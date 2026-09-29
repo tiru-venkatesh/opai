@@ -79,6 +79,20 @@ def groq_not_configured_handler(request: Request, exc: RuntimeError):
     return JSONResponse(status_code=503, content={"detail": str(exc)})
 
 
+@app.exception_handler(Exception)
+def unhandled_error_handler(request: Request, exc: Exception):
+    # Unhandled errors bypass CORSMiddleware, so the browser reports them as a
+    # misleading "CORS blocked". Return JSON with the CORS header so the real
+    # error (status + detail) is visible in the frontend and logs.
+    import logging
+    logging.getLogger("opa").exception("Unhandled error on %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"{type(exc).__name__}: {exc}"},
+        headers={"Access-Control-Allow-Origin": request.headers.get("origin", "*")},
+    )
+
+
 @app.get("/")
 def serve_ui():
     # The structured frontend uses app.html as the canonical application shell.

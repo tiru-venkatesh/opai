@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from typing import List, Optional, Any
 from uuid import UUID
 from datetime import date as date_type, datetime as datetime_type
@@ -342,6 +342,16 @@ class ProjectOut(BaseModel):
     github_link: Optional[str] = None
     status: str
     milestones: List[str] = []
+
+    @field_validator("tech_stack", "milestones", mode="before")
+    @classmethod
+    def _none_or_objects_to_str_list(cls, v):
+        # Old rows can hold NULL or dict items; never 500 the list endpoint over it.
+        if v is None:
+            return []
+        if isinstance(v, list):
+            return [x if isinstance(x, str) else str((x.get("title") or x.get("name") or x) if isinstance(x, dict) else x) for x in v]
+        return v
 
 
 # ================= OPPORTUNITIES CRUD =================
