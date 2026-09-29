@@ -93,6 +93,55 @@ def unhandled_error_handler(request: Request, exc: Exception):
     )
 
 
+@app.get("/v1/health")
+def health(db: Session = Depends(get_db)):
+    """Open this URL in a browser to see why list endpoints 500.
+    Returns no row contents and no secrets: dialect, counts, per-table errors."""
+    from sqlalchemy import inspect as _inspect
+    from database import engine as _engine
+    dialect = _engine.dialect.name
+    out = {
+        "ok": True,
+        "db": dialect,
+        "db_persistent": dialect != "sqlite",
+        "groq_key_set": bool(os.getenv("GROQ_API_KEY", "").strip()),
+        "tables": {},
+    }
+    if dialect == "sqlite":
+        out["warning"] = "DATABASE_URL is not set: SQLite on Render is wiped on every deploy/restart. Data and guest users will disappear."
+    try:
+        cols = {t: [c["name"] for c in _inspect(_engine).get_columns(t)] for t in ("projects", "academics", "users")}
+    except Exception as e:
+        cols = {}
+        out["ok"] = False
+        out["inspect_error"] = f"{type(e).__name__}: {e}"
+    checks = {"users": (User, None), "projects": (Project, ProjectOut), "academics": (Academic, AcademicOut)}
+    for name, (model, schema) in checks.items():
+        info = {"columns": cols.get(name)}
+        try:
+            info["count"] = db.query(model).count()
+            if schema is not None:
+                rows = db.query(model).limit(50).all()
+                bad = 0
+                first_err = None
+                for r in rows:
+                    try:
+                        schema.model_validate(r)
+                    except Exception as e:
+                        bad += 1
+                        first_err = first_err or f"{type(e).__name__}: {str(e)[:300]}"
+                info["rows_failing_schema"] = bad
+                if first_err:
+                    info["first_schema_error"] = first_err
+                    out["ok"] = False
+        except Exception as e:
+            db.rollback()
+            info["error"] = f"{type(e).__name__}: {str(e)[:400]}"
+            out["ok"] = False
+        out["tables"][name] = info
+    return out
+
+
 @app.get("/")
 def serve_ui():
     # The structured frontend uses app.html as the canonical application shell.

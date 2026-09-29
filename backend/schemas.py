@@ -175,6 +175,30 @@ class AcademicOut(BaseModel):
     effort_minutes: int = 60
     done: bool = False
 
+    @field_validator("weak_areas", mode="before")
+    @classmethod
+    def _weak_areas_safe(cls, v):
+        if v is None:
+            return []
+        if isinstance(v, list):
+            return [x if isinstance(x, str) else str(x) for x in v]
+        return v
+
+    @field_validator("priority", mode="before")
+    @classmethod
+    def _priority_safe(cls, v):
+        return v or "med"
+
+    @field_validator("effort_minutes", mode="before")
+    @classmethod
+    def _effort_safe(cls, v):
+        return 60 if v is None else v
+
+    @field_validator("done", mode="before")
+    @classmethod
+    def _done_safe(cls, v):
+        return bool(v)
+
 
 # ================= CONTACTS (PROFESSORS) =================
 class ContactCreate(BaseModel):
@@ -342,6 +366,11 @@ class ProjectOut(BaseModel):
     github_link: Optional[str] = None
     status: str
     milestones: List[str] = []
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def _status_safe(cls, v):
+        return v or "Planning"
 
     @field_validator("tech_stack", "milestones", mode="before")
     @classmethod

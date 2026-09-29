@@ -66,7 +66,12 @@ async function ensureUser() {
   } else {
     // Guests get their own isolated backend user, remembered on this device only.
     let gid = null; try { gid = localStorage.getItem('opa_guest_uid'); } catch (e) {}
-    if (gid) { BACKEND.userId = gid; return gid; }
+    if (gid) {
+      // The backend DB may have been reset (e.g. SQLite on a free host). If this guest no longer exists, make a new one instead of 404-ing everywhere.
+      let alive = true;
+      try { await GET('/v1/profile?user_id=' + gid); } catch (e) { if (/404|not found/i.test(String(e && e.message))) alive = false; }
+      if (alive) { BACKEND.userId = gid; return gid; }
+    }
     r = await POST('/v1/auth/guest');
     try { localStorage.setItem('opa_guest_uid', r.user_id); } catch (e) {}
   }
