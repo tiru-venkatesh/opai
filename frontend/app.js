@@ -264,7 +264,12 @@ const dueTone = (d, status) => { if (!d || ['Offer','Rejected','Applied'].includ
 const splitList = (s) => (s || '').split(',').map(x => x.trim()).filter(Boolean);
  
 const IC = {
+  star:'<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8L12 3.5z"/>',
   spark:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7L19 16z"/>',
+  moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  monitor:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+  dock:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/>',
+  wide:'<path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/>',
   sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   brief:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5.5A1.5 1.5 0 0 1 9.5 4h5A1.5 1.5 0 0 1 16 5.5V7"/>',
   target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
@@ -2116,7 +2121,7 @@ function viewJarvis() {
      an invisible safety net inside jarvisSend() for the rare case the
      backend is down; nothing here asks the user to paste a key. */
   const connectBanner = live ? '' : '<div class="kw-reconnect">Reconnecting to the backend\u2026 this can take up to a minute if it has been idle.</div>';
-  return headBlock + '<div class="jv"><section class="panel jv-main"><div class="jv-top"><div class="orb"></div><div><b>KARNA</b><span>' + (live ? escA(liveLabel) : 'Answering from your workspace data') + '</span></div></div>' + connectBanner + '<div class="msgs" id="msgs">' + (CHAT.length ? CHAT.map(bubbleHTML).join('') : welcomeHTML()) + '</div><div class="composer"><div class="cbox"><textarea id="jv-input" rows="1" placeholder="Ask KARNA about your workspace" aria-label="Message KARNA"></textarea><button class="send" onclick="jarvisSend()" aria-label="Send message">' + icon('up', 17) + '</button></div></div></section><aside class="panel jv-ctx"><h3>Workspace right now</h3><div id="ctx"></div><div class="ctx-note">' + (BACKEND.ready ? 'Connected to your OPAI backend (KARNA agent).' : (S.profile.groqKey ? 'Connected to Groq (' + escA(gm) + ').' : 'Backend is waking up \u2014 retry in a moment.')) + '</div></aside></div>';
+  return headBlock + '<div class="jv"><section class="panel jv-main"><div class="jv-top"><div class="orb"></div><div><b>KARNA</b><span>' + (KARNA_SCOPE === 'general' ? 'General chat: ask anything' : (live ? escA(liveLabel) : 'Answering from your workspace data')) + '</span></div>' + karnaScopeHTML() + '</div>' + connectBanner + '<div class="msgs" id="msgs">' + (CHAT.length ? CHAT.map(bubbleHTML).join('') : welcomeHTML()) + '</div><div class="composer"><div class="cbox"><textarea id="jv-input" rows="1" placeholder="' + (KARNA_SCOPE === 'general' ? 'Ask KARNA anything' : 'Ask KARNA about your workspace') + '" aria-label="Message KARNA"></textarea><button class="send" onclick="jarvisSend()" aria-label="Send message">' + icon('up', 17) + '</button></div></div></section><aside class="panel jv-ctx"><h3>Workspace right now</h3><div id="ctx"></div><div class="ctx-note">' + (BACKEND.ready ? 'Connected to your OPAI backend (KARNA agent).' : (S.profile.groqKey ? 'Connected to Groq (' + escA(gm) + ').' : 'Backend is waking up \u2014 retry in a moment.')) + '</div></aside></div>';
 }
 function welcomeHTML() { return '<div class="welcome" id="welcome"><h2>Start here: set up your whole OPAI app</h2><p>Tap the first option and I will walk you through everything: profile, applications, exams, projects and outreach. Or type your own question.</p><div class="prompts">' + PROMPTS.map(p => '<button onclick="jarvisSend(this.textContent)">' + esc(p) + '</button>').join('') + '</div></div>'; }
 function fmtMsg(t) { return esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>'); }
@@ -2452,9 +2457,10 @@ const NAV = [
   { id:'resume', l:'Resume Lab', i:'file' },
   { id:'agent', l:'Agent Console', i:'shield', g:'Safety' },
   { id:'history', l:'History', i:'clock' },
+  { id:'review', l:'Review', i:'star' },
   { id:'profile', l:'Profile', i:'user' }
 ];
-const VIEWS = { jarvis: viewJarvis, overview: viewOverview, today: viewToday, applications: viewApps, opportunities: viewOpps, outreach: viewOutreach, projects: viewProjects, academics: viewAcads, sems: viewSems, requests: viewReqs, outbox: viewOutbox, resume: viewResume, agent: viewAgent, history: viewHistory, profile: viewProfile };
+const VIEWS = { review: viewReview, jarvis: viewJarvis, overview: viewOverview, today: viewToday, applications: viewApps, opportunities: viewOpps, outreach: viewOutreach, projects: viewProjects, academics: viewAcads, sems: viewSems, requests: viewReqs, outbox: viewOutbox, resume: viewResume, agent: viewAgent, history: viewHistory, profile: viewProfile };
 let cur = 'today';
  
 function badge(id) {
@@ -3079,3 +3085,286 @@ function addTips() {
     if (!open && tx < 28 && dx > 70) document.body.classList.add('nav-open'); else if (open && dx < -70) document.body.classList.remove('nav-open'); tx = null;
   }, { passive: true });
 })();
+
+/* ================= KARNA SECTION PANEL =================
+   Every section is linked to KARNA. "Ask KARNA" (page header / Overview cards)
+   opens a side panel with a thread for THAT section. When KARNA is about to add
+   something (from the panel or the main KARNA chat) it never writes silently:
+   it asks "Can I add this in the <Section> section?" as a card in this panel,
+   and only creates the record after you tap "Yes, add it". */
+const KP_SEC = {
+  today:         { kw: 'focus today',       chips: ['Plan the next 3 hours', 'What should I focus on today?'] },
+  applications:  { kw: 'application deadline', chips: ['What is due this week?', 'Add internship application to Acme for backend intern by Friday'], bare: t => 'add application to ' + t },
+  opportunities: { kw: 'application',       chips: ['Which opportunities should I apply to first?'] },
+  outreach:      { kw: 'outreach email',    chips: ['Who is waiting for a first email?', 'Add contact Prof Rao at IIT Madras'], bare: t => 'add contact ' + t },
+  projects:      { kw: 'project task',      chips: ['Which projects need attention?', 'Add project OPA landing page', 'Add task fix login bug to OPA landing page'], bare: t => 'add project ' + t },
+  academics:     { kw: 'exam study',        chips: ['What should I study first?', 'Add study DBMS: revise normalization by 12 Oct'], bare: t => 'add study ' + t },
+  sems:          { kw: 'exam study',        chips: ['Which exam is most at risk?'] },
+  requests:      { kw: 'client request',    chips: ['Which client requests are open?', 'Add request from Ravi: needs a portfolio website'] },
+  outbox:        { kw: 'email',             chips: ['What is waiting for my approval?'] },
+  resume:        { kw: 'project',           chips: ['Which projects should go on my resume?'] },
+  agent:         { kw: '',                  chips: ['What did KARNA do recently?'] },
+  history:       { kw: '',                  chips: ['What did I finish this week?'] },
+  profile:       { kw: '',                  chips: ['What is missing in my profile?'] },
+  overview:      { kw: 'focus today',       chips: ['What should I do today?', 'Add project called my new idea'] }
+};
+const KP_SEC_OF = { application: 'applications', task: 'projects', project: 'projects', study: 'academics', request: 'requests', contact: 'outreach', mail: 'outbox' };
+const KP = { open: false, sec: 'today', msgs: {}, props: {}, direct: false, busy: false, auto: false, dock: false, wide: false };
+try { const pf = JSON.parse(localStorage.getItem('opa_kp_prefs') || '{}'); KP.auto = !!pf.auto; KP.dock = !!pf.dock; KP.wide = !!pf.wide; } catch (e) {}
+function kpSavePrefs() { try { localStorage.setItem('opa_kp_prefs', JSON.stringify({ auto: KP.auto, dock: KP.dock, wide: KP.wide })); } catch (e) {} }
+function kpApplyLayout() {
+  document.documentElement.style.setProperty('--kpw', KP.wide ? '580px' : '400px');
+  document.body.classList.toggle('kp-open', KP.open);
+  document.body.classList.toggle('kp-docked', KP.dock);
+}
+function kpToggle(k) { KP[k] = !KP[k]; kpSavePrefs(); kpApplyLayout(); kpDrawShell(); }
+const _kpExec = execAction;
+function kpLabel(id) { const n = NAV.find(x => x.id === id); return n ? n.l : 'this page'; }
+function kpThread(sec) { return KP.msgs[sec] || (KP.msgs[sec] = []); }
+function kpEnsure() {
+  if ($('kp')) return;
+  const el = document.createElement('aside');
+  el.id = 'kp'; el.className = 'kp'; el.setAttribute('role', 'complementary'); el.setAttribute('aria-label', 'KARNA panel');
+  document.body.appendChild(el);
+}
+function kpOpen(sec) {
+  kpEnsure();
+  KP.sec = (sec && VIEWS[sec]) ? sec : (VIEWS[cur] ? cur : 'today');
+  KP.open = true; $('kp').classList.add('on'); kpApplyLayout();
+  kpDrawShell();
+  setTimeout(() => { const i = $('kp-in'); if (i) i.focus(); }, 60);
+}
+function kpClose() { KP.open = false; const el = $('kp'); if (el) el.classList.remove('on'); kpApplyLayout(); }
+function kpDrawShell() {
+  const el = $('kp'); if (!el) return;
+  const cfg = KP_SEC[KP.sec] || { chips: [] };
+  el.innerHTML =
+    '<div class="kp-h"><div class="kp-orb"></div><div class="kp-t"><b>KARNA</b><span>' + esc(kpLabel(KP.sec)) + ' section</span></div>' +
+      '<button class="icon-btn kp-tg' + (KP.dock ? ' on' : '') + '" onclick="kpToggle(\'dock\')" aria-pressed="' + KP.dock + '" title="' + (KP.dock ? 'Docked beside the page. Click to float' : 'Floating. Click to dock beside the page') + '" aria-label="Dock panel">' + icon('dock', 17) + '</button>' +
+      '<button class="icon-btn kp-tg' + (KP.wide ? ' on' : '') + '" onclick="kpToggle(\'wide\')" aria-pressed="' + KP.wide + '" title="Wide panel" aria-label="Wide panel">' + icon('wide', 17) + '</button>' +
+      '<button class="icon-btn" onclick="kpClose()" aria-label="Close KARNA panel">' + icon('x', 18) + '</button></div>' +
+    '<label class="kp-mode"><span><b>' + (KP.auto ? 'Add directly' : 'Ask before adding') + '</b><i>' + (KP.auto ? 'KARNA adds records right away' : 'You approve every add') + '</i></span>' +
+      '<input type="checkbox" role="switch" ' + (KP.auto ? 'checked' : '') + ' onchange="kpToggle(\'auto\')" aria-label="Add directly without asking"><em class="kp-sw"></em></label>' +
+    '<div class="kp-msgs" id="kp-msgs"></div>' +
+    '<div class="kp-chips">' + cfg.chips.map(c => '<button onclick="kpSend(this.textContent)">' + esc(c) + '</button>').join('') + '</div>' +
+    '<div class="kp-comp"><textarea id="kp-in" rows="1" placeholder="Ask about ' + esc(kpLabel(KP.sec)) + ' or tell me what to add" aria-label="Message KARNA"></textarea>' +
+      '<button class="send" onclick="kpSend()" aria-label="Send">' + icon('up', 17) + '</button></div>';
+  const inp = $('kp-in');
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kpSend(); } });
+  inp.addEventListener('input', () => { inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 110) + 'px'; });
+  kpDrawMsgs();
+}
+function kpPropHTML(id) {
+  const p = KP.props[id]; if (!p) return '';
+  const lbl = kpLabel(p.sec), d = p.a.data || {};
+  if (p.status === 'done') return '<div class="kp-prop done"><div class="kp-q">' + fmtMsg(p.result) + '</div><div class="kp-act"><button class="btn ghost sm" onclick="switchTab(\'' + p.sec + '\');kpClose()">Open ' + esc(lbl) + '</button></div></div>';
+  if (p.status === 'no') return '<div class="kp-prop no"><div class="kp-q">Okay, I did not add it to <b>' + esc(lbl) + '</b>.</div></div>';
+  const rows = Object.entries(d).filter(([k, v]) => v != null && String(v).trim() !== '').map(([k, v]) => '<div><dt>' + esc(k.replace(/_/g, ' ')) + '</dt><dd>' + esc(v) + '</dd></div>').join('');
+  return '<div class="kp-prop"><div class="kp-q">Can I add this in the <b>' + esc(lbl) + '</b> section?</div><dl>' + rows + '</dl>' +
+    '<div class="kp-act"><button class="btn sm" onclick="kpConfirm(\'' + id + '\')">Yes, add it</button><button class="btn ghost sm" onclick="kpDecline(\'' + id + '\')">No</button></div></div>';
+}
+function kpDrawMsgs() {
+  const box = $('kp-msgs'); if (!box) return;
+  const th = kpThread(KP.sec);
+  const welcome = '<div class="kp-m"><div class="kp-b">You are on <b>' + esc(kpLabel(KP.sec)) + '</b>. Ask me about it, or tell me what to add here. I will always check with you before adding anything.</div></div>';
+  box.innerHTML = welcome + th.map(m => {
+    if (m.role === 'prop') return '<div class="kp-m">' + kpPropHTML(m.id) + '</div>';
+    if (m.typing) return '<div class="kp-m"><div class="kp-b"><span class="typing"><i></i><i></i><i></i></span></div></div>';
+    return '<div class="kp-m' + (m.role === 'user' ? ' you' : '') + '"><div class="kp-b">' + fmtMsg(m.text) + '</div></div>';
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+function kpOffer(a) {
+  const sec = KP_SEC_OF[a.type] || KP.sec;
+  const id = 'p' + Date.now().toString(36) + Math.floor(Math.random() * 1000);
+  KP.props[id] = { a, sec, status: 'pending' };
+  kpThread(sec).push({ role: 'prop', id });
+  kpOpen(sec);
+  return 'Can I add this in the **' + kpLabel(sec) + '** section? I opened the KARNA panel on the right. Tap **Yes, add it** there to confirm.';
+}
+function kpConfirm(id) {
+  const p = KP.props[id]; if (!p || p.status !== 'pending') return;
+  let res;
+  KP.direct = true;
+  try { res = _kpExec(p.a); } catch (e) { res = 'I could not add that (' + e.message + ').'; } finally { KP.direct = false; }
+  p.status = 'done'; p.result = res || 'Done.';
+  try { render(); renderNav(); refreshCtx(); } catch (e) {}
+  kpDrawMsgs();
+}
+function kpDecline(id) { const p = KP.props[id]; if (!p) return; p.status = 'no'; kpDrawMsgs(); }
+execAction = function (a) {
+  if (KP.direct || KP.auto || !a || !QC_TYPES.includes(a.type) || !a.data) return _kpExec(a);
+  return kpOffer(a);
+};
+async function kpAnswer(t, sec) {
+  const cfg = KP_SEC[sec] || {};
+  const tagged = '[The user is on the ' + kpLabel(sec) + ' page] ' + t;
+  if (BACKEND.ready) {
+    try {
+      const uid = await ensureUser();
+      const res = await POST('/v1/jarvis/chat', { user_id: uid, message: tagged });
+      if (res.tool_calls && res.tool_calls.length) { syncBackend(true).catch(() => {}); try { render(); renderNav(); } catch (e) {} }
+      return res.reply || 'Done.';
+    } catch (e) { /* fall through to local */ }
+  }
+  if (S.profile.groqKey) {
+    try {
+      const sys = 'You are KARNA inside OPAI, helping ' + (S.profile.name || 'the user') + ' on the ' + kpLabel(sec) + ' page. Be direct and brief. You cannot send emails. If the user asks to add something, reply in one short sentence and end with one line: ACTION: {"type":"<application|task|project|study|request|contact|mail>","data":{...}}. Today is ' + iso(0) + '.';
+      const g = await groqChat([{ role: 'system', content: sys }, ...kpThread(sec).filter(m => m.text && !m.typing).slice(-8).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }))]);
+      if (g) { const ex = extractAction(g); if (ex.action) { execAction(ex.action); return ex.text || 'I can add that. Please confirm in the card below.'; } return ex.text; }
+    } catch (e) { /* fall through */ }
+  }
+  return jarvisReply((cfg.kw || '') + ' ' + t);
+}
+async function kpSend(text) {
+  const inp = $('kp-in');
+  const t = (text || (inp ? inp.value : '')).trim(); if (!t || KP.busy) return;
+  if (inp) { inp.value = ''; inp.style.height = 'auto'; }
+  let a = parseQuick(t);
+  const cfg = KP_SEC[KP.sec] || {};
+  if (!a && cfg.bare && t.length <= 60 && !/[?]/.test(t) && !/^(what|which|who|when|where|why|how|plan|show|list|help|draft|summar|tell|give|is|are|do|does|can)\b/i.test(t)) a = parseQuick(cfg.bare(t));
+  const sec = a ? (KP_SEC_OF[a.type] || KP.sec) : KP.sec;
+  kpThread(sec).push({ role: 'user', text: t });
+  if (a && KP.auto) {
+    let res; try { res = _kpExec(a); } catch (e) { res = 'I could not add that (' + e.message + ').'; }
+    kpThread(sec).push({ role: 'ai', text: res || 'Done.' });
+    try { render(); renderNav(); refreshCtx(); } catch (e) {}
+    if (KP.open) kpDrawMsgs(); return;
+  }
+  if (a) { kpOffer(a); return; }
+  const th = kpThread(sec); const typing = { role: 'ai', typing: true }; th.push(typing); KP.busy = true; kpDrawMsgs();
+  let reply;
+  try { reply = await kpAnswer(t, sec); } catch (e) { reply = 'Something went wrong (' + e.message + ').'; }
+  KP.busy = false;
+  const i = th.indexOf(typing); if (i > -1) th.splice(i, 1);
+  th.push({ role: 'ai', text: reply });
+  if (KP.open && KP.sec === sec) kpDrawMsgs();
+}
+function kpDecorate() {
+  const v = $('view'); if (!v || cur === 'jarvis') return;
+  const hd = v.querySelector('.head > div:last-child');
+  if (hd && !hd.querySelector('.kp-ask')) {
+    const b = document.createElement('button'); b.className = 'btn soft kp-ask'; b.title = 'Ask KARNA about this section';
+    b.innerHTML = icon('spark', 15) + ' Ask KARNA'; b.onclick = () => kpOpen(cur); hd.insertBefore(b, hd.firstChild);
+  }
+  if (cur === 'overview') v.querySelectorAll('.panel-h').forEach(ph => {
+    if (ph.querySelector('.kp-ask-s')) return;
+    const h = ph.querySelector('h3'); if (!h) return;
+    const n = NAV.find(x => x.l.toLowerCase() === h.textContent.trim().toLowerCase());
+    if (!n || n.id === 'overview' || n.id === 'jarvis') return;
+    const b = document.createElement('button'); b.className = 'kp-ask-s'; b.title = 'Ask KARNA about ' + n.l; b.setAttribute('aria-label', 'Ask KARNA about ' + n.l);
+    b.innerHTML = icon('spark', 13); b.onclick = () => kpOpen(n.id); h.insertAdjacentElement('afterend', b);
+  });
+}
+(function () {
+  const _r = render; render = function (f) { _r(f); try { kpDecorate(); } catch (e) {} };
+  const _s = switchTab; switchTab = function (n) { _s(n); if (KP.open) { KP.sec = VIEWS[cur] ? cur : KP.sec; kpDrawShell(); } };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && KP.open && !$('overlay').classList.contains('on') && !$('palette').classList.contains('on')) kpClose(); });
+})();
+
+/* ===== Theme: auto / light / dark ===== */
+const THEME_MODES = ['auto', 'light', 'dark'];
+const THEME_ICON = { auto: 'monitor', light: 'sun', dark: 'moon' };
+function getThemeMode() { try { const t = localStorage.getItem('opa_theme'); return THEME_MODES.includes(t) ? t : 'auto'; } catch (e) { return 'auto'; } }
+function setTheme(m) {
+  if (!THEME_MODES.includes(m)) m = 'auto';
+  try { localStorage.setItem('opa_theme', m); } catch (e) {}
+  if (m === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', m);
+  themeDraw();
+}
+function themeCycle() { const m = getThemeMode(); setTheme(THEME_MODES[(THEME_MODES.indexOf(m) + 1) % 3]); }
+function themeDraw() {
+  const m = getThemeMode();
+  const hb = $('theme-btn'); if (hb) { hb.innerHTML = icon(THEME_ICON[m], 18); hb.title = 'Theme: ' + m + ' (click to change)'; hb.setAttribute('aria-label', 'Theme: ' + m); }
+  const seg = $('theme-seg'); if (seg) seg.innerHTML = THEME_MODES.map(x => '<button class="' + (x === m ? 'on' : '') + '" onclick="setTheme(\'' + x + '\')" aria-pressed="' + (x === m) + '">' + icon(THEME_ICON[x], 14) + x + '</button>').join('');
+}
+function themeInit() {
+  const m = getThemeMode(); if (m !== 'auto') document.documentElement.setAttribute('data-theme', m);
+  const bell = document.querySelector('.hdr .icon-btn[aria-label="Notifications"]');
+  if (bell && !$('theme-btn')) { const b = document.createElement('button'); b.id = 'theme-btn'; b.className = 'icon-btn'; b.onclick = themeCycle; bell.parentNode.insertBefore(b, bell); }
+  const foot = document.querySelector('.side-foot');
+  if (foot && !$('theme-seg')) { const s = document.createElement('div'); s.id = 'theme-seg'; s.className = 'theme-seg'; s.setAttribute('role', 'group'); s.setAttribute('aria-label', 'Theme'); foot.insertBefore(s, foot.firstChild); }
+  themeDraw();
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', themeInit); else themeInit();
+
+
+/* ===== KARNA main chat: Workspace / General scope ===== */
+let KARNA_SCOPE = 'workspace';
+try { if (localStorage.getItem('opa_karna_scope') === 'general') KARNA_SCOPE = 'general'; } catch (e) {}
+function karnaScopeHTML() {
+  const b = (v, l) => '<button class="' + (KARNA_SCOPE === v ? 'on' : '') + '" aria-pressed="' + (KARNA_SCOPE === v) + '" onclick="setKarnaScope(\'' + v + '\')">' + l + '</button>';
+  return '<div class="scope-seg" role="group" aria-label="KARNA scope">' + b('workspace', 'Workspace') + b('general', 'General') + '</div>' +
+    (KARNA_SCOPE === 'workspace' ? '<label class="scope-add" title="Add records without asking"><input type="checkbox" role="switch" ' + (KP.auto ? 'checked' : '') + ' onchange="kpToggle(\'auto\');render(true)" aria-label="Add directly"><em class="kp-sw"></em><span>Add directly</span></label>' : '');
+}
+function setKarnaScope(v) {
+  KARNA_SCOPE = v === 'general' ? 'general' : 'workspace';
+  try { localStorage.setItem('opa_karna_scope', KARNA_SCOPE); } catch (e) {}
+  render(true);
+}
+async function generalSend(t) {
+  const input = $('jv-input'); if (input) { input.value = ''; input.style.height = 'auto'; }
+  const box = $('msgs'); const w = $('welcome'); if (w) w.remove();
+  CHAT.push({ role: 'user', text: t }); box.insertAdjacentHTML('beforeend', bubbleHTML({ role: 'user', text: t }));
+  box.insertAdjacentHTML('beforeend', '<div class="m" id="typing"><div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div></div>');
+  box.scrollTop = box.scrollHeight;
+  let reply;
+  if (!S.profile.groqKey) reply = 'General chat needs a Groq key (Profile, Groq). Until then, switch to Workspace for questions about your own data.';
+  else {
+    try {
+      const sys = 'You are KARNA, a friendly, knowledgeable general-purpose assistant chatting with ' + (S.profile.name || 'the user') + '. Answer any question helpfully and concisely (code, study help, ideas, writing, general knowledge). Reply in the language the user writes in. You have no access to their workspace in this mode; if they ask to add or change records, tell them to switch to Workspace. Today is ' + iso(0) + '.';
+      const msgs = [{ role: 'system', content: sys }, ...CHAT.slice(-12).map(m => ({ role: m.role, content: m.text }))];
+      reply = (await groqChat(msgs)) || 'No reply came back. Try again.';
+    } catch (e) { reply = 'Groq call failed (' + e.message + ').'; }
+  }
+  const ty = $('typing'); if (ty) ty.remove();
+  CHAT.push({ role: 'assistant', text: reply });
+  box.insertAdjacentHTML('beforeend', bubbleHTML({ role: 'assistant', text: reply }));
+  box.scrollTop = box.scrollHeight;
+}
+(function () {
+  const _js2 = jarvisSend;
+  jarvisSend = function (text) {
+    if (KARNA_SCOPE === 'general') { const inp = $('jv-input'); const t = (text || (inp ? inp.value : '')).trim(); if (!t) return; return generalSend(t); }
+    return _js2(text);
+  };
+})();
+
+
+/* ===== Review: about OPAI + your feedback ===== */
+let REV_STARS = 0;
+const REV_MODS = [
+  ['KARNA', 'Chat copilot. Workspace mode knows your data and adds records (you approve). General mode answers anything.'],
+  ['Today', 'One queue of what to do now, built from deadlines, exams and tasks.'],
+  ['Applications & Opportunities', 'Track internships, research and hackathons, and score what is worth your time.'],
+  ['Outreach & Outbox', 'Draft emails to professors and clients. Nothing sends without your approval.'],
+  ['Projects & Requests', 'Client asks turn into projects and tasks you can track.'],
+  ['Academics & Exams', 'Exams, courses and study workflow with confidence-based revision.'],
+  ['Resume Lab', 'Keep your resume and tailor it per application.'],
+  ['Agent Console & History', 'See what KARNA did and a log of everything you approved.']
+];
+function viewReview() {
+  S.reviews = S.reviews || [];
+  const n = (a) => (a || []).length;
+  const stats = [['Applications', n(S.applications)], ['Projects', n(S.projects)], ['Contacts', n(S.contacts)], ['Requests', n(S.requests)], ['Exams', n(S.academics)], ['History', n(S.history)]];
+  const avg = S.reviews.length ? (S.reviews.reduce((t, r) => t + r.stars, 0) / S.reviews.length).toFixed(1) : null;
+  const stars = (k, on) => Array.from({ length: 5 }, (_, i) => '<button type="button" class="rv-star ' + (i < k ? 'on' : '') + '" ' + (on ? 'onclick="revStar(' + (i + 1) + ')"' : 'tabindex="-1"') + ' aria-label="' + (i + 1) + ' star">' + icon('star', 22) + '</button>').join('');
+  return head('Review', 'What OPAI is, what it can do, and how it is working for you.', '') +
+    '<section class="panel rv-hero"><h2>OPAI, your operating agent</h2><p>OPAI keeps your applications, projects, exams and outreach in one place, and KARNA helps you run them. It acts, you approve: KARNA can prepare records and drafts, but adds, sends and applies wait for your yes.</p>' +
+    '<div class="rv-stats">' + stats.map(x => '<div><b>' + x[1] + '</b><span>' + x[0] + '</span></div>').join('') + '</div></section>' +
+    '<div class="grid2">' + REV_MODS.map(m => '<section class="panel rv-mod"><h3>' + esc(m[0]) + '</h3><p>' + esc(m[1]) + '</p></section>').join('') + '</div>' +
+    '<section class="panel rv-form"><h3>Rate OPAI' + (avg ? ' <span class="pill good">' + avg + ' / 5 avg</span>' : '') + '</h3><div class="rv-stars" id="rv-stars">' + stars(REV_STARS, true) + '</div>' +
+    '<div class="field"><label for="rv-text">What works, what should change?</label><textarea id="rv-text" rows="3" placeholder="Your feedback on OPAI"></textarea></div>' +
+    '<button class="btn" onclick="revSubmit()">Save review</button></section>' +
+    (S.reviews.length ? '<section class="panel"><h3>Your reviews</h3>' + S.reviews.slice().reverse().map(r => '<div class="rv-item"><div class="rv-stars sm">' + stars(r.stars, false) + '<time>' + new Date(r.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</time></div>' + (r.text ? '<p>' + esc(r.text) + '</p>' : '') + '</div>').join('') + '</section>' : '');
+}
+function revStar(k) {
+  REV_STARS = k; const el = $('rv-stars'); if (!el) return;
+  el.querySelectorAll('.rv-star').forEach((b, i) => b.classList.toggle('on', i < k));
+}
+function revSubmit() {
+  const t = ($('rv-text') || {}).value || '';
+  if (!REV_STARS) { toast('Pick a star rating first', true); return; }
+  S.reviews = S.reviews || []; S.reviews.push({ stars: REV_STARS, text: t.trim(), at: new Date().toISOString() });
+  REV_STARS = 0; save(); render(true); toast('Review saved');
+}
