@@ -72,3 +72,57 @@ automatically, and each workflow retrieves what it needs:
 Endpoints: `POST /v1/rag/reindex`, `GET /v1/rag/search?user_id=&q=`, `GET /v1/rag/stats`.
 Embedder: fastembed `bge-small-en-v1.5`; falls back to a hashed bag-of-words embedder if the
 model can't load (`RAG_EMBEDDER=hash|fastembed|auto`). After changing embedders, call `/v1/rag/reindex`.
+## Database maintenance
+
+The backend uses SQLAlchemy with SQLite for local development and PostgreSQL when `DATABASE_URL` is provided. SQLite connections enable foreign-key enforcement, WAL mode, a busy timeout, and indexed user/date/status lookups.
+
+Audit the local database:
+
+```bash
+python db_maintenance.py audit
+```
+
+The repair utility is intentionally conservative and is for cleaning development/test contamination without inventing workspace records:
+
+```bash
+python db_maintenance.py repair --email "you@example.com" --name "Your Name"
+```
+
+For production, set `DATABASE_URL` to managed PostgreSQL so application data survives redeploys independently of the application filesystem.
+
+## Agent architecture
+
+The request path is now:
+
+```text
+Jev typed router
+   ↓
+Groq structured fallback
+   ↓
+deterministic fallback
+   ↓
+validated workflow/tool
+   ↓
+approval/outbox for high-impact actions
+   ↓
+audit log
+```
+
+Set the routing variables in `.env`:
+
+```env
+JEV_ENABLED=false
+JEV_API_URL=
+JEV_API_KEY=
+JEV_MODEL=
+JEV_TIMEOUT_SECONDS=8
+GROQ_ROUTER_MODEL=openai/gpt-oss-20b
+GROQ_AGENT_MODEL=openai/gpt-oss-120b
+ENABLE_DEV_SEED=false
+```
+
+`JEV_ENABLED=false` is the safe default until the production Jev endpoint and
+schema are configured. The exact Jev transport remains provider-agnostic.
+
+`POST /v1/seed` is disabled by default and only exists for explicit local testing
+when `ENABLE_DEV_SEED=true`.

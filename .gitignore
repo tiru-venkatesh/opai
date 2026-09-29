@@ -1,4 +1,9 @@
-﻿backend/.env
+backend/.env
 backend/__pycache__/
 *.pyc
 backend/opa.db
+
+# Local DB runtime/backups
+*.db.before-repair.bak
+*.db-shm
+*.db-wal

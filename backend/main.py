@@ -81,6 +81,9 @@ def groq_not_configured_handler(request: Request, exc: RuntimeError):
 
 @app.get("/")
 def serve_ui():
+    # The structured frontend uses app.html as the canonical application shell.
+    if os.path.exists("static/app.html"):
+        return FileResponse("static/app.html")
     if os.path.exists("static/index.html"):
         return FileResponse("static/index.html")
     return {"message": "OPAI API is running. Visit /docs for Swagger."}
@@ -91,23 +94,21 @@ def serve_ui():
 def dev_login(email: str = "student@university.edu", name: str = None, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == email).first()
     if not user:
-        # Real signed-in users pass their actual name; only fall back to the
-        # demo placeholder profile when none was given (e.g. raw API testing).
+        # Dev-login must create an empty, owned workspace. Never inject a
+        # fictional profile, CGPA, targets, tasks, or academic data.
         user = User(
             email=email,
-            name=name or "Aditya Verma",
-            branch="Computer Science",
-            degree="B.Tech",
-            cgpa=8.84,
-            targets={"roles": ["ML Engineer", "Backend Developer"]},
-            preferences={"deep_work": "morning"}
+            name=name or "User",
+            branch=None,
+            degree=None,
+            cgpa=None,
+            targets={},
+            preferences={},
         )
         db.add(user)
         db.commit()
         db.refresh(user)
-    elif name and user.name == "Aditya Verma":
-        # One-time repair for accounts created before this fix, which were
-        # stuck on the placeholder name forever.
+    elif name and user.name in {"User", "Guest"}:
         user.name = name
         db.commit()
         db.refresh(user)
@@ -1052,6 +1053,10 @@ def run_memory_summarize(user_id: UUID, db: Session = Depends(get_db)):
 # ================= SEED DATABASE =================
 @app.post("/v1/seed")
 def seed_test_data(db: Session = Depends(get_db)):
+    # Seed data is a deliberate development-only feature. It is disabled by
+    # default so a production request can never recreate demo identities.
+    if os.getenv("ENABLE_DEV_SEED", "false").strip().lower() not in {"1", "true", "yes", "on"}:
+        raise HTTPException(status_code=403, detail="Development seed is disabled")
     user = db.query(User).filter(User.email == "student@university.edu").first()
     if not user:
         user = User(

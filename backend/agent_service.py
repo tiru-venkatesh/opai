@@ -959,15 +959,26 @@ def run_jarvis_agent(user_id: UUID, message: str, db: Session) -> JarvisChatResp
 
 # ================= KARNA UNIFIED ROUTER =================
 def process_jarvis_message(user_id: UUID, message: str, db: Session) -> JarvisChatResponse:
-    """Entry point used by /v1/jarvis/chat. Tries the real tool-calling agent
-    loop first (validated tools, activity log, hard call-count limit); if the
-    model backend doesn't cooperate with tool calling for some reason, falls
-    back to the older fixed-intent router so KARNA never goes fully silent."""
+    """Unified OPA agent entry point.
+
+    The production path is now:
+      request -> typed router (Jev -> Groq -> deterministic) -> validated workflow
+      -> approval boundary -> audit log.
+
+    The existing whitelist/tool-calling loop remains as the compatibility path
+    for intents that have not yet been migrated to typed handlers.
+    """
     try:
-        return run_jarvis_agent(user_id, message, db)
+        from agent.orchestrator import handle_message
+        return handle_message(user_id, message, db)
     except Exception:
-        pass
-    return _process_jarvis_message_legacy(user_id, message, db)
+        # Preserve the existing safety boundary: no model should ever be able
+        # to write directly to the database, and the legacy path is still
+        # validated through the explicit tool whitelist.
+        try:
+            return run_jarvis_agent(user_id, message, db)
+        except Exception:
+            return _process_jarvis_message_legacy(user_id, message, db)
 
 
 def _process_jarvis_message_legacy(user_id: UUID, message: str, db: Session) -> JarvisChatResponse:

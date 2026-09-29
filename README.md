@@ -1040,3 +1040,82 @@ Spend more time operating your life.**
 Built with Python, FastAPI, Groq, RAG, and a lot of experimentation.
 
 ---
+
+---
+
+# 🧭 Agent Architecture: Jev + Groq
+
+OPA now separates **decisioning** from **language generation**:
+
+```text
+User
+  ↓
+OPA API
+  ↓
+Jev typed router
+  ├── classify
+  ├── extract entities
+  ├── rank / route
+  └── confidence
+       ↓ fallback
+Groq structured router
+       ↓ fallback
+Deterministic rules
+  ↓
+Backend workflow + validation
+  ↓
+Approval / Outbox
+  ↓
+Groq explanation or content
+  ↓
+Database + audit log
+```
+
+The backend remains the source of truth. Model output never writes directly to the
+database.
+
+### Routing
+
+When `JEV_ENABLED=true`, OPA attempts Jev first. Jev is deliberately isolated
+behind `backend/jev_client.py` because the exact production endpoint contract is
+provider-specific. If Jev is unavailable, OPA falls back to a Groq structured
+decision. If both model layers are unavailable, deterministic keyword routing
+keeps the core workflows usable.
+
+### Approval
+
+High-impact operations remain human-in-the-loop:
+
+* email sending
+* application submission
+* destructive deletion
+* calendar invitations
+
+Drafts are placed in Outbox and require explicit approval before external action.
+
+### Idempotency
+
+Low-risk mutating agent actions use a request key for the current day so retries
+do not create duplicate tasks or repeated study plans.
+
+### Implementation layout
+
+```text
+backend/
+├── agent/
+│   ├── router.py
+│   ├── decision.py
+│   ├── groq_client.py
+│   ├── fallback.py
+│   ├── approval_engine.py
+│   ├── idempotency.py
+│   └── orchestrator.py
+├── workflows/
+├── retrieval/
+├── audit/
+├── api/
+└── typed/
+```
+
+The existing `agent_service.py` remains the compatibility layer while capabilities
+are migrated behind these typed boundaries.

@@ -4,7 +4,8 @@ import logging
 from datetime import datetime as _dt
 from sqlalchemy import (
     create_engine, Column, String, Integer, Numeric,
-    Date, DateTime, ForeignKey, Text, JSON, Boolean, inspect, text
+    Date, DateTime, ForeignKey, Text, JSON, Boolean, Index,
+    event, inspect, text
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -20,9 +21,21 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./opa.db").strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = "postgresql://" + DATABASE_URL[len("postgres://"):]
 
-connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+connect_args = {"check_same_thread": False, "timeout": 30} if DATABASE_URL.startswith("sqlite") else {}
 # pool_pre_ping: free-tier Postgres closes idle connections; this reconnects instead of 500-ing.
 engine = create_engine(DATABASE_URL, echo=False, connect_args=connect_args, pool_pre_ping=True)
+
+# SQLite needs explicit foreign-key enforcement and sane journaling settings.
+# Without this, ON DELETE CASCADE/SET NULL declarations are silently ignored.
+if DATABASE_URL.startswith("sqlite"):
+    @event.listens_for(engine, "connect")
+    def _sqlite_pragmas(dbapi_connection, connection_record):
+        cur = dbapi_connection.cursor()
+        cur.execute("PRAGMA foreign_keys=ON")
+        cur.execute("PRAGMA journal_mode=WAL")
+        cur.execute("PRAGMA synchronous=NORMAL")
+        cur.execute("PRAGMA busy_timeout=30000")
+        cur.close()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -78,6 +91,7 @@ class DocumentChunk(Base):
 
 class Application(Base):
     __tablename__ = "applications"
+    __table_args__ = (Index("ix_applications_user_status", "user_id", "status"), Index("ix_applications_user_deadline", "user_id", "deadline"))
     id = Column(String(36), primary_key=True, default=gen_id)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     company = Column(String, nullable=False)
@@ -95,6 +109,7 @@ class Application(Base):
 
 class Contact(Base):
     __tablename__ = "contacts"
+    __table_args__ = (Index("ix_contacts_status", "status"), Index("ix_contacts_email", "email"))
     id = Column(String(36), primary_key=True, default=gen_id)
     name = Column(String, nullable=False)
     institute = Column(String, nullable=False)
@@ -112,6 +127,7 @@ class Contact(Base):
 
 class OutreachHistory(Base):
     __tablename__ = "outreach_history"
+    __table_args__ = (Index("ix_outreach_user_status", "user_id", "status"), Index("ix_outreach_followup", "user_id", "follow_up_date"))
     id = Column(String(36), primary_key=True, default=gen_id)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     contact_id = Column(String(36), ForeignKey("contacts.id", ondelete="CASCADE"))
@@ -124,6 +140,7 @@ class OutreachHistory(Base):
 
 class Project(Base):
     __tablename__ = "projects"
+    __table_args__ = (Index("ix_projects_user_status", "user_id", "status"),)
     id = Column(String(36), primary_key=True, default=gen_id)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     title = Column(String, nullable=False)
@@ -136,6 +153,7 @@ class Project(Base):
 
 class Task(Base):
     __tablename__ = "tasks"
+    __table_args__ = (Index("ix_tasks_user_status", "user_id", "status"), Index("ix_tasks_user_due", "user_id", "due_date"),)
     id = Column(String(36), primary_key=True, default=gen_id)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     project_id = Column(String(36), ForeignKey("projects.id", ondelete="SET NULL"), nullable=True)
@@ -148,6 +166,7 @@ class Task(Base):
 
 class Opportunity(Base):
     __tablename__ = "opportunities"
+    __table_args__ = (Index("ix_opportunities_status_deadline", "status", "deadline"), Index("ix_opportunities_company_title", "company_or_lab", "title"))
     id = Column(String(36), primary_key=True, default=gen_id)
     title = Column(String, nullable=False)
     company_or_lab = Column(String, nullable=False)
@@ -165,6 +184,7 @@ class Opportunity(Base):
 
 class Academic(Base):
     __tablename__ = "academics"
+    __table_args__ = (Index("ix_academics_user_exam", "user_id", "exam_date"), Index("ix_academics_user_done", "user_id", "done"))
     id = Column(String(36), primary_key=True, default=gen_id)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     subject = Column(String, nullable=False)
@@ -179,6 +199,7 @@ class Academic(Base):
 
 class DailyPlan(Base):
     __tablename__ = "daily_plans"
+    __table_args__ = (Index("uq_daily_plans_user_date", "user_id", "plan_date", unique=True), Index("ix_daily_plans_user_date", "user_id", "plan_date"))
     id = Column(String(36), primary_key=True, default=gen_id)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     plan_date = Column(Date, nullable=False)
@@ -214,6 +235,7 @@ class OutboxItem(Base):
     expires_at: an approval requested but not acted on by this time goes stale
     and must be re-drafted rather than silently sent later."""
     __tablename__ = "outbox_items"
+    __table_args__ = (Index("ix_outbox_user_status", "user_id", "status"), Index("ix_outbox_expires", "expires_at"))
     id = Column(String(36), primary_key=True, default=gen_id)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     channel = Column(String, default="email")
@@ -251,6 +273,7 @@ class MemoryItem(Base):
           | 'forgotten' (soft-deleted - kept only for audit, never surfaced)
     """
     __tablename__ = "memory_items"
+    __table_args__ = (Index("ix_memory_user_status", "user_id", "status"), Index("ix_memory_user_type", "user_id", "type"),)
     id = Column(String(36), primary_key=True, default=gen_id)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     type = Column(String, nullable=False)       # profile | working | learning
@@ -267,6 +290,7 @@ class AgentActivityLog(Base):
     Backs the Outbox/Activity screen's 'what did the agent do and why', and
     is what an undo/rollback action would key off of."""
     __tablename__ = "agent_activity_log"
+    __table_args__ = (Index("ix_activity_user_created", "user_id", "created_at"),)
     id = Column(String(36), primary_key=True, default=gen_id)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     tool_name = Column(String, nullable=False)
@@ -285,6 +309,7 @@ class AgentActivityLog(Base):
 
 class Semester(Base):
     __tablename__ = "semesters"
+    __table_args__ = (Index("ix_semesters_user_current", "user_id", "is_current"), Index("uq_semesters_user_term", "user_id", "semester_number", "academic_year", unique=True),)
     id = Column(String(36), primary_key=True, default=gen_id)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     college = Column(String)
@@ -305,6 +330,7 @@ class Semester(Base):
 
 class Course(Base):
     __tablename__ = "sems_courses"
+    __table_args__ = (Index("ix_courses_user_semester", "user_id", "semester_id"), Index("ix_courses_semester_code", "semester_id", "code"))
     id = Column(String(36), primary_key=True, default=gen_id)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     semester_id = Column(String(36), ForeignKey("semesters.id", ondelete="CASCADE"))
@@ -321,6 +347,7 @@ class Topic(Base):
     plan, per the spec's rule that a regenerated plan must never touch the
     underlying syllabus map."""
     __tablename__ = "sems_topics"
+    __table_args__ = (Index("ix_topics_course_unit", "course_id", "unit"), Index("ix_topics_course_status", "course_id", "status"),)
     id = Column(String(36), primary_key=True, default=gen_id)
     course_id = Column(String(36), ForeignKey("sems_courses.id", ondelete="CASCADE"))
     unit = Column(String)                 # e.g. "Unit 2: Memory"
@@ -338,6 +365,7 @@ class Topic(Base):
 
 class Exam(Base):
     __tablename__ = "sems_exams"
+    __table_args__ = (Index("ix_exams_user_date", "user_id", "exam_date"), Index("ix_exams_course_date", "course_id", "exam_date"))
     id = Column(String(36), primary_key=True, default=gen_id)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     course_id = Column(String(36), ForeignKey("sems_courses.id", ondelete="CASCADE"))
@@ -354,6 +382,7 @@ class Exam(Base):
 
 class StudyBlock(Base):
     __tablename__ = "sems_study_blocks"
+    __table_args__ = (Index("ix_studyblocks_user_date", "user_id", "plan_date"), Index("ix_studyblocks_exam_topic", "exam_id", "topic_id"))
     id = Column(String(36), primary_key=True, default=gen_id)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     exam_id = Column(String(36), ForeignKey("sems_exams.id", ondelete="CASCADE"))
@@ -406,6 +435,14 @@ def _auto_migrate():
 def init_db():
     Base.metadata.create_all(bind=engine)
     _auto_migrate()
+    # create_all() does not reliably add newly declared indexes to existing
+    # tables on every backend; create mapped indexes explicitly and idempotently.
+    for table in Base.metadata.sorted_tables:
+        for idx in table.indexes:
+            try:
+                idx.create(bind=engine, checkfirst=True)
+            except Exception as e:
+                log.warning("db-index: could not create %s (%s)", idx.name, e)
 
 
 def get_db():
