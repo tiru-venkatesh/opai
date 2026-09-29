@@ -13,19 +13,7 @@
    demo rows so the app never breaks.
    ===================================================================== */
 const LS_BASE = 'opa_api_base';
-/* Same-origin by default: when the backend serves this file itself (Render/
-   Railway/VPS/self-host, or `python main.py` locally), the API lives at this
-   exact origin. The hardcoded Render URL below is only needed as a fallback
-   for the handful of cases where the frontend is deployed on its OWN separate
-   static host (e.g. a Vercel deploy of frontend/) and so has no backend of
-   its own to call. */
-const FALLBACK_API = 'https://opa-52ug.onrender.com';
-const DEFAULT_API = (() => {
-  if (location.protocol === 'file:') return FALLBACK_API;               // opened as a local file
-  if (/\.vercel\.app$/.test(location.hostname)) return FALLBACK_API;     // standalone Vercel frontend deploy
-  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.port && location.port !== '8000') return 'http://localhost:8000'; // frontend served by a separate dev static server
-  return location.origin;                                               // self-hosted: backend is serving this page
-})();
+const DEFAULT_API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8000' : 'https://opa-52ug.onrender.com';
 const getBase = () => (localStorage.getItem(LS_BASE) || DEFAULT_API).replace(/\/+$/, '');
 
 async function api(path, opts = {}) {
@@ -2449,32 +2437,25 @@ function viewOverview() {
 }
  
 /* ================= 7. NAVIGATION & RENDER ================= */
-/* Only six items sit in the always-visible sidebar now - the rest (setup-once
-   pages, safety/log pages, and the old full-dashboard Overview) live behind
-   a single "More" toggle so the sidebar itself doesn't read as fifteen
-   equally-important choices. Nothing was removed: every id below still has
-   a live route, so deep links, the command palette, and hash navigation
-   (#/opportunities etc.) keep working exactly as before. */
 const NAV = [
   { id:'jarvis', l:'KARNA', i:'spark', g:'Assistant' },
+  { id:'overview', l:'Overview', i:'layers' },
   { id:'today', l:'Today', i:'sun', g:'Plan' },
   { id:'applications', l:'Applications', i:'brief' },
-  { id:'academics', l:'Academics', i:'book' },
+  { id:'opportunities', l:'Opportunities', i:'target' },
   { id:'outreach', l:'Outreach', i:'mail' },
   { id:'projects', l:'Projects', i:'layers', g:'Work' },
-  { id:'opportunities', l:'Opportunities', i:'target', sec:true },
-  { id:'sems', l:'Exams & Courses', i:'grad', sec:true },
-  { id:'requests', l:'Requests', i:'chat', sec:true },
-  { id:'outbox', l:'Outbox', i:'send', sec:true, g:'Tools' },
-  { id:'resume', l:'Resume Lab', i:'file', sec:true },
-  { id:'overview', l:'Overview', i:'layers', sec:true },
-  { id:'agent', l:'Agent Console', i:'shield', sec:true, g:'Safety' },
-  { id:'history', l:'History', i:'clock', sec:true },
-  { id:'profile', l:'Profile', i:'user', sec:true }
+  { id:'academics', l:'Academics', i:'book' },
+  { id:'sems', l:'Exams & Courses', i:'grad' },
+  { id:'requests', l:'Requests', i:'chat' },
+  { id:'outbox', l:'Outbox', i:'send', g:'Tools' },
+  { id:'resume', l:'Resume Lab', i:'file' },
+  { id:'agent', l:'Agent Console', i:'shield', g:'Safety' },
+  { id:'history', l:'History', i:'clock' },
+  { id:'profile', l:'Profile', i:'user' }
 ];
 const VIEWS = { jarvis: viewJarvis, overview: viewOverview, today: viewToday, applications: viewApps, opportunities: viewOpps, outreach: viewOutreach, projects: viewProjects, academics: viewAcads, sems: viewSems, requests: viewReqs, outbox: viewOutbox, resume: viewResume, agent: viewAgent, history: viewHistory, profile: viewProfile };
 let cur = 'today';
-let navMoreOpen = false;
  
 function badge(id) {
   if (id === 'applications') return S.applications.filter(a => ['Not started','Applied','Interview'].includes(a.status)).length;
@@ -2483,19 +2464,11 @@ function badge(id) {
   if (id === 'outbox') return S.outbox.filter(o => o.status === 'pending').length;
   return 0;
 }
-function toggleNavMore() { navMoreOpen = !navMoreOpen; renderNav(); }
 function renderNav() {
-  const primary = NAV.filter(n => !n.sec);
-  const secondary = NAV.filter(n => n.sec);
-  const curInSecondary = secondary.some(n => n.id === cur);
-  const open = navMoreOpen || curInSecondary;
-  const moreCount = secondary.reduce((s, n) => s + badge(n.id), 0);
-  const btnHTML = (n) => {
+  $('nav').innerHTML = NAV.map(n => {
     const c = badge(n.id);
     return (n.g ? '<div class="nav-group">' + n.g + '</div>' : '') + '<button class="' + (n.id === cur ? 'on' : '') + '" onclick="switchTab(\'' + n.id + '\')"' + (n.id === cur ? ' aria-current="page"' : '') + '>' + icon(n.i, 17) + n.l + (c ? '<span class="count' + (n.id === 'outbox' ? ' alert' : '') + '">' + c + '</span>' : '') + '</button>';
-  };
-  const moreBtn = '<button onclick="toggleNavMore()" aria-expanded="' + open + '">' + icon(open ? 'x' : 'menu', 17) + (open ? 'Less' : 'More') + (!open && moreCount ? '<span class="count alert">' + moreCount + '</span>' : '') + '</button>';
-  $('nav').innerHTML = primary.map(btnHTML).join('') + moreBtn + (open ? secondary.map(btnHTML).join('') : '');
+  }).join('');
 }
 function render(fromNav) {
   renderNav();
@@ -3105,4 +3078,162 @@ function addTips() {
     if (tx === null) return; const dx = e.changedTouches[0].clientX - tx, open = document.body.classList.contains('nav-open');
     if (!open && tx < 28 && dx > 70) document.body.classList.add('nav-open'); else if (open && dx < -70) document.body.classList.remove('nav-open'); tx = null;
   }, { passive: true });
+})();
+
+/* ================= KARNA SECTION PANEL =================
+   Every section is linked to KARNA. "Ask KARNA" (page header / Overview cards)
+   opens a side panel with a thread for THAT section. When KARNA is about to add
+   something (from the panel or the main KARNA chat) it never writes silently:
+   it asks "Can I add this in the <Section> section?" as a card in this panel,
+   and only creates the record after you tap "Yes, add it". */
+const KP_SEC = {
+  today:         { kw: 'focus today',       chips: ['Plan the next 3 hours', 'What should I focus on today?'] },
+  applications:  { kw: 'application deadline', chips: ['What is due this week?', 'Add internship application to Acme for backend intern by Friday'], bare: t => 'add application to ' + t },
+  opportunities: { kw: 'application',       chips: ['Which opportunities should I apply to first?'] },
+  outreach:      { kw: 'outreach email',    chips: ['Who is waiting for a first email?', 'Add contact Prof Rao at IIT Madras'], bare: t => 'add contact ' + t },
+  projects:      { kw: 'project task',      chips: ['Which projects need attention?', 'Add project OPA landing page', 'Add task fix login bug to OPA landing page'], bare: t => 'add project ' + t },
+  academics:     { kw: 'exam study',        chips: ['What should I study first?', 'Add study DBMS: revise normalization by 12 Oct'], bare: t => 'add study ' + t },
+  sems:          { kw: 'exam study',        chips: ['Which exam is most at risk?'] },
+  requests:      { kw: 'client request',    chips: ['Which client requests are open?', 'Add request from Ravi: needs a portfolio website'] },
+  outbox:        { kw: 'email',             chips: ['What is waiting for my approval?'] },
+  resume:        { kw: 'project',           chips: ['Which projects should go on my resume?'] },
+  agent:         { kw: '',                  chips: ['What did KARNA do recently?'] },
+  history:       { kw: '',                  chips: ['What did I finish this week?'] },
+  profile:       { kw: '',                  chips: ['What is missing in my profile?'] },
+  overview:      { kw: 'focus today',       chips: ['What should I do today?', 'Add project called my new idea'] }
+};
+const KP_SEC_OF = { application: 'applications', task: 'projects', project: 'projects', study: 'academics', request: 'requests', contact: 'outreach', mail: 'outbox' };
+const KP = { open: false, sec: 'today', msgs: {}, props: {}, direct: false, busy: false };
+const _kpExec = execAction;
+function kpLabel(id) { const n = NAV.find(x => x.id === id); return n ? n.l : 'this page'; }
+function kpThread(sec) { return KP.msgs[sec] || (KP.msgs[sec] = []); }
+function kpEnsure() {
+  if ($('kp')) return;
+  const el = document.createElement('aside');
+  el.id = 'kp'; el.className = 'kp'; el.setAttribute('role', 'complementary'); el.setAttribute('aria-label', 'KARNA panel');
+  document.body.appendChild(el);
+}
+function kpOpen(sec) {
+  kpEnsure();
+  KP.sec = (sec && VIEWS[sec]) ? sec : (VIEWS[cur] ? cur : 'today');
+  KP.open = true; $('kp').classList.add('on');
+  kpDrawShell();
+  setTimeout(() => { const i = $('kp-in'); if (i) i.focus(); }, 60);
+}
+function kpClose() { KP.open = false; const el = $('kp'); if (el) el.classList.remove('on'); }
+function kpDrawShell() {
+  const el = $('kp'); if (!el) return;
+  const cfg = KP_SEC[KP.sec] || { chips: [] };
+  el.innerHTML =
+    '<div class="kp-h"><div class="kp-orb"></div><div class="kp-t"><b>KARNA</b><span>' + esc(kpLabel(KP.sec)) + ' section</span></div>' +
+      '<button class="icon-btn" onclick="kpClose()" aria-label="Close KARNA panel">' + icon('x', 18) + '</button></div>' +
+    '<div class="kp-msgs" id="kp-msgs"></div>' +
+    '<div class="kp-chips">' + cfg.chips.map(c => '<button onclick="kpSend(this.textContent)">' + esc(c) + '</button>').join('') + '</div>' +
+    '<div class="kp-comp"><textarea id="kp-in" rows="1" placeholder="Ask about ' + esc(kpLabel(KP.sec)) + ' or tell me what to add" aria-label="Message KARNA"></textarea>' +
+      '<button class="send" onclick="kpSend()" aria-label="Send">' + icon('up', 17) + '</button></div>';
+  const inp = $('kp-in');
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kpSend(); } });
+  inp.addEventListener('input', () => { inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 110) + 'px'; });
+  kpDrawMsgs();
+}
+function kpPropHTML(id) {
+  const p = KP.props[id]; if (!p) return '';
+  const lbl = kpLabel(p.sec), d = p.a.data || {};
+  if (p.status === 'done') return '<div class="kp-prop done"><div class="kp-q">' + fmtMsg(p.result) + '</div><div class="kp-act"><button class="btn ghost sm" onclick="switchTab(\'' + p.sec + '\');kpClose()">Open ' + esc(lbl) + '</button></div></div>';
+  if (p.status === 'no') return '<div class="kp-prop no"><div class="kp-q">Okay, I did not add it to <b>' + esc(lbl) + '</b>.</div></div>';
+  const rows = Object.entries(d).filter(([k, v]) => v != null && String(v).trim() !== '').map(([k, v]) => '<div><dt>' + esc(k.replace(/_/g, ' ')) + '</dt><dd>' + esc(v) + '</dd></div>').join('');
+  return '<div class="kp-prop"><div class="kp-q">Can I add this in the <b>' + esc(lbl) + '</b> section?</div><dl>' + rows + '</dl>' +
+    '<div class="kp-act"><button class="btn sm" onclick="kpConfirm(\'' + id + '\')">Yes, add it</button><button class="btn ghost sm" onclick="kpDecline(\'' + id + '\')">No</button></div></div>';
+}
+function kpDrawMsgs() {
+  const box = $('kp-msgs'); if (!box) return;
+  const th = kpThread(KP.sec);
+  const welcome = '<div class="kp-m"><div class="kp-b">You are on <b>' + esc(kpLabel(KP.sec)) + '</b>. Ask me about it, or tell me what to add here. I will always check with you before adding anything.</div></div>';
+  box.innerHTML = welcome + th.map(m => {
+    if (m.role === 'prop') return '<div class="kp-m">' + kpPropHTML(m.id) + '</div>';
+    if (m.typing) return '<div class="kp-m"><div class="kp-b"><span class="typing"><i></i><i></i><i></i></span></div></div>';
+    return '<div class="kp-m' + (m.role === 'user' ? ' you' : '') + '"><div class="kp-b">' + fmtMsg(m.text) + '</div></div>';
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+function kpOffer(a) {
+  const sec = KP_SEC_OF[a.type] || KP.sec;
+  const id = 'p' + Date.now().toString(36) + Math.floor(Math.random() * 1000);
+  KP.props[id] = { a, sec, status: 'pending' };
+  kpThread(sec).push({ role: 'prop', id });
+  kpOpen(sec);
+  return 'Can I add this in the **' + kpLabel(sec) + '** section? I opened the KARNA panel on the right. Tap **Yes, add it** there to confirm.';
+}
+function kpConfirm(id) {
+  const p = KP.props[id]; if (!p || p.status !== 'pending') return;
+  let res;
+  KP.direct = true;
+  try { res = _kpExec(p.a); } catch (e) { res = 'I could not add that (' + e.message + ').'; } finally { KP.direct = false; }
+  p.status = 'done'; p.result = res || 'Done.';
+  try { render(); renderNav(); refreshCtx(); } catch (e) {}
+  kpDrawMsgs();
+}
+function kpDecline(id) { const p = KP.props[id]; if (!p) return; p.status = 'no'; kpDrawMsgs(); }
+execAction = function (a) {
+  if (KP.direct || !a || !QC_TYPES.includes(a.type) || !a.data) return _kpExec(a);
+  return kpOffer(a);
+};
+async function kpAnswer(t, sec) {
+  const cfg = KP_SEC[sec] || {};
+  const tagged = '[The user is on the ' + kpLabel(sec) + ' page] ' + t;
+  if (BACKEND.ready) {
+    try {
+      const uid = await ensureUser();
+      const res = await POST('/v1/jarvis/chat', { user_id: uid, message: tagged });
+      if (res.tool_calls && res.tool_calls.length) { syncBackend(true).catch(() => {}); try { render(); renderNav(); } catch (e) {} }
+      return res.reply || 'Done.';
+    } catch (e) { /* fall through to local */ }
+  }
+  if (S.profile.groqKey) {
+    try {
+      const sys = 'You are KARNA inside OPAI, helping ' + (S.profile.name || 'the user') + ' on the ' + kpLabel(sec) + ' page. Be direct and brief. You cannot send emails. If the user asks to add something, reply in one short sentence and end with one line: ACTION: {"type":"<application|task|project|study|request|contact|mail>","data":{...}}. Today is ' + iso(0) + '.';
+      const g = await groqChat([{ role: 'system', content: sys }, ...kpThread(sec).filter(m => m.text && !m.typing).slice(-8).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }))]);
+      if (g) { const ex = extractAction(g); if (ex.action) { execAction(ex.action); return ex.text || 'I can add that. Please confirm in the card below.'; } return ex.text; }
+    } catch (e) { /* fall through */ }
+  }
+  return jarvisReply((cfg.kw || '') + ' ' + t);
+}
+async function kpSend(text) {
+  const inp = $('kp-in');
+  const t = (text || (inp ? inp.value : '')).trim(); if (!t || KP.busy) return;
+  if (inp) { inp.value = ''; inp.style.height = 'auto'; }
+  let a = parseQuick(t);
+  const cfg = KP_SEC[KP.sec] || {};
+  if (!a && cfg.bare && t.length <= 60 && !/[?]/.test(t) && !/^(what|which|who|when|where|why|how|plan|show|list|help|draft|summar|tell|give|is|are|do|does|can)\b/i.test(t)) a = parseQuick(cfg.bare(t));
+  const sec = a ? (KP_SEC_OF[a.type] || KP.sec) : KP.sec;
+  kpThread(sec).push({ role: 'user', text: t });
+  if (a) { kpOffer(a); return; }
+  const th = kpThread(sec); const typing = { role: 'ai', typing: true }; th.push(typing); KP.busy = true; kpDrawMsgs();
+  let reply;
+  try { reply = await kpAnswer(t, sec); } catch (e) { reply = 'Something went wrong (' + e.message + ').'; }
+  KP.busy = false;
+  const i = th.indexOf(typing); if (i > -1) th.splice(i, 1);
+  th.push({ role: 'ai', text: reply });
+  if (KP.open && KP.sec === sec) kpDrawMsgs();
+}
+function kpDecorate() {
+  const v = $('view'); if (!v || cur === 'jarvis') return;
+  const hd = v.querySelector('.head > div:last-child');
+  if (hd && !hd.querySelector('.kp-ask')) {
+    const b = document.createElement('button'); b.className = 'btn soft kp-ask'; b.title = 'Ask KARNA about this section';
+    b.innerHTML = icon('spark', 15) + ' Ask KARNA'; b.onclick = () => kpOpen(cur); hd.insertBefore(b, hd.firstChild);
+  }
+  if (cur === 'overview') v.querySelectorAll('.panel-h').forEach(ph => {
+    if (ph.querySelector('.kp-ask-s')) return;
+    const h = ph.querySelector('h3'); if (!h) return;
+    const n = NAV.find(x => x.l.toLowerCase() === h.textContent.trim().toLowerCase());
+    if (!n || n.id === 'overview' || n.id === 'jarvis') return;
+    const b = document.createElement('button'); b.className = 'kp-ask-s'; b.title = 'Ask KARNA about ' + n.l; b.setAttribute('aria-label', 'Ask KARNA about ' + n.l);
+    b.innerHTML = icon('spark', 13); b.onclick = () => kpOpen(n.id); h.insertAdjacentElement('afterend', b);
+  });
+}
+(function () {
+  const _r = render; render = function (f) { _r(f); try { kpDecorate(); } catch (e) {} };
+  const _s = switchTab; switchTab = function (n) { _s(n); if (KP.open) { KP.sec = VIEWS[cur] ? cur : KP.sec; kpDrawShell(); } };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && KP.open && !$('overlay').classList.contains('on') && !$('palette').classList.contains('on')) kpClose(); });
 })();
