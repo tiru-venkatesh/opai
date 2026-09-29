@@ -982,3 +982,20 @@ body.nav-open #page{left:min(300px,84vw);border-radius:20px 0 0 20px;box-shadow:
 .rv-stars.sm{margin:0 0 6px}.rv-stars.sm .rv-star svg{width:15px;height:15px}
 .rv-stars time{margin-left:10px;font-size:12px;color:var(--ink-3)}
 .rv-item{padding:12px 0;border-top:1px solid var(--line)}.rv-item p{margin:0;font-size:14px}
+
+.in-intro{padding:20px;margin-bottom:16px}
+.in-intro h3{margin:0 0 6px;font-family:var(--display)}
+.in-intro p{margin:0 0 14px;color:var(--ink-2);line-height:1.55;max-width:75ch}
+.in-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+.in-steps div{padding:12px;border:1px solid var(--line-2);border-radius:10px;background:var(--bg)}
+.in-steps b{display:block;font-size:13.5px;margin-bottom:3px}.in-steps span{font-size:12.5px;color:var(--ink-3);line-height:1.5}
+.in-intro .in-note{margin:0;font-size:13px}
+.in-demo{padding:18px;margin-top:16px}
+.in-demo-h{display:flex;align-items:center;justify-content:space-between;gap:10px}.in-demo-h h3{margin:0}
+.in-demo-off{margin-top:12px}
+.in-mail{border-top:1px solid var(--line);padding:10px 0}
+.in-mail summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;flex-wrap:wrap}
+.in-mail summary::-webkit-details-marker{display:none}
+.in-mail summary b{font-size:14px;flex:1;min-width:180px}.in-mail summary em{font-style:normal;font-size:12px;color:var(--ink-3)}
+.in-mail-b{padding:10px 0 4px}
+.in-mail pre{white-space:pre-wrap;font:inherit;font-size:13.5px;line-height:1.55;margin:8px 0 0;padding:12px;border-radius:10px;background:var(--bg);border:1px solid var(--line-2)}

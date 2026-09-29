@@ -377,7 +377,7 @@ function matchScore(tags, skills) {
 /* ================= 3. TODAY'S PLAN (computed locally) ================= */
 const KIND = {
   app:  { label: 'Applications',  color: 'var(--c-app)',  icon: 'brief' },
-  out:  { label: 'Outreach',      color: 'var(--c-out)',  icon: 'mail' },
+  out:  { label: 'Internships',      color: 'var(--c-out)',  icon: 'mail' },
   proj: { label: 'Projects',      color: 'var(--c-proj)', icon: 'layers' },
   acad: { label: 'Academics',     color: 'var(--c-acad)', icon: 'book' },
   req:  { label: 'Requests',      color: 'var(--c-req)',  icon: 'chat' },
@@ -769,9 +769,9 @@ function facultyFinderHTML() {
       '</div>' : '') + '</section>';
 }
 function viewOutreach() {
-  const h = head('Outreach', 'Contacts matched to your skills. Drafting creates an Outbox item, and nothing goes out until you approve it.', addBtn('Add contact', 'editContact()'));
-  const finder = facultyFinderHTML();
-  if (!S.contacts.length) return h + finder + emptyPanel('No contacts yet', 'Add a professor, founder, or recruiter to start drafting, or use the IIT faculty database above.', '<button class="btn" onclick="editContact()">Add contact</button>');
+  const h = head('Internships', 'Professors, founders and recruiters to email for internships. Drafting creates an Outbox item, and nothing goes out until you approve it.', addBtn('Add contact', 'editContact()'));
+  const finder = internIntroHTML() + facultyFinderHTML();
+  if (!S.contacts.length) return h + finder + demoMailsHTML() + emptyPanel('No contacts yet', 'Add a professor, founder, or recruiter to start drafting, or use the IIT faculty database above.', '<button class="btn" onclick="editContact()">Add contact</button>');
   const rows = S.contacts.map(c => {
     const sc = matchScore(c.tags, S.profile.skills);
     let act = '';
@@ -780,7 +780,7 @@ function viewOutreach() {
     else if (c.status === 'Sent') act = '<button class="btn soft sm" onclick="draftOutreach(\'' + c.id + '\')">Draft follow-up</button>';
     return '<div class="row" style="grid-template-columns:auto 1fr auto"><div class="swatch" style="--c:var(--c-out)">' + icon('mail', 16) + '</div><div><div class="row-t">' + esc(c.name) + '</div><div class="row-s">' + esc(c.institute) + (c.area ? ' · ' + esc(c.area) : '') + '</div><div class="row-m">' + pill(c.status) + meter(sc) + (c.sent_on ? '<span class="chip">Sent ' + fmtDate(c.sent_on) + '</span>' : '') + '</div></div><div class="row-a">' + act + rowBtns('editContact(\'' + c.id + '\')', 'confirmDelete(\'contacts\',\'' + c.id + '\',\'' + escA(c.name) + '\')') + '</div></div>';
   }).join('');
-  return h + finder + '<div class="panel rows">' + rows + '</div>';
+  return h + finder + '<div class="panel rows">' + rows + '</div>' + demoMailsHTML();
 }
 function editContact(id) {
   const c = id ? byId('contacts', id) : {};
@@ -2426,7 +2426,7 @@ function viewOverview() {
     '<div class="grid2">' +
       '<section class="panel">' + ovHead('Applications', S.applications.length, 'applications') + '<div class="rows">' + appsRows + '</div></section>' +
       '<section class="panel">' + ovHead('Opportunities', S.opportunities.length, 'opportunities') + '<div class="rows">' + oppsRows + '</div></section>' +
-      '<section class="panel">' + ovHead('Outreach', S.contacts.length, 'outreach') + '<div class="rows">' + contactRows + '</div></section>' +
+      '<section class="panel">' + ovHead('Internships', S.contacts.length, 'outreach') + '<div class="rows">' + contactRows + '</div></section>' +
       '<section class="panel">' + ovHead('Projects', S.projects.length, 'projects') + '<div class="rows">' + projRows + '</div></section>' +
       '<section class="panel">' + ovHead('Academics', S.academics.length, 'academics') + '<div class="rows">' + acadRows + '</div></section>' +
       '<section class="panel">' + ovHead('Client requests', S.requests.length, 'requests') + '<div class="rows">' + reqRows + '</div></section>' +
@@ -2448,7 +2448,7 @@ const NAV = [
   { id:'today', l:'Today', i:'sun', g:'Plan' },
   { id:'applications', l:'Applications', i:'brief' },
   { id:'opportunities', l:'Opportunities', i:'target' },
-  { id:'outreach', l:'Outreach', i:'mail' },
+  { id:'outreach', l:'Internships', i:'mail' },
   { id:'projects', l:'Projects', i:'layers', g:'Work' },
   { id:'academics', l:'Academics', i:'book' },
   { id:'sems', l:'Exams & Courses', i:'grad' },
@@ -2931,7 +2931,7 @@ const TUTORIALS = {
     ['What these are', 'Openings you have found but not committed to yet: fellowships, internships, hackathons.'],
     ['Match score', 'Each one is scored against the skills in your Profile. Fill your skills in for better matches.'],
     ['Convert', 'Like one? Convert it into an Application. Not interested? Dismiss it.'] ] },
-  outreach: { title: 'Outreach', steps: [
+  outreach: { title: 'Internships', steps: [
     ['Add a contact', 'Add a professor or recruiter with their research area or role.'],
     ['Draft with KARNA', 'Use Draft to get a personalised email that uses your profile and projects.'],
     ['Approve, then send', 'Drafts land in Outbox. Nothing is sent until you approve it. Mark it sent to start follow-up reminders.'] ] },
@@ -3337,7 +3337,7 @@ const REV_MODS = [
   ['KARNA', 'Chat copilot. Workspace mode knows your data and adds records (you approve). General mode answers anything.'],
   ['Today', 'One queue of what to do now, built from deadlines, exams and tasks.'],
   ['Applications & Opportunities', 'Track internships, research and hackathons, and score what is worth your time.'],
-  ['Outreach & Outbox', 'Draft emails to professors and clients. Nothing sends without your approval.'],
+  ['Internships & Outbox', 'Draft internship emails to professors and clients. Nothing sends without your approval.'],
   ['Projects & Requests', 'Client asks turn into projects and tasks you can track.'],
   ['Academics & Exams', 'Exams, courses and study workflow with confidence-based revision.'],
   ['Resume Lab', 'Keep your resume and tailor it per application.'],
@@ -3367,4 +3367,41 @@ function revSubmit() {
   if (!REV_STARS) { toast('Pick a star rating first', true); return; }
   S.reviews = S.reviews || []; S.reviews.push({ stars: REV_STARS, text: t.trim(), at: new Date().toISOString() });
   REV_STARS = 0; save(); render(true); toast('Review saved');
+}
+
+
+/* ===== Internships: explainer + demo emails ===== */
+const DEMO_MAILS = [
+  { st: 'Sent', to: 'Prof. Anita Rao <anita.rao@demo-iitm.example>', org: 'IIT Madras, Dept. of CSE', on: '3 days ago', subj: 'Summer research internship: retrieval-augmented QA',
+    body: 'Dear Prof. Rao,\n\nI am a B.Tech Computer Science student at JNTU. I read your recent paper on retrieval-augmented question answering and built a small RAG prototype inspired by it (link in my resume).\n\nI would like to apply for a summer research internship in your group. I can contribute on evaluation, data cleaning and experiments, and I am comfortable with Python, FastAPI and LLM APIs.\n\nMay I share my resume and a one-page project note?\n\nThank you for your time,\nTiru' },
+  { st: 'Replied', to: 'Rahul Mehta <rahul@demo-startup.example>', org: 'Demo Startup, founder', on: 'Yesterday', subj: 'Re: Frontend / AI engineering internship',
+    body: 'Hi Tiru,\n\nThanks for reaching out. Your dashboard project looks good. Can you do a 20 minute call on Thursday at 4 PM IST? We are looking for someone who can ship UI quickly and wire it to LLM APIs.\n\nRahul' },
+  { st: 'Drafted', to: 'Dr. Suresh Kumar <s.kumar@demo-iith.example>', org: 'IIT Hyderabad, Dept. of AI', on: 'Today', subj: 'Internship enquiry: LLM evaluation',
+    body: 'Dear Dr. Kumar,\n\nI am writing to ask if your lab has openings for an undergraduate intern on LLM evaluation. I have built an AI agent dashboard with tool calling and an approval flow, and I would like to learn from your group.\n\nCould I send my resume for your consideration?\n\nRegards,\nTiru' },
+  { st: 'Follow-up due', to: 'Priya Nair <priya@demo-labs.example>', org: 'Demo Labs, recruiter', on: '7 days ago', subj: 'Following up: AI intern application',
+    body: 'Hi Priya,\n\nA quick follow-up on my application for the AI intern role. Since my last email I have added a RAG demo to my portfolio. Happy to share it or answer any questions.\n\nThanks,\nTiru' }
+];
+function internIntroHTML() {
+  return '<section class="panel in-intro"><h3>Internships: what we are building here</h3>' +
+    '<p>This section is the internship pipeline of OPAI. We were working on turning cold, scattered emailing into one tracked flow: find the right person, draft a good email, approve it, send it, and follow up. Everything is prepared by KARNA and nothing goes out without your approval.</p>' +
+    '<div class="in-steps">' +
+    [['1. Find people', 'Add a professor, founder or recruiter by hand, or pull from the IIT faculty database below. Tags are matched against your profile skills so the best fits show first.'],
+     ['2. Draft', 'Draft email creates an item in Outbox, written from your profile, projects and highlight. You can edit it before anything else happens.'],
+     ['3. Approve and send', 'You review the draft in Outbox and approve. Gmail sending through OAuth is planned; for now approving marks it as sent.'],
+     ['4. Follow up', 'After a week with no reply, the contact shows Draft follow-up. Status moves Not started, Drafted, Sent, then Replied.']]
+      .map(x => '<div><b>' + x[0] + '</b><span>' + x[1] + '</span></div>').join('') + '</div>' +
+    '<p class="in-note"><b>Ask KARNA:</b> try "Add contact Prof Rao at IIT Madras" or "Who is waiting for a first email?". <b>Coming next:</b> Gmail OAuth sending, reply tracking, and RAG so drafts cite the professor\'s actual papers.</p></section>';
+}
+function demoMailsHTML() {
+  let hide = false; try { hide = localStorage.getItem('opa_hide_demo_mail') === '1'; } catch (e) {}
+  if (hide) return '<div class="in-demo-off"><button class="btn ghost sm" onclick="demoMailsToggle()">Show demo emails</button></div>';
+  const tone = { Sent: '', Replied: 'good', Drafted: '', 'Follow-up due': 'warn' };
+  return '<section class="panel in-demo"><div class="in-demo-h"><h3>Demo emails <span class="pill">Sample data</span></h3><button class="btn ghost sm" onclick="demoMailsToggle()">Hide</button></div>' +
+    '<p class="row-s">These are dummy emails to show how the section looks once you start sending. The names and addresses are fake and they are not stored in your data.</p>' +
+    DEMO_MAILS.map(m => '<details class="in-mail"><summary><span class="pill ' + (tone[m.st] || '') + '">' + m.st + '</span><b>' + esc(m.subj) + '</b><em>' + esc(m.on) + '</em></summary>' +
+      '<div class="in-mail-b"><div class="row-s">To: ' + esc(m.to) + ' &middot; ' + esc(m.org) + '</div><pre>' + esc(m.body) + '</pre></div></details>').join('') + '</section>';
+}
+function demoMailsToggle() {
+  let h = false; try { h = localStorage.getItem('opa_hide_demo_mail') === '1'; localStorage.setItem('opa_hide_demo_mail', h ? '0' : '1'); } catch (e) {}
+  render(true);
 }
