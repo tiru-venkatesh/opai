@@ -3353,6 +3353,7 @@ function viewReview() {
     '<section class="panel rv-hero"><h2>OPAI, your operating agent</h2><p>OPAI keeps your applications, projects, exams and outreach in one place, and KARNA helps you run them. It acts, you approve: KARNA can prepare records and drafts, but adds, sends and applies wait for your yes.</p>' +
     '<div class="rv-stats">' + stats.map(x => '<div><b>' + x[1] + '</b><span>' + x[0] + '</span></div>').join('') + '</div></section>' +
     '<div class="grid2">' + REV_MODS.map(m => '<section class="panel rv-mod"><h3>' + esc(m[0]) + '</h3><p>' + esc(m[1]) + '</p></section>').join('') + '</div>' +
+    revShape() +
     '<section class="panel rv-form"><h3>Rate OPAI' + (avg ? ' <span class="pill good">' + avg + ' / 5 avg</span>' : '') + '</h3><div class="rv-stars" id="rv-stars">' + stars(REV_STARS, true) + '</div>' +
     '<div class="field"><label for="rv-text">What works, what should change?</label><textarea id="rv-text" rows="3" placeholder="Your feedback on OPAI"></textarea></div>' +
     '<button class="btn" onclick="revSubmit()">Save review</button></section>' +
@@ -3368,6 +3369,54 @@ function revSubmit() {
   S.reviews = S.reviews || []; S.reviews.push({ stars: REV_STARS, text: t.trim(), at: new Date().toISOString() });
   REV_STARS = 0; save(); render(true); toast('Review saved');
 }
+
+/* ===== Review: Shape OPAI (suggest + roadmap + what's new in one section) ===== */
+let REV_TAB = 'suggest';
+const REV_CATS = ['Feature idea', 'Bug', 'UI / Design', 'KARNA answers', 'Other'];
+const REV_PAGES = ['Any page', 'KARNA', 'Today', 'Applications', 'Internships', 'Projects', 'Academics', 'Requests', 'Outbox', 'Resume'];
+const REV_ROAD = [
+  ['gmail', 'Gmail sending (OAuth)', 'Approve in Outbox and the email really sends. Today approving only marks it as sent.', 'Planned'],
+  ['replies', 'Reply tracking', 'Internships moves a mail to Replied on its own and reminds you to follow up.', 'Planned'],
+  ['peritem', 'Ask KARNA on any item', 'Click a project or application and ask KARNA about just that one.', 'Next'],
+  ['weekly', 'Weekly summary', 'What you finished, what is pending, what needs attention this week.', 'Next'],
+  ['voice', 'Voice input for KARNA', 'Speak your request instead of typing.', 'Idea'],
+  ['rag', 'RAG over your notes', 'KARNA answers from your own documents and resume.', 'Planned']
+];
+const REV_LOG = [
+  ['Sep 2026', 'Review section', 'About OPAI, ratings, and this Shape OPAI area.'],
+  ['Sep 2026', 'Internships', 'Outreach renamed to Internships, with an explainer and 4 sample emails.'],
+  ['Sep 2026', 'KARNA modes', 'Workspace and General chat, plus Ask before adding / Add directly.'],
+  ['Sep 2026', 'Ask KARNA panel', 'Every section has its own KARNA panel, dock and wide options.'],
+  ['Sep 2026', 'Theme', 'Auto, Light and Dark theme toggle.']
+];
+function revShape() {
+  S.ideas = S.ideas || []; S.rvVotes = S.rvVotes || {};
+  const tabs = [['suggest', 'Suggest'], ['road', 'Roadmap'], ['new', 'What\u2019s new']];
+  let body = '';
+  if (REV_TAB === 'suggest') {
+    body = '<div class="rv-row"><div class="field"><label for="rv-cat">Type</label><select id="rv-cat">' + REV_CATS.map(c => '<option>' + c + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label for="rv-pg">Which page?</label><select id="rv-pg">' + REV_PAGES.map(c => '<option>' + c + '</option>').join('') + '</select></div></div>' +
+      '<div class="field"><label for="rv-idea">Your suggestion</label><textarea id="rv-idea" rows="3" placeholder="What should OPAI do, fix or change?"></textarea></div>' +
+      '<button class="btn" onclick="revIdeaAdd()">Submit suggestion</button>' +
+      (S.ideas.length ? '<div class="rv-list">' + S.ideas.slice().sort((a, b) => b.votes - a.votes).map(i => '<div class="rv-item rv-idea"><button class="rv-up ' + (i.mine ? 'on' : '') + '" onclick="revIdeaVote(\'' + i.id + '\')" aria-label="Upvote">\u25B2<b>' + i.votes + '</b></button><div><div class="rv-tags"><span class="pill">' + esc(i.cat) + '</span><span class="pill">' + esc(i.page) + '</span><span class="pill ' + (i.status === 'Done' ? 'good' : '') + '">' + i.status + '</span></div><p>' + esc(i.text) + '</p></div><button class="btn ghost sm" onclick="revIdeaStatus(\'' + i.id + '\')">' + (i.status === 'New' ? 'Mark planned' : i.status === 'Planned' ? 'Mark done' : 'Reopen') + '</button></div>').join('') + '</div>' : '<div class="row-s" style="margin-top:12px">No suggestions yet. Yours will show here and are saved on this device.</div>');
+  } else if (REV_TAB === 'road') {
+    body = '<div class="rv-list">' + REV_ROAD.map(r => '<div class="rv-item rv-idea"><button class="rv-up ' + (S.rvVotes[r[0]] ? 'on' : '') + '" onclick="revRoadVote(\'' + r[0] + '\')" aria-label="I want this">\u25B2<b>' + (S.rvVotes[r[0]] ? 1 : 0) + '</b></button><div><div class="rv-tags"><span class="pill ' + (r[3] === 'Next' ? 'good' : '') + '">' + r[3] + '</span></div><h4>' + esc(r[1]) + '</h4><p>' + esc(r[2]) + '</p></div></div>').join('') + '</div><div class="row-s" style="margin-top:10px">Tap the arrow on what you want first.</div>';
+  } else {
+    body = '<div class="rv-list">' + REV_LOG.map(l => '<div class="rv-item"><div class="rv-tags"><time>' + l[0] + '</time><b>' + esc(l[1]) + '</b></div><p>' + esc(l[2]) + '</p></div>').join('') + '</div>';
+  }
+  return '<section class="panel rv-form"><h3>Shape OPAI</h3><div class="row-s" style="margin-bottom:10px">Suggest changes, see what is coming, and what shipped recently.</div>' +
+    '<div class="rv-tabs" role="tablist">' + tabs.map(t => '<button role="tab" class="' + (REV_TAB === t[0] ? 'on' : '') + '" onclick="revTab(\'' + t[0] + '\')">' + t[1] + '</button>').join('') + '</div>' + body + '</section>';
+}
+function revTab(t) { REV_TAB = t; render(true); }
+function revIdeaAdd() {
+  const t = (($('rv-idea') || {}).value || '').trim(); if (!t) { toast('Write your suggestion first', true); return; }
+  S.ideas = S.ideas || [];
+  S.ideas.push({ id: 'i' + Date.now(), cat: ($('rv-cat') || {}).value || 'Other', page: ($('rv-pg') || {}).value || 'Any page', text: t, votes: 1, mine: true, status: 'New', at: new Date().toISOString() });
+  save(); render(true); toast('Suggestion saved');
+}
+function revIdeaVote(id) { const i = (S.ideas || []).find(x => x.id === id); if (!i) return; i.mine = !i.mine; i.votes = Math.max(0, i.votes + (i.mine ? 1 : -1)); save(); render(true); }
+function revIdeaStatus(id) { const i = (S.ideas || []).find(x => x.id === id); if (!i) return; i.status = i.status === 'New' ? 'Planned' : i.status === 'Planned' ? 'Done' : 'New'; save(); render(true); }
+function revRoadVote(k) { S.rvVotes = S.rvVotes || {}; S.rvVotes[k] = !S.rvVotes[k]; save(); render(true); }
 
 
 /* ===== Internships: explainer + demo emails ===== */
