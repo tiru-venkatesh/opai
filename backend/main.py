@@ -217,6 +217,7 @@ def update_profile(user_id: UUID, payload: ProfileUpdate, db: Session = Depends(
         setattr(user, field, value)
     db.commit()
     db.refresh(user)
+    rag.safe(rag.index_profile, db, user)
     return user
 
 
@@ -282,8 +283,10 @@ def delete_application(application_id: UUID, db: Session = Depends(get_db)):
     row = db.query(Application).filter(Application.id == str(application_id)).first()
     if not row:
         raise HTTPException(status_code=404, detail="Application not found")
+    uid = row.user_id
     db.delete(row)
     db.commit()
+    rag.safe(rag.delete_source, db, uid, rag.COVER_LETTER, str(application_id))
     return {"status": "deleted"}
 
 
@@ -738,6 +741,7 @@ def create_request(payload: ClientRequestCreate, db: Session = Depends(get_db)):
     db.add(row)
     db.commit()
     db.refresh(row)
+    rag.safe(rag.index_request, db, row)
     return row
 
 
@@ -750,6 +754,7 @@ def update_request(request_id: UUID, payload: ClientRequestUpdate, db: Session =
         setattr(row, field, value)
     db.commit()
     db.refresh(row)
+    rag.safe(rag.index_request, db, row)
     return row
 
 
@@ -758,8 +763,10 @@ def delete_request(request_id: UUID, db: Session = Depends(get_db)):
     row = db.query(ClientRequest).filter(ClientRequest.id == str(request_id)).first()
     if not row:
         raise HTTPException(status_code=404, detail="Request not found")
+    uid = row.user_id
     db.delete(row)
     db.commit()
+    rag.safe(rag.delete_source, db, uid, rag.REQUEST, str(request_id))
     return {"status": "deleted"}
 
 
@@ -990,6 +997,7 @@ def create_memory_item(payload: MemoryItemCreate, db: Session = Depends(get_db))
     db.add(item)
     db.commit()
     db.refresh(item)
+    rag.safe(rag.index_memory_item, db, item)
     return item
 
 
@@ -1003,6 +1011,7 @@ def confirm_memory_item(item_id: UUID, payload: MemoryItemConfirm, db: Session =
     item.status = payload.status
     db.commit()
     db.refresh(item)
+    rag.safe(rag.index_memory_item, db, item)
     return item
 
 
@@ -1013,6 +1022,7 @@ def forget_memory_item(item_id: UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Memory item not found")
     item.status = "forgotten"
     db.commit()
+    rag.safe(rag.index_memory_item, db, item)
     return {"status": "forgotten"}
 
 
@@ -1242,6 +1252,7 @@ def create_course(payload: CourseCreate, db: Session = Depends(get_db)):
     db.add(row)
     db.commit()
     db.refresh(row)
+    rag.safe(rag.index_course, db, row)
     return row
 
 
@@ -1283,6 +1294,7 @@ def create_exam(payload: ExamCreate, db: Session = Depends(get_db)):
     db.add(row)
     db.commit()
     db.refresh(row)
+    rag.safe(rag.index_exam, db, row)
     return row
 
 
@@ -1300,6 +1312,7 @@ def update_exam(exam_id: UUID, payload: ExamCreate, db: Session = Depends(get_db
         setattr(row, field, value)
     db.commit()
     db.refresh(row)
+    rag.safe(rag.index_exam, db, row)
     return row
 
 
@@ -1425,6 +1438,7 @@ def import_courses_csv_confirm(payload: CourseCsvConfirm, db: Session = Depends(
     db.commit()
     for c in created:
         db.refresh(c)
+        rag.safe(rag.index_course, db, c)
     return created
 
 

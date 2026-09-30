@@ -17,9 +17,12 @@ log = logging.getLogger("opa.db")
 # required anymore - similarity search is done in Python) to use that instead,
 # e.g. postgresql://opa_user:opa_password@localhost:5432/opa_db
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./opa.db").strip()
-# Some hosts hand out "postgres://..." which SQLAlchemy 2 rejects.
+# Hosts hand out "postgres://" or "postgresql://" with no driver. SQLAlchemy 2.x then
+# defaults to psycopg v3, but requirements.txt ships psycopg2-binary, so pin the driver.
 if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = "postgresql://" + DATABASE_URL[len("postgres://"):]
+    DATABASE_URL = "postgresql+psycopg2://" + DATABASE_URL[len("postgres://"):]
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = "postgresql+psycopg2://" + DATABASE_URL[len("postgresql://"):]
 
 connect_args = {"check_same_thread": False, "timeout": 30} if DATABASE_URL.startswith("sqlite") else {}
 # pool_pre_ping: free-tier Postgres closes idle connections; this reconnects instead of 500-ing.

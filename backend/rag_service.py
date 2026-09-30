@@ -26,6 +26,7 @@ from sqlalchemy.orm import Session
 
 from database import (
     DocumentChunk, Project, DailyPlan, OutreachHistory, Contact, Academic, Application,
+    User, ClientRequest, Course, Exam, MemoryItem,
 )
 
 log = logging.getLogger("opa.rag")
@@ -37,11 +38,15 @@ REFLECTION = "plan_reflection"
 OUTREACH = "outreach_email"
 COVER_LETTER = "cover_letter"
 ACADEMIC = "academic_note"
+PROFILE = "profile"
+REQUEST = "client_request"
+COURSE = "course"
+MEMORY = "memory_item"
 
 # ------------------------------------------------------------------ embedding
 FASTEMBED_TAG = "bge-small-en-v1.5"
 HASH_DIM = 512
-HASH_TAG = f"hash-{HASH_DIM}"
+HASH_TAG = f"hash-{HASH_DIM}-s1"  # bump when tokenize()/_hash_embed change so old chunks re-embed lazily
 
 _fe_model = None
 _fe_failed = False
@@ -73,8 +78,19 @@ _STOP = set(
 _TOKEN = re.compile(r"[a-z0-9][a-z0-9+#\-]*")
 
 
+def _stem(t: str) -> str:
+    """Very light suffix stripping so 'applications'~'application', 'studying'~'study'.
+    Applied identically to queries and chunks, so it only needs to be consistent."""
+    if not t.isalpha() or len(t) < 5:
+        return t
+    for suf, rep_ in (("ies", "y"), ("ing", ""), ("ed", ""), ("es", ""), ("s", "")):
+        if t.endswith(suf) and len(t) - len(suf) >= 4:
+            return t[:-len(suf)] + rep_
+    return t
+
+
 def tokenize(text: str) -> List[str]:
-    return [t for t in _TOKEN.findall((text or "").lower()) if t not in _STOP and len(t) > 1]
+    return [_stem(t) for t in _TOKEN.findall((text or "").lower()) if t not in _STOP and len(t) > 1]
 
 
 def _hash_embed(text: str) -> List[float]:
@@ -236,19 +252,77 @@ def index_outreach(db: Session, row: OutreachHistory, contact: Optional[Contact]
 
 
 def index_academic(db: Session, a: Academic) -> int:
+    bits = [f"Subject {a.subject}."]
+    if a.exam_date:
+        bits.append(f"Exam on {a.exam_date}.")
+    if a.priority:
+        bits.append(f"Priority {a.priority}.")
+    if a.task:
+        bits.append(f"Study task: {a.task}.")
     weak = ", ".join(a.weak_areas or [])
-    text = f"Subject {a.subject}. Priority {a.priority}. Weak areas: {weak}." if weak else ""
-    return index_source(db, a.user_id, ACADEMIC, a.id, text, title=f"Academics: {a.subject}")
+    if weak:
+        bits.append(f"Weak areas: {weak}.")
+    bits.append("Done." if a.done else "Not done yet.")
+    return index_source(db, a.user_id, ACADEMIC, a.id, " ".join(bits), title=f"Academics: {a.subject}")
 
 
 def index_application(db: Session, a: Application) -> int:
-    parts = [a.notes or "", ("Cover letter: " + a.cover_letter) if a.cover_letter else "",
+    facts = [f"Application to {a.company} for {a.role}.", f"Status: {a.status}." if a.status else "",
+             f"Deadline: {a.deadline}." if a.deadline else "", f"Type: {a.type}." if a.type else ""]
+    parts = [" ".join(f for f in facts if f), a.notes or "",
+             ("Cover letter: " + a.cover_letter) if a.cover_letter else "",
              ("Resume bullets: " + "; ".join(a.resume_bullets)) if a.resume_bullets else ""]
     text = " ".join(p for p in parts if p).strip()
-    if not text:
-        return delete_source(db, a.user_id, COVER_LETTER, a.id)
     return index_source(db, a.user_id, COVER_LETTER, a.id, text, title=f"Application: {a.company} / {a.role}",
                         meta={"status": a.status})
+
+
+def index_profile(db: Session, u: User) -> int:
+    bits = [f"Name: {u.name}." if u.name else "",
+            f"Degree: {u.degree}." if u.degree else "",
+            f"Branch: {u.branch}." if u.branch else "",
+            f"CGPA: {u.cgpa}." if u.cgpa is not None else "",
+            f"GitHub: {u.github}." if u.github else "",
+            f"Skills: {u.skills}." if u.skills else "",
+            f"Highlight: {u.highlight}." if u.highlight else ""]
+    text = " ".join(b for b in bits if b).strip()
+    return index_source(db, u.id, PROFILE, u.id, text, title="Profile")
+
+
+def index_request(db: Session, r: ClientRequest) -> int:
+    bits = [f"Client: {r.client}.", f"Ask: {r.ask}." if r.ask else "", f"Scope: {r.scope}." if r.scope else "",
+            f"Timeline: {r.timeline}." if r.timeline else "", f"Price: {r.price}." if r.price else "",
+            f"Status: {r.status}." if r.status else ""]
+    return index_source(db, r.user_id, REQUEST, r.id, " ".join(b for b in bits if b),
+                        title=f"Client request: {r.client}", meta={"status": r.status})
+
+
+def index_course(db: Session, c: Course) -> int:
+    """One chunk per course that also carries its exams, so 'when is my X exam?' resolves from a single hit."""
+    bits = [f"Course {c.name}" + (f" ({c.code})" if c.code else "") + ".",
+            f"Credits: {c.credits}." if c.credits is not None else "",
+            f"Faculty: {c.faculty}." if c.faculty else ""]
+    for e in db.query(Exam).filter(Exam.course_id == c.id).all():
+        when = f" on {e.exam_date}" if e.exam_date else " (date not set)"
+        if e.exam_time:
+            when += f" at {e.exam_time}"
+        if e.venue:
+            when += f", venue {e.venue}"
+        bits.append(f"{e.exam_type or 'Exam'}{when}, status {e.status}.")
+    return index_source(db, c.user_id, COURSE, c.id, " ".join(b for b in bits if b), title=f"Course: {c.name}")
+
+
+def index_exam(db: Session, e: Exam) -> int:
+    c = db.get(Course, e.course_id)
+    return index_course(db, c) if c else 0
+
+
+def index_memory_item(db: Session, m: MemoryItem) -> int:
+    """Only confirmed (active) memories are retrievable; forgotten/unconfirmed ones are removed from the index."""
+    if m.status != "active":
+        return delete_source(db, m.user_id, MEMORY, m.id)
+    return index_source(db, m.user_id, MEMORY, m.id, f"{m.type} memory: {m.content}", title="Memory",
+                        meta={"type": m.type})
 
 
 def safe(fn: Callable, *args, **kwargs):
@@ -330,7 +404,8 @@ def format_context(hits: List[dict], empty: str = "(none)") -> str:
 def reindex_user(db: Session, user_id) -> Dict[str, int]:
     """Rebuilds every derived source from the relational tables and re-embeds all remaining chunks."""
     uid = str(user_id)
-    out = {"projects": 0, "reflections": 0, "outreach": 0, "academics": 0, "applications": 0, "re_embedded": 0}
+    out = {"projects": 0, "reflections": 0, "outreach": 0, "academics": 0, "applications": 0,
+           "profile": 0, "requests": 0, "courses": 0, "memory": 0, "re_embedded": 0}
     for p in db.query(Project).filter(Project.user_id == uid).all():
         out["projects"] += index_project(db, p)
     for pl in db.query(DailyPlan).filter(DailyPlan.user_id == uid, DailyPlan.reflection.isnot(None)).all():
@@ -342,6 +417,15 @@ def reindex_user(db: Session, user_id) -> Dict[str, int]:
         out["academics"] += index_academic(db, a)
     for a in db.query(Application).filter(Application.user_id == uid).all():
         out["applications"] += index_application(db, a) or 0
+    user = db.query(User).filter(User.id == uid).first()
+    if user:
+        out["profile"] += index_profile(db, user)
+    for r in db.query(ClientRequest).filter(ClientRequest.user_id == uid).all():
+        out["requests"] += index_request(db, r)
+    for c in db.query(Course).filter(Course.user_id == uid).all():
+        out["courses"] += index_course(db, c)
+    for m in db.query(MemoryItem).filter(MemoryItem.user_id == uid, MemoryItem.status == "active").all():
+        out["memory"] += index_memory_item(db, m)
     rows = db.query(DocumentChunk).filter(DocumentChunk.user_id == uid).all()
     if rows:
         vecs, tag = embed_texts([r.content for r in rows])

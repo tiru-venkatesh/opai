@@ -19,10 +19,32 @@ from .fallback import local_response_for_intent
 from .idempotency import IDEMPOTENT_TOOLS, make_key, recent_success
 
 
+def _extractive_reply(hits, limit: int = 4, max_chars: int = 260) -> str:
+    """Direct answer straight from the user's own indexed data - no LLM involved.
+    Used when there is no Groq key, or the language layer fails."""
+    if not hits:
+        return ""
+    # Keep only hits close to the best one, so weakly related chunks don't pad the answer.
+    top = hits[0]["score"]
+    hits = [h for h in hits if h["score"] >= 0.5 * top]
+    lines = []
+    for h in hits[:limit]:
+        title = (h.get("meta") or {}).get("title") or h["source_type"]
+        body = " ".join(h["content"].split())
+        prefix = f"[{title}] "
+        if body.startswith(prefix):
+            body = body[len(prefix):]
+        if len(body) > max_chars:
+            body = body[:max_chars].rsplit(" ", 1)[0] + "..."
+        lines.append(f"- {title}: {body}")
+    return "Here is what I found in your data:\n" + "\n".join(lines)
+
+
 def _grounded_chat(user_id: UUID, message: str, db: Session):
     from agent_service import call_groq_json
     from rag_service import retrieve, format_context
     from schemas import JarvisChatResponse
+    from .groq_client import groq_enabled
 
     hits = retrieve(db, str(user_id), message, k=5)
     if not hits:
@@ -31,34 +53,36 @@ def _grounded_chat(user_id: UUID, message: str, db: Session):
             reply="I don't have enough indexed OPA context for that yet. Add the relevant project, resume, application, or academic data and I can ground the answer."
         )
 
-    system = (
-        "You are KARNA inside OPA. Answer only from the supplied personal context. "
-        "Do not invent dates, names, statuses, scores, or plans. If the context is incomplete, "
-        "say what is missing. Return JSON with exactly one field: reply."
-    )
-    try:
-        raw = call_groq_json(
-            system,
-            f"Question: {message}\n\nContext:\n{format_context(hits)}",
-            model="openai/gpt-oss-20b",
+    sources = [
+        {"type": h["source_type"], "title": h["meta"].get("title"), "score": h["score"]}
+        for h in hits
+    ]
+
+    reply, mode = "", "extractive"
+    if groq_enabled():
+        system = (
+            "You are KARNA inside OPA. Answer only from the supplied personal context. "
+            "Do not invent dates, names, statuses, scores, or plans. If the context is incomplete, "
+            "say what is missing. Return JSON with exactly one field: reply."
         )
-        reply = json.loads(raw).get("reply", "")
-    except Exception:
-        reply = "I found relevant OPA data, but the language layer is unavailable right now."
+        try:
+            raw = call_groq_json(
+                system,
+                f"Question: {message}\n\nContext:\n{format_context(hits)}",
+                model="openai/gpt-oss-20b",
+            )
+            reply = (json.loads(raw).get("reply") or "").strip()
+            if reply:
+                mode = "llm"
+        except Exception:
+            reply = ""
+    if not reply:
+        reply = _extractive_reply(hits)
 
     return JarvisChatResponse(
         action="chat",
         reply=reply,
-        payload={
-            "sources": [
-                {
-                    "type": h["source_type"],
-                    "title": h["meta"].get("title"),
-                    "score": h["score"],
-                }
-                for h in hits
-            ]
-        },
+        payload={"sources": sources, "answer_mode": mode},
     )
 
 
@@ -79,6 +103,16 @@ def handle_message(user_id: UUID, message: str, db: Session):
     from schemas import JarvisChatResponse
     from agent_service import run_jarvis_agent, summarize_recent_activity, _tool_search_opportunities, _tool_draft_outreach
     from .tool_registry import execute as execute_tool
+
+    # Read-only lookups (lists / counts / deadlines / profile) are answered straight from the
+    # user's own DB rows: exact, no LLM, no router. Anything that looks like an action falls through.
+    try:
+        from .direct_db import answer as direct_db_answer
+        direct = direct_db_answer(db, str(user_id), message)
+    except Exception:
+        direct = None
+    if direct:
+        return JarvisChatResponse(action="chat", reply=direct["reply"], payload=direct["payload"])
 
     decision = classify(message, {"user_id": str(user_id)})
 
