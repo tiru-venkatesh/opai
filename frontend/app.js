@@ -1034,6 +1034,55 @@ async function importCoursesConfirm() {
     closeModal(); toast('Imported ' + rows.length + ' course' + (rows.length === 1 ? '' : 's')); loadSems(true);
   } catch (e) { toast('Could not import: ' + e.message, true); }
 }
+/* ---- PDF timetable: upload -> AI draft -> chat refine -> confirm ---- */
+let PDF_TT = null, PDF_HIST = [];
+function pdfTtOpen() {
+  PDF_TT = null; PDF_HIST = [];
+  openModal('<h3>Upload timetable PDF</h3><div class="field"><label for="pdf-file">Exam / semester timetable (text PDF, max 8 MB)</label><input id="pdf-file" type="file" accept="application/pdf"></div><div class="foot"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="pdf-go" onclick="pdfTtAnalyze()">Analyze</button></div>');
+}
+function pdfTtB64(f) { return new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result.split(',')[1]); r.onerror = no; r.readAsDataURL(f); }); }
+async function pdfTtAnalyze() {
+  const f = $('pdf-file').files[0];
+  if (!f) { toast('Choose a PDF first', true); return; }
+  if (f.size > 8 * 1024 * 1024) { toast('PDF is over 8 MB', true); return; }
+  const b = $('pdf-go'); b.disabled = true; b.textContent = 'Analyzing\u2026';
+  try {
+    const r = await POST('/v1/timetable/pdf/analyze', { pdf_base64: await pdfTtB64(f) });
+    PDF_TT = r; PDF_HIST = [{ role: 'ai', text: r.reply }]; pdfTtRender();
+  } catch (e) { b.disabled = false; b.textContent = 'Analyze'; toast('Could not analyze: ' + e.message, true); }
+}
+function pdfTtRender() {
+  const d = PDF_TT.draft, s = d.semester || {};
+  const head = [s.degree, s.branch, s.semester_number ? 'Sem ' + s.semester_number : '', s.academic_year].filter(Boolean).map(esc).join(' \u00b7 ') || 'Semester';
+  const rows = d.courses.map((c) => '<div class="row noicon"><div><div class="row-t">' + esc(c.name) + (c.code ? ' \u00b7 ' + esc(c.code) : '') + '</div><div class="row-s">' + (c.exam_date ? fmtDate(c.exam_date) : 'No date') + (c.exam_time ? ' \u00b7 ' + esc(c.exam_time) : '') + (c.venue ? ' \u00b7 ' + esc(c.venue) : '') + '</div></div></div>').join('');
+  const warns = PDF_TT.warnings.filter((w) => w.level !== 'info').map((w) => '<div class="chip warn" style="margin:4px 4px 0 0">' + esc(w.text) + '</div>').join('');
+  const chat = PDF_HIST.map((m) => '<div class="row-s" style="margin:6px 0;' + (m.role === 'me' ? 'text-align:right;font-weight:600' : '') + '">' + esc(m.text) + '</div>').join('');
+  openModal('<h3>' + head + '</h3><div class="panel rows" style="max-height:230px;overflow-y:auto">' + rows + '</div>' + warns +
+    '<div id="pdf-chat" style="max-height:110px;overflow-y:auto;margin-top:10px">' + chat + '</div>' +
+    '<div class="field" style="margin-top:8px"><input id="pdf-msg" placeholder="Ask or change something\u2026 e.g. move DBMS to Nov 22" onkeydown="if(event.key===\'Enter\')pdfTtSend()"></div>' +
+    '<div class="note">Nothing is saved until you confirm.</div><div class="foot"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn ghost" id="pdf-send" onclick="pdfTtSend()">Send</button><button class="btn" id="pdf-ok" onclick="pdfTtConfirm()">Confirm &amp; create</button></div>');
+  const c = $('pdf-chat'); if (c) c.scrollTop = c.scrollHeight;
+}
+async function pdfTtSend() {
+  const el = $('pdf-msg'), msg = el.value.trim();
+  if (!msg) return;
+  $('pdf-send').disabled = true; el.disabled = true;
+  try {
+    const r = await POST('/v1/timetable/pdf/refine', { draft: PDF_TT.draft, message: msg, history: PDF_HIST });
+    PDF_HIST.push({ role: 'me', text: msg }, { role: 'ai', text: r.reply });
+    PDF_TT = { draft: r.draft, warnings: r.warnings, reply: r.reply };
+  } catch (e) { toast('Chat failed: ' + e.message, true); }
+  pdfTtRender();
+}
+async function pdfTtConfirm() {
+  const b = $('pdf-ok'); b.disabled = true;
+  try {
+    const uid = await ensureUser();
+    const r = await POST('/v1/timetable/pdf/confirm', { user_id: uid, draft: PDF_TT.draft, semester_id: SEMS.semester ? SEMS.semester.id : null });
+    closeModal(); toast('Created ' + r.courses + ' courses, ' + r.exams + ' exams'); loadSems(true);
+  } catch (e) { b.disabled = false; toast('Could not create: ' + e.message, true); }
+}
+
 function viewSems() {
   const h = head('Exams & Courses', 'Set up your semester and courses so Study Workflow can build a real study plan from your syllabus.', '');
   if (!BACKEND.ready) return h + emptyPanel('Needs the backend', 'Semester and course setup is saved on your FastAPI server, which could not be reached.', '<button class="btn" onclick="loadSems(true)">Retry</button>');
@@ -1073,7 +1122,7 @@ function viewSems() {
   const coursesSection = '<div style="display:flex;justify-content:space-between;align-items:center;margin:22px 0 10px"><h3 style="font-family:var(--display);font-size:18px;font-weight:650">Courses</h3>' + addBtn('Add course', 'editCourse()') + '</div>' +
     (SEMS.courses.length ? courseRows : emptyPanel('No courses yet', 'Add your first course, then add its topics and exams.', addBtn('Add course', 'editCourse()')));
 
-  const importSection = '<section class="panel" style="padding:18px;margin-top:22px"><div class="row-t" style="margin-bottom:4px">Import a timetable</div><div class="row-s" style="margin-bottom:12px">Paste a course/exam timetable (CSV or a copied table) and OPAI will match columns and show a preview before creating anything.</div><button class="btn ghost" onclick="importCoursesOpen()">Paste a timetable</button></section>';
+  const importSection = '<section class="panel" style="padding:18px;margin-top:22px"><div class="row-t" style="margin-bottom:4px">Import a timetable</div><div class="row-s" style="margin-bottom:12px">Paste a course/exam timetable (CSV or a copied table) and OPAI will match columns and show a preview before creating anything.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="pdfTtOpen()">Upload PDF</button><button class="btn ghost" onclick="importCoursesOpen()">Paste a timetable</button></div></section>';
 
   return h + semPanel + coursesSection + importSection;
 }
