@@ -1,0 +1,194 @@
+/* OPAI theme v2 — "Ink & Cobalt"
+ * Loaded LAST (after app.css, fx.css). Re-skins tokens, shell and components
+ * without touching app.js markup. Delete this file to roll back.
+ *
+ * Palette  paper #F2F4F8 · ink #0F1729 · cobalt #3D5AFE · sidebar #0C1222
+ * Type     Bricolage Grotesque (headings) · Onest (UI) · JetBrains Mono (numbers)
+ */
+
+/* ---------- tokens ---------- */
+html:root:root:root{
+  --bg:#F2F4F8; --surface:#FFFFFF; --surface-2:#E9EDF5;
+  --ink:#0F1729; --ink-2:#4A5570; --ink-3:#7C86A0;
+  --line:#E2E6EF; --line-2:#CDD3E1;
+  --accent:#3D5AFE; --accent-d:#2740D8; --accent-soft:#E6EAFF; --on-accent:#fff;
+  --good:#12805C; --good-soft:#DDF3EA;
+  --warn:#B7620B; --warn-soft:#FCEBD3;
+  --bad:#C93A3A;  --bad-soft:#FBE3E3;
+  --c-app:#3D5AFE; --c-out:#E0871F; --c-proj:#12805C; --c-acad:#8B5CF6; --c-req:#D9455F; --c-opp:#7C86A0;
+  --side:#0C1222;
+  --r-lg:14px; --r-md:10px; --r-sm:8px;
+  --shadow-1:0 1px 2px rgba(15,23,41,.05);
+  --shadow-2:0 18px 44px -20px rgba(15,23,41,.35);
+  --glow:none;
+  --display:'Bricolage Grotesque',system-ui,sans-serif;
+  --body:'Onest',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+html:root:root:root[data-theme="dark"]{
+  --bg:#0A0E1A; --surface:#121828; --surface-2:#1A2136;
+  --ink:#E8ECF7; --ink-2:#A3ADC7; --ink-3:#6F7A96;
+  --line:#1E2640; --line-2:#2C3654;
+  --accent:#7F93FF; --accent-d:#A8B5FF; --accent-soft:#1C2450; --on-accent:#0A0E1A;
+  --good:#3DD6A0; --good-soft:#0E2C25;
+  --warn:#F2A54A; --warn-soft:#33240F;
+  --bad:#FF7A7A;  --bad-soft:#3A1A1E;
+  --c-app:#7F93FF; --c-out:#F2A54A; --c-proj:#3DD6A0; --c-acad:#B197FC; --c-req:#FF7A90; --c-opp:#6F7A96;
+  --side:#070A14;
+  --shadow-1:0 0 0 1px var(--line);
+  --shadow-2:0 24px 60px -24px rgba(0,0,0,.7);
+  color-scheme:dark;
+}
+
+/* ---------- base: flat canvas, no grid / scanline / glow ---------- */
+body{background:var(--bg);background-image:none;font-family:var(--body);font-size:15px;letter-spacing:-.003em}
+.scanline{display:none}
+h1,h2,h3,h4,.head h1,.panel-h h3{font-family:var(--display)}
+.head h1{font-size:30px;font-weight:650;letter-spacing:-.03em}
+.head p{color:var(--ink-2)}
+::selection{background:var(--accent-soft);color:var(--accent-d)}
+
+/* ---------- shell: docked sidebar on desktop ---------- */
+.side{background:var(--side);color:#B9C0D6;border-right:0;box-shadow:none}
+.brand-mark{background:var(--accent);border-radius:10px;box-shadow:none}
+.brand-mark svg{stroke:var(--on-accent)}
+.brand b{color:#fff;font-size:19px;font-weight:650}
+.brand span{font-family:var(--body);font-size:12px;letter-spacing:0;text-transform:none;color:#7D87A6}
+.search-btn{display:flex;background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);color:#9AA3BE;border-radius:10px}
+.search-btn:hover{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.18)}
+.nav-group{font-family:var(--body);font-size:12px;letter-spacing:0;text-transform:none;font-weight:600;color:#6C7695;padding:16px 10px 6px}
+.nav button{color:#B9C0D6;border-radius:10px;padding:9px 11px;font-size:14px}
+.nav button:hover{background:rgba(255,255,255,.07);color:#fff;padding-left:11px}
+.nav button.on{background:rgba(127,147,255,.16);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
+html:root:root:root .nav button.on .count{background:var(--accent);color:var(--on-accent)}
+.nav .count{background:rgba(255,255,255,.1);color:#DDE2F2}
+.nav .count.alert{background:var(--warn);color:#0F1729}
+.conn{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.08);border-radius:10px}
+.conn b{font-family:var(--body);letter-spacing:0;text-transform:none;font-size:12.5px;color:#7EE7C0}
+.conn i{background:#7EE7C0}
+
+@media (min-width:1024px){
+  .side{transform:none;width:264px}
+  #page,body.nav-open #page{margin-left:264px;left:0;border-radius:0;box-shadow:none}
+  .scrim,body.nav-open .scrim{display:none}
+  .menu-btn{display:none}
+  main{padding:32px 40px 96px;max-width:1240px}
+}
+
+/* ---------- header ---------- */
+@media (min-width:921px){
+  .hdr{height:60px;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .hdr-search{height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink-3);padding:0 14px;max-width:460px}
+  .hdr-search:hover{border-color:var(--line-2)}
+  .hdr-av{background:var(--accent);color:var(--on-accent)}
+  .cal-fab{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+}
+
+/* ---------- surfaces ---------- */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-1)}
+.panel-h h3{font-size:17px;font-weight:650}
+.panel:hover{box-shadow:var(--shadow-1)}          /* cancel fx.css hover lift */
+.dialog,.pal,.cal-pop,.focus{border-radius:16px;border:1px solid var(--line-2);box-shadow:var(--shadow-2)}
+.kh{background:var(--surface);border:1px solid var(--line);border-radius:16px}
+.kp{border-radius:16px}
+.kp-orb,.orb{background:var(--accent)}
+
+/* ---------- controls ---------- */
+.btn{background:var(--accent);border-color:var(--accent);color:var(--on-accent);border-radius:10px;font-weight:600;box-shadow:none}
+.btn:hover{background:var(--accent-d);border-color:var(--accent-d);color:var(--on-accent);box-shadow:none}
+.btn.soft{background:var(--accent-soft);border-color:transparent;color:var(--accent-d)}
+.btn.soft:hover{background:var(--accent-soft);filter:brightness(.96)}
+.btn.ghost{background:transparent;border-color:var(--line-2);color:var(--ink)}
+.btn.ghost:hover{background:var(--surface-2);border-color:var(--line-2)}
+.m.you .bubble,.send,.cal-badge,.cal-d.sel,.scope-seg button.on,.kh-step.done i,.hdr-av{color:var(--on-accent)}
+.kp-comp .send{color:var(--on-accent)}
+input[type=text],input[type=email],input[type=date],select,textarea,.addtask input{background:var(--surface);border-color:var(--line-2);border-radius:10px}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.pill{font-weight:600}
+.kbd{font-family:var(--mono);border-radius:6px}
+.rv-tabs button.on{background:var(--accent);color:var(--on-accent)}
+
+/* ---------- motion: keep only tab-switch entrance ---------- */
+.nav button:hover{transition:background .15s,color .15s}
+.conn i{animation:none}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
+/* =====================================================================
+   MOTION v2 — one spring easing, everything answers an action or a load
+   ===================================================================== */
+:root{--spring:cubic-bezier(.34,1.4,.5,1);--out:cubic-bezier(.16,1,.3,1)}
+
+/* tab switch: content settles in, softly un-blurs (JS in motion.js adds .fx-s) */
+@keyframes fxS{from{opacity:0;transform:translateY(14px) scale(.985);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+.fx-s{animation:fxS .5s var(--out) backwards;animation-delay:calc(var(--i,0)*45ms)}
+
+/* first load: sidebar builds itself top to bottom */
+@keyframes fxSlide{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:none}}
+.brand,.search-btn,.nav>*,.side-foot{animation:fxSlide .55s var(--out) backwards}
+.brand{animation-delay:.05s}.search-btn{animation-delay:.12s}
+.nav>*:nth-child(1){animation-delay:.18s}.nav>*:nth-child(2){animation-delay:.22s}.nav>*:nth-child(3){animation-delay:.26s}
+.nav>*:nth-child(4){animation-delay:.30s}.nav>*:nth-child(5){animation-delay:.34s}.nav>*:nth-child(6){animation-delay:.38s}
+.nav>*:nth-child(n+7){animation-delay:.42s}.side-foot{animation-delay:.5s}
+
+/* nav: active bar grows, icon nudges */
+.nav button{position:relative}
+.nav button.on{animation:fxBar .35s var(--out)}
+@keyframes fxBar{from{background-color:transparent;box-shadow:inset 0 0 0 var(--accent)}}
+.nav button:hover .ic,.nav button:hover svg{transform:scale(1.12) rotate(-4deg)}
+.nav button .ic,.nav button svg{transition:transform .25s var(--spring)}
+
+/* route bar: thin sweep across the top on every tab change */
+#fx-route{position:fixed;top:0;left:0;height:2px;width:100%;z-index:9998;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);transform:translateX(-100%);opacity:0}
+#fx-route.go{animation:fxRoute .7s var(--out)}
+@keyframes fxRoute{0%{opacity:1;transform:translateX(-100%)}100%{opacity:0;transform:translateX(100%)}}
+
+/* cards: cursor spotlight + lift (var --mx/--my set by motion.js) */
+.panel,.kcard,.kh{position:relative;transition:transform .3s var(--out),box-shadow .3s var(--out),border-color .3s}
+.panel::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;
+  background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--accent) 12%,transparent),transparent 70%)}
+.panel:hover::before{opacity:1;display:block}
+.panel:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:0 16px 32px -22px rgba(15,23,41,.4)}
+.panel:has(input:focus),.panel:has(textarea:focus),.panel:has(.dialog){transform:none}
+
+/* buttons: spring press + ripple */
+.btn,.icon-btn,.pill,.kp-chips button,.kh-can button{transition:transform .2s var(--spring),background .2s,border-color .2s,color .2s,filter .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:scale(.95)}
+.icon-btn:hover{transform:scale(1.1)}.icon-btn:active{transform:scale(.9)}
+.btn,.send{position:relative;overflow:hidden}
+.fx-rip{position:absolute;border-radius:50%;background:currentColor;opacity:.25;transform:scale(0);pointer-events:none;animation:fxRip .6s var(--out) forwards}
+@keyframes fxRip{to{transform:scale(1);opacity:0}}
+
+/* overlays: backdrop fades, dialog springs up */
+.overlay.on{animation:fxFade .2s ease}
+.overlay.on .dialog,.overlay.on .pal{animation:fxPop .38s var(--spring)}
+@keyframes fxFade{from{opacity:0}}
+@keyframes fxPop{from{opacity:0;transform:translateY(18px) scale(.95)}}
+.onboard.on .onboard-card{animation:fxPop .55s var(--spring)}
+.cal-pop.on{animation:fxPop .3s var(--spring)}
+.focus{animation:fxPop .4s var(--spring)}
+
+/* toast: bouncy rise */
+.toast{transition:opacity .25s,transform .45s var(--spring)}
+
+/* list rows + checkbox satisfaction */
+.task{transition:background .2s,padding .2s var(--out),opacity .3s}
+.task:hover{background:var(--surface-2);padding-left:8px;padding-right:8px;border-radius:8px}
+input[type=checkbox].ck:checked:not(:disabled){animation:fxTick .4s var(--spring)}
+@keyframes fxTick{0%{transform:scale(.7)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+
+/* live status dot: soft ring pulse */
+.conn i{animation:fxRing 2.2s ease-out infinite}
+@keyframes fxRing{0%{box-shadow:0 0 0 0 color-mix(in srgb,currentColor 0%,#7EE7C0)}70%{box-shadow:0 0 0 7px rgba(126,231,192,0)}100%{box-shadow:0 0 0 0 rgba(126,231,192,0)}}
+
+/* progress bars fill from left */
+.kh-bar b,.bar>i,.progress>i{transform-origin:left;animation:fxFill .9s var(--out) backwards}
+@keyframes fxFill{from{transform:scaleX(0)}}
+
+@media (prefers-reduced-motion:reduce){
+  .brand,.search-btn,.nav>*,.side-foot,.fx-s,.overlay.on,.overlay.on .dialog,.overlay.on .pal,.onboard.on .onboard-card,.cal-pop.on,.focus,.conn i,.kh-bar b{animation:none!important}
+  .panel,.btn{transition:none!important}.panel:hover,.btn:hover{transform:none}
+  #fx-route,.fx-rip{display:none}
+}
