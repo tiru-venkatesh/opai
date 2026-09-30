@@ -1,0 +1,39 @@
+/* OPAI motion — restrained, professional. One easing, short durations. */
+:root{--ease:cubic-bezier(.22,.61,.36,1);--fx-dur:.55s}
+/* thin scroll progress */
+#fx-progress{position:fixed;top:0;left:0;height:2px;width:100%;transform-origin:0 50%;transform:scaleX(0);z-index:9999;background:var(--accent,#EE7B5D);pointer-events:none}
+/* header gains a hairline shadow after scrolling */
+header{transition:box-shadow .25s var(--ease),background .25s}
+header.fx-scrolled{box-shadow:0 1px 0 var(--line,#E7E4D9),0 8px 24px -16px rgba(30,42,40,.25)}
+/* hero: simple ordered fade-up on load */
+.fx-up{opacity:0;transform:translateY(14px);animation:fxUp var(--fx-dur) var(--ease) forwards;animation-delay:calc(var(--i,0)*90ms + 60ms)}
+@keyframes fxUp{to{opacity:1;transform:none}}
+/* scroll reveal (only hidden when JS is running) */
+.fx-on .fx-r{opacity:0;transform:translateY(16px);transition:opacity var(--fx-dur) var(--ease),transform var(--fx-dur) var(--ease);transition-delay:var(--d,0ms)}
+.fx-on .fx-r.in{opacity:1;transform:none}
+/* cards: quiet lift on hover */
+.inside-cell,.persona,.step,.stat,.device-card{transition:transform .25s var(--ease),box-shadow .25s var(--ease),border-color .25s}
+.inside-cell:hover,.persona:hover,.step:hover{transform:translateY(-3px);border-color:var(--line-2,#D8D4C6);box-shadow:0 14px 28px -20px rgba(30,42,40,.35)}
+/* buttons: subtle press feedback */
+.btn{transition:transform .15s var(--ease),background .2s,border-color .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-1px)}
+.btn.accent:hover{box-shadow:0 8px 18px -10px var(--accent-d,#D9613F)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn:focus-visible,a:focus-visible,button:focus-visible{outline:2px solid var(--accent,#EE7B5D);outline-offset:2px}
+/* nav links: underline draws in */
+nav.links a{position:relative;border-bottom-color:transparent!important}
+nav.links a::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .25s var(--ease)}
+nav.links a:hover::after{transform:scaleX(1)}
+/* FAQ + hero device */
+.faq-a{transition:max-height .35s var(--ease)}
+.faq-q .plus{transition:transform .3s var(--ease)}
+/* app */
+.nav button{transition:background .15s,color .15s,padding-left .2s var(--ease)}
+.nav button:hover{padding-left:13px}
+.panel{transition:box-shadow .25s var(--ease),border-color .25s}
+.panel:hover{box-shadow:0 10px 24px -18px rgba(30,42,40,.35)}
+.fx-s{animation:fxS .38s var(--ease) backwards;animation-delay:calc(var(--i)*40ms)}
+@keyframes fxS{from{opacity:0;transform:translateY(10px)}}
+@media (prefers-reduced-motion:reduce){
+  .fx-up,.fx-s{animation:none!important;opacity:1!important;transform:none!important}
+  .fx-on .fx-r{opacity:1!important;transform:none!important;transition:none!important}}
