@@ -1,0 +1,120 @@
+.hero,
+.quick button,
+.kcard,
+.proj,
+.form-panel,
+.dialog,
+.pal,
+.focus,
+.jv-main,
+.jv-ctx,
+.prompts button,
+.spc-canvas,
+.spc-node,
+.pl-canvas,
+.pl-node,
+.cal-pop {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Keep content surfaces slightly translucent */
+.panel,
+.hero,
+.kcard,
+.proj,
+.form-panel,
+.dialog,
+.pal,
+.focus,
+.jv-main,
+.jv-ctx,
+.prompts button {
+  background-color: rgba(255, 255, 255, 0.90);
+}
+
+/* Blue glass treatment for secondary surfaces */
+.quick button,
+.spc-node,
+.pl-node {
+  background-color: rgba(245, 249, 255, 0.88);
+}
+
+/* Stronger blue navigation state */
+.nav button.on {
+  background: rgba(61, 90, 254, 0.16);
+  color: #8fb8ff;
+  box-shadow:
+    inset 2px 0 0 #3d8bff,
+    0 0 18px -7px rgba(45, 132, 255, 0.9);
+}
+
+/* Search / controls */
+.search-btn,
+.conn {
+  background: rgba(4, 23, 61, 0.72) !important;
+  border-color: rgba(92, 160, 255, 0.18) !important;
+}
+
+/* Blue accent for the existing orange/gold accent system */
+:root {
+  --accent: #3D8BFF;
+  --accent-d: #6EACFF;
+  --accent-soft: rgba(61, 139, 255, 0.14);
+  --good: #39D6A0;
+  --good-soft: rgba(57, 214, 160, 0.13);
+  --warn: #FFB84D;
+  --warn-soft: rgba(255, 184, 77, 0.14);
+  --bad: #FF6B7A;
+  --bad-soft: rgba(255, 107, 122, 0.14);
+}
+
+/* Make the brand mark electric blue */
+.brand-mark {
+  background:
+    radial-gradient(
+      circle at 34% 28%,
+      #B8DDFF 0%,
+      #3D8BFF 48%,
+      #0755D9 100%
+    ) !important;
+  box-shadow: 0 0 20px rgba(61, 139, 255, 0.65) !important;
+}
+
+/* Blue futuristic focus/orb */
+.orb {
+  background:
+    radial-gradient(
+      circle at 32% 28%,
+      #fff 0 12%,
+      #8CC8FF 35%,
+      #3D8BFF 62%,
+      #0755D9 100%
+    ) !important;
+}
+
+/* Better contrast on the blue background */
+.head p,
+.hero .lead,
+.row-s,
+.proj .desc,
+.jv-top span,
+.welcome p,
+.ctx-row,
+.ctx-note {
+  color: #53627C;
+}
+
+/* Responsive background behavior */
+@media (max-width: 920px) {
+  body {
+    background-position: center center !important;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    background-attachment: scroll !important;
+  }
+}
+
