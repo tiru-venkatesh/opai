@@ -1,9 +1,23 @@
+# Secrets
+.env
 backend/.env
-backend/__pycache__/
-*.pyc
-backend/opa.db
 
-# Local DB runtime/backups
-*.db.before-repair.bak
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local databases and backups
+backend/opa.db
+*.db
 *.db-shm
 *.db-wal
+*.db.backup
+*.bak
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

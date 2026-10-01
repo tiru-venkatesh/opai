@@ -1098,9 +1098,24 @@ class GeneralChatRequest(BaseModel):
     messages: List[GeneralChatMessage]
 
 
+_GENERAL_HITS: dict = {}
+_GENERAL_LIMIT = int(os.getenv("GENERAL_CHAT_PER_MIN", "20"))
+
+
+def _general_rate_limit(ip: str):
+    import time
+    now = time.time()
+    hits = [t for t in _GENERAL_HITS.get(ip, []) if now - t < 60]
+    if len(hits) >= _GENERAL_LIMIT:
+        raise HTTPException(429, "Too many chat requests. Try again in a minute.")
+    hits.append(now)
+    _GENERAL_HITS[ip] = hits
+
+
 @app.post("/v1/chat/general")
-def general_chat(req: GeneralChatRequest):
+def general_chat(req: GeneralChatRequest, request: Request):
     from agent import groq_client
+    _general_rate_limit(request.client.host if request.client else "unknown")
     if not groq_client.groq_enabled():
         raise HTTPException(503, "GROQ_API_KEY is not configured on the backend")
     msgs = [{"role": "system", "content": (req.system or "You are KARNA, a helpful general-purpose assistant.")[:2000]}]

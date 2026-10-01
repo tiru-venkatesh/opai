@@ -144,7 +144,7 @@ def handle_message(user_id: UUID, message: str, db: Session):
     if decision.intent == "create_task":
         import re as _re
         # Guard: the classifier sometimes maps "write/create a prompt/email/code" to create_task.
-        if not _re.search(r"\b(task|todo|to-do|remind|reminder|add|schedule|deadline)\b", message.lower()):
+        if not _re.search(r"\b(tasks?|todos?|to-do|reminders?|remind me|deadline)\b", message.lower()):
             return _grounded_chat(user_id, message, db)
         tool_args = {
             "title": entities.get("task_title") or entities.get("title") or message[:300],

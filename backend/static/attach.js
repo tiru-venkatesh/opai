@@ -3,6 +3,7 @@
   var MAX = 8 * 1024 * 1024, MAXN = 5;
   var ST = {};                      // per-section state, survives re-renders
   var CLIP = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.6 8.6a2 2 0 0 1-2.8-2.8L15 7.5"/></svg>';
+  function camHTML() { try { return window.matchMedia('(pointer: coarse)').matches ? ' <button type="button" class="btn ghost" onclick="attPick(true)">Take photo</button>' : ''; } catch (e) { return ''; } }
   var ACCEPT = 'image/*,application/pdf,.pdf,.txt,.md,.csv,.json,.docx';
   function st(k) { return ST[k] || (ST[k] = { files: [], q: '', result: '', busy: false, open: false, err: '' }); }
   function sec() { return typeof cur !== 'undefined' ? cur : 'overview'; }
@@ -18,8 +19,7 @@
     if (s.result) res += '<div class="att-res"><div class="att-res-h"><b>Analysis</b><button type="button" class="btn ghost" onclick="attCopy()">Copy</button></div>' + fmtMsg(s.result) + '</div>';
     return '<button type="button" class="att-toggle" onclick="attToggle()" aria-expanded="' + s.open + '">' + CLIP + '<span>Attach file, photo or PDF for analysis</span></button>' +
       '<div class="att-body"' + (s.open ? '' : ' hidden') + '>' +
-      '<div class="att-drop" id="att-drop"><span>Drop files here, or</span> <button type="button" class="btn ghost" onclick="attPick(false)">Choose file / PDF</button> <button type="button" class="btn ghost" onclick="attPick(true)">Take / pick photo</button>' +
-      '<div class="att-hint">Images, PDF (text), TXT, CSV, JSON · up to ' + MAXN + ' files, 8 MB each</div></div>' +
+      '<div class="att-drop" id="att-drop"><span>Drop files here, or</span> <button type="button" class="btn ghost" onclick="attPick(false)">Choose file / PDF</button>' + camHTML() + '</div>' +
       (chips ? '<div class="att-chips">' + chips + '</div>' : '') +
       '<div class="att-row"><input id="att-q" placeholder="What should I look for? (optional)" value="' + esc(s.q) + '" oninput="attQ(this.value)" onkeydown="if(event.key===\'Enter\')attGo()">' +
       '<button type="button" class="btn" id="att-go" onclick="attGo()"' + (s.busy ? ' disabled' : '') + '>' + (s.busy ? 'Analyzing\u2026' : 'Analyze') + '</button></div>' + res + '</div>';
