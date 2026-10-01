@@ -870,7 +870,7 @@ function toggleAcad(id) { const t = byId('academics', id); t.done = !t.done; if 
 let SEMS = { loading: false, error: null, semester: null, courses: null, exams: null, openCourse: null, courseTopics: {} };
 function semsReset() { SEMS = { loading: false, error: null, semester: null, courses: null, exams: null, openCourse: null, courseTopics: {} }; }
 async function loadSems(force) {
-  if (!BACKEND.ready) { SEMS.error = 'backend'; render(true); return; }
+  if (!BACKEND.ready) { if (SEMS.error !== 'backend') { SEMS.error = 'backend'; render(true); } return; }
   if (SEMS.loading) return;
   if (!force && SEMS.courses !== null) return;
   SEMS.loading = true; SEMS.error = null; render(true);
@@ -3039,7 +3039,7 @@ function karnaHero() {
   const open = S.projects.reduce((n, p) => n + p.tasks.filter(t => !t.done).length, 0);
   const done = SETUP_STEPS.filter(x => x.done()).length, pct = Math.round(done / SETUP_STEPS.length * 100);
   const name = (S.profile.name || '').split(' ')[0];
-  return '<section class="kh"><h2>Hi' + (name ? ' ' + esc(name) : '') + ', I am KARNA, your OPAI chat assistant</h2>' +
+  return '<section class="kh"><h2>Hi' + (name ? ' ' + esc(name) : '') + ', I am KARNA</h2>' +
     '<p>Your operating agent. I read your applications, exams, projects and contacts, then tell you what to do next and do the busywork for you.</p>' +
     '<div class="kh-stats"><span><b>' + due + '</b> due in 7 days</span><span><b>' + open + '</b> open project tasks</span><span><b>' + pend + '</b> waiting for your approval</span><span>' + (BACKEND.ready ? 'Backend connected' : 'Offline mode') + '</span></div>' +
     '<div class="kh-ask"><input id="kh-input" placeholder="Ask KARNA anything, e.g. what should I do today?" onkeydown="if(event.key===\'Enter\')karnaAsk()"><button class="btn" onclick="karnaAsk()">Ask</button></div>' +

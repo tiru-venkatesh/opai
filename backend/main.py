@@ -55,6 +55,8 @@ import rag_service as rag
 app = FastAPI(title="OPAI Agent Core API", version="1.1.0")
 from pdf_timetable import router as pdf_timetable_router
 app.include_router(pdf_timetable_router)
+from attach import router as attach_router
+app.include_router(attach_router)
 
 app.add_middleware(
     CORSMiddleware,

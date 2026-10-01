@@ -870,7 +870,7 @@ function toggleAcad(id) { const t = byId('academics', id); t.done = !t.done; if 
 let SEMS = { loading: false, error: null, semester: null, courses: null, exams: null, openCourse: null, courseTopics: {} };
 function semsReset() { SEMS = { loading: false, error: null, semester: null, courses: null, exams: null, openCourse: null, courseTopics: {} }; }
 async function loadSems(force) {
-  if (!BACKEND.ready) { SEMS.error = 'backend'; render(true); return; }
+  if (!BACKEND.ready) { if (SEMS.error !== 'backend') { SEMS.error = 'backend'; render(true); } return; }
   if (SEMS.loading) return;
   if (!force && SEMS.courses !== null) return;
   SEMS.loading = true; SEMS.error = null; render(true);
