@@ -1599,7 +1599,7 @@ function resetData() { confirmBox('Reset all data to the sample workspace?', 'Re
 const GROQ_MODELS = [
   { v: 'openai/gpt-oss-120b', l: 'GPT-OSS 120B (best quality)' },
   { v: 'openai/gpt-oss-20b', l: 'GPT-OSS 20B (fastest)' },
-  { v: 'qwen/qwen3.6-27b', l: 'Qwen3.6 27B' }
+  { v: 'qwen/qwen3.8-27b', l: 'Qwen3.8 27B' }
 ];
 async function groqChat(messages) {
   const key = S.profile.groqKey; if (!key) return null;
@@ -3363,7 +3363,16 @@ async function generalSend(t) {
   box.insertAdjacentHTML('beforeend', '<div class="m" id="typing"><div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div></div>');
   box.scrollTop = box.scrollHeight;
   let reply;
-  if (!S.profile.groqKey) reply = 'General chat needs a Groq key (Profile, Groq). Until then, switch to Workspace for questions about your own data.';
+  const sys0 = 'You are KARNA, a friendly, knowledgeable general-purpose assistant chatting with ' + (S.profile.name || 'the user') + '. Answer any question helpfully and concisely (code, study help, ideas, writing, general knowledge). Reply in the language the user writes in. You have no access to their workspace in this mode; if they ask to add or change records, tell them to switch to Workspace. Today is ' + iso(0) + '.';
+  if (BACKEND.ready) {
+    try {
+      const r = await POST('/v1/chat/general', { system: sys0, messages: CHAT.slice(-12).map(m => ({ role: m.role, content: m.text })) });
+      reply = r.reply || 'No reply came back. Try again.';
+    } catch (e) {
+      if (S.profile.groqKey) { try { reply = (await groqChat([{ role: 'system', content: sys0 }, ...CHAT.slice(-12).map(m => ({ role: m.role, content: m.text }))])) || 'No reply came back. Try again.'; } catch (e2) { reply = 'Groq call failed (' + e2.message + ').'; } }
+      else reply = 'General chat failed (' + e.message + ').';
+    }
+  } else if (!S.profile.groqKey) reply = 'General chat needs the backend connection or a Groq key (Profile, Groq). Until then, switch to Workspace for questions about your own data.';
   else {
     try {
       const sys = 'You are KARNA, a friendly, knowledgeable general-purpose assistant chatting with ' + (S.profile.name || 'the user') + '. Answer any question helpfully and concisely (code, study help, ideas, writing, general knowledge). Reply in the language the user writes in. You have no access to their workspace in this mode; if they ask to add or change records, tell them to switch to Workspace. Today is ' + iso(0) + '.';

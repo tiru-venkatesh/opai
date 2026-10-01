@@ -63,7 +63,7 @@ Extract only entities that are directly supported by the request:
 course, topic, exam, duration_min, date, time_window, task_title, due_date,
 query, contact_id, application_id, outbox_id, requested_action.
 
-Never invent IDs, dates, names, or deadlines.
+Use create_task ONLY when the user explicitly asks to add/create a task, todo or reminder. Requests to write, generate or explain content (prompts, emails, code, essays) are intent chat.\n\nNever invent IDs, dates, names, or deadlines.
 Confidence must represent how certain the intent/entity extraction is.
 """
     try:

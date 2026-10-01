@@ -77,7 +77,7 @@
       }
       var hasImg = parts.length > 1;
       var res = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.profile.groqKey },
-        body: JSON.stringify({ model: hasImg ? 'meta-llama/llama-4-scout-17b-16e-instruct' : (S.profile.groqModel || 'openai/gpt-oss-120b'), messages: [{ role: 'user', content: hasImg ? parts : parts[0].text }], max_tokens: 1200 }) });
+        body: JSON.stringify({ model: hasImg ? 'qwen/qwen3.8-27b' : (S.profile.groqModel || 'openai/gpt-oss-120b'), messages: [{ role: 'user', content: hasImg ? parts : parts[0].text }], max_tokens: 1200 }) });
       if (!res.ok) throw new Error('Groq ' + res.status);
       return (await res.json()).choices[0].message.content || '';
     }

@@ -4,6 +4,7 @@ load_dotenv()  # reads backend/.env if present, before any os.environ.get() call
 from uuid import UUID
 from datetime import date, datetime, timedelta
 from typing import List, Optional
+from pydantic import BaseModel
 from fastapi import FastAPI, Depends, HTTPException, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -1084,6 +1085,35 @@ def set_agent_permissions(user_id: UUID, payload: AgentPermissionsUpdate, db: Se
 @app.post("/v1/jarvis/chat", response_model=JarvisChatResponse)
 def jarvis_chat(request: JarvisChatRequest, db: Session = Depends(get_db)):
     return process_jarvis_message(request.user_id, request.message, db)
+
+
+# ================= GENERAL CHAT (no workspace data) =================
+class GeneralChatMessage(BaseModel):
+    role: str
+    content: str
+
+
+class GeneralChatRequest(BaseModel):
+    system: Optional[str] = None
+    messages: List[GeneralChatMessage]
+
+
+@app.post("/v1/chat/general")
+def general_chat(req: GeneralChatRequest):
+    from agent import groq_client
+    if not groq_client.groq_enabled():
+        raise HTTPException(503, "GROQ_API_KEY is not configured on the backend")
+    msgs = [{"role": "system", "content": (req.system or "You are KARNA, a helpful general-purpose assistant.")[:2000]}]
+    for m in req.messages[-12:]:
+        if m.role in ("user", "assistant"):
+            msgs.append({"role": m.role, "content": m.content[:6000]})
+    try:
+        out = groq_client.get_client().chat.completions.create(
+            model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), messages=msgs, temperature=0.6, max_tokens=1500,
+        ).choices[0].message.content or ""
+    except Exception as e:
+        raise HTTPException(502, f"AI chat failed: {e}")
+    return {"reply": out}
 
 
 # ================= HISTORY (READ-ONLY ROLLUP) =================

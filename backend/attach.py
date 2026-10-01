@@ -1,5 +1,5 @@
 """Attach & analyze: files / photos / PDFs from any section -> AI analysis. Nothing is stored."""
-import base64, io, os
+import base64, io, os, re
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException
@@ -11,7 +11,8 @@ router = APIRouter(prefix="/v1/attach", tags=["attach"])
 MAX_FILE_BYTES = 8 * 1024 * 1024
 MAX_FILES = 5
 MAX_TEXT = 24000
-VISION_MODEL = os.getenv("GROQ_VISION_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
+MAX_IMAGES = 3  # qwen3.8-27b on Groq accepts up to 3 images per request
+VISION_MODEL = os.getenv("GROQ_VISION_MODEL", "qwen/qwen3.8-27b")
 
 SECTION_HINTS = {
     "applications": "The user tracks internship/job/research applications. Pull out company, role, deadline, requirements and next steps.",
@@ -77,6 +78,8 @@ def analyze(req: AttachRequest):
             texts.append((f.name, t))
         else:
             texts.append((f.name, raw.decode("utf-8", errors="replace")))
+    if len(images) > MAX_IMAGES:
+        raise HTTPException(400, f"Attach at most {MAX_IMAGES} images at a time")
     budget = MAX_TEXT // max(len(texts), 1)
     doc = "\n\n".join(f"=== {n} ===\n{t[:budget]}" for n, t in texts)
     q = (req.question or "").strip() or "Analyze this and tell me what matters."
@@ -91,6 +94,7 @@ def analyze(req: AttachRequest):
                 messages=[{"role": "system", "content": system}, {"role": "user", "content": content}],
                 temperature=0.2,
             ).choices[0].message.content or ""
+            out = re.sub(r"<think>.*?</think>", "", out, flags=re.S).strip()
         else:
             out = groq_client.generate_text(system, f"{q}\n\n{doc}")
     except Exception as e:
