@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OPAI Super Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#131315;--surface:#1c1b1d;--surface-2:#201f22;--surface-3:#2a2a2c;--surface-4:#353437;
+  --text:#e5e1e4;--muted:#c4c7c8;--dim:#8e9192;--line:#444748;--primary:#fff;--on-primary:#2f3131;
+  --good:#9be3a9;--warn:#f0c674;--bad:#ffb4ab;
+  --sans:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/22px var(--sans);letter-spacing:-.005em;-webkit-font-smoothing:antialiased}
+body{min-height:100vh;background-image:radial-gradient(#ffffff0a 1px,transparent 1px);background-size:32px 32px}
+body::before{content:"";position:fixed;left:50%;top:-180px;width:640px;height:640px;transform:translateX(-50%);border-radius:50%;
+  background:radial-gradient(closest-side,#ffffff12,transparent);pointer-events:none;z-index:-1}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.mono{font-family:var(--mono)}
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:16px;padding:0 24px;height:60px;
+  background:#131315d9;backdrop-filter:blur(16px);border-bottom:1px solid #2a2a2c99}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:18px;letter-spacing:-.015em;color:var(--primary)}
+.brand svg{width:26px;height:26px}
+nav{display:flex;gap:2px;margin-left:8px;overflow-x:auto;scrollbar-width:none}
+nav a{padding:5px 10px;border-radius:2px;color:var(--muted);text-decoration:none;font-size:13px;white-space:nowrap}
+nav a:hover{background:var(--surface-3);color:var(--text)}
+nav a[aria-current=page]{background:var(--primary);color:var(--on-primary);font-weight:600}
+.sp{flex:1}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border:1px solid #2a2a2c99;background:var(--surface);border-radius:999px;
+  font:11px/14px var(--mono);color:var(--muted);letter-spacing:.04em}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--dim)}
+.dot.ok{background:var(--good)} .dot.err{background:var(--bad)} .dot.wait{background:var(--warn)}
+main{max-width:860px;margin:0 auto;padding:28px 20px 220px;display:flex;flex-direction:column;gap:28px}
+.empty h1{font-size:32px;line-height:38px;letter-spacing:-.03em;font-weight:500;margin:24px 0 8px}
+.empty p{margin:0;color:var(--muted);max-width:56ch}
+.msg{display:flex;gap:14px;align-items:flex-start}
+.av{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--surface-3);border:1px solid var(--surface-4);font-size:12px;font-weight:600}
+.msg.agent .av{background:var(--primary);color:var(--on-primary);box-shadow:0 0 20px #ffffff40}
+.body{min-width:0;flex:1;display:flex;flex-direction:column;gap:10px}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font:11px/14px var(--mono);color:var(--dim);letter-spacing:.04em}
+.meta b{color:var(--text);font-weight:500}
+.pill{padding:1px 7px;border-radius:4px;background:var(--surface-3);color:var(--text)}
+.bubble{padding:16px 18px;border-radius:16px;background:#201f22cc;border:1px solid #2a2a2c99;white-space:pre-wrap;word-break:break-word;line-height:24px}
+.msg.agent .bubble{background:#1c1b1de6;border-color:#444748aa}
+.msg.err .bubble{border-color:#93000a;color:var(--bad)}
+details.trace,details.data{background:#0e0e10cc;border:1px solid #2a2a2c99;border-radius:10px;padding:6px 10px}
+details summary{cursor:pointer;font:11px/14px var(--mono);letter-spacing:.04em;color:var(--muted);padding:6px 2px;list-style:none;display:flex;gap:8px;align-items:center}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"+";color:var(--dim);width:10px}
+details[open] summary::before{content:"\2212"}
+.step{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;padding:8px;margin:4px 0;border-radius:6px;background:#1c1b1db3;font:12px/18px var(--mono)}
+.step .t{color:var(--text)} .step .a,.step .r{grid-column:2;color:var(--dim);word-break:break-all}
+.step .ok{color:var(--good)} .step .no{color:var(--bad)}
+pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);color:var(--muted);white-space:pre-wrap;word-break:break-word}
+.gate{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:12px;background:#20202299;border:1px solid #444748aa}
+.gate h2{margin:0;font-size:14px;font-weight:600;display:flex;gap:10px;align-items:center}
+.card{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;background:#0e0e10cc;border:1px solid #2a2a2c99}
+.card .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font:12px/18px var(--mono);color:var(--dim)}
+.card .subj{font-weight:500;color:var(--text);font-size:14px}
+.card .preview{white-space:pre-wrap;color:var(--muted);font-size:13px;line-height:20px;max-height:140px;overflow:auto}
+.risk-high{color:var(--bad)} .risk-medium{color:var(--warn)} .risk-low{color:var(--good)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{padding:7px 14px;border-radius:4px;border:1px solid var(--line);background:var(--surface-3);font-size:13px}
+.btn:hover{background:var(--surface-4)}
+.btn.primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary);font-weight:600}
+.btn.primary:hover{background:#ffffffe6}
+.btn:disabled{opacity:.5;cursor:default}
+.note{font-size:12px;color:var(--dim)}
+.dock{position:fixed;left:0;right:0;bottom:0;padding:24px 20px calc(14px + env(safe-area-inset-bottom,0px));z-index:15;
+  background:linear-gradient(to top,var(--bg) 55%,transparent);pointer-events:none}
+.composer{pointer-events:auto;max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:16px;
+  background:#1c1b1df2;border:1px solid #444748b3;box-shadow:0 20px 50px #000000d9}
+.sugg{display:flex;flex-wrap:wrap;gap:6px}
+.sugg button{padding:4px 11px;border-radius:999px;border:1px solid #2a2a2c99;background:var(--surface);font-size:12px;color:var(--text)}
+.sugg button:hover{border-color:#ffffff80}
+.input{display:flex;align-items:center;gap:10px;padding:6px 8px 6px 14px;border-radius:12px;background:var(--surface-2);border:1px solid #2a2a2c99}
+.input:focus-within{border-color:#ffffff66}
+.input input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--primary);font:inherit;padding:8px 0}
+.input input::placeholder{color:var(--dim)}
+.typing i{display:inline-block;width:6px;height:6px;margin-right:4px;border-radius:50%;background:var(--muted);animation:b 1s infinite ease-in-out}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,80%,100%{opacity:.25}40%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.typing i{animation:none;opacity:.6}}
+@media (max-width:720px){header{padding:0 14px}.chip.hide-sm{display:none}main{padding-left:14px;padding-right:14px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>
+    OPAI
+  </div>
+  <nav id="nav" aria-label="Sections"></nav>
+  <span class="sp"></span>
+  <span class="chip hide-sm" id="agent-chip" title="Tool calls allowed per message"><span class="dot wait"></span><span>agent</span></span>
+  <span class="chip" id="conn"><span class="dot wait"></span><span>connecting</span></span>
+</header>
+
+<main id="thread" aria-live="polite">
+  <section class="empty" id="empty">
+    <h1>Ask KARNA to run your day.</h1>
+    <p>It plans, searches your data, and drafts outreach. Drafts wait below for your approval and nothing is sent automatically.</p>
+  </section>
+</main>
+
+<div class="dock">
+  <div class="composer">
+    <div class="sugg" id="sugg"></div>
+    <div class="input">
+      <input id="q" type="text" autocomplete="off" aria-label="Message KARNA" placeholder="Ask KARNA to plan, search, or draft something">
+      <button class="btn primary" id="send" type="button">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const LS_BASE = 'opa_api_base';
+  const DEFAULT_API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8000' : 'https://opa-52ug.onrender.com';
+  const base = () => (localStorage.getItem(LS_BASE) || DEFAULT_API).replace(/\/+$/, '');
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  async function api(path, opts = {}) {
+    const res = await fetch(base() + path, { headers: opts.body ? { 'Content-Type': 'application/json' } : {}, ...opts });
+    if (!res.ok) {
+      let d = ''; try { d = (await res.json()).detail || ''; } catch (e) {}
+      const err = new Error(d || (res.status + ' ' + res.statusText)); err.status = res.status; throw err;
+    }
+    const t = await res.text(); return t ? JSON.parse(t) : null;
+  }
+
+  // Same identity rules as the main app: dev-login for ?email=, otherwise the device's guest user.
+  let uid = null;
+  async function ensureUser() {
+    if (uid) return uid;
+    const params = new URLSearchParams(location.search);
+    const email = params.get('email') || localStorage.getItem('opai_sc_email');
+    if (email) {
+      localStorage.setItem('opai_sc_email', email);
+      uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(email), { method: 'POST' })).user_id;
+      return uid;
+    }
+    let gid = localStorage.getItem('opa_guest_uid');
+    if (gid) {
+      try { await api('/v1/profile?user_id=' + encodeURIComponent(gid)); uid = gid; return uid; }
+      catch (e) { if (e.status !== 404) throw e; }
+    }
+    gid = (await api('/v1/auth/guest', { method: 'POST' })).user_id;
+    localStorage.setItem('opa_guest_uid', gid); uid = gid; return uid;
+  }
+
+  // ---------- nav (links into the main app) ----------
+  const NAV = [['Overview','overview'],['Today','today'],['Applications','applications'],['Outreach','outreach'],['Projects','projects'],['Outbox','outbox'],['Agent','agent']];
+  $('nav').innerHTML = '<a aria-current="page" href="#">Super Chat</a>' + NAV.map(([l,v]) => '<a href="app.html#/' + v + '">' + l + '</a>').join('');
+
+  // ---------- status ----------
+  function setConn(state, text) { $('conn').innerHTML = '<span class="dot ' + state + '"></span><span>' + esc(text) + '</span>'; }
+  async function boot() {
+    try {
+      const h = await api('/v1/health');
+      setConn(h.ok ? 'ok' : 'err', h.ok ? 'connected' : 'backend degraded');
+      if (!h.groq_key_set) addError('The backend has no GROQ_API_KEY set, so the agent cannot answer yet.');
+    } catch (e) { setConn('err', 'backend unreachable'); addError('Could not reach ' + base() + '. If it is on a free host it may be waking up; try again in a minute. ' + e.message); }
+    try {
+      await ensureUser();
+      const p = await api('/v1/agent/permissions?user_id=' + uid);
+      $('agent-chip').innerHTML = '<span class="dot ' + (p.agent_enabled ? 'ok' : 'err') + '"></span><span>' + (p.agent_enabled ? 'agent on' : 'agent off') + ' \u00b7 ' + p.max_tool_calls_per_turn + ' tools/msg</span>';
+      refreshGate();
+    } catch (e) { /* surfaced on first send */ }
+  }
+
+  // ---------- thread ----------
+  const thread = $('thread');
+  function scrollEnd() { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }
+  function hideEmpty() { const e = $('empty'); if (e) e.remove(); }
+  function addUser(text) {
+    hideEmpty();
+    const d = document.createElement('div'); d.className = 'msg';
+    d.innerHTML = '<div class="av" aria-hidden="true">You</div><div class="body"><div class="meta"><b>You</b><span>' + new Date().toLocaleTimeString() + '</span></div><div class="bubble">' + esc(text) + '</div></div>';
+    thread.insertBefore(d, $('gate')); scrollEnd();
+  }
+  function addError(text) {
+    hideEmpty();
+    const d = document.createElement('div'); d.className = 'msg err';
+    d.innerHTML = '<div class="av" aria-hidden="true">!</div><div class="body"><div class="bubble">' + esc(text) + '</div></div>';
+    thread.insertBefore(d, $('gate')); scrollEnd();
+  }
+  function stepHTML(tc, i) {
+    const r = tc.result || {};
+    const failed = r.ok === false || r.error || (r.result && (r.result.error || r.result.created === false || r.result.drafted === false));
+    const out = r.error || (r.result && r.result.error) || JSON.stringify(r.result !== undefined ? r.result : r);
+    return '<div class="step"><span class="' + (failed ? 'no' : 'ok') + '">' + (failed ? '\u2715' : '\u2713') + '</span><span class="t">' + esc(tc.tool || tc.name || 'tool') + '</span>' +
+      '<span class="a">args ' + esc(JSON.stringify(tc.arguments || {}).slice(0, 220)) + '</span>' +
+      '<span class="r">' + esc(String(out).slice(0, 320)) + '</span></div>';
+  }
+  function addAgent(res, ms) {
+    hideEmpty();
+    const tcs = res.tool_calls || [];
+    const d = document.createElement('div'); d.className = 'msg agent';
+    let h = '<div class="av" aria-hidden="true">K</div><div class="body"><div class="meta"><b>KARNA</b><span class="pill">' + esc(res.action || 'chat') + '</span><span>' + new Date().toLocaleTimeString() + '</span><span>' + (ms / 1000).toFixed(2) + 's round trip</span></div>';
+    if (tcs.length) h += '<details class="trace"><summary>Tool calls this turn (' + tcs.length + ')</summary>' + tcs.map(stepHTML).join('') + '</details>';
+    h += '<div class="bubble">' + esc(res.reply || 'Done.') + '</div>';
+    if (res.payload != null && res.payload !== '' && !(Array.isArray(res.payload) && !res.payload.length))
+      h += '<details class="data"><summary>Result data</summary><pre class="json">' + esc(JSON.stringify(res.payload, null, 2)) + '</pre></details>';
+    h += '</div>'; d.innerHTML = h;
+    thread.insertBefore(d, $('gate')); scrollEnd();
+  }
+
+  // ---------- approval gate (real Outbox) ----------
+  const gate = document.createElement('section'); gate.id = 'gate'; gate.className = 'gate'; gate.hidden = true; thread.appendChild(gate);
+  async function refreshGate() {
+    try {
+      const rows = await api('/v1/outbox?user_id=' + encodeURIComponent(await ensureUser()));
+      const pending = rows.filter((o) => o.status === 'pending');
+      gate.hidden = !pending.length;
+      if (!pending.length) { gate.innerHTML = ''; return; }
+      gate.innerHTML = '<h2>Waiting for your approval <span class="pill mono">' + pending.length + '</span></h2>' +
+        pending.map((o) => {
+          const p = o.payload || {};
+          const exp = o.expires_at ? new Date(o.expires_at + (/[zZ]|[+-]\d\d:?\d\d$/.test(o.expires_at) ? '' : 'Z')).toLocaleString() : '';
+          return '<div class="card" data-id="' + esc(o.id) + '">' +
+            '<div class="row"><span>' + esc(o.channel) + '</span><span class="risk-' + esc(o.risk_level) + '">risk ' + esc(o.risk_level) + '</span>' + (exp ? '<span>expires ' + esc(exp) + '</span>' : '') + '</div>' +
+            '<div class="subj">' + esc(p.subject || '(no subject)') + '</div>' +
+            '<div class="row">To: ' + esc(p.to || 'no address yet') + '</div>' +
+            '<div class="preview">' + esc(p.body || '') + '</div>' +
+            (o.note ? '<div class="note">' + esc(o.note) + '</div>' : '') +
+            '<div class="btns"><button class="btn primary" data-act="approve">Approve draft</button><button class="btn" data-act="reject">Reject</button></div>' +
+            '<div class="note" data-msg></div></div>';
+        }).join('') +
+        '<div class="note">Approving marks the draft as approved in your Outbox. OPAI does not send email for you; send it yourself from your mail client.</div>';
+    } catch (e) { /* leave gate as-is */ }
+  }
+  gate.addEventListener('click', async (ev) => {
+    const b = ev.target.closest('button[data-act]'); if (!b) return;
+    const card = b.closest('.card'), id = card.dataset.id, act = b.dataset.act, msg = card.querySelector('[data-msg]');
+    card.querySelectorAll('button').forEach((x) => x.disabled = true);
+    try {
+      await api('/v1/outbox/' + encodeURIComponent(id) + '/' + act, { method: 'POST' });
+      msg.textContent = act === 'approve' ? 'Approved.' : 'Rejected.';
+      setTimeout(refreshGate, 600);
+    } catch (e) {
+      msg.textContent = e.message; msg.className = 'note risk-high';
+      if (e.status === 409 || e.status === 410) setTimeout(refreshGate, 900); else card.querySelectorAll('button').forEach((x) => x.disabled = false);
+    }
+  });
+
+  // ---------- send ----------
+  const SUGG = ['What is on my plan today?', 'Show my upcoming deadlines', 'Find opportunities that match my resume', 'What is waiting for my approval?'];
+  $('sugg').innerHTML = SUGG.map((s) => '<button type="button">' + esc(s) + '</button>').join('');
+  $('sugg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { $('q').value = b.textContent; $('q').focus(); } });
+
+  let busy = false;
+  async function send() {
+    const input = $('q'), text = input.value.trim();
+    if (!text || busy) return;
+    busy = true; input.value = ''; $('send').disabled = true;
+    addUser(text);
+    const t = document.createElement('div'); t.className = 'msg agent';
+    t.innerHTML = '<div class="av" aria-hidden="true">K</div><div class="body"><div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div></div>';
+    thread.insertBefore(t, $('gate'));
+    const t0 = performance.now();
+    try {
+      const id = await ensureUser();
+      const res = await api('/v1/jarvis/chat', { method: 'POST', body: JSON.stringify({ user_id: id, message: text }) });
+      t.remove(); addAgent(res, performance.now() - t0);
+      refreshGate();
+    } catch (e) {
+      t.remove();
+      addError(e.status === 429 ? 'Too many requests. Wait a moment and try again.' : 'KARNA could not answer: ' + e.message);
+    } finally { busy = false; $('send').disabled = false; input.focus(); }
+  }
+  $('send').addEventListener('click', send);
+  $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); send(); } });
+
+  boot();
+})();
+</script>
+</body>
+</html>

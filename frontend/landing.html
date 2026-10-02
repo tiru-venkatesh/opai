@@ -6,1941 +6,240 @@
 <title>OPAI — an operating agent for one person doing a founder's job</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..700&family=Onest:wght@400..600&display=swap" rel="stylesheet">
 <style>
-  
-:root{
-  --bg:#F6F4EE; --surface:#FDFCF9; --surface-2:#EFEDE3;
-  --ink:#1E2A28; --ink-2:#5E6A66; --ink-3:#8F9894;
-  --line:#E7E4D9; --line-2:#D8D4C6;
-  --accent:#EE7B5D; --accent-d:#D9613F; --accent-soft:#FCE4DB;
-  --pine:#134E48; --pine-soft:#E0EBE5;
-  --good:#1B5A50; --good-soft:#E0EBE5;
-  --warn:#E0873A; --warn-soft:#FBEBD9;
-  --bad:#D9613F; --bad-soft:#FCE4DB;
-  --c-app:#1B5A50; --c-out:#EE7B5D; --c-proj:#2F7A6B; --c-acad:#8A7BB0; --c-req:#E0873A; --c-opp:#8F9894;
-  --display:'Newsreader',Georgia,serif;
-  --body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
-  color-scheme:light;
-}
-:root:not([data-theme="light"])[data-theme="dark"]{
-  /* OPAI landing stays on the brand light palette. */
-}
-
-@media (prefers-color-scheme:dark){
-  /* Keep the brand light palette on the public landing page. */
-}
-:root[data-theme="dark"]{
-  /* Keep the brand light palette on the public landing page. */
-}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px)}
-body{
-  margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);
-  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;
-  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
-}
-h1,h2,h3,p{margin:0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ease:cubic-bezier(.16,1,.3,1);--bg:#F2F4F8;--surface:#fff;--ink:#0F1729;--ink-2:#4A5570;--ink-3:#7C86A0;--line:#E2E6EF;--line-2:#CDD3E1;--accent:#3D5AFE;--accent-d:#2740D8;--pill:#F4F4F6;
+--display:'Bricolage Grotesque',system-ui,sans-serif;--body:'Onest',system-ui,-apple-system,'Segoe UI',sans-serif}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.02em}
 a{color:inherit}
-img{max-width:100%}
 .wrap{max-width:1180px;margin:0 auto;padding:0 32px}
-@media (max-width:640px){.wrap{padding:0 20px}}
+@media(max-width:640px){.wrap{padding:0 20px}}
 
-/* nav */
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-.navrow{display:flex;align-items:center;gap:36px;height:68px}
-.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:21px;font-weight:600;letter-spacing:-.01em;margin-right:auto}
-.brand i{width:26px;height:26px;border-radius:6px;background:var(--accent);display:inline-block;position:relative;flex-shrink:0}
-.brand i:before{content:"";position:absolute;inset:7px;border-radius:2px;background:var(--surface)}
-nav.links{display:flex;gap:28px}
-nav.links a{font-size:14px;color:var(--ink-2);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:2px;transition:color .15s,border-color .15s}
-nav.links a:hover{color:var(--ink);border-color:var(--ink-3)}
-.navcta{display:flex;align-items:center;gap:10px}
-@media (max-width:900px){nav.links{display:none}}
+/* ---------- navbar ---------- */
+.navbar{position:fixed;top:0;left:0;width:100%;z-index:50;pointer-events:none;padding:calc(16px + env(safe-area-inset-top,0px)) 16px 16px;display:flex;align-items:center;justify-content:space-between;opacity:0;transform:translateY(-16px);animation:down .8s var(--ease) forwards}
+@keyframes down{to{opacity:1;transform:none}}
+.nav-left,.nav-right{display:flex;align-items:center;gap:8px;pointer-events:auto;position:relative}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;padding:4px 10px 4px 4px;border-radius:99px;background:rgba(255,255,255,.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.logo svg{width:28px;height:28px;flex-shrink:0}
+.brand-name{font-family:var(--display);font-size:15px;font-weight:600;display:none}
+.menu-btn{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:#fff;padding:3px 12px 3px 3px;border-radius:99px;border:0;cursor:pointer;font:500 11px var(--body);box-shadow:0 2px 8px rgba(0,0,0,.12);transition:transform .2s var(--ease)}
+.menu-btn:hover{transform:scale(1.03)}
+.menu-btn .ic{width:28px;height:28px;border-radius:50%;background:#fff;color:var(--ink);display:grid;place-items:center;transition:transform .3s var(--ease)}
+.menu-btn[aria-expanded=true] .ic{transform:rotate(45deg)}
+.menu-panel{position:absolute;top:calc(100% + 10px);left:0;min-width:200px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:0 18px 40px -18px rgba(15,23,41,.35);display:none;flex-direction:column}
+.menu-panel.open{display:flex}
+.menu-panel a{padding:9px 12px;border-radius:8px;text-decoration:none;font-size:14px;color:var(--ink-2)}
+.menu-panel a:hover{background:var(--bg);color:var(--ink)}
+.tags-pill{display:none;align-items:center;gap:12px;background:var(--pill);padding:7px 16px;border-radius:99px;font-size:11px;font-weight:500;color:rgba(0,0,0,.75);border:1px solid rgba(0,0,0,.04)}
+.right-pill{display:inline-flex;align-items:center;gap:8px;background:var(--pill);padding:3px;border-radius:99px;border:1px solid rgba(0,0,0,.04);font-size:11px;font-weight:500;text-decoration:none}
+.right-pill .ic{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center}
+.right-pill span{display:none;padding-right:12px}
+@media(min-width:768px){
+ .navbar{padding:calc(24px + env(safe-area-inset-top,0px)) 32px 24px}
+ .brand-name,.tags-pill{display:inline-flex}.brand-name{display:block}
+ .right-pill span{display:block}
+ .logo svg,.menu-btn .ic,.right-pill .ic{width:32px;height:32px}
+}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 20px;border-radius:7px;font-size:14.5px;font-weight:600;border:1px solid transparent;cursor:pointer;text-decoration:none;transition:transform .1s,background .15s,border-color .15s}
-.btn.dark{background:var(--ink);color:var(--bg)}
-.btn.dark:hover{background:var(--pine)}
-.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line-2)}
-.btn.ghost:hover{background:var(--surface-2)}
-.btn.accent{background:var(--accent);color:#fff}
-.btn.accent:hover{filter:brightness(1.06)}
-.btn:active{transform:translateY(1px)}
+/* ---------- hero ---------- */
+.hero{position:relative;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;background:#fff}
+.video-viewport{position:absolute;inset:0;z-index:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.video-wrapper{width:80%;height:80%;border-radius:20px;overflow:hidden;background:var(--ink);box-shadow:0 20px 50px rgba(0,0,0,.08);opacity:0;transform:scale(1.05);animation:vfade 1.8s var(--ease) forwards}
+@keyframes vfade{to{opacity:1;transform:none}}
+.video-wrapper img{width:100%;height:100%;object-fit:cover;object-position:62% 35%;display:block}
+.hero-foot{position:relative;z-index:30;width:100%;background:linear-gradient(to top,#fff 0%,rgba(255,255,255,.85) 60%,transparent 100%);padding:80px 20px 32px;display:flex;flex-direction:column;gap:24px;opacity:0;transform:translateY(20px);animation:up 1s var(--ease) .5s forwards}
+@keyframes up{to{opacity:1;transform:none}}
+.sub{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:rgba(0,0,0,.55)}
+.sub i{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px rgba(61,90,254,.15)}
+.hero h1{font-size:clamp(2rem,8vw,4.5rem);font-weight:400;line-height:1.02;letter-spacing:-.03em;margin:14px 0 24px}
+.hero h1 span{display:block}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 24px;border-radius:99px;font-size:13px;font-weight:500;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:all .2s var(--ease)}
+.btn.p{background:var(--ink);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.15)}
+.btn.p:hover{background:var(--accent);transform:translateY(-1px)}
+.btn.s{background:rgba(255,255,255,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-color:rgba(0,0,0,.35)}
+.btn.s:hover{background:#fff;border-color:rgba(0,0,0,.7);transform:translateY(-1px)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:8px 16px;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:99px;font-size:11px;font-weight:500;color:rgba(0,0,0,.75);box-shadow:0 2px 6px rgba(0,0,0,.04)}
+@media(min-width:768px){
+ .video-wrapper{width:100%;height:100%;border-radius:0;box-shadow:none}
+ .hero-foot{padding:120px 32px 40px;flex-direction:row;align-items:flex-end;justify-content:space-between}
+ .hero h1{font-size:clamp(2.5rem,5.5vw,4.5rem)}
+ .chips{justify-content:flex-end;margin-bottom:8px}
+}
 
-/* hero */
-.hero{padding:88px 0 76px}
-.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
-@media (max-width:920px){.hero-grid{grid-template-columns:1fr;gap:44px}.hero{padding:52px 0 48px}}
-.eyebrow{font-family:var(--mono);font-size:12.5px;color:var(--accent);letter-spacing:.01em}
-.hero h1{font-family:var(--display);font-weight:500;font-size:clamp(36px,5vw,58px);letter-spacing:-.02em;line-height:1.06;margin-top:16px}
-.hero p.lead{color:var(--ink-2);font-size:17.5px;max-width:46ch;margin-top:20px;line-height:1.65}
-.hero-actions{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
-.hero-fine{font-size:13px;color:var(--ink-3);margin-top:16px}
-
-/* device panel */
-.device{background:var(--pine);border-radius:14px;padding:20px;box-shadow:0 24px 60px -28px rgba(19,78,72,.45)}
-.device-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.device-dots{display:flex;gap:6px}
-.device-dots span{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.28)}
-.device-time{font-family:var(--mono);font-size:11.5px;color:rgba(255,255,255,.65);background:rgba(255,255,255,.1);padding:4px 10px;border-radius:99px}
-.device-card{background:var(--surface);border-radius:10px;padding:22px}
-.device-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
-.device-title{font-family:var(--display);font-size:20px;font-weight:600;letter-spacing:-.01em;margin-bottom:16px}
-.plan-item{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:13px 0;border-top:1px solid var(--line)}
-.plan-item:first-of-type{border-top:none}
-.plan-item .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:6px;flex-shrink:0}
-.plan-item.done .dot{background:var(--pine)}
-.plan-item .name{font-weight:600;font-size:14.5px}
-.plan-item.done .name{color:var(--ink-3);text-decoration:line-through}
-.plan-item .sub{font-size:12.5px;color:var(--ink-2);margin-top:2px}
-.plan-item .when{font-family:var(--mono);font-size:12px;color:var(--ink-3);white-space:nowrap;padding-top:1px}
-.plan-row{display:flex;gap:12px;align-items:flex-start}
-
-section{padding:64px 0}
-.section-head{max-width:640px;margin-bottom:44px}
-.section-head .eyebrow{display:block;margin-bottom:12px}
-.section-head h2{font-family:var(--display);font-weight:500;font-size:clamp(28px,3.4vw,38px);letter-spacing:-.015em;line-height:1.15}
-.section-head p{color:var(--ink-2);font-size:16px;margin-top:14px;max-width:56ch}
-
-/* problem */
-.problem-top h2{font-family:var(--display);font-weight:500;font-size:clamp(28px,3.6vw,42px);line-height:1.18;letter-spacing:-.015em;max-width:16ch}
-.problem-top p{color:var(--ink-2);font-size:16px;margin-top:18px;max-width:56ch}
-.personas{margin-top:48px;border-top:1px solid var(--line)}
-.persona{display:grid;grid-template-columns:180px 1fr;gap:32px;padding:30px 0;border-bottom:1px solid var(--line)}
-@media (max-width:720px){.persona{grid-template-columns:1fr;gap:10px}}
-.persona .tag{font-family:var(--mono);font-size:12.5px;color:var(--accent);padding-top:2px}
-.persona h3{font-family:var(--display);font-weight:500;font-size:21px;letter-spacing:-.01em;max-width:34ch}
-.persona p{color:var(--ink-2);font-size:15px;margin-top:10px;max-width:58ch}
-
-/* how it works */
+/* ---------- sections ---------- */
+section{padding:72px 0}
+.eyebrow{font:500 12.5px ui-monospace,Menlo,monospace;color:var(--accent)}
+.head{max-width:640px;margin-bottom:40px}
+.head h2,.why h2{font-size:clamp(28px,3.6vw,40px);font-weight:500;line-height:1.15;margin-top:12px}
+.head p,.why>p{color:var(--ink-2);margin-top:14px;max-width:56ch}
+.personas{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:40px}
+.persona{background:var(--surface);padding:28px}
+.persona .tag{font:500 12px ui-monospace,Menlo,monospace;color:var(--accent)}
+.persona h3{font-size:20px;font-weight:500;margin-top:8px;line-height:1.25}
+.persona p{color:var(--ink-2);font-size:14.5px;margin-top:10px}
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-@media (max-width:820px){.steps{grid-template-columns:1fr}}
-.step{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:26px}
-.step .n{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
-.step h3{font-family:var(--display);font-weight:600;font-size:19px;margin-top:10px}
-.step p{color:var(--ink-2);font-size:14.5px;margin-top:8px;line-height:1.55}
-.step .bit{margin-top:16px;background:var(--surface-2);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:var(--ink)}
-.step .bit.you{color:var(--accent)}
-
-/* inside grid */
-.inside-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-@media (max-width:820px){.inside-grid{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:560px){.inside-grid{grid-template-columns:1fr}}
-.inside-cell{background:var(--surface);padding:26px}
-.inside-cell .dot-lbl{display:flex;align-items:center;gap:9px;margin-bottom:10px}
-.inside-cell .dot-lbl i{width:8px;height:8px;border-radius:2.5px}
-.inside-cell h3{font-family:var(--display);font-weight:600;font-size:17px}
-.inside-cell p{color:var(--ink-2);font-size:14px;margin-top:7px;line-height:1.55}
-
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:44px}
-@media (max-width:640px){.stats{grid-template-columns:1fr 1fr}}
-.stat{background:var(--surface);padding:24px}
-.stat b{display:block;font-family:var(--display);font-size:34px;font-weight:500;color:var(--accent)}
-.stat span{font-size:13px;color:var(--ink-2);margin-top:4px;display:block}
-
-/* jarvis */
-.jarvis{background:var(--pine);border-radius:16px;padding:44px;color:#F4F2E8}
-.jarvis-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
-@media (max-width:860px){.jarvis-grid{grid-template-columns:1fr}.jarvis{padding:30px}}
-.jarvis h2{font-family:var(--display);font-weight:500;font-size:clamp(24px,3vw,32px);letter-spacing:-.01em;line-height:1.22}
-.jarvis p{color:#BFD4CE;font-size:15px;margin-top:14px;max-width:44ch}
-.chat{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:18px}
-.bubble{max-width:88%;padding:10px 14px;border-radius:9px;font-size:13.5px;line-height:1.5;margin-bottom:10px}
-.bubble.you{background:var(--accent);color:#fff;margin-left:auto;border-bottom-right-radius:3px}
-.bubble.jv{background:rgba(255,255,255,.09);color:#EDEAE0;border-bottom-left-radius:3px}
-.bubble b{display:block}
-
-/* faq */
-.faq-list{border-top:1px solid var(--line)}
-.faq-item{border-bottom:1px solid var(--line)}
-.faq-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 0;background:none;border:0;text-align:left;font-family:var(--display);font-size:19px;font-weight:500;color:var(--ink);cursor:pointer;letter-spacing:-.005em}
-.faq-q .plus{font-family:var(--mono);font-size:18px;color:var(--ink-3);flex-shrink:0;transition:transform .2s}
-.faq-item.open .faq-q .plus{transform:rotate(45deg);color:var(--accent)}
-.faq-a{max-height:0;overflow:hidden;transition:max-height .25s ease}
-.faq-a p{color:var(--ink-2);font-size:15px;line-height:1.6;padding-bottom:22px;max-width:60ch}
-
-/* cta */
-.cta{background:var(--surface-2);border-radius:16px;padding:52px;text-align:left}
-.cta-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
-@media (max-width:820px){.cta-grid{grid-template-columns:1fr}.cta{padding:32px}}
-.cta h2{font-family:var(--display);font-weight:500;font-size:clamp(26px,3.4vw,36px);letter-spacing:-.015em;line-height:1.15}
-.cta p{color:var(--ink-2);font-size:15.5px;margin-top:14px;max-width:44ch}
-.cta-actions{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
-.notify{background:var(--surface);border:1px solid var(--line-2);border-radius:10px;padding:18px}
-.notify label{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:9px}
-.notify-row{display:flex;gap:8px}
-.notify input{flex:1;min-width:0;padding:11px 12px;border:1px solid var(--line-2);border-radius:7px;background:var(--bg);color:var(--ink);font-size:14px}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:26px;transition:transform .25s var(--ease),box-shadow .25s var(--ease)}
+.step:hover{transform:translateY(-3px);box-shadow:0 14px 28px -20px rgba(15,23,41,.35)}
+.step .n{font:12px ui-monospace,Menlo,monospace;color:var(--ink-3)}
+.step h3{font-size:19px;font-weight:600;margin-top:10px}
+.step p{color:var(--ink-2);font-size:14.5px;margin-top:8px}
+.bit{margin-top:16px;background:var(--bg);border-radius:8px;padding:12px 14px;font:12.5px/1.55 ui-monospace,Menlo,monospace}
+.bit.you{color:var(--accent-d)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.cell{background:var(--surface);padding:24px}
+.cell i{display:block;width:8px;height:8px;border-radius:2.5px;margin-bottom:12px}
+.cell h3{font-size:17px;font-weight:600}
+.cell p{color:var(--ink-2);font-size:14px;margin-top:6px}
+.faq details{border-bottom:1px solid var(--line)}
+.faq details:first-of-type{border-top:1px solid var(--line)}
+.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:16px;padding:22px 0;font:500 19px var(--display)}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font:18px ui-monospace,monospace;color:var(--ink-3);transition:transform .3s var(--ease)}
+.faq details[open] summary::after{transform:rotate(45deg);color:var(--accent)}
+.faq details p{color:var(--ink-2);padding:0 0 22px;max-width:60ch}
+.cta{background:var(--ink);color:#F2F4F8;border-radius:20px;padding:52px;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+.cta h2{font-size:clamp(26px,3.4vw,36px);font-weight:500;line-height:1.15}
+.cta p{color:#AEB8D2;margin-top:14px;max-width:44ch}
+.cta .btns{margin-top:24px}
+.cta .btn.p{background:var(--accent)}
+.cta .btn.s{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.notify{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:18px}
+.notify label{font:11.5px ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:#AEB8D2;display:block;margin-bottom:9px}
+.notify div{display:flex;gap:8px}
+.notify input{flex:1;min-width:0;padding:11px 12px;border:1px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font:14px var(--body)}
 .notify input:focus{outline:2px solid var(--accent);outline-offset:1px}
-.notify .fine{font-size:12px;color:var(--ink-3);margin-top:10px;line-height:1.5}
-
-footer{border-top:1px solid var(--line);padding:32px 0;margin-top:16px}
-.foot-row{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)}
-.foot-row .brand{font-size:15px;margin-right:0}
-
-@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;scroll-behavior:auto!important}}
-
-/* ===== OPAI KARNA STUDY WORKFLOW ===== */
-
-.workflow-app-container{
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-  width:100%;
-}
-
-.sw-header-top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:14px;
-  padding:12px 16px;
-  background:var(--surface);
-  border:1px solid var(--line);
-  border-radius:10px;
-  box-shadow:var(--shadow-1);
-}
-
-.sw-header-left{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-
-.sw-jarvis-title h2{
-  font-family:var(--display);
-  font-size:18px;
-  line-height:1;
-}
-
-.sw-jarvis-title span{
-  display:block;
-  margin-top:3px;
-  color:var(--ink-3);
-  font:10.5px var(--mono);
-}
-
-.sw-live-badge{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:4px 9px;
-  border-radius:999px;
-  background:var(--good-soft);
-  color:var(--good);
-  font:600 10px var(--mono);
-}
-
-.sw-live-dot{
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:currentColor;
-  animation:swlive 1.8s infinite;
-}
-
-@keyframes swlive{
-  50%{opacity:.35}
-}
-
-.sw-header-right{
-  display:flex;
-  gap:7px;
-}
-
-.sw-tabs-bar{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:8px 14px;
-  background:var(--surface);
-  border:1px solid var(--line);
-  border-radius:10px;
-}
-
-.sw-tabs-left{
-  display:flex;
-  gap:18px;
-}
-
-.sw-tab-btn{
-  position:relative;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:7px 4px;
-  border:0;
-  background:none;
-  color:var(--ink-2);
-  font-size:13px;
-  font-weight:600;
-}
-
-.sw-tab-btn.active{
-  color:var(--accent-d);
-}
-
-.sw-tab-btn.active::after{
-  content:"";
-  position:absolute;
-  left:3px;
-  right:3px;
-  bottom:-9px;
-  height:2px;
-  border-radius:3px;
-  background:var(--accent);
-}
-
-.sw-tabs-right-flow{
-  color:var(--ink-3);
-  font:500 10.5px var(--mono);
-}
-
-.sw-main-card{
-  position:relative;
-  background:var(--surface);
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:20px;
-  box-shadow:var(--shadow-1);
-}
-
-.sw-workflow-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:16px;
-  flex-wrap:wrap;
-  margin-bottom:18px;
-}
-
-.sw-title-wrap{
-  display:flex;
-  gap:11px;
-}
-
-.sw-sparkle-icon{
-  color:var(--accent);
-}
-
-.sw-title-text h2{
-  font-family:var(--display);
-  font-size:26px;
-  letter-spacing:-.03em;
-}
-
-.sw-title-text p{
-  margin-top:4px;
-  color:var(--ink-2);
-  font-size:13px;
-}
-
-.sw-encouragement-card{
-  display:flex;
-  align-items:center;
-  gap:9px;
-  padding:8px 12px;
-  border:1px solid var(--line);
-  background:var(--accent-soft);
-  border-radius:9px;
-}
-
-.sw-target-icon-wrap{
-  width:28px;
-  height:28px;
-  display:grid;
-  place-items:center;
-  border-radius:7px;
-  background:var(--surface);
-  color:var(--accent);
-}
-
-.sw-encouragement-text{
-  font-size:11.5px;
-}
-
-.sw-encouragement-text strong{
-  display:block;
-}
-
-.sw-encouragement-text span{
-  color:var(--ink-2);
-}
-
-.sw-steps-container{
-  display:grid;
-  grid-template-columns:
-    1fr 18px
-    1fr 18px
-    1fr 18px
-    1fr 18px
-    1fr 18px
-    1fr;
-  gap:0;
-  overflow-x:auto;
-  padding-bottom:6px;
-}
-
-.sw-step-card{
-  min-width:152px;
-  min-height:142px;
-  padding:12px;
-  border:1px solid var(--line);
-  border-radius:9px;
-  background:var(--bg);
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  transition:.18s;
-}
-
-.sw-step-card:hover{
-  transform:translateY(-2px);
-}
-
-.sw-step-card.done{
-  background:var(--good-soft);
-}
-
-.sw-step-card.active{
-  border-color:var(--accent);
-  background:var(--surface);
-  box-shadow:0 8px 24px -18px var(--accent);
-}
-
-.sw-step-header{
-  display:flex;
-  justify-content:space-between;
-  gap:8px;
-  margin-bottom:9px;
-}
-
-.sw-step-label{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:11.5px;
-  font-weight:700;
-}
-
-.sw-badge-done,
-.sw-badge-progress,
-.sw-badge-waiting{
-  padding:3px 6px;
-  border-radius:999px;
-  font:9.5px var(--mono);
-}
-
-.sw-badge-done{
-  background:var(--good-soft);
-  color:var(--good);
-}
-
-.sw-badge-progress{
-  background:var(--accent-soft);
-  color:var(--accent-d);
-}
-
-.sw-badge-waiting{
-  background:var(--surface-2);
-  color:var(--ink-3);
-}
-
-.sw-step-body{
-  color:var(--ink-2);
-  font-size:11.5px;
-  line-height:1.48;
-}
-
-.sw-step-body strong{
-  color:var(--ink);
-}
-
-.sw-step-footer{
-  color:var(--ink-3);
-  font:10px var(--mono);
-}
-
-.sw-step-dots{
-  display:flex;
-  gap:4px;
-}
-
-.sw-dot{
-  width:4px;
-  height:4px;
-  border-radius:50%;
-  background:var(--line-2);
-}
-
-.sw-dot.active{
-  background:var(--accent);
-}
-
-.sw-connector{
-  display:grid;
-  place-items:center;
-  color:var(--ink-3);
-  font:600 14px var(--mono);
-}
-
-.sw-controls-row{
-  display:grid;
-  grid-template-columns:1.2fr .8fr 1fr auto;
-  gap:10px;
-  align-items:end;
-  margin-top:18px;
-  padding-top:17px;
-  border-top:1px solid var(--line);
-}
-
-.sw-input-group{
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-}
-
-.sw-input-group label{
-  color:var(--ink-3);
-  font:600 10.5px var(--mono);
-  text-transform:uppercase;
-}
-
-.sw-select{
-  width:100%;
-  padding:9px 11px;
-  border:1px solid var(--line-2);
-  border-radius:7px;
-  background:var(--surface);
-  color:var(--ink);
-}
-
-.sw-btn-generate{
-  height:38px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:7px;
-  padding:0 15px;
-  border:0;
-  border-radius:7px;
-  background:var(--accent);
-  color:white;
-  font-weight:700;
-  cursor:pointer;
-}
-
-.sw-plan-card{
-  margin-top:18px;
-  border:1px solid var(--line);
-  border-radius:9px;
-  overflow:hidden;
-  background:var(--surface);
-}
-
-.sw-plan-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:14px;
-  padding:13px 15px;
-  border-bottom:1px solid var(--line);
-}
-
-.sw-plan-header-left{
-  display:flex;
-  align-items:center;
-  gap:9px;
-}
-
-.sw-plan-header-left h3{
-  font-family:var(--display);
-  font-size:17px;
-}
-
-.sw-plan-header-left p{
-  color:var(--ink-3);
-  font-size:11.5px;
-}
-
-.sw-plan-header-right{
-  display:flex;
-  align-items:center;
-  gap:13px;
-}
-
-.sw-progress-widget{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.sw-progress-circle{
-  width:35px;
-  height:35px;
-}
-
-.sw-progress-circle svg{
-  width:35px;
-  height:35px;
-  transform:rotate(-90deg);
-}
-
-.sw-progress-circle path{
-  fill:none;
-  stroke-width:4;
-}
-
-.sw-progress-circle .bg{
-  stroke:var(--line);
-}
-
-.sw-progress-circle .val{
-  stroke:var(--accent);
-  stroke-linecap:round;
-  transition:.4s;
-}
-
-.sw-progress-stats-top{
-  font:600 10.5px var(--mono);
-}
-
-.sw-progress-bar-wrap{
-  display:flex;
-  align-items:center;
-  gap:5px;
-  margin-top:3px;
-}
-
-.sw-progress-bar-wrap span{
-  font:600 9.5px var(--mono);
-}
-
-.sw-progress-track{
-  width:62px;
-  height:4px;
-  overflow:hidden;
-  background:var(--line);
-  border-radius:999px;
-}
-
-.sw-progress-fill{
-  height:100%;
-  background:var(--accent);
-  transition:.3s;
-}
-
-.sw-keep-going-card{
-  display:flex;
-  align-items:center;
-  gap:7px;
-  padding:6px 9px;
-  border:1px solid var(--line);
-  background:var(--bg);
-  border-radius:7px;
-}
-
-.sw-keep-going-text{
-  font-size:10.5px;
-}
-
-.sw-keep-going-text strong{
-  display:block;
-}
-
-.sw-keep-going-text span{
-  color:var(--ink-3);
-}
-
-.sw-plan-row{
-  display:grid;
-  grid-template-columns:30px 155px 1fr 65px 78px;
-  gap:8px;
-  align-items:center;
-  padding:10px 15px;
-  border-bottom:1px solid var(--line);
-  font-size:11.5px;
-}
-
-.sw-plan-row:last-child{
-  border-bottom:0;
-}
-
-.sw-custom-cb{
-  width:17px;
-  height:17px;
-  display:grid;
-  place-items:center;
-  border:1.5px solid var(--line-2);
-  border-radius:4px;
-  background:var(--surface);
-  cursor:pointer;
-}
-
-.sw-custom-cb.checked{
-  border-color:var(--accent);
-  background:var(--accent);
-  color:#fff;
-}
-
-.sw-title-col{
-  font-weight:650;
-}
-
-.sw-desc-col{
-  color:var(--ink-2);
-}
-
-.sw-time-col{
-  color:var(--ink-3);
-  text-align:right;
-  font:500 10.5px var(--mono);
-}
-
-.sw-status-col{
-  text-align:right;
-}
-
-.sw-pill-completed,
-.sw-pill-pending{
-  padding:3px 7px;
-  border-radius:999px;
-  font:600 9.5px var(--mono);
-}
-
-.sw-pill-completed{
-  background:var(--good-soft);
-  color:var(--good);
-}
-
-.sw-pill-pending{
-  background:var(--surface-2);
-  color:var(--ink-3);
-}
-
-.sw-quick-actions-row{
-  display:flex;
-  align-items:center;
-  gap:7px;
-  overflow:auto;
-  padding:2px 0;
-}
-
-.sw-quick-actions-label{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  color:var(--accent-d);
-  font-size:11.5px;
-  font-weight:700;
-  white-space:nowrap;
-}
-
-.sw-action-pill-btn{
-  border:1px solid var(--line-2);
-  border-radius:999px;
-  padding:6px 10px;
-  background:var(--surface);
-  color:var(--ink-2);
-  font-size:10.5px;
-  white-space:nowrap;
-  cursor:pointer;
-}
-
-.sw-action-pill-btn:hover{
-  background:var(--accent-soft);
-  border-color:var(--accent);
-  color:var(--accent-d);
-}
-
-.sw-chat-input-wrapper{
-  display:flex;
-  align-items:center;
-  gap:7px;
-}
-
-.sw-input-box{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  flex:1;
-  padding:5px 6px 5px 12px;
-  border:1px solid var(--line-2);
-  border-radius:8px;
-  background:var(--surface);
-}
-
-.sw-input-box:focus-within{
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px var(--accent-soft);
-}
-
-.sw-input-box input{
-  width:100%;
-  border:0;
-  outline:0;
-  background:transparent;
-  font-size:12px;
-}
-
-.sw-send-btn{
-  width:29px;
-  height:29px;
-  border:0;
-  border-radius:7px;
-  background:var(--accent);
-  color:white;
-  cursor:pointer;
-}
-
-@media(max-width:1040px){
-  .sw-controls-row{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .sw-btn-generate{
-    width:100%;
-  }
-
-  .sw-tabs-right-flow{
-    display:none;
-  }
-}
-
-@media(max-width:760px){
-  .sw-plan-row{
-    grid-template-columns:27px 1fr auto;
-  }
-
-  .sw-desc-col{
-    grid-column:2/-1;
-  }
-
-  .sw-time-col{
-    grid-column:2;
-    text-align:left;
-  }
-
-  .sw-status-col{
-    grid-column:3;
-    grid-row:1/3;
-  }
-
-  .sw-controls-row{
-    grid-template-columns:1fr;
-  }
-}
-
+.notify .btn{height:auto;padding:0 18px;border-radius:8px;background:#fff;color:var(--ink)}
+.notify small{display:block;font-size:12px;color:#8E9AB8;margin-top:10px}
+footer{padding:32px 0;color:var(--ink-3);font-size:13px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}.steps{grid-template-columns:1fr}.cta{grid-template-columns:1fr;padding:32px}}
+@media(max-width:640px){.personas,.grid{grid-template-columns:1fr}section{padding:52px 0}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}.navbar,.hero-foot,.video-wrapper{opacity:1!important;transform:none!important}}
 </style>
-<link rel="stylesheet" href="fx.css">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Onest:wght@400..700&display=swap" rel="stylesheet">
-<style>
-/* theme v2 — matches the app: Ink & Cobalt */
-:root{--bg:#F2F4F8;--surface:#FFFFFF;--surface-2:#E9EDF5;--ink:#0F1729;--ink-2:#4A5570;--ink-3:#7C86A0;
---line:#E2E6EF;--line-2:#CDD3E1;--accent:#3D5AFE;--accent-d:#2740D8;--accent-soft:#E6EAFF;
---pine:#0C1222;--pine-soft:#E6EAFF;--good:#12805C;--good-soft:#DDF3EA;--warn:#B7620B;--warn-soft:#FCEBD3;
---bad:#C93A3A;--bad-soft:#FBE3E3;--c-app:#3D5AFE;--c-out:#E0871F;--c-proj:#12805C;--c-acad:#8B5CF6;--c-req:#D9455F;
---display:'Bricolage Grotesque',system-ui,sans-serif;--body:'Onest',system-ui,sans-serif}
-h1,h2,h3,.brand{font-family:var(--display);letter-spacing:-.02em}
-.btn.accent,.btn.primary{color:#fff}
-</style>
-<link rel="stylesheet" href="opai-glass.css">
 </head>
 <body>
 
-  
+<header class="navbar">
+  <div class="nav-left">
+    <a class="logo" href="#top" aria-label="OPAI home">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><g transform="rotate(-35 16 16)"><rect x="7" y="5" width="7" height="22" rx="3.5" fill="#0F1729"/><rect x="18" y="5" width="7" height="22" rx="3.5" fill="#3D5AFE"/></g></svg>
+      <span class="brand-name">OPAI</span>
+    </a>
+    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="menu-panel">
+      <span class="ic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>Menu
+    </button>
+    <nav class="menu-panel" id="menu-panel">
+      <a href="#why">The problem</a><a href="#how">How it works</a><a href="#inside">What's inside</a><a href="#faq">Questions</a><a href="#access">Open OPAI</a>
+    </nav>
+    <div class="tags-pill"><span>Applications</span><span>Outreach</span></div>
+  </div>
+  <div class="nav-right">
+    <a class="right-pill" href="app.html" aria-label="Open OPAI">
+      <span class="ic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><circle cx="4.5" cy="4.5" r="1.75"/><circle cx="11.5" cy="4.5" r="1.75"/><circle cx="4.5" cy="11.5" r="1.75"/><circle cx="11.5" cy="11.5" r="1.75"/></svg></span>
+      <span>Open dashboard</span>
+    </a>
+  </div>
+</header>
 
-<main>
-  <section class="hero">
-    <div class="wrap hero-grid">
+<main id="top">
+  <div class="hero">
+    <div class="video-viewport" aria-hidden="true">
+      <div class="video-wrapper">
+        <img src="assets/bg.png" alt="" fetchpriority="high">
+      </div>
+    </div>
+    <div class="hero-foot">
       <div>
-        <span class="eyebrow">A dashboard for one person doing a founder's job</span>
-        <h1>Everything you're juggling, running as one operation.</h1>
-        <p class="lead">Applications, outreach, freelance clients, coursework, side projects — OPAI holds all of it in one place and tells you what to do with the next three hours.</p>
-        <div class="hero-actions">
-          <a class="btn accent" href="app.html">Open OPAI</a>
-          <a class="btn ghost" href="#how">See how it works</a>
+        <div class="sub"><i aria-hidden="true"></i>An operating agent for one person doing a founder's job</div>
+        <h1><span>Everything you're juggling,</span><span>running as one operation.</span></h1>
+        <div class="btns">
+          <a href="app.html" class="btn p">Open OPAI</a>
+          <a href="#how" class="btn s">How it works</a>
         </div>
-        <p class="hero-fine">No signup wall to look around — sign in with Google when you're ready to send email.</p>
       </div>
-      <div class="device">
-        <div class="device-top">
-          <div class="device-dots"><span></span><span></span><span></span></div>
-          <div class="device-time">Today, 9:40 AM</div>
-        </div>
-        <div class="device-card">
-          <div class="device-label">Priority plan</div>
-          <div class="device-title">Three moves before lunch</div>
-          <div class="plan-item">
-            <div class="plan-row"><span class="dot"></span><div><div class="name">Apply to Northwind Labs</div><div class="sub">ML Engineer Intern</div></div></div>
-            <div class="when">Due in 2d</div>
-          </div>
-          <div class="plan-item">
-            <div class="plan-row"><span class="dot"></span><div><div class="name">Email Dr. Meera Rao</div><div class="sub">RAG · first outreach</div></div></div>
-            <div class="when">20m</div>
-          </div>
-          <div class="plan-item done">
-            <div class="plan-row"><span class="dot"></span><div><div class="name">Finish Operating Agent MVP task</div><div class="sub">Wire Gmail sending</div></div></div>
-            <div class="when">Done</div>
-          </div>
-        </div>
+      <div class="chips" aria-label="Trackers">
+        <div class="chip">Applications</div><div class="chip">Outreach</div><div class="chip">Projects</div><div class="chip">Academics</div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <section id="why">
-    <div class="wrap">
-      <div class="problem-top">
-        <span class="eyebrow">The problem</span>
-        <h2 style="margin-top:14px">You're not short on ambition. You're short on a second self.</h2>
-        <p>Applying to internships, cold-emailing labs, running a client build, keeping up with exams — each one wants full attention, and none of them talk to each other. OPAI is the thing that keeps score across all of it.</p>
-      </div>
-      <div class="personas">
-        <div class="persona">
-          <div class="tag">The applicant</div>
-          <div>
-            <h3>Tracking a dozen open applications in your head</h3>
-            <p>Deadlines slip because they live in five different tabs. OPAI keeps every application, interview, and offer in one pipeline, and surfaces the ones closing soonest.</p>
-          </div>
-        </div>
-        <div class="persona">
-          <div class="tag">The researcher</div>
-          <div>
-            <h3>Cold outreach that never gets past "I should email them"</h3>
-            <p>OPAI drafts the email, matches it to your skills and the professor's work, and holds it for your approval — nothing goes out without you.</p>
-          </div>
-        </div>
-        <div class="persona">
-          <div class="tag">The freelancer</div>
-          <div>
-            <h3>Client asks turning into scope creep before there's even a scope</h3>
-            <p>Log the ask, turn it into a scoped proposal, send it — without losing track of the three other clients you're mid-conversation with.</p>
-          </div>
-        </div>
-        <div class="persona">
-          <div class="tag">The student</div>
-          <div>
-            <h3>Exams that only become urgent the week before</h3>
-            <p>Study tasks sit next to everything else you're doing, sized in minutes, so an exam three weeks out gets a slice of today instead of all of next Tuesday.</p>
-          </div>
-        </div>
-      </div>
+  <section id="why"><div class="wrap why">
+    <span class="eyebrow">The problem</span>
+    <h2>You're not short on ambition. You're short on a second self.</h2>
+    <p>Internships, cold emails, a client build, exams — each wants full attention and none of them talk to each other. OPAI keeps score across all of it.</p>
+    <div class="personas">
+      <div class="persona"><div class="tag">The applicant</div><h3>A dozen open applications, tracked in your head</h3><p>Every application, interview and offer in one pipeline, with the soonest deadline on top.</p></div>
+      <div class="persona"><div class="tag">The researcher</div><h3>Cold outreach stuck at "I should email them"</h3><p>OPAI drafts it, matches it to your skills and the professor's work, and holds it for your approval.</p></div>
+      <div class="persona"><div class="tag">The freelancer</div><h3>Client asks becoming scope creep before there's a scope</h3><p>Log the ask, turn it into a scoped proposal, send it — without losing the other clients.</p></div>
+      <div class="persona"><div class="tag">The student</div><h3>Exams that only feel urgent the week before</h3><p>Study tasks sit beside everything else, sized in minutes, so a far-off exam gets a slice of today.</p></div>
     </div>
-  </section>
+  </div></section>
 
-  <section id="how">
-    <div class="wrap">
-      <div class="section-head">
-        <span class="eyebrow">How it works</span>
-        <h2>Talk to it like an assistant. It edits the actual records.</h2>
-        <p>KARNA isn't a chat window bolted onto the side — asking it to do something changes what's in Applications, Projects, or Outreach immediately.</p>
-      </div>
-      <div class="steps">
-        <div class="step">
-          <div class="n">01</div>
-          <h3>Say what happened</h3>
-          <p>Tell KARNA about a new lead, a deadline, or a task the way you'd tell a person.</p>
-          <div class="bit you">"Add an application to Northwind Labs, ML intern, due next Friday"</div>
-        </div>
-        <div class="step">
-          <div class="n">02</div>
-          <h3>It writes the record</h3>
-          <p>The application lands in your pipeline, dated and typed correctly — no form to fill in.</p>
-          <div class="bit">Added Northwind Labs — ML Engineer Intern to Applications, due in 6 days.</div>
-        </div>
-        <div class="step">
-          <div class="n">03</div>
-          <h3>It shows up in your plan</h3>
-          <p>Today's priority list re-sorts around what you just added, weighed against everything else open.</p>
-          <div class="bit">Now first in today's plan — 5 days out and unstarted.</div>
-        </div>
-      </div>
+  <section id="how"><div class="wrap">
+    <div class="head"><span class="eyebrow">How it works</span><h2>Talk to it like an assistant. It edits the actual records.</h2><p>KARNA isn't a chat window bolted on the side — asking it to do something changes what's in Applications, Projects or Outreach immediately.</p></div>
+    <div class="steps">
+      <div class="step"><div class="n">01</div><h3>Say what happened</h3><p>Tell KARNA about a lead, a deadline or a task the way you'd tell a person.</p><div class="bit you">"Add an application to Northwind Labs, ML intern, due next Friday"</div></div>
+      <div class="step"><div class="n">02</div><h3>It writes the record</h3><p>The application lands in your pipeline, dated and typed — no form to fill in.</p><div class="bit">Added Northwind Labs — ML Engineer Intern to Applications, due in 6 days.</div></div>
+      <div class="step"><div class="n">03</div><h3>It shows up in your plan</h3><p>Today's priority list re-sorts around what you just added.</p><div class="bit">Now first in today's plan — due in 6 days and unstarted.</div></div>
     </div>
-  </section>
+  </div></section>
 
-  <section id="inside">
-    <div class="wrap">
-      <div class="section-head">
-        <span class="eyebrow">What's inside</span>
-        <h2>One dashboard, seven working parts</h2>
-        <p>Each section is a real tracker on its own — a kanban board, a scored list, an outbox — not a widget for show.</p>
-      </div>
-      <div class="inside-grid">
-        <div class="inside-cell"><div class="dot-lbl"><i style="background:var(--c-app)"></i></div><h3>Applications</h3><p>A kanban from Not started through Offer, with due dates that turn amber when they're close.</p></div>
-        <div class="inside-cell"><div class="dot-lbl"><i style="background:var(--c-opp)"></i></div><h3>Opportunities</h3><p>Roles you're weighing, scored against your own skills before you commit to applying.</p></div>
-        <div class="inside-cell"><div class="dot-lbl"><i style="background:var(--accent)"></i></div><h3>Outreach</h3><p>Contacts matched to your skills, with drafts held for approval before anything sends.</p></div>
-        <div class="inside-cell"><div class="dot-lbl"><i style="background:var(--c-proj)"></i></div><h3>Projects</h3><p>Tasks broken down small enough that the planner can slot the next one into a free hour.</p></div>
-        <div class="inside-cell"><div class="dot-lbl"><i style="background:var(--c-acad)"></i></div><h3>Academics</h3><p>Exam prep sized in minutes, weighed against everything else that's due.</p></div>
-        <div class="inside-cell"><div class="dot-lbl"><i style="background:var(--c-req)"></i></div><h3>Requests</h3><p>Client asks turned into scoped proposals you can actually send.</p></div>
-        <div class="inside-cell" style="grid-column:span 1"><div class="dot-lbl"><i style="background:var(--pine)"></i></div><h3>Outbox</h3><p>Every email OPAI drafts waits here. Nothing leaves your inbox without your say.</p></div>
-      </div>
-      <div class="stats">
-        <div class="stat"><b>7</b><span>Live trackers in one dashboard</span></div>
-        <div class="stat"><b>1</b><span>Place your day actually gets planned</span></div>
-        <div class="stat"><b>0</b><span>Emails sent without your approval</span></div>
-        <div class="stat"><b>3</b><span>Hours KARNA can plan out on request</span></div>
-      </div>
+  <section id="inside"><div class="wrap">
+    <div class="head"><span class="eyebrow">What's inside</span><h2>One dashboard, eight working parts</h2><p>Each is a real tracker — a kanban, a scored list, an outbox — not a widget for show.</p></div>
+    <div class="grid">
+      <div class="cell"><i style="background:#3D5AFE"></i><h3>Applications</h3><p>Kanban from Not started to Offer; due dates turn amber when close.</p></div>
+      <div class="cell"><i style="background:#7C86A0"></i><h3>Opportunities</h3><p>Roles scored against your own skills before you commit.</p></div>
+      <div class="cell"><i style="background:#3D5AFE"></i><h3>Outreach</h3><p>Contacts matched to your skills, drafts held for approval.</p></div>
+      <div class="cell"><i style="background:#12805C"></i><h3>Projects</h3><p>Tasks small enough to slot into a free hour.</p></div>
+      <div class="cell"><i style="background:#8B5CF6"></i><h3>Academics</h3><p>Exam prep sized in minutes, weighed against everything else.</p></div>
+      <div class="cell"><i style="background:#D9455F"></i><h3>Requests</h3><p>Client asks turned into scoped proposals you can send.</p></div>
+      <div class="cell"><i style="background:#0F1729"></i><h3>Outbox</h3><p>Every drafted email waits here. Nothing leaves without your say.</p></div>
+      <div class="cell"><i style="background:#E0871F"></i><h3>KARNA</h3><p>Ask what today looks like; it reads your open work before it answers.</p></div>
     </div>
-  </section>
+  </div></section>
 
-  <section id="jarvis">
-    <div class="wrap">
-      <div class="jarvis">
-        <div class="jarvis-grid">
-          <div>
-            <h2>Ask it what today looks like. Get an actual answer.</h2>
-            <p>KARNA reads your open applications, contacts, projects, and exams before it replies — not a generic assistant, a copilot for this exact workload.</p>
-          </div>
-          <div class="chat">
-            <div class="bubble you">What should I focus on today?</div>
-            <div class="bubble jv">
-              Start with the most urgent items:
-              <b>1. Apply to Northwind Labs (1h 30m)</b>
-              <b>2. Email Dr. Meera Rao (20m)</b>
-              <b>3. Finish "Wire Gmail sending" (45m)</b>
-            </div>
-            <div class="bubble you">Help me plan the next 3 hours.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <section id="faq"><div class="wrap faq">
+    <div class="head"><span class="eyebrow">Questions</span><h2>Before you open it</h2></div>
+    <details open><summary>Where does my data live?</summary><p>On your device, in the browser, until you connect your own backend. Nothing is sent anywhere by default.</p></details>
+    <details><summary>Will it send emails on its own?</summary><p>No. Every draft sits in the Outbox until you approve it, and sending only happens through your own Gmail sign-in.</p></details>
+    <details><summary>Do I need to sign in to try it?</summary><p>No. Continue as a guest and everything works except sending real email, which needs a Google sign-in.</p></details>
+    <details><summary>Is this only for job hunting?</summary><p>No — it's for anyone running more than one thread at once: applications, outreach, freelance clients and coursework, side by side.</p></details>
+  </div></section>
 
-  <section id="faq">
-    <div class="wrap">
-      <div class="section-head">
-        <span class="eyebrow">Questions</span>
-        <h2>Before you open it</h2>
+  <section id="access"><div class="wrap">
+    <div class="cta">
+      <div>
+        <h2>Stop running six jobs from six tabs.</h2>
+        <p>OPAI is free to open and keeps your data on your own device until you connect a backend.</p>
+        <div class="btns"><a class="btn p" href="app.html">Open OPAI</a><a class="btn s" href="login.html?guest=1">Continue as guest</a></div>
       </div>
-      <div class="faq-list" id="faq-list"></div>
-    </div>
-  </section>
-
-  <section id="access">
-    <div class="wrap">
-      <div class="cta">
-        <div class="cta-grid">
-          <div>
-            <h2>Stop running six jobs from six tabs.</h2>
-            <p>OPAI is free to open and keeps your data on your own device until you connect a backend. Guest mode needs nothing to try.</p>
-            <div class="cta-actions">
-              <a class="btn accent" href="app.html">Open OPAI</a>
-              <a class="btn ghost" href="login.html?guest=1">Continue as guest</a>
-            </div>
-          </div>
-          <div class="notify">
-            <label for="notify-email">Want to know when it's ready for you?</label>
-            <div class="notify-row">
-              <input id="notify-email" type="email" placeholder="you@example.com">
-              <a class="btn dark" id="notify-btn" href="mailto:hello@opa-demo.app">Notify me</a>
-            </div>
-            <p class="fine">Opens your mail app, addressed to hello@opa-demo.app — a placeholder inbox for this demo.</p>
-          </div>
-        </div>
+      <div class="notify">
+        <label for="notify-email">Want to know when it's ready for you?</label>
+        <div><input id="notify-email" type="email" placeholder="you@example.com"><a class="btn" id="notify-btn" href="mailto:hello@opa-demo.app">Notify me</a></div>
+        <small>Opens your mail app, addressed to a placeholder inbox for this demo.</small>
       </div>
     </div>
-  </section>
+  </div></section>
 </main>
 
-<footer>
-  <div class="wrap foot-row">
-    <span class="brand"><i style="width:18px;height:18px;border-radius:5px"></i>OPAI — Operating Agent</span>
-    <span>Built by Tiru</span>
-  </div>
-</footer>
+<footer><div class="wrap"><span>OPAI — Operating Agent</span><span>Built by Tiru</span></div></footer>
 
 <script>
-  /* ===== STUDY WORKFLOW STATE ===== */
-
-let KARNA_MODE = 'study';
-
-let STUDY_WORKFLOW = {
-  subject: 'Database Systems',
-  duration: '3 hours',
-  mode: 'Balanced (Plan + Practice)',
-  examDate: '2026-10-01',
-
-  tasks: [
-    {
-      title:'1. Normalization',
-      desc:'Learn 1NF, 2NF, 3NF with examples.',
-      time:'30 min',
-      done:true
-    },
-    {
-      title:'2. ER Diagrams',
-      desc:'Understand ER models, constraints and mapping.',
-      time:'30 min',
-      done:true
-    },
-    {
-      title:'3. SQL Queries',
-      desc:'Practice complex queries, joins and subqueries.',
-      time:'40 min',
-      done:false
-    },
-    {
-      title:'4. Transactions',
-      desc:'Study ACID properties and concurrency control.',
-      time:'30 min',
-      done:false
-    },
-    {
-      title:'5. Past Questions',
-      desc:'Solve previous year questions.',
-      time:'40 min',
-      done:false
-    }
-  ]
-};
-
-function setJarvisMode(mode){
-  KARNA_MODE = mode;
-  render();
-}
-
-function toggleWorkflowTask(index){
-
-  const task = STUDY_WORKFLOW.tasks[index];
-
-  if(!task) return;
-
-  task.done = !task.done;
-
-  save();
-  render();
-}
-
-function generateWorkflowFromUI(){
-
-  const subject = $('sw-select-subject');
-  const time = $('sw-select-time');
-  const mode = $('sw-select-mode');
-
-  if(subject)
-    STUDY_WORKFLOW.subject = subject.value;
-
-  if(time)
-    STUDY_WORKFLOW.duration = time.value;
-
-  if(mode)
-    STUDY_WORKFLOW.mode = mode.value;
-
-  toast('Generating Study Workflow…');
-
-  setTimeout(() => {
-    render();
-    toast('Study Workflow updated');
-  },350);
-}
-
-function runQuickAction(action){
-
-  if(action === 'plan3h'){
-
-    STUDY_WORKFLOW.duration = '3 hours';
-
-    setTimeout(() => render(),50);
-
-  }
-
-  else if(action === 'weak'){
-
-    STUDY_WORKFLOW.mode = 'Weak-Topic Recovery';
-
-    render();
-
-  }
-
-  else if(action === 'pyq'){
-
-    setJarvisMode('chat');
-
-    setTimeout(() => {
-      jarvisSend(
-        'Generate previous year questions for ' +
-        STUDY_WORKFLOW.subject
-      );
-    },60);
-
-  }
-
-  else if(action === 'explain'){
-
-    setJarvisMode('chat');
-
-    setTimeout(() => {
-      jarvisSend(
-        'Explain Normalization in ' +
-        STUDY_WORKFLOW.subject +
-        ' with examples'
-      );
-    },60);
-
-  }
-
-  else if(action === 'quiz'){
-
-    setJarvisMode('chat');
-
-    setTimeout(() => {
-      jarvisSend(
-        'Give me a 5 question quick quiz on ' +
-        STUDY_WORKFLOW.subject
-      );
-    },60);
-
-  }
-
-  else if(action === 'track'){
-
-    const done =
-      STUDY_WORKFLOW.tasks.filter(t => t.done).length;
-
-    const total =
-      STUDY_WORKFLOW.tasks.length;
-
-    toast(
-      'Progress: ' +
-      done +
-      '/' +
-      total
-    );
-  }
-}
-
-function handleWorkflowPrompt(){
-
-  const input = $('sw-prompt-input');
-
-  if(!input) return;
-
-  const text = input.value.trim();
-
-  if(!text) return;
-
-  input.value = '';
-
-  setJarvisMode('chat');
-
-  setTimeout(() => {
-    jarvisSend(text);
-  },60);
-}
-
-function renderStudyWorkflowBody(){
-
-  const tasks = STUDY_WORKFLOW.tasks;
-
-  const total = tasks.length;
-
-  const done =
-    tasks.filter(t => t.done).length;
-
-  const pct =
-    total
-      ? Math.round((done / total) * 100)
-      : 0;
-
-  const dashoffset = 100 - pct;
-
-  const rows = tasks.map((task,index) => `
-
-    <div class="sw-plan-row">
-
-      <div>
-
-        <div
-          class="sw-custom-cb ${task.done ? 'checked' : ''}"
-          onclick="toggleWorkflowTask(${index})"
-        >
-
-          ${
-            task.done
-              ? '✓'
-              : ''
-          }
-
-        </div>
-
-      </div>
-
-      <div class="sw-title-col">
-        ${esc(task.title)}
-      </div>
-
-      <div class="sw-desc-col">
-        ${esc(task.desc)}
-      </div>
-
-      <div class="sw-time-col">
-        ${esc(task.time)}
-      </div>
-
-      <div class="sw-status-col">
-
-        <span class="${
-          task.done
-            ? 'sw-pill-completed'
-            : 'sw-pill-pending'
-        }">
-
-          ${
-            task.done
-              ? 'Completed'
-              : 'Pending'
-          }
-
-        </span>
-
-      </div>
-
-    </div>
-
-  `).join('');
-
-
-  return `
-
-    <div class="sw-main-card">
-
-      <div class="sw-workflow-header">
-
-        <div class="sw-title-wrap">
-
-          <div class="sw-sparkle-icon">
-            ✦
-          </div>
-
-          <div class="sw-title-text">
-
-            <h2 >
-              Study Workflow
-            </h2>
-
-            <p>
-              Turn your goals into focused action with KARNA.
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div class="sw-encouragement-card">
-
-          <div class="sw-target-icon-wrap">
-            ◎
-          </div>
-
-          <div class="sw-encouragement-text">
-
-            <strong>
-              Stay consistent.
-            </strong>
-
-            <span>
-              Make progress. You got this.
-            </span>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- PIPELINE -->
-
-      <div class="sw-steps-container">
-
-        <div class="sw-step-card done">
-
-          <div>
-
-            <div class="sw-step-header">
-
-              <span class="sw-step-label">
-                💬 1. Goal
-              </span>
-
-              <span class="sw-badge-done">
-                ✓ Done
-              </span>
-
-            </div>
-
-            <div class="sw-step-body">
-              Prepare for
-              <strong>
-                ${esc(STUDY_WORKFLOW.subject)}
-              </strong>
-              exam.
-            </div>
-
-          </div>
-
-          <div class="sw-step-footer">
-            Goal locked
-          </div>
-
-        </div>
-
-
-        <div class="sw-connector">
-          →
-        </div>
-
-
-        <div class="sw-step-card done">
-
-          <div>
-
-            <div class="sw-step-header">
-
-              <span class="sw-step-label">
-                📄 2. Plan
-              </span>
-
-              <span class="sw-badge-done">
-                ✓ Done
-              </span>
-
-            </div>
-
-            <div class="sw-step-body">
-
-              Created a
-              <strong>
-                ${esc(STUDY_WORKFLOW.duration)}
-              </strong>
-              plan for
-              ${total}
-              topics.
-
-            </div>
-
-          </div>
-
-          <div class="sw-step-footer">
-            Plan ready
-          </div>
-
-        </div>
-
-
-        <div class="sw-connector">
-          →
-        </div>
-
-
-        <div class="sw-step-card active">
-
-          <div>
-
-            <div class="sw-step-header">
-
-              <span class="sw-step-label">
-                ◎ 3. Focus
-              </span>
-
-              <span class="sw-badge-progress">
-                + In Progress
-              </span>
-
-            </div>
-
-            <div class="sw-step-body">
-
-              Starting with
-              <strong>
-                ${
-                  esc(
-                    tasks.find(t => !t.done)?.title
-                    || 'Revision'
-                  )
-                }
-              </strong>.
-
-              Stay focused.
-
-            </div>
-
-          </div>
-
-          <div class="sw-step-dots">
-
-            <span class="sw-dot active"></span>
-            <span class="sw-dot"></span>
-            <span class="sw-dot"></span>
-
-          </div>
-
-        </div>
-
-
-        <div class="sw-connector">
-          →
-        </div>
-
-
-        <div class="sw-step-card">
-
-          <div>
-
-            <div class="sw-step-header">
-
-              <span class="sw-step-label">
-                🎓 4. Learn
-              </span>
-
-              <span class="sw-badge-waiting">
-                Waiting
-              </span>
-
-            </div>
-
-            <div class="sw-step-body">
-              Waiting for
-              <strong>Groq</strong>
-              explanation...
-            </div>
-
-          </div>
-
-          <div class="sw-step-dots">
-            <span class="sw-dot"></span>
-            <span class="sw-dot"></span>
-            <span class="sw-dot"></span>
-          </div>
-
-        </div>
-
-
-        <div class="sw-connector">
-          →
-        </div>
-
-
-        <div class="sw-step-card">
-
-          <div>
-
-            <div class="sw-step-header">
-
-              <span class="sw-step-label">
-                &lt;/&gt; 5. Practice
-              </span>
-
-              <span class="sw-badge-waiting">
-                Waiting
-              </span>
-
-            </div>
-
-            <div class="sw-step-body">
-              Waiting to generate
-              practice questions...
-            </div>
-
-          </div>
-
-          <div class="sw-step-dots">
-            <span class="sw-dot"></span>
-            <span class="sw-dot"></span>
-            <span class="sw-dot"></span>
-          </div>
-
-        </div>
-
-
-        <div class="sw-connector">
-          →
-        </div>
-
-
-        <div class="sw-step-card">
-
-          <div>
-
-            <div class="sw-step-header">
-
-              <span class="sw-step-label">
-                ✓ 6. Review
-              </span>
-
-              <span class="sw-badge-waiting">
-                Waiting
-              </span>
-
-            </div>
-
-            <div class="sw-step-body">
-              Waiting to summarize
-              and review progress...
-            </div>
-
-          </div>
-
-          <div class="sw-step-dots">
-            <span class="sw-dot"></span>
-            <span class="sw-dot"></span>
-            <span class="sw-dot"></span>
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- CONTROLS -->
-
-      <div class="sw-controls-row">
-
-        <div class="sw-input-group">
-
-          <label>
-            Select Exam / Subject
-          </label>
-
-          <select
-            class="sw-select"
-            id="sw-select-subject"
-          >
-
-            <option>
-              Database Systems
-            </option>
-
-            <option>
-              Operating Systems
-            </option>
-
-            <option>
-              Computer Networks
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <div class="sw-input-group">
-
-          <label>
-            Available Time
-          </label>
-
-          <select
-            class="sw-select"
-            id="sw-select-time"
-          >
-
-            <option>1 hour</option>
-            <option>2 hours</option>
-            <option selected>3 hours</option>
-            <option>4 hours</option>
-
-          </select>
-
-        </div>
-
-
-        <div class="sw-input-group">
-
-          <label>
-            Study Mode
-          </label>
-
-          <select
-            class="sw-select"
-            id="sw-select-mode"
-          >
-
-            <option>
-              Balanced (Plan + Practice)
-            </option>
-
-            <option>
-              Exam Sprint (Speed & PYQs)
-            </option>
-
-            <option>
-              Weak-Topic Recovery
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <button
-          class="sw-btn-generate"
-          onclick="generateWorkflowFromUI()"
-        >
-
-          ✦
-          Generate Workflow
-
-        </button>
-
-      </div>
-
-
-      <!-- PLAN -->
-
-      <div class="sw-plan-card">
-
-        <div class="sw-plan-header">
-
-          <div class="sw-plan-header-left">
-
-            <div class="sw-plan-icon-wrap">
-              📅
-            </div>
-
-            <div>
-
-              <h3>
-                Today's Study Plan
-              </h3>
-
-              <p>
-                ${esc(STUDY_WORKFLOW.subject)}
-                •
-                ${esc(STUDY_WORKFLOW.duration)}
-                • Exam on
-                ${esc(STUDY_WORKFLOW.examDate)}
-              </p>
-
-            </div>
-
-          </div>
-
-
-          <div class="sw-plan-header-right">
-
-            <div class="sw-progress-widget">
-
-              <div class="sw-progress-circle">
-
-                <svg viewBox="0 0 36 36">
-
-                  <path
-                    class="bg"
-                    d="M18 2.0845
-                       a15.9155 15.9155 0 0 1 0 31.831
-                       a15.9155 15.9155 0 0 1 0-31.831"
-                  />
-
-                  <path
-                    class="val"
-                    stroke-dasharray="100"
-                    stroke-dashoffset="${dashoffset}"
-                    d="M18 2.0845
-                       a15.9155 15.9155 0 0 1 0 31.831
-                       a15.9155 15.9155 0 0 1 0-31.831"
-                  />
-
-                </svg>
-
-              </div>
-
-
-              <div>
-
-                <div class="sw-progress-stats-top">
-
-                  ${done}
-                  /
-                  ${total}
-                  completed
-
-                </div>
-
-                <div class="sw-progress-bar-wrap">
-
-                  <span>
-                    ${pct}%
-                  </span>
-
-                  <div class="sw-progress-track">
-
-                    <div
-                      class="sw-progress-fill"
-                      style="width:${pct}%"
-                    ></div>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-
-            <div class="sw-keep-going-card">
-
-              <div>↗</div>
-
-              <div class="sw-keep-going-text">
-
-                <strong>
-                  Keep going!
-                </strong>
-
-                <span>
-                  You're on track.
-                </span>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div class="sw-plan-table">
-
-          ${rows}
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- QUICK ACTIONS -->
-
-    <div class="sw-quick-actions-row">
-
-      <div class="sw-quick-actions-label">
-        ⚡ Quick actions
-      </div>
-
-      <button
-        class="sw-action-pill-btn"
-        onclick="runQuickAction('plan3h')"
-      >
-        Plan for next 3 hours
-      </button>
-
-      <button
-        class="sw-action-pill-btn"
-        onclick="runQuickAction('weak')"
-      >
-        Focus on weak topics
-      </button>
-
-      <button
-        class="sw-action-pill-btn"
-        onclick="runQuickAction('pyq')"
-      >
-        Generate PYQs
-      </button>
-
-      <button
-        class="sw-action-pill-btn"
-        onclick="runQuickAction('explain')"
-      >
-        Explain this topic
-      </button>
-
-      <button
-        class="sw-action-pill-btn"
-        onclick="runQuickAction('quiz')"
-      >
-        Take a quick quiz
-      </button>
-
-      <button
-        class="sw-action-pill-btn"
-        onclick="runQuickAction('track')"
-      >
-        Track my progress
-      </button>
-
-    </div>
-
-
-    <!-- KARNA INPUT -->
-
-    <div class="sw-chat-input-wrapper">
-
-      <div class="sw-input-box">
-
-        <input
-          id="sw-prompt-input"
-          type="text"
-          placeholder="Ask KARNA about your study goal..."
-          onkeydown="
-            if(event.key === 'Enter'){
-              handleWorkflowPrompt();
-            }
-          "
-        >
-
-        <button
-          class="sw-send-btn"
-          onclick="handleWorkflowPrompt()"
-        >
-          ↑
-        </button>
-
-      </div>
-
-    </div>
-
-  `;
-}
-
-const FAQ = [
-  { q: "Where does my data live?", a: "On your device, in the browser, until you connect it to your own backend. Nothing is sent anywhere by default." },
-  { q: "Will it send emails on its own?", a: "No. Every draft — outreach or a client proposal — sits in the Outbox until you approve it. Sending only happens through your own Gmail sign-in." },
-  { q: "Do I need to sign in to try it?", a: "No. Continue as a guest and everything works except sending real email, which needs a Google sign-in." },
-  { q: "Is this only for job hunting?", a: "No — it's built for anyone running more than one thread at once: applications, research outreach, freelance clients, and coursework, side by side." }
-];
-const list = document.getElementById('faq-list');
-list.innerHTML = FAQ.map((f, i) =>
-  '<div class="faq-item' + (i === 0 ? ' open' : '') + '" data-i="' + i + '">' +
-    '<button class="faq-q" aria-expanded="' + (i === 0 ? 'true' : 'false') + '">' + f.q + '<span class="plus">+</span></button>' +
-    '<div class="faq-a"><p>' + f.a + '</p></div>' +
-  '</div>'
-).join('');
-function layoutFaq(item, open) {
-  const a = item.querySelector('.faq-a');
-  a.style.maxHeight = open ? a.scrollHeight + 'px' : '0px';
-}
-document.querySelectorAll('.faq-item').forEach(item => {
-  const btn = item.querySelector('.faq-q');
-  if (item.classList.contains('open')) layoutFaq(item, true);
-  btn.addEventListener('click', () => {
-    const willOpen = !item.classList.contains('open');
-    document.querySelectorAll('.faq-item').forEach(other => {
-      other.classList.remove('open');
-      other.querySelector('.faq-q').setAttribute('aria-expanded', 'false');
-      layoutFaq(other, false);
-    });
-    if (willOpen) {
-      item.classList.add('open');
-      btn.setAttribute('aria-expanded', 'true');
-      layoutFaq(item, true);
-    }
-  });
-});
-window.addEventListener('resize', () => {
-  document.querySelectorAll('.faq-item.open').forEach(item => layoutFaq(item, true));
-});
-
-document.getElementById('notify-btn').addEventListener('click', (e) => {
-  const email = document.getElementById('notify-email').value.trim();
-  if (email) e.currentTarget.href = 'mailto:hello@opa-demo.app?subject=' + encodeURIComponent('Notify me when OPAI is ready') + '&body=' + encodeURIComponent('My email: ' + email);
+const mb=document.getElementById('menu-btn'),mp=document.getElementById('menu-panel');
+const setMenu=o=>{mp.classList.toggle('open',o);mb.setAttribute('aria-expanded',o)};
+mb.addEventListener('click',e=>{e.stopPropagation();setMenu(!mp.classList.contains('open'))});
+mp.addEventListener('click',()=>setMenu(false));
+document.addEventListener('click',()=>setMenu(false));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false)});
+document.getElementById('notify-btn').addEventListener('click',e=>{
+  const v=document.getElementById('notify-email').value.trim();
+  if(v)e.currentTarget.href='mailto:hello@opa-demo.app?subject='+encodeURIComponent('Notify me when OPAI is ready')+'&body='+encodeURIComponent('My email: '+v);
 });
 </script>
-<script src="fx.js" defer></script>
 </body>
 </html>

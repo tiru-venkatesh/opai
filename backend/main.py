@@ -147,6 +147,13 @@ def health(db: Session = Depends(get_db)):
     return out
 
 
+@app.get("/super-chat")
+def serve_super_chat():
+    if os.path.exists("static/super-chat.html"):
+        return FileResponse("static/super-chat.html")
+    raise HTTPException(status_code=404, detail="super-chat.html not found")
+
+
 @app.get("/")
 def serve_ui():
     # The structured frontend uses app.html as the canonical application shell.
