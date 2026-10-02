@@ -2498,6 +2498,7 @@ function viewOverview() {
 /* ================= 7. NAVIGATION & RENDER ================= */
 const NAV = [
   { id:'jarvis', l:'KARNA', i:'spark', g:'Assistant' },
+  { id:'superchat', l:'Super Chat', i:'spark', href:'/super-chat' },
   { id:'overview', l:'Overview', i:'layers' },
   { id:'today', l:'Today', i:'sun', g:'Plan' },
   { id:'applications', l:'Applications', i:'brief' },
@@ -2527,7 +2528,7 @@ function badge(id) {
 function renderNav() {
   $('nav').innerHTML = NAV.map(n => {
     const c = badge(n.id);
-    return (n.g ? '<div class="nav-group">' + n.g + '</div>' : '') + '<button class="' + (n.id === cur ? 'on' : '') + '" onclick="switchTab(\'' + n.id + '\')"' + (n.id === cur ? ' aria-current="page"' : '') + '>' + icon(n.i, 17) + n.l + (c ? '<span class="count' + (n.id === 'outbox' ? ' alert' : '') + '">' + c + '</span>' : '') + '</button>';
+    return (n.g ? '<div class="nav-group">' + n.g + '</div>' : '') + '<button class="' + (n.id === cur ? 'on' : '') + '" onclick="' + (n.href ? 'location.href=\'' + n.href + '\'' : 'switchTab(\'' + n.id + '\')') + '"' + (n.id === cur ? ' aria-current="page"' : '') + '>' + icon(n.i, 17) + n.l + (c ? '<span class="count' + (n.id === 'outbox' ? ' alert' : '') + '">' + c + '</span>' : '') + '</button>';
   }).join('');
 }
 function render(fromNav) {
