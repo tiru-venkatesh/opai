@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projects · OPAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e0e10;--s1:#1c1b1d;--s2:#201f22;--s3:#2a2a2c;--line:#444748;--tx:#e5e1e4;--mut:#c4c7c8;--pri:#fff;--font:'Geist',system-ui,-apple-system,Segoe UI,sans-serif}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font:14px/22px var(--font)}
+header{position:sticky;top:0;z-index:5;background:rgba(14,14,16,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(68,71,72,.4)}
+.bar{max-width:1200px;margin:0 auto;padding:0 20px;height:56px;display:flex;align-items:center;gap:20px}
+.brand{font-weight:600;color:var(--pri)}
+nav{display:flex;gap:2px;overflow-x:auto}
+nav a{color:var(--mut);text-decoration:none;padding:6px 12px;border-radius:6px;white-space:nowrap}
+nav a:hover{background:var(--s1);color:var(--tx)}
+nav a[aria-current=page]{background:var(--s3);color:var(--pri);font-weight:500}
+a:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+main{max-width:1200px;margin:0 auto;padding:32px 20px 64px}
+h1{font-size:30px;line-height:36px;letter-spacing:-.03em;font-weight:500;margin:0 0 4px;color:var(--pri)}
+.sub{color:var(--mut);margin:0 0 28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;align-items:start}
+.proj{background:var(--s1);border-radius:10px;padding:18px}
+.proj h2{font-size:18px;line-height:24px;font-weight:500;color:var(--pri);margin:0}
+.desc{color:var(--mut);margin:2px 0 12px}
+.prog{display:flex;justify-content:space-between;color:var(--mut);font-size:13px;margin-bottom:6px}
+.track{height:4px;background:var(--bg);border-radius:4px;overflow:hidden;margin-bottom:14px}
+.fill{height:100%;background:var(--pri)}
+ul{list-style:none;margin:0 0 12px;padding:0}
+li label{display:flex;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:6px;cursor:pointer}
+li label:hover{background:var(--s2)}
+li input{margin-top:5px;accent-color:#fff}
+li.done span{color:var(--mut);text-decoration:line-through}
+form{display:flex;gap:8px}
+form input{flex:1;min-width:0;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font:inherit}
+form button{background:var(--pri);color:#2f3131;border:0;border-radius:6px;padding:7px 14px;font:inherit;font-weight:500;cursor:pointer}
+.empty{background:var(--s1);border-radius:10px;padding:18px;color:var(--mut)}
+.empty b{color:var(--pri);font-weight:500}
+.note{margin-top:40px;color:var(--mut);font-size:13px}
+</style>
+</head>
+<body>
+<header><div class="bar">
+<span class="brand">OPAI</span>
+<nav aria-label="Main">
+<a href="super-chat.html" id="n-chat">Super Chat</a>
+<a href="overview.html">Overview</a>
+<a href="app.html#/today">Today</a>
+<a href="applications.html">Applications</a>
+<a href="app.html#/outreach">Outreach</a>
+<a href="projects.html" aria-current="page">Projects</a>
+<a href="app.html#/outbox">Outbox</a>
+<a href="app.html#/agent">Agent</a>
+</nav></div></header>
+<main>
+<h1>Projects</h1>
+<p class="sub" id="sum"></p>
+<div id="list"></div>
+<p class="note" id="note"></p>
+</main>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var WS=null,S={};
+function load(){
+  var best=null,bt=-1;
+  try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);
+    if(k!=='opa_demo_v3'&&!/^opa_ws_/.test(k))continue;
+    var o;try{o=JSON.parse(localStorage.getItem(k))}catch(e){continue}
+    if(!o||typeof o!=='object')continue;
+    var t=Date.parse(o.history&&o.history[0]&&o.history[0].at)||0;
+    if(!best||t>bt){best={key:k,data:o};bt=t}}}catch(e){}
+  WS=best;S=(best&&best.data)||{};
+  ['projects','history'].forEach(function(k){if(!Array.isArray(S[k]))S[k]=[]});
+  S.projects.forEach(function(p){if(!Array.isArray(p.tasks))p.tasks=[]});
+}
+function save(){try{if(WS)localStorage.setItem(WS.key,JSON.stringify(S))}catch(e){}}
+function log(t){S.history.unshift({id:'h'+Date.now(),at:new Date().toISOString(),text:t})}
+function render(){
+  var ps=S.projects,open=0;
+  ps.forEach(function(p){open+=p.tasks.filter(function(t){return !t.done}).length});
+  $('sum').textContent=ps.length?ps.length+' projects, '+open+' open tasks.':'';
+  if(!WS){$('list').innerHTML='<div class="empty"><b>No workspace found in this browser.</b><br>Open the main app on this site first and add a project. This page shows what it saves.</div>';return}
+  if(!ps.length){$('list').innerHTML='<div class="empty"><b>No projects yet.</b><br>Add one in the main app and it will appear here.</div>';return}
+  $('list').innerHTML='<div class="grid">'+ps.map(function(p){
+    var tot=p.tasks.length,done=p.tasks.filter(function(t){return t.done}).length,pc=tot?Math.round(done/tot*100):0;
+    return '<section class="proj"><h2>'+esc(p.name)+'</h2>'+(p.description?'<p class="desc">'+esc(p.description)+'</p>':'<div style="height:12px"></div>')+
+    '<div class="prog"><span>'+done+' of '+tot+' done</span><span>'+pc+'%</span></div>'+
+    '<div class="track" role="progressbar" aria-valuenow="'+pc+'" aria-valuemin="0" aria-valuemax="100"><div class="fill" style="width:'+pc+'%"></div></div>'+
+    (tot?'<ul>'+p.tasks.map(function(t){return '<li'+(t.done?' class="done"':'')+'><label><input type="checkbox" data-p="'+esc(p.id)+'" data-t="'+esc(t.id)+'"'+(t.done?' checked':'')+'><span>'+esc(t.name)+'</span></label></li>'}).join('')+'</ul>':'<p class="desc">No tasks yet. Add the first one below.</p>')+
+    '<form data-p="'+esc(p.id)+'"><input name="n" placeholder="Add a task" aria-label="New task for '+esc(p.name)+'" required><button>Add</button></form></section>'}).join('')+'</div>';
+  $('note').textContent='Changes save to the same workspace the main app uses, in this browser.';
+}
+function proj(id){return S.projects.find(function(x){return String(x.id)===id})}
+document.addEventListener('change',function(e){
+  var el=e.target;if(!el.matches||!el.matches('input[type=checkbox][data-t]'))return;
+  var p=proj(el.getAttribute('data-p')),t=p&&p.tasks.find(function(x){return String(x.id)===el.getAttribute('data-t')});
+  if(!t)return;t.done=el.checked;
+  log((t.done?'Completed task: ':'Reopened task: ')+t.name);save();render();
+});
+document.addEventListener('submit',function(e){
+  var f=e.target;if(!f.matches||!f.matches('form[data-p]'))return;e.preventDefault();
+  var v=f.elements.n.value.trim(),p=proj(f.getAttribute('data-p'));if(!v||!p)return;
+  p.tasks.push({id:'t'+Date.now(),name:v,done:false});
+  log('Added task: '+v+' ('+p.name+')');save();render();
+});
+window.addEventListener('storage',function(e){if(WS&&e.key===WS.key){load();render()}});
+var sc=$('n-chat');
+if(sc&&location.protocol!=='file:'&&!/\.html$/.test(location.pathname))sc.setAttribute('href','/super-chat');
+load();render();
+})();
+</script>
+</body>
+</html>
