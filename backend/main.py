@@ -84,18 +84,37 @@ def groq_not_configured_handler(request: Request, exc: RuntimeError):
     return JSONResponse(status_code=503, content={"detail": str(exc)})
 
 
+def _friendly_error(exc: Exception):
+    """Map provider/DB failures to (status, message, retry_after); None for genuine bugs.
+    Raw Groq/SQLAlchemy text can leak hosts and usernames, so it is never echoed."""
+    name, mod = type(exc).__name__, (type(exc).__module__ or "")
+    if mod.startswith("groq"):
+        if name == "RateLimitError":
+            return 429, "The AI service is rate-limited right now. Wait a minute and try again.", 30
+        if name in ("AuthenticationError", "PermissionDeniedError"):
+            return 502, "The AI service rejected the server's API key. Check GROQ_API_KEY on the backend.", None
+        if name in ("APIConnectionError", "APITimeoutError"):
+            return 503, "Could not reach the AI service. Try again shortly.", 5
+        return 502, "The AI service returned an error. Try again.", 5
+    if mod.startswith("sqlalchemy") and name in ("OperationalError", "InterfaceError", "DBAPIError", "TimeoutError"):
+        return 503, "The database is temporarily unavailable. Try again shortly.", 5
+    return None
+
+
 @app.exception_handler(Exception)
 def unhandled_error_handler(request: Request, exc: Exception):
-    # Unhandled errors bypass CORSMiddleware, so the browser reports them as a
-    # misleading "CORS blocked". Return JSON with the CORS header so the real
-    # error (status + detail) is visible in the frontend and logs.
+    # Unhandled errors bypass CORSMiddleware, so add the CORS header here; otherwise the
+    # browser reports a misleading "CORS blocked" instead of the real status/detail.
     import logging
     logging.getLogger("opa").exception("Unhandled error on %s %s", request.method, request.url.path)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": f"{type(exc).__name__}: {exc}"},
-        headers={"Access-Control-Allow-Origin": request.headers.get("origin", "*")},
-    )
+    headers = {"Access-Control-Allow-Origin": request.headers.get("origin", "*")}
+    friendly = _friendly_error(exc)
+    if friendly:
+        status, message, retry = friendly
+        if retry:
+            headers["Retry-After"] = str(retry)
+        return JSONResponse(status_code=status, content={"detail": message}, headers=headers)
+    return JSONResponse(status_code=500, content={"detail": f"{type(exc).__name__}: {exc}"}, headers=headers)
 
 
 @app.get("/v1/health")
