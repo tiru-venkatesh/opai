@@ -43,9 +43,20 @@ def _extractive_reply(hits, limit: int = 4, max_chars: int = 260) -> str:
 def _grounded_chat(user_id: UUID, message: str, db: Session, history=None, doc_ids=None):
     """RAG answer over the user's workspace + uploaded docs, with [n] citations and conversation history."""
     from schemas import JarvisChatResponse
-    from rag_api import answer_question
+    from rag_api import answer_question, general_answer, _SMALLTALK, GREETING
+    from . import groq_client
+
+    if not doc_ids and _SMALLTALK.match(message or ""):
+        return JarvisChatResponse(action="chat", reply=GREETING, payload={"answer_mode": "smalltalk"})
 
     res = answer_question(db, str(user_id), message, history=history, doc_ids=doc_ids)
+    if res["mode"] == "none" and not doc_ids and not res["answer"].startswith("You haven't uploaded") and groq_client.groq_enabled():
+        try:
+            text = general_answer(message, history)
+            if text:
+                return JarvisChatResponse(action="chat", reply=text, payload={"answer_mode": "general"})
+        except Exception:
+            pass
     return JarvisChatResponse(
         action="chat",
         reply=res["answer"],
@@ -118,6 +129,11 @@ def handle_message(user_id: UUID, message: str, db: Session, history=None, doc_i
             captured = None
         if captured:
             return captured
+
+    import re as _re0
+    if not doc_ids and _re0.search(r"\b(uploaded|documents?|docs?|pdfs?|files?)\b", (message or "").lower()) \
+            and not _re0.search(r"\b(task|todo|remind|outreach|email)\b", (message or "").lower()):
+        return _grounded_chat(user_id, message, db, history)  # questions about the user's documents are RAG, not workspace-summary
 
     if doc_ids:  # "Ask only this doc": skip routing and answer strictly from the selected documents
         return _grounded_chat(user_id, message, db, history, doc_ids)

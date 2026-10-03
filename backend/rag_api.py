@@ -408,6 +408,10 @@ def answer_question(db: Session, user_id, question: str, history=None, doc_ids=N
     uid = str(user_id)
     hits = retrieve_for_question(db, uid, question, history, doc_ids, k)
     if not hits:
+        if not doc_ids and re.search(r"\b(uploaded|upload|documents?|docs?|files?|pdfs?|notes)\b", question, re.I) \
+                and not _doc_chunks(db, uid):
+            return {"answer": "You haven't uploaded any documents yet. Open Knowledge (top right) and drop a PDF, DOCX, TXT, MD or CSV, or paste notes, then ask again.",
+                    "mode": "none", "sources": []}
         msg = ("I couldn't find anything relevant in the selected document(s)." if doc_ids else
                "I couldn't find anything relevant in your workspace or uploaded documents. "
                "Upload a file or paste notes in Knowledge, or add the relevant project/application/task.")
@@ -425,6 +429,27 @@ def answer_question(db: Session, user_id, question: str, history=None, doc_ids=N
     if not answer:
         answer = extractive_answer(sources, hits, question)
     return {"answer": answer, "mode": mode, "sources": sources}
+
+
+_SMALLTALK = re.compile(r"^\s*(hi+|hello+|hey+|yo|hola|namaste|good (?:morning|afternoon|evening)|thanks?(?: you)?|thank you|ok(?:ay)?|cool|bye)\W*$", re.I)
+GREETING = ("Hi! I can answer from your documents and workspace (with citations), or add things for you: "
+            "\u201cadd a project\u2026\u201d, \u201cadd an exam\u2026\u201d, \u201cadd an application\u2026\u201d, \u201cadd a task\u2026\u201d. What do you need?")
+
+
+def general_answer(question: str, history=None) -> str:
+    """Used in Workspace mode when nothing in the user's data matches: answer normally instead of dead-ending."""
+    from agent import groq_client
+    msgs = [{"role": "system", "content": "You are KARNA, a helpful, concise assistant for a student and independent builder. "
+             "The user's workspace had nothing relevant to this message, so answer from general knowledge. "
+             "Do not claim to have looked at their documents. If it clearly depends on their personal data, say what to add."}]
+    for h in (history or [])[-6:]:
+        if _role(h) in ("user", "assistant"):
+            msgs.append({"role": _role(h), "content": _content(h)[:1500]})
+    msgs.append({"role": "user", "content": question})
+    out = groq_client.get_client().chat.completions.create(
+        model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), messages=msgs, temperature=0.4, max_tokens=1200,
+    ).choices[0].message.content or ""
+    return out.strip()
 
 
 class AskIn(BaseModel):

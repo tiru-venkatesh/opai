@@ -210,3 +210,11 @@ def test_chat_capture_asks_for_missing_and_ignores_questions(users):
     assert "I still need" in r["reply"] and not r["payload"].get("created")
     q = chat(a, "how do I add a project to my resume?")
     assert not (q.get("payload") or {}).get("created")
+
+
+def test_smalltalk_and_no_docs_message(users):
+    _, b = users   # user b has uploaded nothing
+    r = chat(b, "hi")
+    assert "I don't have enough" not in r["reply"] and r["payload"]["answer_mode"] == "smalltalk"
+    r = chat(b, "Summarise my uploaded documents")
+    assert "haven't uploaded any documents" in r["reply"]

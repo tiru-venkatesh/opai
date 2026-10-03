@@ -67,6 +67,11 @@ main{max-width:860px;margin:0 auto;padding:20px 20px 250px;display:flex;flex-dir
 .bubble pre{margin:8px 0;padding:12px 14px;background:#0e0e10;border:1px solid #2a2a2c99;border-radius:10px;overflow:auto;max-height:380px}
 .bubble pre code{background:none;border:0;padding:0;font-size:12.5px;line-height:20px;white-space:pre}
 .bubble a{color:var(--primary);text-underline-offset:3px}
+.bubble hr{border:0;border-top:1px solid #444748aa;margin:12px 0}
+.tbl{overflow-x:auto;margin:8px 0}
+.bubble table{border-collapse:collapse;font-size:13px;min-width:60%}
+.bubble th,.bubble td{border:1px solid #444748aa;padding:6px 10px;text-align:left;vertical-align:top}
+.bubble th{background:var(--surface-3);font-weight:600}
 .files{display:flex;flex-wrap:wrap;gap:6px}
 .fchip{display:inline-flex;align-items:center;gap:6px;max-width:220px;padding:3px 9px;border-radius:999px;background:var(--surface-3);border:1px solid var(--surface-4);font:11px/16px var(--mono);color:var(--muted)}
 .fchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -289,16 +294,25 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
          .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
          .replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, '$1<em>$2</em>')
          .replace(/\[([^\]\n]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    for (let i = 0; i < 4; i++) s = s.replace(/(^\s*\|[^\n]*)\n[ \t]*\n(?=\s*\|)/gm, '$1\n');
     let out = '', list = null; const close = () => { if (list) { out += '</' + list + '>'; list = null; } };
-    s.split('\n').forEach((ln) => {
-      let m;
+    const cells = (r) => r.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+    const rows = s.split('\n');
+    for (let i = 0; i < rows.length; i++) {
+      const ln = rows[i]; let m;
+      if (/^\s*\|.*\|\s*$/.test(ln) && i + 1 < rows.length && /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(rows[i + 1])) {
+        close(); const head = cells(ln); i += 2; let body = '';
+        while (i < rows.length && /^\s*\|.*\|\s*$/.test(rows[i])) { body += '<tr>' + cells(rows[i]).map((c) => '<td>' + c + '</td>').join('') + '</tr>'; i++; }
+        i--; out += '<div class="tbl"><table><thead><tr>' + head.map((c) => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>' + body + '</tbody></table></div>'; continue;
+      }
+      if (/^\s*-{3,}\s*$/.test(ln)) { close(); out += '<hr>'; continue; }
       if ((m = ln.match(/^\s*[-*•]\s+(.*)/))) { if (list !== 'ul') { close(); out += '<ul>'; list = 'ul'; } out += '<li>' + m[1] + '</li>'; }
       else if ((m = ln.match(/^\s*\d+[.)]\s+(.*)/))) { if (list !== 'ol') { close(); out += '<ol>'; list = 'ol'; } out += '<li>' + m[1] + '</li>'; }
       else if ((m = ln.match(/^#{1,4}\s+(.*)/))) { close(); out += '<h4>' + m[1] + '</h4>'; }
       else if (!ln.trim()) { close(); }
       else if (/^\u0000\d+\u0000$/.test(ln.trim())) { close(); out += ln.trim(); }
       else { close(); out += '<p>' + ln + '</p>'; }
-    });
+    }
     close();
     return out.replace(/\u0000(\d+)\u0000/g, (_, i) => blocks[+i]);
   }
@@ -378,6 +392,8 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
     if (m.action === 'attachment') return 'file analysis';
     if (m.action === 'general') return 'general';
     if (m.payload && m.payload.answer_mode === 'capture') return m.payload.created ? 'added' : 'needs info';
+    if (m.mode === 'general') return 'general answer';
+    if (m.mode === 'smalltalk') return 'chat';
     if (m.mode === 'llm') return 'cited answer';
     if (m.mode === 'extractive') return 'from your data';
     const p = m.payload;
