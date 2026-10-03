@@ -58,6 +58,8 @@ from pdf_timetable import router as pdf_timetable_router
 app.include_router(pdf_timetable_router)
 from attach import router as attach_router
 app.include_router(attach_router)
+from rag_api import router as rag_router
+app.include_router(rag_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -171,6 +173,11 @@ def serve_super_chat():
     if os.path.exists("static/super-chat.html"):
         return FileResponse("static/super-chat.html")
     raise HTTPException(status_code=404, detail="super-chat.html not found")
+
+
+@app.get("/karna")
+def serve_karna():
+    return serve_super_chat()
 
 
 @app.get("/")
@@ -550,6 +557,7 @@ def create_task(payload: TaskCreate, db: Session = Depends(get_db)):
     db.add(row)
     db.commit()
     db.refresh(row)
+    rag.safe(rag.index_task, db, row)
     return row
 
 
@@ -562,6 +570,7 @@ def update_task(task_id: UUID, payload: TaskUpdate, db: Session = Depends(get_db
         setattr(row, field, value)
     db.commit()
     db.refresh(row)
+    rag.safe(rag.index_task, db, row)
     return row
 
 
@@ -570,8 +579,10 @@ def delete_task(task_id: UUID, db: Session = Depends(get_db)):
     row = db.query(Task).filter(Task.id == str(task_id)).first()
     if not row:
         raise HTTPException(status_code=404, detail="Task not found")
+    uid_t = str(row.user_id)
     db.delete(row)
     db.commit()
+    rag.safe(rag.delete_source, db, uid_t, rag.TASK, str(task_id))
     return {"status": "deleted"}
 
 
@@ -1110,7 +1121,7 @@ def set_agent_permissions(user_id: UUID, payload: AgentPermissionsUpdate, db: Se
 # ================= KARNA UNIFIED CHAT =================
 @app.post("/v1/jarvis/chat", response_model=JarvisChatResponse)
 def jarvis_chat(request: JarvisChatRequest, db: Session = Depends(get_db)):
-    return process_jarvis_message(request.user_id, request.message, db)
+    return process_jarvis_message(request.user_id, request.message, db, history=request.history, doc_ids=request.doc_ids)
 
 
 # ================= GENERAL CHAT (no workspace data) =================

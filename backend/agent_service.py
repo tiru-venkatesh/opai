@@ -803,6 +803,11 @@ def _tool_create_task(uid: str, db: Session, args: dict) -> dict:
     db.add(task)
     db.commit()
     db.refresh(task)
+    try:
+        import rag_service as _rag
+        _rag.safe(_rag.index_task, db, task)
+    except Exception:
+        pass
     return {"created": True, "task_id": task.id, "title": task.title}
 
 
@@ -816,6 +821,11 @@ def _tool_update_task_status(uid: str, db: Session, args: dict) -> dict:
         return {"updated": False, "error": "task not found"}
     task.status = new_status
     db.commit()
+    try:
+        import rag_service as _rag
+        _rag.safe(_rag.index_task, db, task)
+    except Exception:
+        pass
     return {"updated": True, "task_id": task.id, "status": task.status}
 
 
@@ -958,7 +968,7 @@ def run_jarvis_agent(user_id: UUID, message: str, db: Session) -> JarvisChatResp
 
 
 # ================= KARNA UNIFIED ROUTER =================
-def process_jarvis_message(user_id: UUID, message: str, db: Session) -> JarvisChatResponse:
+def process_jarvis_message(user_id: UUID, message: str, db: Session, history=None, doc_ids=None) -> JarvisChatResponse:
     """Unified OPA agent entry point.
 
     The production path is now:
@@ -970,7 +980,7 @@ def process_jarvis_message(user_id: UUID, message: str, db: Session) -> JarvisCh
     """
     try:
         from agent.orchestrator import handle_message
-        return handle_message(user_id, message, db)
+        return handle_message(user_id, message, db, history=history, doc_ids=doc_ids)
     except Exception:
         # Preserve the existing safety boundary: no model should ever be able
         # to write directly to the database, and the legacy path is still

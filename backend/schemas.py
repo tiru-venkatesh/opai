@@ -62,9 +62,16 @@ class ProfessorOutreachDraft(BaseModel):
 
 
 # ================= JARVIS CHAT SCHEMA =================
+class ChatTurn(BaseModel):
+    role: str
+    content: str
+
+
 class JarvisChatRequest(BaseModel):
     user_id: UUID
     message: str
+    history: Optional[List[ChatTurn]] = None  # prior turns, so follow-ups ("what does it use?") resolve
+    doc_ids: Optional[List[str]] = None       # restrict retrieval to these uploaded docs ("ask only this doc")
 
 
 class JarvisChatResponse(BaseModel):

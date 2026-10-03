@@ -2175,7 +2175,7 @@ function viewJarvis() {
      an invisible safety net inside jarvisSend() for the rare case the
      backend is down; nothing here asks the user to paste a key. */
   const connectBanner = live ? '' : '<div class="kw-reconnect">Reconnecting to the backend\u2026 this can take up to a minute if it has been idle.</div>';
-  return headBlock + '<div class="jv"><section class="panel jv-main"><div class="jv-top"><div class="orb"></div><div><b>KARNA</b><span>' + (KARNA_SCOPE === 'general' ? 'General chat: ask anything' : (live ? escA(liveLabel) : 'Answering from your workspace data')) + '</span></div>' + karnaScopeHTML() + '</div>' + connectBanner + '<div class="msgs" id="msgs">' + (CHAT.length ? CHAT.map(bubbleHTML).join('') : welcomeHTML()) + '</div><div class="composer"><div class="cbox"><textarea id="jv-input" rows="1" placeholder="' + (KARNA_SCOPE === 'general' ? 'Ask KARNA anything' : 'Ask KARNA about your workspace') + '" aria-label="Message KARNA"></textarea><button class="send" onclick="jarvisSend()" aria-label="Send message">' + icon('up', 17) + '</button></div></div></section><aside class="panel jv-ctx"><h3>Workspace right now</h3><div id="ctx"></div><div class="ctx-note">' + (BACKEND.ready ? 'Connected to your OPAI backend (KARNA agent).' : (S.profile.groqKey ? 'Connected to Groq (' + escA(gm) + ').' : 'Backend is waking up \u2014 retry in a moment.')) + '</div></aside></div>';
+  return headBlock + '<div class="jv"><section class="panel jv-main"><div class="jv-top"><div class="orb"></div><div><b>KARNA</b><span>' + (KARNA_SCOPE === 'general' ? 'General chat: ask anything' : (live ? escA(liveLabel) : 'Answering from your workspace data')) + '</span></div>' + karnaScopeHTML() + '<a class="kf-btn" href="/super-chat" title="Upload documents and chat with citations" style="margin-left:8px;text-decoration:none">Knowledge &amp; docs</a></div>' + connectBanner + '<div class="msgs" id="msgs">' + (CHAT.length ? CHAT.map(bubbleHTML).join('') : welcomeHTML()) + '</div><div class="composer"><div class="cbox"><textarea id="jv-input" rows="1" placeholder="' + (KARNA_SCOPE === 'general' ? 'Ask KARNA anything' : 'Ask KARNA about your workspace') + '" aria-label="Message KARNA"></textarea><button class="send" onclick="jarvisSend()" aria-label="Send message">' + icon('up', 17) + '</button></div></div></section><aside class="panel jv-ctx"><h3>Workspace right now</h3><div id="ctx"></div><div class="ctx-note">' + (BACKEND.ready ? 'Connected to your OPAI backend (KARNA agent).' : (S.profile.groqKey ? 'Connected to Groq (' + escA(gm) + ').' : 'Backend is waking up \u2014 retry in a moment.')) + '</div></aside></div>';
 }
 function welcomeHTML() { return '<div class="welcome" id="welcome"><h2>Start here: set up your whole OPAI app</h2><p>Tap the first option and I will walk you through everything: profile, applications, exams, projects and outreach. Or type your own question.</p><div class="prompts">' + PROMPTS.map(p => '<button onclick="jarvisSend(this.textContent)">' + esc(p) + '</button>').join('') + '</div></div>'; }
 function fmtMsg(t) { return esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>'); }
@@ -2352,8 +2352,11 @@ async function jarvisSend(text) {
   if (BACKEND.ready) {
     try {
       const uid = await ensureUser();
-      const res = await POST('/v1/jarvis/chat', { user_id: uid, message: t });
+      const hist = CHAT.slice(-9, -1).filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role: m.role, content: String(m.text).slice(0, 1500) }));
+      const res = await POST('/v1/jarvis/chat', { user_id: uid, message: t, history: hist });
       reply = res.reply || 'Done.';
+      const srcs = res.payload && Array.isArray(res.payload.sources) ? res.payload.sources.filter(s => s && s.n) : [];
+      if (srcs.length) reply += '\n\n**Sources:** ' + srcs.map(s => '[' + s.n + '] ' + s.title + (s.page ? ' p.' + s.page : '')).join(' \u00b7 ');
       if (res.tool_calls && res.tool_calls.length) { syncBackend(true).catch(() => {}); }
     } catch (e) {
       reply = 'KARNA backend call failed (' + e.message + ').';

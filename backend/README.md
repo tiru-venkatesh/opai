@@ -72,6 +72,26 @@ automatically, and each workflow retrieves what it needs:
 Endpoints: `POST /v1/rag/reindex`, `GET /v1/rag/search?user_id=&q=`, `GET /v1/rag/stats`.
 Embedder: fastembed `bge-small-en-v1.5`; falls back to a hashed bag-of-words embedder if the
 model can't load (`RAG_EMBEDDER=hash|fastembed|auto`). After changing embedders, call `/v1/rag/reindex`.
+## KARNA knowledge workspace (uploads + cited answers)
+
+Open `/super-chat` (or `/karna`). **Knowledge** lets you upload PDF/DOCX/TXT/MD/CSV or paste notes; each file is
+parsed (PDFs page by page), chunked, embedded and stored per user in `document_chunks`. Re-uploading a file with the
+same name replaces it. **Workspace** mode answers from your uploads *and* your OPAI data (projects, tasks, applications,
+courses...) with `[n]` citations and per-source snippets; follow-up questions use the conversation history, and
+"Ask only this doc" restricts retrieval to one document. **General** mode is a plain assistant with no data access.
+Without a Groq key (or if the LLM call fails) Workspace falls back to quoting the best matching sentences.
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /v1/rag/docs` (multipart `user_id`, `files`) | upload + index, per-file ok/error |
+| `GET /v1/rag/docs?user_id=` / `DELETE /v1/rag/docs/{id}?user_id=` | list / delete |
+| `POST /v1/rag/notes` | index pasted text |
+| `POST /v1/rag/ask` | `{user_id, question, history?, doc_ids?}` -> `{answer, mode, sources[]}` |
+| `POST /v1/jarvis/chat` | unified agent; now also accepts `history` and `doc_ids` |
+| `POST /v1/rag/reindex-docs` | rebuild workspace sources and re-embed everything |
+
+Tests: `pip install pytest reportlab && python -m pytest tests -q`.
+
 ## Database maintenance
 
 The backend uses SQLAlchemy with SQLite for local development and PostgreSQL when `DATABASE_URL` is provided. SQLite connections enable foreign-key enforcement, WAL mode, a busy timeout, and indexed user/date/status lookups.

@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 
 from database import (
     DocumentChunk, Project, DailyPlan, OutreachHistory, Contact, Academic, Application,
-    User, ClientRequest, Course, Exam, MemoryItem,
+    User, ClientRequest, Course, Exam, MemoryItem, Task,
 )
 
 log = logging.getLogger("opa.rag")
@@ -42,6 +42,9 @@ PROFILE = "profile"
 REQUEST = "client_request"
 COURSE = "course"
 MEMORY = "memory_item"
+TASK = "task"
+UPLOAD = "upload"   # user-uploaded files (rag_api.py)
+NOTE = "note"       # pasted notes (rag_api.py)
 
 # ------------------------------------------------------------------ embedding
 FASTEMBED_TAG = "bge-small-en-v1.5"
@@ -317,6 +320,14 @@ def index_exam(db: Session, e: Exam) -> int:
     return index_course(db, c) if c else 0
 
 
+def index_task(db: Session, t: Task) -> int:
+    bits = [f"Task: {t.title}.", f"Status: {t.status}." if t.status else "",
+            f"Due: {t.due_date}." if t.due_date else "", f"Type: {t.type}." if t.type else "",
+            f"About {t.estimated_minutes} minutes." if t.estimated_minutes else ""]
+    return index_source(db, t.user_id, TASK, t.id, " ".join(b for b in bits if b), title=f"Task: {t.title[:60]}",
+                        meta={"status": t.status})
+
+
 def index_memory_item(db: Session, m: MemoryItem) -> int:
     """Only confirmed (active) memories are retrievable; forgotten/unconfirmed ones are removed from the index."""
     if m.status != "active":
@@ -405,7 +416,7 @@ def reindex_user(db: Session, user_id) -> Dict[str, int]:
     """Rebuilds every derived source from the relational tables and re-embeds all remaining chunks."""
     uid = str(user_id)
     out = {"projects": 0, "reflections": 0, "outreach": 0, "academics": 0, "applications": 0,
-           "profile": 0, "requests": 0, "courses": 0, "memory": 0, "re_embedded": 0}
+           "profile": 0, "requests": 0, "courses": 0, "memory": 0, "tasks": 0, "re_embedded": 0}
     for p in db.query(Project).filter(Project.user_id == uid).all():
         out["projects"] += index_project(db, p)
     for pl in db.query(DailyPlan).filter(DailyPlan.user_id == uid, DailyPlan.reflection.isnot(None)).all():
@@ -426,6 +437,8 @@ def reindex_user(db: Session, user_id) -> Dict[str, int]:
         out["courses"] += index_course(db, c)
     for m in db.query(MemoryItem).filter(MemoryItem.user_id == uid, MemoryItem.status == "active").all():
         out["memory"] += index_memory_item(db, m)
+    for t in db.query(Task).filter(Task.user_id == uid).all():
+        out["tasks"] += index_task(db, t)
     rows = db.query(DocumentChunk).filter(DocumentChunk.user_id == uid).all()
     if rows:
         vecs, tag = embed_texts([r.content for r in rows])

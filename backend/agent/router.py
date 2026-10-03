@@ -87,7 +87,11 @@ def _deterministic_classify(message: str) -> IntentDecision:
         return IntentDecision(intent="generate_exam_plan", confidence=0.84, provider="deterministic")
     if any(k in text for k in ["create task", "add task", "add a task", "new task", "todo", "to-do"]):
         return IntentDecision(intent="create_task", confidence=0.86, provider="deterministic")
+    _search_verb = re.search(r"\b(find|search|look(?:ing)? for|recommend|suggest|match|show me|any|list|browse)\b", text)
+    _about_it = re.search(r"\b(skills?|requirements?|needs?|require\w*|what|which|why|how|explain|about|tell me)\b", text)
     if any(k in text for k in ["opportunit", "internship", "hackathon", "research opening"]):
+        if _about_it and not _search_verb:   # "which skills does the Acme internship need?" is a question, not a search
+            return IntentDecision(intent="chat", confidence=0.7, provider="deterministic")
         return IntentDecision(intent="find_opportunity", confidence=0.82, provider="deterministic")
     if any(k in text for k in ["email professor", "draft email", "outreach", "contact professor"]):
         return IntentDecision(intent="draft_outreach", confidence=0.81, provider="deterministic")

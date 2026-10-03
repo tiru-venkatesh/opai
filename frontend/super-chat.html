@@ -15,6 +15,7 @@
   --sans:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--text);font:14px/22px var(--sans);letter-spacing:-.005em;-webkit-font-smoothing:antialiased}
 body{min-height:100vh;background-image:radial-gradient(#ffffff0a 1px,transparent 1px);background-size:32px 32px}
 body::before{content:"";position:fixed;left:50%;top:-180px;width:640px;height:640px;transform:translateX(-50%);border-radius:50%;
@@ -87,6 +88,38 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
 @keyframes b{0%,80%,100%{opacity:.25}40%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.typing i{animation:none;opacity:.6}}
 @media (max-width:720px){header{padding:0 14px}.chip.hide-sm{display:none}main{padding-left:14px;padding-right:14px}}
+
+/* ---- KARNA workspace additions ---- */
+.seg{display:inline-flex;padding:3px;border-radius:8px;background:var(--surface);border:1px solid #2a2a2c99}
+.seg button{padding:4px 12px;border:0;border-radius:5px;background:none;color:var(--muted);font:12px/16px var(--mono);letter-spacing:.04em}
+.seg button[aria-pressed=true]{background:var(--surface-4);color:var(--primary)}
+.hbtn{padding:5px 11px;border-radius:6px;border:1px solid #2a2a2c99;background:var(--surface);font-size:12px;color:var(--text)}
+.hbtn:hover{border-color:#ffffff66}
+.cite{display:inline-block;min-width:18px;margin:0 1px;padding:0 5px;border-radius:4px;border:1px solid var(--line);background:var(--surface-3);color:var(--primary);font:11px/16px var(--mono);vertical-align:baseline}
+.cite:hover{background:var(--primary);color:var(--on-primary)}
+.srcs{display:flex;flex-wrap:wrap;gap:6px}
+.src{display:inline-flex;gap:6px;align-items:center;max-width:100%;padding:3px 9px;border-radius:999px;border:1px solid #2a2a2c99;background:var(--surface);font:11px/16px var(--mono);color:var(--muted)}
+.src b{color:var(--primary);font-weight:500}.src span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.src.on{border-color:#ffffffaa;color:var(--text)}
+.snip{padding:10px 12px;border-radius:10px;background:#0e0e10cc;border:1px solid #2a2a2c99;font-size:13px;line-height:20px;color:var(--muted)}
+.snip small{display:block;margin-bottom:4px;font:11px/14px var(--mono);color:var(--dim)}
+.scope{pointer-events:auto;display:flex;align-items:center;gap:8px;padding:4px 10px;border-radius:8px;background:var(--surface);border:1px solid #ffffff55;font:12px/16px var(--mono);color:var(--text)}
+.scope button{border:0;background:none;color:var(--muted);padding:0 2px}
+.drawer{position:fixed;top:60px;right:0;bottom:0;width:min(400px,100vw);z-index:30;display:flex;flex-direction:column;gap:14px;padding:18px;overflow:auto;
+  background:#131315f5;backdrop-filter:blur(16px);border-left:1px solid #444748aa;transform:translateX(100%);transition:transform .2s ease}
+.drawer.open{transform:none}
+@media (prefers-reduced-motion:reduce){.drawer{transition:none}}
+.drawer h2{margin:0;font-size:15px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.drop{display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;padding:18px;border:1px dashed var(--line);border-radius:12px;text-align:center;color:var(--muted);font-size:13px}
+.drop.over{border-color:var(--primary);background:#ffffff0d}
+.drawer textarea,.drawer input[type=text]{width:100%;padding:8px 10px;border-radius:8px;border:1px solid #2a2a2c99;background:var(--surface-2);color:var(--primary);font:13px/20px var(--sans)}
+.drawer textarea{min-height:84px;resize:vertical}
+.doc{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid #2a2a2c99}
+.doc.on{border-color:#ffffffaa}
+.doc .n{font-weight:500;word-break:break-all}
+.doc .m{font:11px/14px var(--mono);color:var(--dim)}
+.upmsg{font:12px/18px var(--mono)}
+.upmsg .bad{color:var(--bad)}.upmsg .good{color:var(--good)}
 </style>
 </head>
 <body>
@@ -97,19 +130,39 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
   </div>
   <nav id="nav" aria-label="Sections"></nav>
   <span class="sp"></span>
+  <div class="seg" role="group" aria-label="Chat scope"><button type="button" id="m-ws" aria-pressed="true" title="Answers from your workspace and uploaded documents">Workspace</button><button type="button" id="m-gen" aria-pressed="false" title="General assistant, no access to your data">General</button></div>
+  <button class="hbtn" id="kbtn" type="button" aria-expanded="false" aria-controls="drawer">Knowledge <span class="mono" id="kcount">0</span></button>
+  <button class="hbtn" id="newchat" type="button">New chat</button>
   <span class="chip hide-sm" id="agent-chip" title="Tool calls allowed per message"><span class="dot wait"></span><span>agent</span></span>
   <span class="chip" id="conn"><span class="dot wait"></span><span>connecting</span></span>
 </header>
 
+<aside class="drawer" id="drawer" aria-label="Knowledge">
+  <h2>Knowledge <button class="hbtn" id="kclose" type="button">Close</button></h2>
+  <p class="note">Files and notes you add here are indexed privately for your account. KARNA answers from them and cites the passages it used. Text inside files is treated as data, never as instructions.</p>
+  <label class="drop" id="drop"><span>Drop files here or choose</span><span class="note">PDF, DOCX, TXT, MD, CSV · up to 10 MB each</span>
+    <input id="file" type="file" multiple accept=".pdf,.docx,.txt,.md,.markdown,.csv" hidden>
+    <span class="btn">Choose files</span></label>
+  <div class="upmsg" id="upmsg" aria-live="polite"></div>
+  <details><summary>Paste notes</summary>
+    <div style="display:flex;flex-direction:column;gap:8px;padding-top:8px">
+      <input id="ntitle" type="text" placeholder="Title (optional)" maxlength="120">
+      <textarea id="ntext" placeholder="Paste text to index"></textarea>
+      <button class="btn" id="nadd" type="button">Add note</button></div></details>
+  <div style="display:flex;justify-content:space-between;align-items:center"><span class="note mono" id="dtotal"></span><button class="hbtn" id="reidx" type="button" title="Rebuild the index from your workspace and re-embed everything">Re-index</button></div>
+  <div id="docs" style="display:flex;flex-direction:column;gap:8px"></div>
+</aside>
+
 <main id="thread" aria-live="polite">
   <section class="empty" id="empty">
     <h1>Ask KARNA to run your day.</h1>
-    <p>It plans, searches your data, and drafts outreach. Drafts wait below for your approval and nothing is sent automatically.</p>
+    <p id="empty-p">It plans, searches your data and documents, and drafts outreach. Drafts wait below for your approval and nothing is sent automatically.</p>
   </section>
 </main>
 
 <div class="dock">
   <div class="composer">
+    <div class="scope" id="scope" hidden></div>
     <div class="sugg" id="sugg"></div>
     <div class="input">
       <input id="q" type="text" autocomplete="off" aria-label="Message KARNA" placeholder="Ask KARNA to plan, search, or draft something">
@@ -125,159 +178,274 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
   const base = () => (localStorage.getItem(LS_BASE) || DEFAULT_API).replace(/\/+$/, '');
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 
   async function api(path, opts = {}) {
-    const res = await fetch(base() + path, { headers: opts.body ? { 'Content-Type': 'application/json' } : {}, ...opts });
+    const isForm = typeof FormData !== 'undefined' && opts.body instanceof FormData;
+    const res = await fetch(base() + path, { headers: opts.body && !isForm ? { 'Content-Type': 'application/json' } : {}, ...opts });
     if (!res.ok) {
-      let d = ''; try { d = (await res.json()).detail || ''; } catch (e) {}
+      let d = ''; try { const j = await res.json(); d = typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail || ''); } catch (e) {}
       const err = new Error(d || (res.status + ' ' + res.statusText)); err.status = res.status; throw err;
     }
     const t = await res.text(); return t ? JSON.parse(t) : null;
   }
 
-  // Same identity rules as the main app: dev-login for ?email=, otherwise the device's guest user.
   let uid = null;
   async function ensureUser() {
     if (uid) return uid;
     const params = new URLSearchParams(location.search);
-    const email = params.get('email') || localStorage.getItem('opai_sc_email');
-    if (email) {
-      localStorage.setItem('opai_sc_email', email);
-      uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(email), { method: 'POST' })).user_id;
-      return uid;
-    }
-    let gid = localStorage.getItem('opa_guest_uid');
-    if (gid) {
-      try { await api('/v1/profile?user_id=' + encodeURIComponent(gid)); uid = gid; return uid; }
-      catch (e) { if (e.status !== 404) throw e; }
-    }
-    gid = (await api('/v1/auth/guest', { method: 'POST' })).user_id;
-    localStorage.setItem('opa_guest_uid', gid); uid = gid; return uid;
+    const email = params.get('email') || lsGet('opai_sc_email', '');
+    if (email) { lsSet('opai_sc_email', email); uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(email), { method: 'POST' })).user_id; return uid; }
+    let gid = lsGet('opa_guest_uid', '');
+    if (gid) { try { await api('/v1/profile?user_id=' + encodeURIComponent(gid)); uid = gid; return uid; } catch (e) { if (e.status !== 404) throw e; } }
+    gid = (await api('/v1/auth/guest', { method: 'POST' })).user_id; lsSet('opa_guest_uid', gid); uid = gid; return uid;
   }
 
-  // ---------- nav (links into the main app) ----------
   const NAV = [['Overview','overview'],['Today','today'],['Applications','applications'],['Outreach','outreach'],['Projects','projects'],['Outbox','outbox'],['Agent','agent']];
-  $('nav').innerHTML = '<a aria-current="page" href="#">Super Chat</a>' + NAV.map(([l,v]) => '<a href="app.html#/' + v + '">' + l + '</a>').join('');
+  $('nav').innerHTML = '<a aria-current="page" href="#">KARNA</a>' + NAV.map(([l,v]) => '<a href="app.html#/' + v + '">' + l + '</a>').join('');
 
-  // ---------- status ----------
   function setConn(state, text) { $('conn').innerHTML = '<span class="dot ' + state + '"></span><span>' + esc(text) + '</span>'; }
-  async function boot() {
-    try {
-      const h = await api('/v1/health');
-      setConn(h.ok ? 'ok' : 'err', h.ok ? 'connected' : 'backend degraded');
-      if (!h.groq_key_set) addError('The backend has no GROQ_API_KEY set, so the agent cannot answer yet.');
-    } catch (e) { setConn('err', 'backend unreachable'); addError('Could not reach ' + base() + '. If it is on a free host it may be waking up; try again in a minute. ' + e.message); }
-    try {
-      await ensureUser();
-      const p = await api('/v1/agent/permissions?user_id=' + uid);
-      $('agent-chip').innerHTML = '<span class="dot ' + (p.agent_enabled ? 'ok' : 'err') + '"></span><span>' + (p.agent_enabled ? 'agent on' : 'agent off') + ' \u00b7 ' + p.max_tool_calls_per_turn + ' tools/msg</span>';
-      refreshGate();
-    } catch (e) { /* surfaced on first send */ }
-  }
+  let hasKey = true;
 
-  // ---------- thread ----------
+  // ---------- state: mode, messages (persisted per user + mode) ----------
+  let mode = lsGet('karna_mode', 'workspace') === 'general' ? 'general' : 'workspace';
+  let msgs = [];
+  let scopeDoc = null;      // {doc_id, filename} when "Ask only this doc"
+  const MAX_SAVED = 60;
+  const key = () => 'karna_chat_v2:' + (uid || 'anon') + ':' + mode;
+  function save() { lsSet(key(), JSON.stringify(msgs.slice(-MAX_SAVED))); }
+  function load() { try { msgs = JSON.parse(lsGet(key(), '[]')) || []; } catch (e) { msgs = []; } }
+
   const thread = $('thread');
+  const gate = document.createElement('section'); gate.id = 'gate'; gate.className = 'gate'; gate.hidden = true; thread.appendChild(gate);
   function scrollEnd() { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }
-  function hideEmpty() { const e = $('empty'); if (e) e.remove(); }
-  function addUser(text) {
-    hideEmpty();
-    const d = document.createElement('div'); d.className = 'msg';
-    d.innerHTML = '<div class="av" aria-hidden="true">You</div><div class="body"><div class="meta"><b>You</b><span>' + new Date().toLocaleTimeString() + '</span></div><div class="bubble">' + esc(text) + '</div></div>';
-    thread.insertBefore(d, $('gate')); scrollEnd();
+  function clearThread() { thread.querySelectorAll('.msg').forEach((n) => n.remove()); }
+  function showEmpty(on) {
+    let e = $('empty');
+    if (!on) { if (e) e.remove(); return; }
+    if (e) return;
+    e = document.createElement('section'); e.className = 'empty'; e.id = 'empty';
+    e.innerHTML = '<h1>' + (mode === 'general' ? 'Ask me anything.' : 'Ask KARNA to run your day.') + '</h1><p id="empty-p">' + esc(emptyCopy()) + '</p>';
+    thread.insertBefore(e, thread.firstChild);
   }
-  function addError(text) {
-    hideEmpty();
-    const d = document.createElement('div'); d.className = 'msg err';
-    d.innerHTML = '<div class="av" aria-hidden="true">!</div><div class="body"><div class="bubble">' + esc(text) + '</div></div>';
-    thread.insertBefore(d, $('gate')); scrollEnd();
+  const emptyCopy = () => mode === 'general'
+    ? 'General mode: a plain assistant with no access to your workspace or documents.'
+    : 'It plans, searches your data and documents, and drafts outreach. Drafts wait below for your approval and nothing is sent automatically.';
+
+  // [n] markers in an answer become clickable chips that open the matching source
+  function answerHTML(text, sources) {
+    const html = esc(text || 'Done.');
+    if (!sources || !sources.length) return html;
+    return html.replace(/\[(\d+)\]/g, (m, n) => (+n >= 1 && +n <= sources.length) ? '<button type="button" class="cite" data-n="' + n + '" aria-label="Source ' + n + '">' + n + '</button>' : '');
   }
-  function stepHTML(tc, i) {
+  function srcLabel(s) { return esc(s.title || s.type) + (s.page ? ' · p.' + esc(s.page) : ''); }
+
+  function render(m) {
+    const d = document.createElement('div');
+    if (m.role === 'user') {
+      d.className = 'msg';
+      d.innerHTML = '<div class="av" aria-hidden="true">You</div><div class="body"><div class="meta"><b>You</b><span>' + esc(m.t || '') + '</span></div><div class="bubble">' + esc(m.content) + '</div></div>';
+    } else if (m.role === 'error') {
+      d.className = 'msg err';
+      d.innerHTML = '<div class="av" aria-hidden="true">!</div><div class="body"><div class="bubble">' + esc(m.content) + '</div></div>';
+    } else {
+      d.className = 'msg agent';
+      const tcs = m.tool_calls || [], srcs = m.sources || [];
+      let h = '<div class="av" aria-hidden="true">K</div><div class="body"><div class="meta"><b>KARNA</b>' + (m.action ? '<span class="pill">' + esc(m.action) + '</span>' : '') +
+        (m.mode ? '<span class="pill">' + esc(m.mode === 'llm' ? 'AI answer' : m.mode === 'extractive' ? 'from your data' : m.mode) + '</span>' : '') + '<span>' + esc(m.t || '') + '</span></div>';
+      if (tcs.length) h += '<details class="trace"><summary>Tool calls this turn (' + tcs.length + ')</summary>' + tcs.map(stepHTML).join('') + '</details>';
+      h += '<div class="bubble">' + answerHTML(m.content, srcs) + '</div>';
+      if (srcs.length) h += '<div class="srcs">' + srcs.map((s) => '<button type="button" class="src" data-n="' + s.n + '"><b>' + s.n + '</b><span>' + srcLabel(s) + '</span></button>').join('') + '</div><div class="snip-slot"></div>';
+      if (m.payload != null && m.payload !== '' && !(Array.isArray(m.payload) && !m.payload.length) && !(m.payload.sources && Object.keys(m.payload).every((k) => k === 'sources' || k === 'answer_mode')))
+        h += '<details class="data"><summary>Result data</summary><pre class="json">' + esc(JSON.stringify(m.payload, null, 2)) + '</pre></details>';
+      d.innerHTML = h + '</div>';
+      d._sources = srcs;
+    }
+    return d;
+  }
+  function stepHTML(tc) {
     const r = tc.result || {};
     const failed = r.ok === false || r.error || (r.result && (r.result.error || r.result.created === false || r.result.drafted === false));
     const out = r.error || (r.result && r.result.error) || JSON.stringify(r.result !== undefined ? r.result : r);
     return '<div class="step"><span class="' + (failed ? 'no' : 'ok') + '">' + (failed ? '\u2715' : '\u2713') + '</span><span class="t">' + esc(tc.tool || tc.name || 'tool') + '</span>' +
-      '<span class="a">args ' + esc(JSON.stringify(tc.arguments || {}).slice(0, 220)) + '</span>' +
-      '<span class="r">' + esc(String(out).slice(0, 320)) + '</span></div>';
+      '<span class="a">args ' + esc(JSON.stringify(tc.arguments || {}).slice(0, 220)) + '</span><span class="r">' + esc(String(out).slice(0, 320)) + '</span></div>';
   }
-  function addAgent(res, ms) {
-    hideEmpty();
-    const tcs = res.tool_calls || [];
-    const d = document.createElement('div'); d.className = 'msg agent';
-    let h = '<div class="av" aria-hidden="true">K</div><div class="body"><div class="meta"><b>KARNA</b><span class="pill">' + esc(res.action || 'chat') + '</span><span>' + new Date().toLocaleTimeString() + '</span><span>' + (ms / 1000).toFixed(2) + 's round trip</span></div>';
-    if (tcs.length) h += '<details class="trace"><summary>Tool calls this turn (' + tcs.length + ')</summary>' + tcs.map(stepHTML).join('') + '</details>';
-    h += '<div class="bubble">' + esc(res.reply || 'Done.') + '</div>';
-    if (res.payload != null && res.payload !== '' && !(Array.isArray(res.payload) && !res.payload.length))
-      h += '<details class="data"><summary>Result data</summary><pre class="json">' + esc(JSON.stringify(res.payload, null, 2)) + '</pre></details>';
-    h += '</div>'; d.innerHTML = h;
-    thread.insertBefore(d, $('gate')); scrollEnd();
+  thread.addEventListener('click', (ev) => {
+    const b = ev.target.closest('.cite,.src'); if (!b) return;
+    const msg = b.closest('.msg'); if (!msg) return;
+    const n = +b.dataset.n, s = (msg._sources || []).find((x) => x.n === n); if (!s) return;
+    const slot = msg.querySelector('.snip-slot'), open = slot.dataset.n === String(n);
+    msg.querySelectorAll('.src').forEach((x) => x.classList.toggle('on', !open && +x.dataset.n === n));
+    slot.dataset.n = open ? '' : String(n);
+    slot.innerHTML = open ? '' : '<div class="snip"><small>[' + n + '] ' + srcLabel(s) + ' \u00b7 relevance ' + esc(s.score) + '</small>' + esc(s.snippet) + '</div>';
+  });
+  const now = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  function push(m) {
+    m.t = m.t || now(); msgs.push(m); save(); showEmpty(false);
+    const el = render(m); thread.insertBefore(el, gate); scrollEnd(); return el;
+  }
+  function flash(text) { showEmpty(false); const el = render({ role: 'error', content: text }); thread.insertBefore(el, gate); scrollEnd(); return el; }
+  function restore() {
+    clearThread(); load();
+    if (!msgs.length) showEmpty(true); else { showEmpty(false); msgs.forEach((m) => thread.insertBefore(render(m), gate)); }
+    window.scrollTo(0, document.body.scrollHeight);
   }
 
+  // ---------- mode toggle / new chat ----------
+  const SUGG = {
+    workspace: ['What is on my plan today?', 'Show my upcoming deadlines', 'Summarise my uploaded documents', 'Find opportunities that match my resume'],
+    general: ['Explain how paging works', 'Help me outline a study plan', 'Draft a polite follow-up email'],
+  };
+  function setMode(m) {
+    mode = m; lsSet('karna_mode', m);
+    $('m-ws').setAttribute('aria-pressed', String(m === 'workspace')); $('m-gen').setAttribute('aria-pressed', String(m === 'general'));
+    $('sugg').innerHTML = SUGG[m].map((s) => '<button type="button">' + esc(s) + '</button>').join('');
+    $('q').placeholder = m === 'general' ? 'Ask anything (no workspace access)' : 'Ask KARNA to plan, search, or draft something';
+    $('kbtn').style.display = m === 'general' ? 'none' : ''; if (m === 'general') toggleDrawer(false);
+    renderScope(); restore();
+  }
+  $('m-ws').addEventListener('click', () => setMode('workspace'));
+  $('m-gen').addEventListener('click', () => setMode('general'));
+  $('newchat').addEventListener('click', () => { msgs = []; save(); restore(); $('q').focus(); });
+  $('sugg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { $('q').value = b.textContent; $('q').focus(); } });
+
+  // ---------- knowledge drawer ----------
+  let docs = [];
+  function toggleDrawer(open) { $('drawer').classList.toggle('open', open); $('kbtn').setAttribute('aria-expanded', String(open)); if (open) refreshDocs(); }
+  $('kbtn').addEventListener('click', () => toggleDrawer(!$('drawer').classList.contains('open')));
+  $('kclose').addEventListener('click', () => toggleDrawer(false));
+  function renderScope() {
+    const s = $('scope');
+    s.hidden = !(scopeDoc && mode === 'workspace');
+    if (!s.hidden) s.innerHTML = '<span>Asking only: ' + esc(scopeDoc.filename) + '</span><button type="button" aria-label="Clear document scope" id="unscope">\u2715</button>';
+    const u = $('unscope'); if (u) u.onclick = () => { scopeDoc = null; renderScope(); renderDocs(); };
+  }
+  function renderDocs() {
+    $('kcount').textContent = docs.length;
+    $('dtotal').textContent = docs.length ? docs.length + ' item' + (docs.length > 1 ? 's' : '') + ' \u00b7 ' + docs.reduce((a, d) => a + d.chunks, 0) + ' chunks' : '';
+    $('docs').innerHTML = docs.length ? docs.map((d) =>
+      '<div class="doc' + (scopeDoc && scopeDoc.doc_id === d.doc_id ? ' on' : '') + '" data-id="' + esc(d.doc_id) + '"><div class="n">' + esc(d.filename) + '</div>' +
+      '<div class="m">' + (d.kind === 'note' ? 'note' : 'file') + ' \u00b7 ' + d.chunks + ' chunks' + (d.pages ? ' \u00b7 ' + d.pages + ' pages' : '') + ' \u00b7 ' + Math.max(1, Math.round(d.chars / 1000)) + 'k chars</div>' +
+      '<div class="btns"><button class="btn" data-act="scope">' + (scopeDoc && scopeDoc.doc_id === d.doc_id ? 'Ask everything' : 'Ask only this doc') + '</button><button class="btn" data-act="del">Delete</button></div></div>').join('')
+      : '<p class="note">Nothing indexed yet. Upload a file or paste notes to get cited answers.</p>';
+  }
+  async function refreshDocs() { try { docs = (await api('/v1/rag/docs?user_id=' + encodeURIComponent(await ensureUser()))).docs; if (scopeDoc && !docs.some((d) => d.doc_id === scopeDoc.doc_id)) scopeDoc = null; } catch (e) { $('upmsg').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; } renderDocs(); renderScope(); }
+  $('docs').addEventListener('click', async (ev) => {
+    const b = ev.target.closest('button[data-act]'); if (!b) return;
+    const id = b.closest('.doc').dataset.id, d = docs.find((x) => x.doc_id === id); if (!d) return;
+    if (b.dataset.act === 'scope') { scopeDoc = scopeDoc && scopeDoc.doc_id === id ? null : { doc_id: id, filename: d.filename }; renderDocs(); renderScope(); return; }
+    if (!confirm('Delete "' + d.filename + '" from your knowledge base?')) return;
+    try { docs = (await api('/v1/rag/docs/' + encodeURIComponent(id) + '?user_id=' + encodeURIComponent(uid), { method: 'DELETE' })).docs; if (scopeDoc && scopeDoc.doc_id === id) scopeDoc = null; renderDocs(); renderScope(); }
+    catch (e) { $('upmsg').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; }
+  });
+  async function upload(fileArr) {
+    if (!fileArr.length) return;
+    $('upmsg').textContent = 'Uploading ' + fileArr.length + ' file' + (fileArr.length > 1 ? 's' : '') + '\u2026';
+    try {
+      const fd = new FormData(); fd.append('user_id', await ensureUser()); fileArr.forEach((f) => fd.append('files', f, f.name));
+      const r = await api('/v1/rag/docs', { method: 'POST', body: fd });
+      docs = r.docs;
+      $('upmsg').innerHTML = r.results.map((x) => x.ok ? '<div class="good">\u2713 ' + esc(x.filename) + ' \u00b7 ' + x.chunks + ' chunks</div>' : '<div class="bad">\u2715 ' + esc(x.filename) + ': ' + esc(x.error) + '</div>').join('');
+      renderDocs();
+    } catch (e) { $('upmsg').innerHTML = '<span class="bad">Upload failed: ' + esc(e.message) + '</span>'; }
+  }
+  // IMPORTANT: copy the FileList into an array *before* anything async or before clearing the input.
+  $('file').addEventListener('change', (e) => { const arr = Array.from(e.target.files || []); e.target.value = ''; upload(arr); });
+  const drop = $('drop');
+  ['dragenter', 'dragover'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', (e) => upload(Array.from(e.dataTransfer.files || [])));
+  $('nadd').addEventListener('click', async () => {
+    const text = $('ntext').value.trim(); if (!text) return;
+    try { const r = await api('/v1/rag/notes', { method: 'POST', body: JSON.stringify({ user_id: await ensureUser(), title: $('ntitle').value.trim() || 'Pasted note', text }) }); docs = r.docs; $('ntext').value = ''; $('ntitle').value = ''; $('upmsg').innerHTML = '<div class="good">\u2713 note added</div>'; renderDocs(); }
+    catch (e) { $('upmsg').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; }
+  });
+  $('reidx').addEventListener('click', async () => {
+    $('upmsg').textContent = 'Re-indexing\u2026';
+    try { await api('/v1/rag/reindex-docs?user_id=' + encodeURIComponent(await ensureUser()), { method: 'POST' }); $('upmsg').innerHTML = '<div class="good">\u2713 index rebuilt</div>'; refreshDocs(); }
+    catch (e) { $('upmsg').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; }
+  });
+
   // ---------- approval gate (real Outbox) ----------
-  const gate = document.createElement('section'); gate.id = 'gate'; gate.className = 'gate'; gate.hidden = true; thread.appendChild(gate);
   async function refreshGate() {
     try {
       const rows = await api('/v1/outbox?user_id=' + encodeURIComponent(await ensureUser()));
       const pending = rows.filter((o) => o.status === 'pending');
-      gate.hidden = !pending.length;
+      gate.hidden = !pending.length || mode === 'general';
       if (!pending.length) { gate.innerHTML = ''; return; }
       gate.innerHTML = '<h2>Waiting for your approval <span class="pill mono">' + pending.length + '</span></h2>' +
         pending.map((o) => {
           const p = o.payload || {};
           const exp = o.expires_at ? new Date(o.expires_at + (/[zZ]|[+-]\d\d:?\d\d$/.test(o.expires_at) ? '' : 'Z')).toLocaleString() : '';
-          return '<div class="card" data-id="' + esc(o.id) + '">' +
-            '<div class="row"><span>' + esc(o.channel) + '</span><span class="risk-' + esc(o.risk_level) + '">risk ' + esc(o.risk_level) + '</span>' + (exp ? '<span>expires ' + esc(exp) + '</span>' : '') + '</div>' +
-            '<div class="subj">' + esc(p.subject || '(no subject)') + '</div>' +
-            '<div class="row">To: ' + esc(p.to || 'no address yet') + '</div>' +
-            '<div class="preview">' + esc(p.body || '') + '</div>' +
+          return '<div class="card" data-id="' + esc(o.id) + '"><div class="row"><span>' + esc(o.channel) + '</span><span class="risk-' + esc(o.risk_level) + '">risk ' + esc(o.risk_level) + '</span>' + (exp ? '<span>expires ' + esc(exp) + '</span>' : '') + '</div>' +
+            '<div class="subj">' + esc(p.subject || '(no subject)') + '</div><div class="row">To: ' + esc(p.to || 'no address yet') + '</div><div class="preview">' + esc(p.body || '') + '</div>' +
             (o.note ? '<div class="note">' + esc(o.note) + '</div>' : '') +
-            '<div class="btns"><button class="btn primary" data-act="approve">Approve draft</button><button class="btn" data-act="reject">Reject</button></div>' +
-            '<div class="note" data-msg></div></div>';
-        }).join('') +
-        '<div class="note">Approving marks the draft as approved in your Outbox. OPAI does not send email for you; send it yourself from your mail client.</div>';
+            '<div class="btns"><button class="btn primary" data-act="approve">Approve draft</button><button class="btn" data-act="reject">Reject</button></div><div class="note" data-msg></div></div>';
+        }).join('') + '<div class="note">Approving marks the draft as approved in your Outbox. OPAI does not send email for you; send it yourself from your mail client.</div>';
     } catch (e) { /* leave gate as-is */ }
   }
   gate.addEventListener('click', async (ev) => {
     const b = ev.target.closest('button[data-act]'); if (!b) return;
     const card = b.closest('.card'), id = card.dataset.id, act = b.dataset.act, msg = card.querySelector('[data-msg]');
     card.querySelectorAll('button').forEach((x) => x.disabled = true);
-    try {
-      await api('/v1/outbox/' + encodeURIComponent(id) + '/' + act, { method: 'POST' });
-      msg.textContent = act === 'approve' ? 'Approved.' : 'Rejected.';
-      setTimeout(refreshGate, 600);
-    } catch (e) {
-      msg.textContent = e.message; msg.className = 'note risk-high';
-      if (e.status === 409 || e.status === 410) setTimeout(refreshGate, 900); else card.querySelectorAll('button').forEach((x) => x.disabled = false);
-    }
+    try { await api('/v1/outbox/' + encodeURIComponent(id) + '/' + act, { method: 'POST' }); msg.textContent = act === 'approve' ? 'Approved.' : 'Rejected.'; setTimeout(refreshGate, 600); }
+    catch (e) { msg.textContent = e.message; msg.className = 'note risk-high'; if (e.status === 409 || e.status === 410) setTimeout(refreshGate, 900); else card.querySelectorAll('button').forEach((x) => x.disabled = false); }
   });
 
   // ---------- send ----------
-  const SUGG = ['What is on my plan today?', 'Show my upcoming deadlines', 'Find opportunities that match my resume', 'What is waiting for my approval?'];
-  $('sugg').innerHTML = SUGG.map((s) => '<button type="button">' + esc(s) + '</button>').join('');
-  $('sugg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { $('q').value = b.textContent; $('q').focus(); } });
-
   let busy = false;
+  const turns = () => msgs.filter((m) => m.role === 'user' || m.role === 'assistant').slice(-9, -1).map((m) => ({ role: m.role, content: String(m.content).slice(0, 1500) }));
   async function send() {
     const input = $('q'), text = input.value.trim();
     if (!text || busy) return;
     busy = true; input.value = ''; $('send').disabled = true;
-    addUser(text);
+    const history = mode === 'general' ? null : turns();
+    const userEl = push({ role: 'user', content: text });
     const t = document.createElement('div'); t.className = 'msg agent';
     t.innerHTML = '<div class="av" aria-hidden="true">K</div><div class="body"><div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div></div>';
-    thread.insertBefore(t, $('gate'));
-    const t0 = performance.now();
+    thread.insertBefore(t, gate); scrollEnd();
     try {
       const id = await ensureUser();
-      const res = await api('/v1/jarvis/chat', { method: 'POST', body: JSON.stringify({ user_id: id, message: text }) });
-      t.remove(); addAgent(res, performance.now() - t0);
-      refreshGate();
+      if (mode === 'general') {
+        const convo = msgs.filter((m) => m.role === 'user' || m.role === 'assistant').slice(-12).map((m) => ({ role: m.role, content: m.content }));
+        const r = await api('/v1/chat/general', { method: 'POST', body: JSON.stringify({ messages: convo }) });
+        t.remove(); push({ role: 'assistant', content: r.reply || '(empty reply)' });
+      } else {
+        const body = { user_id: id, message: text, history }; if (scopeDoc) body.doc_ids = [scopeDoc.doc_id];
+        const r = await api('/v1/jarvis/chat', { method: 'POST', body: JSON.stringify(body) });
+        const p = r.payload && typeof r.payload === 'object' && !Array.isArray(r.payload) ? r.payload : null;
+        t.remove(); push({ role: 'assistant', content: r.reply || 'Done.', action: r.action, tool_calls: r.tool_calls || [], payload: r.payload,
+          sources: p && Array.isArray(p.sources) && p.sources.length && p.sources[0].n ? p.sources : [], mode: p && p.answer_mode });
+        refreshGate(); if (r.action === 'task') refreshDocs();
+      }
     } catch (e) {
       t.remove();
-      addError(e.status === 429 ? 'Too many requests. Wait a moment and try again.' : 'KARNA could not answer: ' + e.message);
+      // A failed turn isn't persisted: drop the question from history, show a transient error, give the text back.
+      userEl.remove(); msgs.pop(); save(); input.value = text;
+      flash(e.status === 429 ? 'Too many requests. Wait a moment and try again.'
+        : e.status === 503 && mode === 'general' ? 'General mode needs GROQ_API_KEY on the backend. Switch to Workspace, which still answers from your data without a key.'
+        : 'KARNA could not answer: ' + e.message);
     } finally { busy = false; $('send').disabled = false; input.focus(); }
   }
   $('send').addEventListener('click', send);
   $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); send(); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleDrawer(false); });
 
+  async function boot() {
+    setMode(mode);
+    try {
+      const h = await api('/v1/health');
+      setConn(h.ok ? 'ok' : 'err', h.ok ? 'connected' : 'backend degraded'); hasKey = !!h.groq_key_set;
+      if (!hasKey) $('empty-p') && ($('empty-p').textContent += ' (No GROQ_API_KEY on the backend: Workspace answers are quoted straight from your data and General mode is unavailable.)');
+    } catch (e) { setConn('err', 'backend unreachable'); flash('Could not reach ' + base() + '. If it is on a free host it may be waking up; try again in a minute. ' + e.message); }
+    try {
+      await ensureUser(); restore(); refreshDocs();
+      const p = await api('/v1/agent/permissions?user_id=' + uid);
+      $('agent-chip').innerHTML = '<span class="dot ' + (p.agent_enabled ? 'ok' : 'err') + '"></span><span>' + (p.agent_enabled ? 'agent on' : 'agent off') + ' \u00b7 ' + p.max_tool_calls_per_turn + ' tools/msg</span>';
+      refreshGate();
+    } catch (e) { /* surfaced on first send */ }
+  }
   boot();
 })();
 </script>

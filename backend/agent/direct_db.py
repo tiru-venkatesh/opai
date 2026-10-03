@@ -40,6 +40,13 @@ _READ = re.compile(
     r"\b(how many|count|list|show|what|whats|which|when|who|do i have|have i|any|status|"
     r"tell me|enni|entha|unnayi|chupinchu|cheppu)\b|\?"
 )
+# Asks about the CONTENT of things ("which project uses embeddings?", "what does the Acme role need?") are
+# semantic questions: they go to RAG, not to a table dump.
+_CONTENT = re.compile(
+    r"\b(uses?|using|used|about|mention\w*|contains?|containing|involv\w*|built with|made with|related to|regarding|"
+    r"explain|why|how (?:does|do|did|can|to)|needs?|needed|requires?|required|requirements?|skills? (?:does|do|for)|"
+    r"tech(?:nolog\w+)?|stack|summar\w+|describe|compare|difference)\b"
+)
 _PERSONAL = re.compile(r"\b(my|mine|i|ive|i've|our|naa|na|nenu|mana)\b")
 _COUNT = re.compile(r"\b(how many|count|number of|enni|entha)\b")
 
@@ -207,7 +214,7 @@ _HANDLERS: Dict[str, Callable] = {
 def answer(db: Session, user_id: str, message: str) -> Optional[dict]:
     """Returns {"reply": str, "payload": dict} or None if this isn't a direct-DB question."""
     msg = " ".join((message or "").lower().split())
-    if not msg or _WRITE.search(msg) or not _READ.search(msg):
+    if not msg or _WRITE.search(msg) or not _READ.search(msg) or _CONTENT.search(msg):
         return None
     if not (_PERSONAL.search(msg) or len(msg.split()) <= 5):
         return None

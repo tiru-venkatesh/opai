@@ -40,50 +40,46 @@ def _extractive_reply(hits, limit: int = 4, max_chars: int = 260) -> str:
     return "Here is what I found in your data:\n" + "\n".join(lines)
 
 
-def _grounded_chat(user_id: UUID, message: str, db: Session):
-    from agent_service import call_groq_json
-    from rag_service import retrieve, format_context
+def _grounded_chat(user_id: UUID, message: str, db: Session, history=None, doc_ids=None):
+    """RAG answer over the user's workspace + uploaded docs, with [n] citations and conversation history."""
     from schemas import JarvisChatResponse
-    from .groq_client import groq_enabled
+    from rag_api import answer_question
 
-    hits = retrieve(db, str(user_id), message, k=5)
-    if not hits:
-        return JarvisChatResponse(
-            action="chat",
-            reply="I don't have enough indexed OPA context for that yet. Add the relevant project, resume, application, or academic data and I can ground the answer."
-        )
-
-    sources = [
-        {"type": h["source_type"], "title": h["meta"].get("title"), "score": h["score"]}
-        for h in hits
-    ]
-
-    reply, mode = "", "extractive"
-    if groq_enabled():
-        system = (
-            "You are KARNA inside OPA. Answer only from the supplied personal context. "
-            "Do not invent dates, names, statuses, scores, or plans. If the context is incomplete, "
-            "say what is missing. Return JSON with exactly one field: reply."
-        )
-        try:
-            raw = call_groq_json(
-                system,
-                f"Question: {message}\n\nContext:\n{format_context(hits)}",
-                model="openai/gpt-oss-20b",
-            )
-            reply = (json.loads(raw).get("reply") or "").strip()
-            if reply:
-                mode = "llm"
-        except Exception:
-            reply = ""
-    if not reply:
-        reply = _extractive_reply(hits)
-
+    res = answer_question(db, str(user_id), message, history=history, doc_ids=doc_ids)
     return JarvisChatResponse(
         action="chat",
-        reply=reply,
-        payload={"sources": sources, "answer_mode": mode},
+        reply=res["answer"],
+        payload={"sources": res["sources"], "answer_mode": res["mode"]} if res["sources"] else {"answer_mode": res["mode"]},
     )
+
+
+_TASK_LEAD = None
+
+
+def extract_task_title(message: str) -> str:
+    """'add a task to revise paging tomorrow' -> 'Revise paging'. Falls back to the cleaned sentence."""
+    import re as _re
+    t = " ".join((message or "").strip().split())
+    t = _re.sub(r"^(?:please\s+|can you\s+|could you\s+|pls\s+)*(?:add|create|make|set up|new)\s+(?:me\s+)?(?:a\s+|an\s+|the\s+)?"
+                r"(?:new\s+)?(?:task|todo|to-do|reminder)\s*(?:to|for|called|named|:|-)?\s*", "", t, flags=_re.I)
+    t = _re.sub(r"^(?:remind me to|remind me)\s+", "", t, flags=_re.I)
+    t = _re.sub(r"\s+(?:by\s+)?(?:today|tomorrow|tonight|tmrw|next week|this week|"
+                r"(?:on|by|before)\s+(?:mon|tues?|wed(?:nes)?|thu(?:rs)?|fri|sat(?:ur)?|sun)[a-z]*|"
+                r"(?:on|by|before)\s+\d{1,2}(?:st|nd|rd|th)?(?:\s+[a-z]{3,9})?|"
+                r"(?:in|within)\s+\d+\s+(?:days?|weeks?))\s*[.!]?$", "", t, flags=_re.I)
+    t = t.strip(" .,:;-")
+    return (t[:1].upper() + t[1:]) if t else (message or "")[:300]
+
+
+def extract_due_date(message: str):
+    import re as _re
+    from datetime import date as _d, timedelta as _td
+    m = (message or "").lower()
+    if _re.search(r"\b(tomorrow|tmrw)\b", m):
+        return (_d.today() + _td(days=1)).isoformat()
+    if _re.search(r"\b(today|tonight)\b", m):
+        return _d.today().isoformat()
+    return None
 
 
 def _clarify(decision, message):
@@ -99,7 +95,7 @@ def _clarify(decision, message):
     )
 
 
-def handle_message(user_id: UUID, message: str, db: Session):
+def handle_message(user_id: UUID, message: str, db: Session, history=None, doc_ids=None):
     from schemas import JarvisChatResponse
     from agent_service import run_jarvis_agent, summarize_recent_activity, _tool_search_opportunities, _tool_draft_outreach
     from .tool_registry import execute as execute_tool
@@ -108,11 +104,14 @@ def handle_message(user_id: UUID, message: str, db: Session):
     # user's own DB rows: exact, no LLM, no router. Anything that looks like an action falls through.
     try:
         from .direct_db import answer as direct_db_answer
-        direct = direct_db_answer(db, str(user_id), message)
+        direct = None if doc_ids else direct_db_answer(db, str(user_id), message)
     except Exception:
         direct = None
     if direct:
         return JarvisChatResponse(action="chat", reply=direct["reply"], payload=direct["payload"])
+
+    if doc_ids:  # "Ask only this doc": skip routing and answer strictly from the selected documents
+        return _grounded_chat(user_id, message, db, history, doc_ids)
 
     decision = classify(message, {"user_id": str(user_id)})
 
@@ -131,7 +130,7 @@ def handle_message(user_id: UUID, message: str, db: Session):
     tool_args: Dict[str, Any] = {}
 
     if decision.intent == "chat":
-        return _grounded_chat(user_id, message, db)
+        return _grounded_chat(user_id, message, db, history)
 
     if decision.intent == "summarize_workspace":
         summary = summarize_recent_activity(user_id, db)
@@ -145,10 +144,13 @@ def handle_message(user_id: UUID, message: str, db: Session):
         import re as _re
         # Guard: the classifier sometimes maps "write/create a prompt/email/code" to create_task.
         if not _re.search(r"\b(tasks?|todos?|to-do|reminders?|remind me|deadline)\b", message.lower()):
-            return _grounded_chat(user_id, message, db)
+            return _grounded_chat(user_id, message, db, history)
+        _due = entities.get("due_date")
+        if not (isinstance(_due, str) and _re.fullmatch(r"\d{4}-\d{2}-\d{2}", _due)):
+            _due = extract_due_date(message)
         tool_args = {
-            "title": entities.get("task_title") or entities.get("title") or message[:300],
-            "due_date": entities.get("due_date"),
+            "title": entities.get("task_title") or entities.get("title") or extract_task_title(message),
+            "due_date": _due,
             "estimated_minutes": entities.get("duration_min") or entities.get("estimated_minutes") or 45,
         }
         executed = execute_tool(str(user_id), "create_task", tool_args, db)
