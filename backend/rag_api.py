@@ -254,6 +254,28 @@ def contextual_query(question: str, history: Optional[list]) -> str:
     return q
 
 
+def rewrite_query(question: str, history: Optional[list]) -> str:
+    """Standalone search query for a follow-up. Uses the LLM when available, else the concat heuristic."""
+    base = contextual_query(question, history)
+    if base == (question or "").strip() or os.getenv("RAG_REWRITE", "1") != "1":
+        return base
+    try:
+        from agent import groq_client
+        if not groq_client.groq_enabled():
+            return base
+        turns = "\n".join(f"{_role(h)}: {_content(h)[:300]}" for h in (history or [])[-4:] if _role(h) in ("user", "assistant"))
+        out = groq_client.get_client().chat.completions.create(
+            model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), temperature=0, max_tokens=80,
+            messages=[{"role": "system", "content": "Rewrite the last user message as one standalone search query, resolving pronouns from the conversation. Output only the query."},
+                      {"role": "user", "content": f"{turns}\nuser: {question}"}],
+        ).choices[0].message.content or ""
+        out = out.strip().strip('"')
+        return out[:300] if 3 <= len(out) <= 300 else base
+    except Exception as e:
+        log.warning("query rewrite failed, using heuristic: %s", e)
+        return base
+
+
 def _role(h) -> str:
     return (h.get("role") if isinstance(h, dict) else getattr(h, "role", "")) or ""
 
@@ -275,7 +297,7 @@ def _floor() -> float:
 
 
 def retrieve_for_question(db: Session, uid: str, question: str, history=None, doc_ids=None, k: int = 5) -> List[dict]:
-    query = contextual_query(question, history)
+    query = rewrite_query(question, history)
     where = (lambda m: m.get("doc_id") in set(doc_ids)) if doc_ids else None
     types = list(UPLOAD_TYPES) if doc_ids else None
     # When the user explicitly scoped to specific documents, don't second-guess them with the global floor:
@@ -294,11 +316,32 @@ def build_sources(hits: List[dict]) -> List[dict]:
     return out
 
 
-def _numbered_context(sources: List[dict], hits: List[dict]) -> str:
+def expand_neighbors(db: Session, uid: str, hits: List[dict]) -> List[str]:
+    """Matched chunk plus its previous/next chunk from the same upload, so answers aren't cut mid-thought."""
+    by_doc: dict = {}
+    for r in _doc_chunks(db, uid):
+        m = r.metadata_json or {}
+        by_doc.setdefault(m.get("doc_id"), {})[m.get("chunk")] = r.content
+    out = []
+    for h in hits:
+        m = h.get("meta") or {}
+        chunks, i = by_doc.get(m.get("doc_id"), {}), m.get("chunk")
+        if not chunks or i is None:
+            out.append(h["content"])
+            continue
+        title = m.get("title") or ""
+        strip = lambda t: t[len(f"[{title}] "):] if title and t.startswith(f"[{title}] ") else t
+        parts = [strip(chunks[j]) for j in (i - 1, i, i + 1) if j in chunks]
+        out.append(f"[{title}] " + "\n".join(parts))
+    return out
+
+
+def _numbered_context(sources: List[dict], hits: List[dict], texts: Optional[List[str]] = None) -> str:
     blocks = []
-    for s, h in zip(sources, hits):
+    for idx, (s, h) in enumerate(zip(sources, hits)):
         where = f"{s['title']}" + (f", page {s['page']}" if s["page"] else "")
-        blocks.append(f"[{s['n']}] ({where})\n{_snippet(h['content'], s['title'], 1200)}")
+        body = texts[idx] if texts else h["content"]
+        blocks.append(f"[{s['n']}] ({where})\n{_snippet(body, s['title'], 2000)}")
     return "\n\n".join(blocks)
 
 
@@ -332,7 +375,7 @@ def extractive_answer(sources: List[dict], hits: Optional[List[dict]] = None, qu
     """No-LLM answer: the most relevant sentences from the best passages, each tagged with its [n]."""
     if not sources:
         return ""
-    top = sources[0]["score"]
+    top = max(s["score"] for s in sources)
     keep = [(s, h) for s, h in zip(sources, hits or [None] * len(sources)) if s["score"] >= 0.5 * top][:limit]
     lines = []
     for s, h in keep:
@@ -373,7 +416,7 @@ def answer_question(db: Session, user_id, question: str, history=None, doc_ids=N
     answer, mode = "", "extractive"
     if groq_client.groq_enabled():
         try:
-            answer = _prune_citations(_llm_answer(question, history, _numbered_context(sources, hits)), len(sources))
+            answer = _prune_citations(_llm_answer(question, history, _numbered_context(sources, hits, expand_neighbors(db, uid, hits))), len(sources))
             if answer:
                 mode = "llm"
         except Exception as e:

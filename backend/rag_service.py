@@ -358,13 +358,57 @@ def _lexical(query_toks: Iterable[str], content: str) -> float:
     return len(q & c) / len(q)
 
 
+def bm25_scores(query_toks: Sequence[str], docs_toks: Sequence[Sequence[str]], k1: float = 1.5, b: float = 0.75) -> List[float]:
+    """Okapi BM25 over the candidate set (IDF is computed on the user's own chunks)."""
+    n = len(docs_toks)
+    qs = list(dict.fromkeys(query_toks))
+    if not n or not qs:
+        return [0.0] * n
+    avgdl = (sum(len(d) for d in docs_toks) / n) or 1.0
+    df = {t: sum(1 for d in docs_toks if t in d) for t in qs}
+    idf = {t: math.log(1.0 + (n - df[t] + 0.5) / (df[t] + 0.5)) for t in qs}
+    out = []
+    for d in docs_toks:
+        tf: Dict[str, int] = {}
+        for t in d:
+            if t in idf:
+                tf[t] = tf.get(t, 0) + 1
+        dl = len(d) or 1
+        out.append(sum(idf[t] * f * (k1 + 1) / (f + k1 * (1 - b + b * dl / avgdl)) for t, f in tf.items()))
+    return out
+
+
+_reranker = None
+_reranker_failed = False
+
+
+def _rerank(query: str, texts: List[str]) -> Optional[List[float]]:
+    """Optional cross-encoder rerank (RAG_RERANKER=1, needs fastembed + model download). None if unavailable."""
+    global _reranker, _reranker_failed
+    if os.getenv("RAG_RERANKER", "0") != "1" or _reranker_failed:
+        return None
+    try:
+        if _reranker is None:
+            from fastembed.rerank.cross_encoder import TextCrossEncoder
+            _reranker = TextCrossEncoder(model_name=os.getenv("RAG_RERANK_MODEL", "Xenova/ms-marco-MiniLM-L-6-v2"))
+        return [float(x) for x in _reranker.rerank(query, texts)]
+    except Exception as e:
+        _reranker_failed = True
+        log.warning("reranker unavailable (%s); skipping", e)
+        return None
+
+
 def retrieve(
     db: Session, user_id, query: str, k: int = 4,
     source_types: Optional[Sequence[str]] = None,
     where: Optional[Callable[[dict], bool]] = None,
     min_score: float = 0.05,
 ) -> List[dict]:
-    """Hybrid ranking: cosine(embedding) + 0.15 * keyword overlap. Returns dicts, best first."""
+    """Hybrid retrieval: dense cosine + BM25, fused with reciprocal-rank fusion, then MMR for diversity.
+
+    "score" stays cosine + 0.15 * (BM25 normalised to 0..1) so existing floors keep their meaning;
+    the ORDER comes from RRF + MMR (+ optional cross-encoder). Returns dicts, best first.
+    """
     uid = str(user_id)
     if not (query or "").strip():
         return []
@@ -389,20 +433,50 @@ def retrieve(
             r.metadata_json = {**_meta(r), "embedder": tag}
         db.commit()
 
-    qtoks = tokenize(query)
-    seen, scored = set(), []
+    seen, uniq = set(), []
     for r in rows:
         key = " ".join(r.content.split())[:160]
-        if key in seen:
-            continue
-        seen.add(key)
-        score = cosine_similarity(r.embedding or [], qvec) + 0.15 * _lexical(qtoks, r.content)
-        if score >= min_score:
-            scored.append((score, r))
-    scored.sort(key=lambda x: x[0], reverse=True)
+        if key not in seen:
+            seen.add(key)
+            uniq.append(r)
+
+    qtoks = tokenize(query)
+    cos = [cosine_similarity(r.embedding or [], qvec) for r in uniq]
+    bm = bm25_scores(qtoks, [tokenize(r.content) for r in uniq])
+    bmax = max(bm) or 1.0
+    score = [c + 0.15 * (x / bmax) for c, x in zip(cos, bm)]
+
+    keep = [i for i in range(len(uniq)) if score[i] >= min_score]
+    if not keep:
+        return []
+    # reciprocal-rank fusion of the dense and lexical rankings (among candidates that passed the floor)
+    rrf = {i: 0.0 for i in keep}
+    for ranking in (sorted(keep, key=lambda i: -cos[i]), sorted((i for i in keep if bm[i] > 0), key=lambda i: -bm[i])):
+        for rank, i in enumerate(ranking):
+            rrf[i] += 1.0 / (60 + rank + 1)
+    order = sorted(keep, key=lambda i: (-rrf[i], -score[i]))
+    pool = order[: max(k * 4, 12)]
+
+    ce = _rerank(query, [uniq[i].content for i in pool])
+    if ce is not None:
+        lo, hi = min(ce), max(ce)
+        rel = {i: (c - lo) / ((hi - lo) or 1.0) for i, c in zip(pool, ce)}
+    else:
+        top = max(rrf[i] for i in pool) or 1.0
+        rel = {i: rrf[i] / top for i in pool}
+
+    # MMR: relevance minus similarity to what is already picked, so near-duplicate chunks don't crowd out coverage
+    lam, picked, rest = 0.7, [], list(pool)
+    while rest and len(picked) < k:
+        def mmr(i):
+            div = max((cosine_similarity(uniq[i].embedding or [], uniq[j].embedding or []) for j in picked), default=0.0)
+            return lam * rel[i] - (1 - lam) * div
+        best = max(rest, key=mmr)
+        picked.append(best)
+        rest.remove(best)
     return [
-        {"score": round(s, 4), "source_type": r.source_type, "content": r.content, "meta": _meta(r)}
-        for s, r in scored[:k]
+        {"score": round(score[i], 4), "source_type": uniq[i].source_type, "content": uniq[i].content, "meta": _meta(uniq[i])}
+        for i in picked
     ]
 
 

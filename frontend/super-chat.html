@@ -9,8 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#131315;--surface:#1c1b1d;--surface-2:#201f22;--surface-3:#2a2a2c;--surface-4:#353437;
-  --text:#e5e1e4;--muted:#c4c7c8;--dim:#8e9192;--line:#444748;--primary:#fff;--on-primary:#2f3131;
+  --bg:#0e0e10;--surface:#131315;--surface-2:#1c1b1d;--surface-3:#2a2a2c;--surface-4:#353437;
+  --text:#e5e1e4;--muted:#c4c7c8;--dim:#8e9192;--line:#444748;--primary:#fff;--on-primary:#131315;
   --good:#9be3a9;--warn:#f0c674;--bad:#ffb4ab;
   --sans:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
   --ease:cubic-bezier(.2,.8,.2,1);
@@ -18,27 +18,31 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--text);font:14px/22px var(--sans);letter-spacing:-.005em;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-body{min-height:100vh;background-image:radial-gradient(#ffffff0a 1px,transparent 1px);background-size:32px 32px}
-body::before{content:"";position:fixed;left:50%;top:-180px;width:640px;height:640px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,#ffffff12,transparent);pointer-events:none;z-index:-1}
+body{min-height:100vh}
+
 button,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 button:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .mono{font-family:var(--mono)}
-header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:0 20px;height:60px;background:#131315d9;backdrop-filter:blur(16px);border-bottom:1px solid #2a2a2c99}
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:0 max(20px,calc((100vw - 1540px)/2 + 24px));height:64px;background:#0e0e10d9;backdrop-filter:blur(20px);border-bottom:1px solid #ffffff0f}
 .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:18px;letter-spacing:-.015em;color:var(--primary);text-decoration:none}
 .brand svg{width:26px;height:26px}
-nav{display:flex;gap:2px;margin-left:6px;overflow-x:auto;scrollbar-width:none}
-nav a{padding:5px 10px;border-radius:4px;color:var(--muted);text-decoration:none;font-size:13px;white-space:nowrap}
+nav{display:flex;gap:2px;margin-left:6px;overflow-x:auto;scrollbar-width:none;flex:0 1 auto;min-width:0}
+nav a{padding:6px 12px;border-radius:8px;color:var(--muted);text-decoration:none;font-size:13px;white-space:nowrap}
 nav a:hover{background:var(--surface-3);color:var(--text)}
-nav a[aria-current=page]{background:var(--primary);color:var(--on-primary);font-weight:600}
+nav a[aria-current=page]{background:var(--primary);color:var(--on-primary);font-weight:500}
+.ver{font:11px/14px var(--mono);padding:2px 8px;border-radius:999px;background:var(--surface-2);border:1px solid #44474855;color:var(--dim)}
 .sp{flex:1}
 .chip{display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border:1px solid #2a2a2c99;background:var(--surface);border-radius:999px;font:11px/14px var(--mono);color:var(--muted);letter-spacing:.04em}
+.hbtn,.chip{white-space:nowrap}
 .hbtn{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid #2a2a2c99;background:var(--surface);border-radius:8px;font-size:12px;color:var(--muted)}
 .hbtn:hover{background:var(--surface-3);color:var(--text)}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--dim);position:relative}
 .dot.ok{background:var(--good)} .dot.err{background:var(--bad)} .dot.wait{background:var(--warn)}
 .dot.ok::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid var(--good);opacity:0}
-main{max-width:860px;margin:0 auto;padding:28px 20px 250px;display:flex;flex-direction:column;gap:26px}
+#ctxbar{max-width:860px;margin:0 auto;padding:22px 20px 0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;font:11px/16px var(--mono);letter-spacing:.04em;color:var(--dim)}
+#ctxbar .tag{padding:3px 10px;border-radius:6px;background:var(--surface-2);border:1px solid #44474866;color:var(--text);text-transform:uppercase;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+main{max-width:860px;margin:0 auto;padding:20px 20px 250px;display:flex;flex-direction:column;gap:26px}
 .empty h1{font-size:32px;line-height:38px;letter-spacing:-.03em;font-weight:500;margin:24px 0 8px;text-wrap:balance}
 .empty p{margin:0;color:var(--muted);max-width:58ch;text-wrap:pretty}
 .msg{display:flex;gap:14px;align-items:flex-start}
@@ -51,7 +55,7 @@ main{max-width:860px;margin:0 auto;padding:28px 20px 250px;display:flex;flex-dir
 .meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font:11px/14px var(--mono);color:var(--dim);letter-spacing:.04em}
 .meta b{color:var(--text);font-weight:500}
 .pill{padding:1px 7px;border-radius:4px;background:var(--surface-3);color:var(--text)}
-.bubble{padding:14px 18px;border-radius:16px;background:#201f22cc;border:1px solid #2a2a2c99;line-height:24px;word-break:break-word;overflow-wrap:anywhere}
+.bubble{padding:14px 18px;border-radius:20px;background:#201f22cc;border:1px solid #2a2a2c99;line-height:24px;word-break:break-word;overflow-wrap:anywhere}
 .msg.user .bubble{background:var(--surface-3);white-space:pre-wrap;border-top-right-radius:4px}
 .msg.agent .bubble{background:#1c1b1de6;border-color:#444748aa;border-top-left-radius:4px}
 .msg.err .bubble{border-color:#93000a;color:var(--bad)}
@@ -81,7 +85,7 @@ details[open] summary::before{content:"\2212"}
 .step .t{color:var(--text)} .step .a,.step .r{grid-column:2;color:var(--dim);word-break:break-all}
 .step .ok{color:var(--good)} .step .no{color:var(--bad)}
 pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);color:var(--muted);white-space:pre-wrap;word-break:break-word}
-.gate{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:12px;background:#20202299;border:1px solid #444748aa}
+.gate{display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:20px;background:#20202299;border:1px solid #444748aa}
 .gate h2{margin:0;font-size:14px;font-weight:600;display:flex;gap:10px;align-items:center}
 .card{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;background:#0e0e10cc;border:1px solid #2a2a2c99}
 .card .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font:12px/18px var(--mono);color:var(--dim)}
@@ -97,27 +101,32 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
 .btn:disabled{opacity:.5;cursor:default}
 .note{font-size:12px;color:var(--dim)}
 .dock{position:fixed;left:0;right:0;bottom:0;padding:24px 20px calc(14px + env(safe-area-inset-bottom,0px));z-index:15;background:linear-gradient(to top,var(--bg) 55%,transparent);pointer-events:none}
-.composer{pointer-events:auto;max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:16px;background:#1c1b1df2;border:1px solid #444748b3;box-shadow:0 20px 50px #000000d9}
+.composer{pointer-events:auto;max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:20px;background:#131315f2;border:1px solid #444748b3;box-shadow:0 20px 50px #000000d9}
 .composer.drag{border-color:var(--primary);box-shadow:0 0 0 3px #ffffff22,0 20px 50px #000000d9}
 .modebar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-.seg{display:inline-flex;padding:2px;border-radius:9px;background:var(--surface-2);border:1px solid #2a2a2c99}
+.seg{display:inline-flex;padding:2px;border-radius:10px;background:var(--surface-2);border:1px solid #2a2a2c99}
 .seg button{border:0;background:none;padding:4px 12px;border-radius:7px;font-size:12px;color:var(--muted)}
 .seg button.on{background:var(--primary);color:var(--on-primary);font-weight:600}
 .sugg{display:flex;flex-wrap:wrap;gap:6px}
-.sugg button{padding:3px 11px;border-radius:999px;border:1px solid #2a2a2c99;background:var(--surface);font-size:12px;color:var(--text)}
-.sugg button:hover{border-color:#ffffff80}
-.input{display:flex;align-items:flex-end;gap:8px;padding:6px 8px 6px 8px;border-radius:12px;background:var(--surface-2);border:1px solid #2a2a2c99}
+.sugg{flex:1 1 100%;order:3;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;justify-content:flex-start}
+.sugg button{flex:none;white-space:nowrap}
+.sugg button{padding:3px 12px;border-radius:999px;border:1px solid #44474866;background:#131315e6;font:12px/18px var(--mono);color:var(--dim)}
+.sugg button:hover{color:var(--primary)}
+
+.input{display:flex;align-items:flex-end;gap:8px;padding:6px 8px;border-radius:14px;background:var(--surface-2);border:1px solid #2a2a2c99}
 .input:focus-within{border-color:#ffffff66}
 .input textarea{flex:1;min-width:0;background:none;border:0;outline:0;resize:none;color:var(--primary);padding:8px 4px;max-height:180px;line-height:22px}
 .input textarea::placeholder{color:var(--dim)}
 .icon{width:34px;height:34px;display:grid;place-items:center;border:0;background:none;border-radius:8px;color:var(--muted)}
 .icon:hover{background:var(--surface-3);color:var(--text)}
 .icon svg{width:18px;height:18px}
+.icon.rec{background:var(--primary);color:var(--on-primary)}
+@media (prefers-reduced-motion:no-preference){.icon.rec{animation:recp 1.2s ease-in-out infinite}@keyframes recp{50%{box-shadow:0 0 0 6px #ffffff22}}}
 .hint{font:10.5px/14px var(--mono);color:var(--dim);padding:0 4px}
 .typing{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
 .typing i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted)}
 .typing em{font:11px var(--mono);color:var(--dim);font-style:normal;margin-left:6px;font-variant-numeric:tabular-nums}
-#hist,#know{position:fixed;top:60px;right:0;bottom:0;width:min(340px,92vw);z-index:30;background:#161618f5;backdrop-filter:blur(14px);border-left:1px solid #2a2a2c;padding:14px;display:flex;flex-direction:column;gap:8px;overflow:auto;transform:translateX(100%);transition:transform .3s var(--ease)}
+#hist,#know{position:fixed;top:64px;right:0;bottom:0;width:min(340px,92vw);z-index:30;background:#161618f5;backdrop-filter:blur(14px);border-left:1px solid #2a2a2c;padding:14px;display:flex;flex-direction:column;gap:8px;overflow:auto;transform:translateX(100%);transition:transform .3s var(--ease)}
 #hist.open,#know.open{transform:none}
 #know{width:min(400px,94vw);gap:12px}
 #hist h3,#know h3{margin:4px 0 6px;font:11px var(--mono);letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
@@ -160,12 +169,13 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
   @keyframes wordin{from{opacity:0;filter:blur(5px);transform:translateY(3px)}to{opacity:1;filter:none;transform:none}}
   .w{display:inline-block;white-space:pre-wrap;opacity:0;animation:wordin .45s var(--ease) forwards;animation-delay:var(--d,0ms)}
 }
+@media (max-width:1380px){#agent-chip{display:none}}
 @media (max-width:720px){header{padding:0 12px}.chip.hide-sm,.hbtn span{display:none}main{padding-left:14px;padding-right:14px}.acts{opacity:1}.hint{display:none}}
 </style>
 </head>
 <body>
 <header>
-  <a class="brand" href="app.html" aria-label="OPAI home"><svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="1.6" aria-hidden="true"><circle cx="16" cy="16" r="12"/><circle cx="16" cy="16" r="6"/><path d="M16 4v6M16 22v6M4 16h6M22 16h6" stroke-linecap="round"/></svg>KARNA</a>
+  <a class="brand" href="app.html" aria-label="OPAI home"><svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="1.6" aria-hidden="true"><circle cx="16" cy="16" r="12"/><circle cx="16" cy="16" r="6"/><path d="M16 4v6M16 22v6M4 16h6M22 16h6" stroke-linecap="round"/></svg>OPAI</a><span class="ver">v4.2</span>
   <nav id="nav" aria-label="Pages"></nav>
   <span class="sp"></span>
   <span class="chip hide-sm" id="agent-chip" title="Tool calls allowed per message"><span class="dot wait"></span><span>agent</span></span>
@@ -193,6 +203,7 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
   <div id="docs" style="display:flex;flex-direction:column;gap:8px"></div>
 </aside>
 
+<div id="ctxbar" aria-label="Session context"></div>
 <main id="thread" aria-live="polite" aria-relevant="additions"></main>
 
 <div class="dock">
@@ -205,6 +216,7 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
     <div class="files" id="files"></div>
     <div class="input">
       <button class="icon" id="attach" type="button" aria-label="Attach files" title="Analyse a PDF, image or text file once (max 5 files, 8 MB each). To make files searchable, use Knowledge."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l9-9a3.7 3.7 0 0 1 5.2 5.2l-9 9a1.8 1.8 0 0 1-2.6-2.6l8.4-8.4"/></svg></button>
+      <button class="icon" id="mic" type="button" aria-label="Voice input" aria-pressed="false" title="Speak your message" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
       <textarea id="q" rows="1" autocomplete="off" aria-label="Message KARNA" placeholder="Ask KARNA about your day…"></textarea>
       <button class="btn" id="stop" type="button" hidden>Stop</button>
       <button class="btn primary" id="send" type="button">Send</button>
@@ -267,7 +279,7 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
 
   /* ---------- nav ---------- */
   const NAV = [['Overview','app.html'],['Today','today.html'],['Plan','plan.html'],['Applications','applications.html'],['Projects','projects.html'],['Academics','academics.html'],['Agent Console','agent-console.html']];
-  $('nav').innerHTML = NAV.map(([l, h]) => '<a href="' + h + '">' + l + '</a>').join('') + '<a aria-current="page" href="#">KARNA</a>';
+  $('nav').innerHTML = NAV.map(([l, h], i) => (i === 1 ? '<a aria-current="page" href="#">KARNA</a>' : '') + '<a href="' + h + '">' + l + '</a>').join('');
 
   /* ---------- tiny safe markdown (escape first, then format) ---------- */
   function md(src) {
@@ -335,7 +347,7 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
   const thread = $('thread');
   const gate = document.createElement('section'); gate.id = 'gate'; gate.className = 'gate'; gate.hidden = true;
   const SUGG = {
-    ws: ['What is on my plan today?', 'Summarise my uploaded documents', 'Show my upcoming deadlines', 'What is waiting for my approval?'],
+    ws: ['What is on my plan today?', 'Summarise my uploaded documents', 'Show my upcoming deadlines', 'Add a project called My App using React', 'Add an exam for Operating Systems on 20 Nov', 'Add an application as ML Intern at Acme deadline 30 Oct'],
     gen: ['Explain RAG like I am new to AI', 'Help me write a cold email to a professor', 'Quiz me on database normalization']
   };
   function applyMode() {
@@ -351,7 +363,7 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
     if (e) e.remove();
     const d = document.createElement('section'); d.className = 'empty'; d.id = 'empty';
     d.innerHTML = store.mode === 'ws'
-      ? '<h1>Ask KARNA to run your day.</h1><p>Workspace mode answers from your uploaded documents and your own applications, tasks, projects and exams, with citations, and can draft outreach. Drafts wait for your approval below; nothing is sent automatically.</p>'
+      ? '<h1>Ask KARNA to run your day.</h1><p>Workspace mode answers from your uploaded documents and your own applications, tasks, projects and exams, with citations. You can also add things by chat: \u201cadd a project\u2026\u201d, \u201cadd an exam\u2026\u201d, \u201cadd an application\u2026\u201d, \u201cadd an internship\u2026\u201d, \u201cadd a task\u2026\u201d, and draft outreach. Drafts wait for your approval below; nothing is sent automatically.</p>'
       : '<h1>Ask KARNA anything.</h1><p>General mode is open-ended chat for explaining, writing and studying. It does not read your workspace or documents. Switch to Workspace for questions about your own data.</p>';
     thread.insertBefore(d, thread.firstChild);
   }
@@ -365,6 +377,7 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
   function label(m) {
     if (m.action === 'attachment') return 'file analysis';
     if (m.action === 'general') return 'general';
+    if (m.payload && m.payload.answer_mode === 'capture') return m.payload.created ? 'added' : 'needs info';
     if (m.mode === 'llm') return 'cited answer';
     if (m.mode === 'extractive') return 'from your data';
     const p = m.payload;
@@ -439,13 +452,19 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
     if (open) { closeHist(); refreshDocs(); }
   }
   $('b-know').addEventListener('click', () => toggleKnow(!$('know').classList.contains('open')));
+  function renderCtx() {
+    const t = (x) => '<span class="tag">' + esc(x) + '</span>';
+    $('ctxbar').innerHTML = '<span>Context:</span>' + t(store.mode === 'ws' ? 'Workspace' : 'General') +
+      (store.mode === 'ws' ? t(docs.length + ' doc' + (docs.length === 1 ? '' : 's') + ' indexed') + (scopeDoc ? t('only ' + scopeDoc.filename) : t('all sources')) : t('no workspace data'));
+  }
   function renderScope() {
+    renderCtx();
     const s = $('scope'); s.hidden = !(scopeDoc && store.mode === 'ws');
     if (!s.hidden) s.innerHTML = '<span>Only: ' + esc(scopeDoc.filename) + '</span><button type="button" id="unscope" aria-label="Ask everything again">\u2715</button>';
     const u = $('unscope'); if (u) u.onclick = () => { scopeDoc = null; renderScope(); renderDocs(); };
   }
   function renderDocs() {
-    $('kcount').textContent = docs.length;
+    $('kcount').textContent = docs.length; renderCtx();
     $('dtotal').textContent = docs.length ? docs.length + ' item' + (docs.length > 1 ? 's' : '') + ' \u00b7 ' + docs.reduce((a, d) => a + d.chunks, 0) + ' chunks' : '';
     $('docs').innerHTML = docs.length ? docs.map((d) => {
       const on = scopeDoc && scopeDoc.doc_id === d.doc_id;
@@ -640,6 +659,26 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
     else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'o') { e.preventDefault(); newChat(); }
     else if (e.key === 'Escape') { closeHist(); toggleKnow(false); }
   });
+
+  /* ---------- voice input (Web Speech API; hidden where unsupported) ---------- */
+  (function mic() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition, btn = $('mic');
+    if (!SR) return; btn.hidden = false;
+    let rec = null, base0 = '';
+    const stop = () => { if (rec) { try { rec.stop(); } catch (e) {} } };
+    const ui = (on) => { btn.classList.toggle('rec', on); btn.setAttribute('aria-pressed', String(on)); btn.title = on ? 'Stop listening' : 'Speak your message'; };
+    btn.addEventListener('click', () => {
+      if (rec) { stop(); return; }
+      rec = new SR(); rec.lang = localStorage.getItem('opai_voice_lang') || navigator.language || 'en-IN'; rec.interimResults = true; rec.continuous = true;
+      base0 = $('q').value ? $('q').value.replace(/\s*$/, ' ') : '';
+      rec.onresult = (e) => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; $('q').value = base0 + t; autosize(); };
+      rec.onerror = (e) => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') flash('Microphone permission is blocked. Allow it in your browser settings.'); else if (e.error === 'no-speech') flash('Did not catch anything. Try again.'); };
+      rec.onend = () => { rec = null; ui(false); $('q').focus(); };
+      try { rec.start(); ui(true); } catch (e) { rec = null; ui(false); }
+    });
+    $('send').addEventListener('click', stop);
+    $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) stop(); });
+  })();
 
   /* ---------- status + boot ---------- */
   function setConn(state, text) { $('conn').innerHTML = '<span class="dot ' + state + '"></span><span>' + esc(text) + '</span>'; }

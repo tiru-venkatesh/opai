@@ -110,6 +110,15 @@ def handle_message(user_id: UUID, message: str, db: Session, history=None, doc_i
     if direct:
         return JarvisChatResponse(action="chat", reply=direct["reply"], payload=direct["payload"])
 
+    if not doc_ids:  # "add a project / exam / application ..." writes to the matching section
+        try:
+            from .capture import handle as capture_handle
+            captured = capture_handle(user_id, message, db)
+        except Exception:
+            captured = None
+        if captured:
+            return captured
+
     if doc_ids:  # "Ask only this doc": skip routing and answer strictly from the selected documents
         return _grounded_chat(user_id, message, db, history, doc_ids)
 

@@ -165,3 +165,48 @@ def test_task_title_extraction():
     assert extract_task_title("Please create a task: finish OS assignment by friday") == "Finish OS assignment"
     assert extract_task_title("remind me to call mom") == "Call mom"
     assert extract_due_date("add a task to revise paging tomorrow")
+
+
+def test_bm25_prefers_rare_term_and_mmr_dedups():
+    import rag_service as rag
+    docs = [rag.tokenize(t) for t in ["the paging policy of os", "cooking pasta with tomato", "paging paging memory frames"]]
+    sc = rag.bm25_scores(rag.tokenize("paging memory"), docs)
+    assert sc[2] > sc[0] > sc[1] == 0.0
+
+
+def chat(uid, msg):
+    return client.post("/v1/jarvis/chat", json={"user_id": uid, "message": msg}).json()
+
+
+def test_chat_adds_to_every_section(users):
+    from database import SessionLocal, Project, Academic, Application, Opportunity, ClientRequest
+    a, _ = users
+    cases = [
+        ("add a project called KARNA RAG using FastAPI, React", "projects"),
+        ("add an exam for Operating Systems on 20 Nov", "academics"),
+        ("add an application as ML Intern at Acme Corp deadline 30 Oct", "applications"),
+        ("add an internship at Google Research deadline 15 Dec", "opportunities"),
+        ("add client request from Radisson wants a booking website", "requests"),
+    ]
+    for msg, sec in cases:
+        r = chat(a, msg)
+        assert r["payload"].get("created") and r["payload"]["section"] == sec, (msg, r)
+    db = SessionLocal()
+    try:
+        assert db.query(Project).filter_by(user_id=a, title="KARNA RAG").first().tech_stack == ["FastAPI", "React"]
+        ex = db.query(Academic).filter_by(user_id=a).first()
+        assert ex.subject == "Operating Systems" and ex.exam_date.month == 11 and ex.exam_date.day == 20
+        ap = db.query(Application).filter_by(user_id=a).first()
+        assert (ap.company, ap.role) == ("Acme Corp", "ML Intern") and ap.deadline.month == 10
+        assert db.query(Opportunity).filter_by(company_or_lab="Google Research").first()
+        assert db.query(ClientRequest).filter_by(user_id=a, client="Radisson").first()
+    finally:
+        db.close()
+
+
+def test_chat_capture_asks_for_missing_and_ignores_questions(users):
+    a, _ = users
+    r = chat(a, "add an application")
+    assert "I still need" in r["reply"] and not r["payload"].get("created")
+    q = chat(a, "how do I add a project to my resume?")
+    assert not (q.get("payload") or {}).get("created")

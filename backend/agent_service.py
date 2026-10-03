@@ -1,3 +1,4 @@
+import re
 import os
 import json
 import math
@@ -13,7 +14,7 @@ from database import (
     User, DocumentChunk, Contact, Resume,
     OutreachHistory, Task, Academic, DailyPlan, UserMemory, Application,
     Opportunity, OutboxItem, MemoryItem, AgentActivityLog,
-    Semester, Course, Topic, Exam, StudyBlock,
+    Semester, Course, Topic, Exam, StudyBlock, Project, ClientRequest,
 )
 import rag_service as rag
 from schemas import (
@@ -859,6 +860,94 @@ def _tool_draft_outreach(uid: str, db: Session, args: dict) -> dict:
     }
 
 
+
+# ---------------------------------------------------------------- chat "add to section" tools
+def _d(v):
+    if not v:
+        return None
+    try:
+        return datetime.strptime(str(v)[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
+def _list(v):
+    if isinstance(v, str):
+        v = [x.strip() for x in re.split(r"[,;/]", v)]
+    return [str(x).strip()[:60] for x in (v or []) if str(x).strip()][:20]
+
+
+def _index(fn_name: str, db: Session, obj) -> None:
+    try:
+        import rag_service as _rag
+        _rag.safe(getattr(_rag, fn_name), db, obj)
+    except Exception:
+        pass
+
+
+def _tool_create_project(uid: str, db: Session, args: dict) -> dict:
+    title = (args.get("title") or "").strip()
+    if not title:
+        return {"created": False, "error": "title is required"}
+    status = args.get("status") if args.get("status") in ("Planning", "In Progress", "Done") else "Planning"
+    p = Project(user_id=uid, title=title[:200], description=(args.get("description") or "")[:2000] or None,
+                tech_stack=_list(args.get("tech_stack")), github_link=args.get("github_link") or None, status=status)
+    db.add(p); db.commit(); db.refresh(p)
+    _index("index_project", db, p)
+    return {"created": True, "section": "projects", "id": p.id, "title": p.title, "status": p.status}
+
+
+def _tool_create_academic(uid: str, db: Session, args: dict) -> dict:
+    subject = (args.get("subject") or "").strip()
+    if not subject:
+        return {"created": False, "error": "subject is required"}
+    pr = args.get("priority") if args.get("priority") in ("low", "med", "high") else "med"
+    a = Academic(user_id=uid, subject=subject[:200], exam_date=_d(args.get("exam_date")), priority=pr,
+                 weak_areas=_list(args.get("weak_areas")), task=(args.get("task") or "")[:1000] or None,
+                 assignment_deadlines=[{"title": "Assignment", "due": str(_d(args.get("assignment_due")))}] if _d(args.get("assignment_due")) else [],
+                 effort_minutes=int(args.get("effort_minutes") or 60))
+    db.add(a); db.commit(); db.refresh(a)
+    _index("index_academic", db, a)
+    return {"created": True, "section": "academics", "id": a.id, "subject": a.subject,
+            "exam_date": str(a.exam_date) if a.exam_date else None}
+
+
+def _tool_create_application(uid: str, db: Session, args: dict) -> dict:
+    company, role = (args.get("company") or "").strip(), (args.get("role") or "").strip()
+    if not company or not role:
+        return {"created": False, "error": "company and role are required"}
+    a = Application(user_id=uid, company=company[:200], role=role[:200], type=args.get("type") or "internship",
+                    status=args.get("status") or "To Apply", deadline=_d(args.get("deadline")),
+                    link=args.get("link") or None, notes=(args.get("notes") or "")[:2000] or None)
+    db.add(a); db.commit(); db.refresh(a)
+    _index("index_application", db, a)
+    return {"created": True, "section": "applications", "id": a.id, "company": a.company, "role": a.role,
+            "deadline": str(a.deadline) if a.deadline else None}
+
+
+def _tool_create_opportunity(uid: str, db: Session, args: dict) -> dict:
+    title, org = (args.get("title") or "").strip(), (args.get("company_or_lab") or args.get("company") or "").strip()
+    if not title or not org:
+        return {"created": False, "error": "title and company/lab are required"}
+    typ = args.get("type") if args.get("type") in ("internship", "research", "job") else "internship"
+    o = Opportunity(title=title[:200], company_or_lab=org[:200], type=typ, description=(args.get("description") or "")[:2000] or None,
+                    link=args.get("link") or None, source="chat", tags=_list(args.get("tags")), deadline=_d(args.get("deadline")))
+    db.add(o); db.commit(); db.refresh(o)
+    return {"created": True, "section": "opportunities", "id": o.id, "title": o.title, "company_or_lab": o.company_or_lab,
+            "note": "Opportunities are a shared list (not per-user)."}
+
+
+def _tool_create_request(uid: str, db: Session, args: dict) -> dict:
+    client = (args.get("client") or "").strip()
+    if not client:
+        return {"created": False, "error": "client is required"}
+    r = ClientRequest(user_id=uid, client=client[:200], ask=(args.get("ask") or "")[:2000] or None,
+                      timeline=args.get("timeline") or None, price=args.get("price") or None, email=args.get("email") or None)
+    db.add(r); db.commit(); db.refresh(r)
+    _index("index_request", db, r)
+    return {"created": True, "section": "requests", "id": r.id, "client": r.client}
+
+
 TOOL_HANDLERS = {
     "get_today_plan": (_tool_get_today_plan, "low"),
     "show_deadlines": (_tool_show_deadlines, "low"),
@@ -869,6 +958,11 @@ TOOL_HANDLERS = {
     "create_task": (_tool_create_task, "low"),
     "update_task_status": (_tool_update_task_status, "low"),
     "draft_outreach": (_tool_draft_outreach, "high"),
+    "create_project": (_tool_create_project, "low"),
+    "create_academic": (_tool_create_academic, "low"),
+    "create_application": (_tool_create_application, "low"),
+    "create_opportunity": (_tool_create_opportunity, "low"),
+    "create_request": (_tool_create_request, "low"),
 }
 
 
