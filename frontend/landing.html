@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..700&family=Onest:wght@400..600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--ease:cubic-bezier(.16,1,.3,1);--bg:#F2F4F8;--surface:#fff;--ink:#0F1729;--ink-2:#4A5570;--ink-3:#7C86A0;--line:#E2E6EF;--line-2:#CDD3E1;--accent:#3D5AFE;--accent-d:#2740D8;--pill:#F4F4F6;
+:root{--ease:cubic-bezier(.16,1,.3,1);--bg:#F6F4EE;--surface:#FBFAF6;--ink:#16181A;--ink-2:#4A4F52;--ink-3:#7A7F80;--line:#E3DFD3;--line-2:#D2CCBC;--accent:#17504A;--accent-d:#0F3531;--pill:#EDE9DF;
 --display:'Bricolage Grotesque',system-ui,sans-serif;--body:'Onest',system-ui,-apple-system,'Segoe UI',sans-serif}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -50,10 +50,10 @@ a{color:inherit}
 .video-wrapper{width:80%;height:80%;border-radius:20px;overflow:hidden;background:var(--ink);box-shadow:0 20px 50px rgba(0,0,0,.08);opacity:0;transform:scale(1.05);animation:vfade 1.8s var(--ease) forwards}
 @keyframes vfade{to{opacity:1;transform:none}}
 .video-wrapper img{width:100%;height:100%;object-fit:cover;object-position:62% 35%;display:block}
-.hero-foot{position:relative;z-index:30;width:100%;background:linear-gradient(to top,#fff 0%,rgba(255,255,255,.85) 60%,transparent 100%);padding:80px 20px 32px;display:flex;flex-direction:column;gap:24px;opacity:0;transform:translateY(20px);animation:up 1s var(--ease) .5s forwards}
+.hero-foot{position:relative;z-index:30;width:100%;background:linear-gradient(to top,#F6F4EE 0%,rgba(246,244,238,.88) 60%,transparent 100%);padding:80px 20px 32px;display:flex;flex-direction:column;gap:24px;opacity:0;transform:translateY(20px);animation:up 1s var(--ease) .5s forwards}
 @keyframes up{to{opacity:1;transform:none}}
 .sub{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:rgba(0,0,0,.55)}
-.sub i{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px rgba(61,90,254,.15)}
+.sub i{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px rgba(23,80,74,.15)}
 .hero h1{font-size:clamp(2rem,8vw,4.5rem);font-weight:400;line-height:1.02;letter-spacing:-.03em;margin:14px 0 24px}
 .hero h1 span{display:block}
 .btns{display:flex;gap:10px;flex-wrap:wrap}
@@ -102,7 +102,7 @@ section{padding:72px 0}
 .faq summary::after{content:"+";font:18px ui-monospace,monospace;color:var(--ink-3);transition:transform .3s var(--ease)}
 .faq details[open] summary::after{transform:rotate(45deg);color:var(--accent)}
 .faq details p{color:var(--ink-2);padding:0 0 22px;max-width:60ch}
-.cta{background:var(--ink);color:#F2F4F8;border-radius:20px;padding:52px;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+.cta{background:var(--accent);color:#F6F4EE;border-radius:20px;padding:52px;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
 .cta h2{font-size:clamp(26px,3.4vw,36px);font-weight:500;line-height:1.15}
 .cta p{color:#AEB8D2;margin-top:14px;max-width:44ch}
 .cta .btns{margin-top:24px}
@@ -122,34 +122,18 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}.navbar,.hero-foot,.video-wrapper{opacity:1!important;transform:none!important}}
 </style>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0e0e10">
+<meta name="theme-color" content="#F6F4EE">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="opai-shared.css">
-<style id="opai-landing-dark">
-:root{--bg:#0e0e10;--surface:#131315;--ink:#e5e1e4;--ink-2:#c4c7c8;--ink-3:#8e9192;--line:#2a2a2c;--line-2:#444748;--accent:#7F93FF;--accent-d:#A8B5FF;--pill:#1c1b1d}
-.hero{background:#0e0e10}
-.hero-foot{background:linear-gradient(to top,#0e0e10 0%,rgba(14,14,16,.88) 60%,transparent 100%)}
-.logo{background:#e5e1e4}.brand-name{color:#0e0e10}
-.menu-btn{background:#fff;color:#0e0e10}.menu-btn .ic{background:#0e0e10;color:#fff}
-.tags-pill,.right-pill{color:#e5e1e4;border-color:#2a2a2c}.right-pill .ic{background:#fff;color:#0e0e10}
-.sub{color:#c4c7c8}.hero h1{color:#fff}
-.btn.p{background:#fff;color:#0e0e10;box-shadow:none}.btn.p:hover{background:#e5e1e4}
-.btn.s{background:rgba(19,19,21,.7);color:#e5e1e4;border-color:#444748}.btn.s:hover{background:#1c1b1d;border-color:#8e9192}
-.chip{background:#131315;color:#c4c7c8;border-color:#2a2a2c;box-shadow:none}
-.step:hover{box-shadow:0 14px 28px -20px #000}
-.cta{background:#1c1b1d;border:1px solid #2a2a2c;color:#e5e1e4}.cta .btn.p{background:#fff;color:#0e0e10}
-.cta .btn.s{color:#fff}
-.menu-panel{background:#131315;border-color:#2a2a2c}.menu-panel a:hover{background:#1c1b1d}
-.video-wrapper{background:#131315}
-</style>
+<style>.btn.p{background:var(--accent);color:#fff}.btn.p:hover{background:var(--accent-d)}.tags-pill,.chip{font-family:"JetBrains Mono",ui-monospace,monospace}.cta .btn.p{background:#fff;color:var(--accent)}</style>
 </head>
 <body>
 
 <header class="navbar">
   <div class="nav-left">
     <a class="logo" href="#top" aria-label="OPAI home">
-      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><g transform="rotate(-35 16 16)"><rect x="7" y="5" width="7" height="22" rx="3.5" fill="#0F1729"/><rect x="18" y="5" width="7" height="22" rx="3.5" fill="#3D5AFE"/></g></svg>
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><g transform="rotate(-35 16 16)"><rect x="7" y="5" width="7" height="22" rx="3.5" fill="#16181A"/><rect x="18" y="5" width="7" height="22" rx="3.5" fill="#17504A"/></g></svg>
       <span class="brand-name">OPAI</span>
     </a>
     <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="menu-panel">
@@ -214,13 +198,13 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <section id="inside"><div class="wrap">
     <div class="head"><span class="eyebrow">What's inside</span><h2>One dashboard, eight working parts</h2><p>Each is a real tracker — a kanban, a scored list, an outbox — not a widget for show.</p></div>
     <div class="grid">
-      <div class="cell"><i style="background:#3D5AFE"></i><h3>Applications</h3><p>Kanban from Not started to Offer; due dates turn amber when close.</p></div>
-      <div class="cell"><i style="background:#7C86A0"></i><h3>Opportunities</h3><p>Roles scored against your own skills before you commit.</p></div>
-      <div class="cell"><i style="background:#3D5AFE"></i><h3>Outreach</h3><p>Contacts matched to your skills, drafts held for approval.</p></div>
+      <div class="cell"><i style="background:#17504A"></i><h3>Applications</h3><p>Kanban from Not started to Offer; due dates turn amber when close.</p></div>
+      <div class="cell"><i style="background:#7A7F80"></i><h3>Opportunities</h3><p>Roles scored against your own skills before you commit.</p></div>
+      <div class="cell"><i style="background:#17504A"></i><h3>Outreach</h3><p>Contacts matched to your skills, drafts held for approval.</p></div>
       <div class="cell"><i style="background:#12805C"></i><h3>Projects</h3><p>Tasks small enough to slot into a free hour.</p></div>
       <div class="cell"><i style="background:#8B5CF6"></i><h3>Academics</h3><p>Exam prep sized in minutes, weighed against everything else.</p></div>
       <div class="cell"><i style="background:#D9455F"></i><h3>Requests</h3><p>Client asks turned into scoped proposals you can send.</p></div>
-      <div class="cell"><i style="background:#0F1729"></i><h3>Outbox</h3><p>Every drafted email waits here. Nothing leaves without your say.</p></div>
+      <div class="cell"><i style="background:#16181A"></i><h3>Outbox</h3><p>Every drafted email waits here. Nothing leaves without your say.</p></div>
       <div class="cell"><i style="background:#E0871F"></i><h3>KARNA</h3><p>Ask what today looks like; it reads your open work before it answers.</p></div>
     </div>
   </div></section>

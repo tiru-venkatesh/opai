@@ -1,31 +1,70 @@
-/* OPAI shared layer v7 — one dark theme + mobile tuning. Loaded LAST on every page. */
-:root{--opai-bg:#0e0e10;--opai-surface:#131315;--opai-surface-2:#1c1b1d;--opai-line:#444748;--opai-text:#e5e1e4;--opai-muted:#c4c7c8;--opai-accent:#7F93FF}
-html{background:var(--opai-bg);color-scheme:dark}
-body{background-color:var(--opai-bg)}
-/* smooth page-to-page switch (no white/black flash) */
-@media (prefers-reduced-motion:no-preference){body{animation:opaiIn .28s ease-out both}@keyframes opaiIn{from{opacity:0}to{opacity:1}}}
-
-/* ---- Guide button + panel (all pages) ---- */
-#opai-guide-fab{position:fixed;right:14px;bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:60;width:42px;height:42px;border-radius:50%;border:1px solid var(--opai-line);background:var(--opai-surface-2);color:var(--opai-text);font:600 16px system-ui;cursor:pointer;box-shadow:0 8px 24px #000a}
-#opai-guide-fab:hover{background:#2a2a2c}
-#opai-guide{position:fixed;inset:0;z-index:80;display:none;background:#000a;backdrop-filter:blur(4px)}
-#opai-guide.open{display:flex;align-items:flex-end;justify-content:center}
-#opai-guide .gp{width:min(560px,100%);max-height:86vh;overflow:auto;background:var(--opai-surface);border:1px solid var(--opai-line);border-radius:18px 18px 0 0;padding:16px 14px calc(18px + env(safe-area-inset-bottom,0px));color:var(--opai-text);font:14px/21px 'Geist',system-ui,sans-serif}
-@media(min-width:640px){#opai-guide.open{align-items:center}#opai-guide .gp{border-radius:18px}}
-#opai-guide h2{margin:0 0 4px;font-size:18px;font-weight:600}
-#opai-guide .gs{color:var(--opai-muted);font-size:12.5px;margin:0 0 10px}
-#opai-guide a.gi{display:block;padding:10px 12px;margin:6px 0;border:1px solid #2a2a2c;border-radius:12px;background:var(--opai-surface-2);color:var(--opai-text);text-decoration:none}
-#opai-guide a.gi:hover{border-color:#fff6}
-#opai-guide a.gi b{display:block;font-weight:600}
-#opai-guide a.gi span{color:var(--opai-muted);font-size:13px}
-#opai-guide .gx{float:right;border:0;background:none;color:var(--opai-muted);font-size:22px;cursor:pointer;line-height:1}
-#opai-guide input{width:100%;margin:6px 0 4px;padding:10px 12px;border-radius:10px;border:1px solid #2a2a2c;background:#0e0e10;color:#fff;font:inherit}
-
-/* ---- Mobile tuning ---- */
-@media (max-width:640px){
-  .bar{padding:0 12px!important;gap:10px!important}
-  main{padding-left:12px!important;padding-right:12px!important}
-  .px-margin-tablet,.px-gutter-desktop{padding-left:12px!important;padding-right:12px!important}
-  header .h-16{height:52px}
-  nav a,nav button{padding:6px 10px}
+/* OPAI shared design layer v8 — warm paper, deep teal, coral signal. Loaded LAST on every page. */
+:root{
+  --paper:#F6F4EE;--card:#FBFAF6;--card-2:#F2EFE7;--well:#EDE9DF;--hair:#E3DFD3;--line-2:#D2CCBC;
+  --ink:#16181A;--ink-2:#4A4F52;--ink-3:#7A7F80;
+  --teal:#17504A;--teal-2:#1F6A62;--teal-soft:#E1EEEA;--coral:#E8705A;--coral-ink:#C2452F;--coral-soft:#FCE4DC;
+  --ok:#2E7D5B;--warn:#B7791F;--bad:#B3382C;
+  --sans:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --shadow:0 1px 0 #fff inset,0 10px 30px -18px rgba(23,80,74,.35);
 }
+html{background:var(--paper);color-scheme:light}
+body{background-color:var(--paper);color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){body{animation:opaiIn .25s ease-out both}@keyframes opaiIn{from{opacity:0}to{opacity:1}}}
+::selection{background:var(--coral-soft);color:var(--ink)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+/* ---------- shell header ---------- */
+.opai-hd{position:fixed;top:0;left:0;right:0;z-index:50;height:64px;display:flex;align-items:center;gap:16px;padding:0 max(12px,env(safe-area-inset-left,0px)) 0 max(12px,env(safe-area-inset-left,0px));background:rgba(246,244,238,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--hair)}
+.opai-hd .in{width:100%;max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:0 8px}
+.opai-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.opai-logo svg{display:block}.opai-logo b{display:block;font:700 17px/1 var(--sans);letter-spacing:-.02em}.opai-logo small{display:block;font:11px/1.2 var(--mono);color:var(--ink-3);margin-top:3px}
+.opai-pills{display:flex;gap:2px;padding:4px;border-radius:999px;background:var(--well);border:1px solid var(--hair);overflow-x:auto;scrollbar-width:none;min-width:0;margin:0 auto}
+.opai-pills::-webkit-scrollbar{display:none}
+.opai-pills a{padding:7px 16px;border-radius:999px;color:var(--ink-2);text-decoration:none;font:14px/20px var(--sans);white-space:nowrap}
+.opai-pills a:hover{color:var(--ink)}
+.opai-pills a[aria-current=page]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(22,24,26,.12);font-weight:500}
+.opai-right{display:flex;align-items:center;gap:10px;flex:none}
+.opai-k{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--hair);background:var(--well);font:12px/16px var(--mono);color:var(--ink-3);cursor:pointer}
+.opai-k:hover{color:var(--ink)}
+.opai-st{display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:var(--teal-soft);color:var(--teal);font:11px/16px var(--mono);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.opai-st i{width:7px;height:7px;border-radius:50%;background:var(--teal)}.opai-st.off{background:var(--coral-soft);color:var(--coral-ink)}.opai-st.off i{background:var(--coral)}
+.opai-user{display:flex;align-items:center;gap:9px;padding:5px 14px 5px 5px;border-radius:999px;border:1px solid var(--hair);background:var(--card);text-decoration:none;color:var(--ink)}
+.opai-user .av{width:32px;height:32px;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;font:600 13px var(--sans)}
+.opai-user b{display:block;font:600 12px/14px var(--mono)}.opai-user small{display:block;font:11px/14px var(--mono);color:var(--ink-3);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.opai-pad{padding-top:64px}
+body.opai-has-shell main.pt-fix{padding-top:0}
+@media(max-width:1100px){.opai-st,.opai-k{display:none}}
+@media(max-width:760px){.opai-hd{height:56px;gap:8px}.opai-hd .in{padding:0 4px;gap:8px}body.opai-pad{padding-top:56px}.opai-logo small,.opai-user b,.opai-user small{display:none}.opai-user{padding:3px}.opai-pills a{padding:6px 12px;font-size:13px}}
+
+/* ---------- floating focus timer + dock ---------- */
+.opai-timer{position:fixed;left:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:70;display:none;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-radius:999px;background:var(--card);border:1px solid var(--hair);box-shadow:0 12px 30px -12px rgba(22,24,26,.35)}
+.opai-timer.on{display:flex}.opai-timer i{width:9px;height:9px;border-radius:50%;background:var(--coral);flex:none}.opai-timer.paused i{background:var(--ink-3)}
+.opai-timer b{font:600 12px var(--mono)}.opai-timer span{font-size:14px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opai-timer button{border:0;background:var(--well);border-radius:50%;width:28px;height:28px;display:grid;place-items:center;color:var(--ink-2);cursor:pointer}
+.opai-dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;gap:6px;padding:6px;border-radius:999px;background:rgba(251,250,246,.85);backdrop-filter:blur(14px);border:1px solid var(--hair);box-shadow:0 12px 30px -12px rgba(22,24,26,.3)}
+.opai-dock a,.opai-dock button{width:44px;height:44px;border-radius:50%;border:0;background:none;display:grid;place-items:center;color:var(--ink-2);cursor:pointer;text-decoration:none}
+.opai-dock a:hover,.opai-dock button:hover{background:var(--well);color:var(--ink)}.opai-dock [aria-current=page]{background:var(--well);color:var(--teal)}
+body.opai-has-shell main,body.opai-has-shell .wrap{scroll-padding-bottom:90px}
+@media(max-width:760px){.opai-timer{bottom:calc(76px + env(safe-area-inset-bottom,0px));left:12px}}
+
+/* ---------- Guide panel ---------- */
+#opai-guide{position:fixed;inset:0;z-index:90;display:none;background:rgba(22,24,26,.35);backdrop-filter:blur(4px)}
+#opai-guide.open{display:flex;align-items:flex-end;justify-content:center}
+#opai-guide .gp{width:min(560px,100%);max-height:86vh;overflow:auto;background:var(--card);border:1px solid var(--hair);border-radius:20px 20px 0 0;padding:16px 14px calc(18px + env(safe-area-inset-bottom,0px));color:var(--ink);font:14px/21px var(--sans)}
+@media(min-width:640px){#opai-guide.open{align-items:center}#opai-guide .gp{border-radius:20px}}
+#opai-guide h2{margin:0 0 4px;font-size:18px;font-weight:600}#opai-guide .gs{color:var(--ink-2);font-size:12.5px;margin:0 0 10px}
+#opai-guide a.gi{display:block;padding:10px 12px;margin:6px 0;border:1px solid var(--hair);border-radius:12px;background:#fff;color:var(--ink);text-decoration:none}
+#opai-guide a.gi:hover{border-color:var(--teal)}#opai-guide a.gi b{display:block;font-weight:600}#opai-guide a.gi span{color:var(--ink-2);font-size:13px}
+#opai-guide .gx{float:right;border:0;background:none;color:var(--ink-2);font-size:22px;cursor:pointer;line-height:1}
+#opai-guide input{width:100%;margin:6px 0 4px;padding:10px 12px;border-radius:10px;border:1px solid var(--hair);background:#fff;color:var(--ink);font:inherit}
+
+/* ---------- mobile tuning ---------- */
+@media (max-width:640px){
+  .bar{padding:0 12px!important}
+  main{padding-left:12px!important;padding-right:12px!important}
+  .px-margin-tablet,.px-gutter-desktop,.px-margin-desktop{padding-left:12px!important;padding-right:12px!important}
+}
+
+/* Tailwind pages: headings use ink; teal is reserved for actions */
+.text-primary{color:var(--ink)!important}
+.bg-primary,.bg-primary\/90{color:#fff}

@@ -6,7 +6,7 @@
 <title>Applications · OPAI</title>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0e0e10;--s1:#1c1b1d;--s2:#201f22;--s3:#2a2a2c;--line:#444748;--tx:#e5e1e4;--mut:#c4c7c8;--pri:#fff;--font:'Geist',system-ui,-apple-system,Segoe UI,sans-serif}
+:root{--bg:#F6F4EE;--s1:#FBFAF6;--s2:#F2EFE7;--s3:#E3DFD3;--line:#D9D4C7;--tx:#16181A;--mut:#4A4F52;--pri:#17504A;--font:'Geist',system-ui,-apple-system,Segoe UI,sans-serif}
 *{box-sizing:border-box}html,body{margin:0}
 body{background:var(--bg);color:var(--tx);font:14px/22px var(--font)}
 header{position:sticky;top:0;z-index:5;background:rgba(14,14,16,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(68,71,72,.4)}
@@ -40,7 +40,7 @@ select{margin-top:10px;width:100%;background:var(--bg);color:var(--tx);border:1p
 @media (prefers-reduced-motion:no-preference){.card{transition:background .15s}.card:hover{background:var(--s3)}}
 </style>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0e0e10">
+<meta name="theme-color" content="#F6F4EE">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="opai-shared.css">
@@ -123,6 +123,7 @@ if(sc&&location.protocol!=='file:'&&!/\.html$/.test(location.pathname))sc.setAtt
 load();render();
 })();
 </script>
+<script src="opai-shell.js" defer></script>
 <script src="guide.js" defer></script>
 <script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
 </body>

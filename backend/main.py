@@ -58,6 +58,8 @@ from pdf_timetable import router as pdf_timetable_router
 app.include_router(pdf_timetable_router)
 from attach import router as attach_router
 app.include_router(attach_router)
+from today_api import router as today_router
+app.include_router(today_router)
 from rag_api import router as rag_router
 app.include_router(rag_router)
 

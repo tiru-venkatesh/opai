@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400..600&family=Bricolage+Grotesque:opsz,wght@12..96,300..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400..700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <!-- Tailwind, scoped to the KARNA Study Workflow redesign only. Preflight is
      disabled so Tailwind's base-element reset never touches the rest of
@@ -45,7 +45,7 @@
    of this <style> re-skins them to the light look.
    ===================================================================== */
 :root{
-  --bg:#0e0e10;
+  --bg:#F6F4EE;
   --surface:#1B1E27;
   --surface-2:#242833;
  
@@ -641,21 +641,21 @@ main{padding-top:78px}
    "PERSONAL AI" LIGHT SKIN — overrides everything above
    ===================================================================== */
 html:root:root, html:root:root[data-theme]{
-  --bg:#0e0e10; --surface:#131315; --surface-2:#1c1b1d;
-  --ink:#e5e1e4; --ink-2:#c4c7c8; --ink-3:#8e9192;
-  --line:#2a2a2c; --line-2:#444748;
-  --accent:#7F93FF; --accent-d:#A8B5FF; --accent-soft:#1C2450;
-  --good:#3DD6A0; --good-soft:#0E2C25;
-  --warn:#F2A54A; --warn-soft:#33240F;
-  --bad:#FF7A7A; --bad-soft:#3A1A1E;
-  --on-accent:#0e0e10; --on-good:#0e0e10; --on-warn:#0e0e10; --on-bad:#0e0e10; --live:#4ADE9F;
-  --c-app:#7F93FF; --c-out:#F2A54A; --c-proj:#3DD6A0; --c-acad:#B197FC; --c-req:#FF7A90; --c-opp:#6F7A96;
-  --side:#070A14;
-  --shadow-1:0 0 0 1px var(--line); --shadow-2:0 24px 60px -24px rgba(0,0,0,.7); --glow:none;
-  --display:'Bricolage Grotesque',system-ui,sans-serif;
-  --body:'Onest','Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --bg:#F6F4EE; --surface:#FBFAF6; --surface-2:#F2EFE7;
+  --ink:#16181A; --ink-2:#4A4F52; --ink-3:#7A7F80;
+  --line:#E3DFD3; --line-2:#D2CCBC;
+  --accent:#17504A; --accent-d:#0F3531; --accent-soft:#E1EEEA;
+  --good:#2E7D5B; --good-soft:#DDF0E6;
+  --warn:#B7791F; --warn-soft:#FBEBD0;
+  --bad:#B3382C; --bad-soft:#FBE3DE;
+  --on-accent:#FFFFFF; --on-good:#FFFFFF; --on-warn:#FFFFFF; --on-bad:#FFFFFF; --live:#2E7D5B;
+  --c-app:#17504A; --c-out:#E8705A; --c-proj:#2E7D5B; --c-acad:#7A5BB5; --c-req:#C2452F; --c-opp:#7A7F80;
+  --side:#16181A;
+  --shadow-1:0 0 0 1px var(--line); --shadow-2:0 24px 60px -28px rgba(23,80,74,.35); --glow:none;
+  --display:'Geist',system-ui,sans-serif;
+  --body:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;
   --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
-  color-scheme:dark;
+  color-scheme:light;
 }
 body{background:var(--bg);background-image:none;font-size:14px}
 .scanline{display:none}
@@ -790,11 +790,11 @@ body.nav-open #page{left:min(300px,84vw);border-radius:20px 0 0 20px;box-shadow:
 .kh-can{display:flex;flex-wrap:wrap;gap:8px}.kh-can button{border:1px solid var(--line-2);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer}.kh-can button:hover{border-color:var(--accent);color:var(--accent)}
 </style>
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#0e0e10">
+<meta name="theme-color" content="#F6F4EE">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
 <link rel="stylesheet" href="/static/opai-shared.css">
-<script>try{document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
+<script>try{document.documentElement.setAttribute("data-theme","light")}catch(e){}</script>
 </head>
 <body>
 

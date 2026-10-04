@@ -38,10 +38,10 @@
     var inp=panel.querySelector('input');inp.value=q||'';render(q||'');panel.classList.add('open');}
   function render(q){var l=q&&q.trim()?find(q):S;if(!l.length)l=S;
     panel.querySelector('#opai-gl').innerHTML=l.map(function(s){return '<a class="gi" href="'+s.h+'"><b>'+s.t+'</b><span>'+s.d+'</span></a>'}).join('')}
-  function fab(){if(document.getElementById('opai-guide-fab')||document.getElementById('b-guide')||/login|landing/.test(location.pathname))return;
+  function fab_unused(){if(document.getElementById('opai-guide-fab')||document.getElementById('b-guide')||/login|landing/.test(location.pathname))return;
     var b=document.createElement('button');b.id='opai-guide-fab';b.type='button';b.title='Guide: which section does what';b.setAttribute('aria-label','Guide');b.textContent='?';
     b.onclick=function(){open('')};document.body.appendChild(b)}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fab);else fab();
+  
   /* tooltips on every nav link, on all pages */
   function tips(){var m={};S.forEach(function(x){m[x.h]=x.d});
     [].forEach.call(document.querySelectorAll('nav a[href], header a[href$=".html"]'),function(a){var h=(a.getAttribute('href')||'').split('#')[0];if(m[h]&&!a.title)a.title=m[h]})}

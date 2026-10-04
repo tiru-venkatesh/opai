@@ -6,8 +6,8 @@
 <title>Today · OPAI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#F6F4EE"><link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="opai-shared.css">
+<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#F6F4EE"><link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+<link rel="stylesheet" href="/static/opai-shared.css">
 <style>
 *{box-sizing:border-box}[hidden]{display:none!important}
 html,body{margin:0;font:15px/24px var(--sans);-webkit-font-smoothing:antialiased}
@@ -93,8 +93,8 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
   <div class="ctas" style="margin-top:16px"><button class="pill teal" id="save">Save and plan tomorrow</button><button class="pill line" id="cancel">Cancel</button></div>
   <p id="dmsg" style="margin:12px 0 0;color:var(--ink-2);font-size:14px"></p>
 </dialog>
-<script src="opai-shell.js"></script>
-<script src="guide.js"></script>
+<script src="/static/opai-shell.js"></script>
+<script src="/static/guide.js"></script>
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -199,7 +199,7 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
   };
   function fail(e) { $('sum').innerHTML = '<span class="err">' + esc(e.name === 'TypeError' ? 'Could not reach the backend at ' + base() + '. If it is on a free host it may be waking up; retry in a minute.' : e.message) + '</span>'; }
   load().catch(fail);
-  if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 })();
 </script>
 </body>

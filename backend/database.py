@@ -454,3 +454,35 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# ---------------- Phase 1: typed actions, approvals ----------------
+class ActionRecord(Base):
+    """One typed action proposed by JARVIS / the Today engine / the UI.
+    Models propose; only action_service executes. idempotency_key is unique per user."""
+    __tablename__ = "actions"
+    __table_args__ = (Index("ix_actions_user_created", "user_id", "created_at"),
+                      Index("uq_actions_user_idem", "user_id", "idempotency_key", unique=True))
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
+    intent = Column(String, nullable=False)
+    risk = Column(String, default="low")                 # low | medium | high
+    status = Column(String, default="proposed")          # proposed | pending_approval | executed | rejected | failed
+    source = Column(String, default="ui")                # ui | jarvis | today | system
+    payload_json = Column(JSON, default=dict)
+    result_json = Column(JSON, default=dict)
+    reason = Column(Text)
+    confidence = Column(Numeric(3, 2), default=1.0)
+    requires_approval = Column(Boolean, default=False)
+    idempotency_key = Column(String(80))
+    created_at = Column(DateTime, default=_dt.utcnow)
+    executed_at = Column(DateTime)
+
+
+class ActionApproval(Base):
+    __tablename__ = "approvals"
+    id = Column(String(36), primary_key=True, default=gen_id)
+    action_id = Column(String(36), ForeignKey("actions.id", ondelete="CASCADE"))
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
+    decision = Column(String, nullable=False)            # approved | rejected
+    approved_payload_hash = Column(String(64))
+    approved_at = Column(DateTime, default=_dt.utcnow)
