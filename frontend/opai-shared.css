@@ -1,0 +1,31 @@
+/* OPAI shared layer v7 — one dark theme + mobile tuning. Loaded LAST on every page. */
+:root{--opai-bg:#0e0e10;--opai-surface:#131315;--opai-surface-2:#1c1b1d;--opai-line:#444748;--opai-text:#e5e1e4;--opai-muted:#c4c7c8;--opai-accent:#7F93FF}
+html{background:var(--opai-bg);color-scheme:dark}
+body{background-color:var(--opai-bg)}
+/* smooth page-to-page switch (no white/black flash) */
+@media (prefers-reduced-motion:no-preference){body{animation:opaiIn .28s ease-out both}@keyframes opaiIn{from{opacity:0}to{opacity:1}}}
+
+/* ---- Guide button + panel (all pages) ---- */
+#opai-guide-fab{position:fixed;right:14px;bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:60;width:42px;height:42px;border-radius:50%;border:1px solid var(--opai-line);background:var(--opai-surface-2);color:var(--opai-text);font:600 16px system-ui;cursor:pointer;box-shadow:0 8px 24px #000a}
+#opai-guide-fab:hover{background:#2a2a2c}
+#opai-guide{position:fixed;inset:0;z-index:80;display:none;background:#000a;backdrop-filter:blur(4px)}
+#opai-guide.open{display:flex;align-items:flex-end;justify-content:center}
+#opai-guide .gp{width:min(560px,100%);max-height:86vh;overflow:auto;background:var(--opai-surface);border:1px solid var(--opai-line);border-radius:18px 18px 0 0;padding:16px 14px calc(18px + env(safe-area-inset-bottom,0px));color:var(--opai-text);font:14px/21px 'Geist',system-ui,sans-serif}
+@media(min-width:640px){#opai-guide.open{align-items:center}#opai-guide .gp{border-radius:18px}}
+#opai-guide h2{margin:0 0 4px;font-size:18px;font-weight:600}
+#opai-guide .gs{color:var(--opai-muted);font-size:12.5px;margin:0 0 10px}
+#opai-guide a.gi{display:block;padding:10px 12px;margin:6px 0;border:1px solid #2a2a2c;border-radius:12px;background:var(--opai-surface-2);color:var(--opai-text);text-decoration:none}
+#opai-guide a.gi:hover{border-color:#fff6}
+#opai-guide a.gi b{display:block;font-weight:600}
+#opai-guide a.gi span{color:var(--opai-muted);font-size:13px}
+#opai-guide .gx{float:right;border:0;background:none;color:var(--opai-muted);font-size:22px;cursor:pointer;line-height:1}
+#opai-guide input{width:100%;margin:6px 0 4px;padding:10px 12px;border-radius:10px;border:1px solid #2a2a2c;background:#0e0e10;color:#fff;font:inherit}
+
+/* ---- Mobile tuning ---- */
+@media (max-width:640px){
+  .bar{padding:0 12px!important;gap:10px!important}
+  main{padding-left:12px!important;padding-right:12px!important}
+  .px-margin-tablet,.px-gutter-desktop{padding-left:12px!important;padding-right:12px!important}
+  header .h-16{height:52px}
+  nav a,nav button{padding:6px 10px}
+}

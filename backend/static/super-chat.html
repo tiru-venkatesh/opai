@@ -175,8 +175,21 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
   .w{display:inline-block;white-space:pre-wrap;opacity:0;animation:wordin .45s var(--ease) forwards;animation-delay:var(--d,0ms)}
 }
 @media (max-width:1380px){#agent-chip{display:none}}
+@media (max-width:720px){
+  header{height:52px;gap:6px;overflow:hidden}.sp,#b-exp,#conn span:last-child{display:none}nav{flex:1 1 0}.chip{padding:4px 7px}.brand{font-size:16px}.ver{display:none}nav{margin-left:0}nav a{padding:5px 9px;font-size:12.5px}
+  #ctxbar{padding:12px 12px 0}main{padding:12px 12px 230px;gap:18px}.empty h1{font-size:26px;line-height:32px;margin-top:12px}
+  .msg{gap:8px}.av{width:28px;height:28px;font-size:11px}.body{max-width:calc(100% - 36px)}
+  .bubble{padding:10px 12px;border-radius:16px;line-height:22px}
+  .dock{padding:16px 8px calc(8px + env(safe-area-inset-bottom,0px))}.composer{max-width:none;width:100%;border-radius:16px;padding:6px}
+  #hist,#know{top:52px}.hbtn{padding:5px 8px}
+}
 @media (max-width:720px){header{padding:0 12px}.chip.hide-sm,.hbtn span{display:none}main{padding-left:14px;padding-right:14px}.acts{opacity:1}.hint{display:none}}
 </style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0e0e10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+<link rel="stylesheet" href="/static/opai-shared.css">
 </head>
 <body>
 <header>
@@ -189,6 +202,7 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
   <button class="hbtn" id="b-new" type="button" title="New chat (Ctrl+Shift+O)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>New</span></button>
   <button class="hbtn" id="b-hist" type="button" aria-expanded="false" aria-controls="hist"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 8v4l3 2"/></svg><span>History</span></button>
   <button class="hbtn" id="b-exp" type="button" title="Download this chat as Markdown"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Export</span></button>
+  <button class="hbtn" id="b-guide" type="button" title="Which section does what (or type /guide)" onclick="window.OPAI_GUIDE&&OPAI_GUIDE.open('')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/></svg><span>Guide</span></button>
 </header>
 
 <aside id="hist" aria-label="Chat history"></aside>
@@ -215,6 +229,7 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
   <div class="composer" id="composer">
     <div class="modebar">
       <div class="seg" role="group" aria-label="Chat mode"><button type="button" id="m-ws" title="Answers from your documents and your own applications, tasks, projects and exams">Workspace</button><button type="button" id="m-gen" title="Open-ended chat, not tied to your data">General</button></div>
+      <select id="lang" class="hbtn" aria-label="Reply language" title="Reply language (General mode, files, Guide) and voice input language"><option value="en">English</option><option value="hi">Hinglish</option><option value="te">Tenglish</option></select>
       <span class="scope" id="scope" hidden></span>
       <div class="sugg" id="sugg"></div>
     </div>
@@ -222,7 +237,7 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
     <div class="input">
       <button class="icon" id="attach" type="button" aria-label="Attach files" title="Analyse a PDF, image or text file once (max 5 files, 8 MB each). To make files searchable, use Knowledge."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l9-9a3.7 3.7 0 0 1 5.2 5.2l-9 9a1.8 1.8 0 0 1-2.6-2.6l8.4-8.4"/></svg></button>
       <button class="icon" id="mic" type="button" aria-label="Voice input" aria-pressed="false" title="Speak your message" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
-      <textarea id="q" rows="1" autocomplete="off" aria-label="Message KARNA" placeholder="Ask KARNA about your day…"></textarea>
+      <textarea id="q" rows="1" autocomplete="off" aria-label="Message KARNA" placeholder="Ask KARNA… (or type /guide)"></textarea>
       <button class="btn" id="stop" type="button" hidden>Stop</button>
       <button class="btn primary" id="send" type="button">Send</button>
     </div>
@@ -231,6 +246,7 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
 </div>
 <input type="file" id="file" multiple hidden accept="image/*,.pdf,.txt,.md,.csv,.json,.log">
 
+<script src="/static/guide.js"></script>
 <script>
 (() => {
   /* ---------- config + helpers ---------- */
@@ -284,8 +300,10 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
 
   /* ---------- nav ---------- */
   const NAV = [['Overview','app.html'],['Today','today.html'],['Plan','plan.html'],['Applications','applications.html'],['Projects','projects.html'],['Academics','academics.html'],['Agent Console','agent-console.html']];
-  $('nav').innerHTML = NAV.map(([l, h], i) => (i === 1 ? '<a aria-current="page" href="#">KARNA</a>' : '') + '<a href="' + h + '">' + l + '</a>').join('');
+  const TIP = {}; ((window.OPAI_GUIDE && OPAI_GUIDE.sections) || []).forEach((g) => { TIP[g.h] = g.d; });
+  $('nav').innerHTML = NAV.map(([l, h], i) => (i === 1 ? '<a aria-current="page" href="#" title="Chat agent: add things by typing, ask about your data">KARNA</a>' : '') + '<a href="' + h + '" title="' + esc(TIP[h] || l) + '">' + l + '</a>').join('');
 
+  try { const cur = $('nav').querySelector('[aria-current]'); if (cur) $('nav').scrollLeft = Math.max(0, cur.offsetLeft - 60); } catch (e) {}
   /* ---------- tiny safe markdown (escape first, then format) ---------- */
   function md(src) {
     const blocks = [];
@@ -293,7 +311,8 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
     s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>')
          .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
          .replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, '$1<em>$2</em>')
-         .replace(/\[([^\]\n]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+         .replace(/\[([^\]\n]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+         .replace(/\[([^\]\n]+)\]\(([a-z-]+\.html)\)/g, '<a href="$2">$1</a>');
     for (let i = 0; i < 4; i++) s = s.replace(/(^\s*\|[^\n]*)\n[ \t]*\n(?=\s*\|)/gm, '$1\n');
     let out = '', list = null; const close = () => { if (list) { out += '</' + list + '>'; list = null; } };
     const cells = (r) => r.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
@@ -361,7 +380,7 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
   const thread = $('thread');
   const gate = document.createElement('section'); gate.id = 'gate'; gate.className = 'gate'; gate.hidden = true;
   const SUGG = {
-    ws: ['What is on my plan today?', 'Summarise my uploaded documents', 'Show my upcoming deadlines', 'Add a project called My App using React', 'Add an exam for Operating Systems on 20 Nov', 'Add an application as ML Intern at Acme deadline 30 Oct'],
+    ws: ['/guide','What is on my plan today?', 'Summarise my uploaded documents', 'Show my upcoming deadlines', 'Add a project called My App using React', 'Add an exam for Operating Systems on 20 Nov', 'Add an application as ML Intern at Acme deadline 30 Oct'],
     gen: ['Explain RAG like I am new to AI', 'Help me write a cold email to a professor', 'Quiz me on database normalization']
   };
   function applyMode() {
@@ -555,7 +574,12 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
 
   /* ---------- sending ---------- */
   let busy = false, ctrl = null;
-  const SYSTEM_GEN = 'You are KARNA, a helpful, concise assistant for a student and independent builder. Use short paragraphs and lists where useful. If you are not sure, say so.';
+  const LANG_KEY = 'opai_reply_lang';
+  const getLang = () => { try { return localStorage.getItem(LANG_KEY) || 'en'; } catch (e) { return 'en'; } };
+  const LANG_HINT = { en: '', hi: ' Reply in Hinglish (Hindi written in Latin letters, mixed with English technical words).', te: ' Reply in Tenglish (Telugu written in Latin letters, mixed with English technical words).' };
+  const VOICE = { en: 'en-IN', hi: 'hi-IN', te: 'te-IN' };
+  const SYSTEM_GEN_BASE = 'You are KARNA, a helpful, concise assistant for a student and independent builder. Use short paragraphs and lists where useful. If you are not sure, say so.';
+  const SYSTEM_GEN = () => SYSTEM_GEN_BASE + LANG_HINT[getLang()];
   function setBusy(b) { busy = b; $('send').hidden = b; $('stop').hidden = !b; $('q').disabled = false; }
   function typingEl() {
     const t = document.createElement('div'); t.className = 'msg agent'; t.id = 'typing';
@@ -582,17 +606,21 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
       c.msgs.push(um); if (c.title === 'New chat') c.title = (text || files[0].name).slice(0, 48);
       addMsg(um); $('q').value = ''; autosize(); pending = []; redrawFiles();
     }
+    if (!opts.regen && !opts.retry && !files.length && window.OPAI_GUIDE && OPAI_GUIDE.isGuideQuery(text)) {
+      const gm = { role: 'agent', action: 'general', mode: 'smalltalk', text: OPAI_GUIDE.answer(text, getLang()), ts: Date.now() };
+      c.msgs.push(gm); addMsg(gm, true); c.ts = Date.now(); save(); return;
+    }
     c.ts = Date.now(); save(); setBusy(true);
     const t = typingEl(), t0 = performance.now(); ctrl = new AbortController();
     try {
       let am;
       if (files.length) {
         const payload = []; for (const f of files) payload.push({ name: f.name, mime: f.type || '', data_base64: await b64(f) });
-        const r = await api('/v1/attach/analyze', { method: 'POST', signal: ctrl.signal, body: JSON.stringify({ section: 'jarvis', question: text || undefined, files: payload }) });
+        const r = await api('/v1/attach/analyze', { method: 'POST', signal: ctrl.signal, body: JSON.stringify({ section: 'jarvis', question: (text || '') ? text + LANG_HINT[getLang()] : undefined, files: payload }) });
         am = { role: 'agent', action: 'attachment', text: r.analysis || 'No analysis returned.' };
       } else if (store.mode === 'gen') {
         const hist = c.msgs.filter((m) => m.role === 'user' || m.role === 'agent').slice(-12).map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text || '' }));
-        const r = await api('/v1/chat/general', { method: 'POST', signal: ctrl.signal, body: JSON.stringify({ system: SYSTEM_GEN, messages: hist }) });
+        const r = await api('/v1/chat/general', { method: 'POST', signal: ctrl.signal, body: JSON.stringify({ system: SYSTEM_GEN(), messages: hist }) });
         am = { role: 'agent', action: 'general', text: r.reply || '' };
       } else {
         const body = { user_id: await ensureUser(), message: text, history: historyFor(c) };
@@ -699,6 +727,8 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
   /* ---------- status + boot ---------- */
   function setConn(state, text) { $('conn').innerHTML = '<span class="dot ' + state + '"></span><span>' + esc(text) + '</span>'; }
   async function boot() {
+    const ls = $('lang'); ls.value = getLang();
+    ls.addEventListener('change', () => { try { localStorage.setItem(LANG_KEY, ls.value); localStorage.setItem('opai_voice_lang', VOICE[ls.value]); } catch (e) {} });
     renderAll(); applyMode();
     try {
       const h = await api('/v1/health');
@@ -719,5 +749,6 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
   boot();
 })();
 </script>
+<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})});</script>
 </body>
 </html>

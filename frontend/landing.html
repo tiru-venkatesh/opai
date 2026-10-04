@@ -121,6 +121,28 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 @media(max-width:640px){.personas,.grid{grid-template-columns:1fr}section{padding:52px 0}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}.navbar,.hero-foot,.video-wrapper{opacity:1!important;transform:none!important}}
 </style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e0e10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="opai-shared.css">
+<style id="opai-landing-dark">
+:root{--bg:#0e0e10;--surface:#131315;--ink:#e5e1e4;--ink-2:#c4c7c8;--ink-3:#8e9192;--line:#2a2a2c;--line-2:#444748;--accent:#7F93FF;--accent-d:#A8B5FF;--pill:#1c1b1d}
+.hero{background:#0e0e10}
+.hero-foot{background:linear-gradient(to top,#0e0e10 0%,rgba(14,14,16,.88) 60%,transparent 100%)}
+.logo{background:#e5e1e4}.brand-name{color:#0e0e10}
+.menu-btn{background:#fff;color:#0e0e10}.menu-btn .ic{background:#0e0e10;color:#fff}
+.tags-pill,.right-pill{color:#e5e1e4;border-color:#2a2a2c}.right-pill .ic{background:#fff;color:#0e0e10}
+.sub{color:#c4c7c8}.hero h1{color:#fff}
+.btn.p{background:#fff;color:#0e0e10;box-shadow:none}.btn.p:hover{background:#e5e1e4}
+.btn.s{background:rgba(19,19,21,.7);color:#e5e1e4;border-color:#444748}.btn.s:hover{background:#1c1b1d;border-color:#8e9192}
+.chip{background:#131315;color:#c4c7c8;border-color:#2a2a2c;box-shadow:none}
+.step:hover{box-shadow:0 14px 28px -20px #000}
+.cta{background:#1c1b1d;border:1px solid #2a2a2c;color:#e5e1e4}.cta .btn.p{background:#fff;color:#0e0e10}
+.cta .btn.s{color:#fff}
+.menu-panel{background:#131315;border-color:#2a2a2c}.menu-panel a:hover{background:#1c1b1d}
+.video-wrapper{background:#131315}
+</style>
 </head>
 <body>
 
@@ -241,5 +263,7 @@ document.getElementById('notify-btn').addEventListener('click',e=>{
   if(v)e.currentTarget.href='mailto:hello@opa-demo.app?subject='+encodeURIComponent('Notify me when OPAI is ready')+'&body='+encodeURIComponent('My email: '+v);
 });
 </script>
+<script src="guide.js" defer></script>
+<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
 </body>
 </html>

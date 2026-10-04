@@ -79,9 +79,35 @@ _DATE_RXS = [
 ]
 
 
+
+# ---- Hinglish (Hindi in Latin or Devanagari) -> mapped onto the Tenglish tokens the pipeline already understands ----
+_HI_SCRIPT = [("कर दो", "cheyyi"), ("करो", "cheyyi"), ("जोड़ो", "cheyyi"), ("जोड़ दो", "cheyyi"), ("में", "lo"), ("है", "undi"), ("हैं", "unnayi"),
+              ("परसों", "ellundi"), ("कल", "repu"), ("आज", "ee roju"), ("चाहिए", "kavali"), ("कैसे", "ela"), ("कहाँ", "ekkada"), ("कहां", "ekkada"),
+              ("कब", "eppudu"), ("क्यों", "enduku"), ("परीक्षा", "exam"), ("प्रोजेक्ट", "project"), ("तक", "varaku"), ("से", "nunchi"), ("को", "ki"), ("एक", "oka")]
+_HI_PHRASES = [(r"apply\s+(?:kar\s*diya|kiya|kar\s*liya)", "apply chesanu"), (r"(?:add|create|save|note|log|put|track)\s+(?:kar\s*do|karo|kardo|karein|kijiye|karu)", "add"),
+               (r"(?:kar\s*do|kardo|karo|karein|kijiye|karu|kar\s*dena)", "cheyyi"), (r"(?:daal\s*do|daalo|dalo|daal\s*dena|rakho|rakh\s*do|jodo|jod\s*do|likh\s*do|likho|banao|bana\s*do)", "pettu"),
+               (r"parso", "ellundi"), (r"kal", "repu"), (r"aaj", "ee roju"), (r"chahiye", "kavali"), (r"mein", "lo"), (r"tak", "varaku"),
+               (r"kaise|kaisey", "ela"), (r"kahan|kaha", "ekkada"), (r"kab", "eppudu"), (r"kyun|kyu", "enduku"), (r"kya", "enti"),
+               (r"hain", "unnayi"), (r"hai", "undi"), (r"naam", "peru"), (r"ek", "oka")]
+_HI_MARK = re.compile(r"\b(?:karo|kardo|kar\s*do|karein|kijiye|daal\s*do|daalo|dalo|jodo|jod\s*do|rakho|rakh\s*do|banao|bana\s*do|chahiye|mein|kaise|kahan|kyun|hain?|"
+                      r"kiya|kar\s*diya|parso|kal|aaj|likh\s*do|likho)\b", re.I)
+
+
+def _hi_norm(s: str) -> str:
+    """Hinglish -> Tenglish tokens. Only fires when the message carries a distinctive Hindi marker, so plain English is untouched."""
+    if re.search(r"[\u0900-\u097F]", s or ""):
+        for hi, lat in _HI_SCRIPT:
+            s = s.replace(hi, f" {lat} ")
+    if not _HI_MARK.search(s or ""):
+        return s
+    for pat, rep in _HI_PHRASES:
+        s = re.sub(rf"\b(?:{pat})\b", rep, s, flags=re.I)
+    return s
+
+
 def _te_norm(message: str) -> str:
     """Telugu script -> Latin tokens (no-op for plain English/Tenglish). Case of other text is preserved."""
-    s = (message or "").translate(_TE_DIGITS)
+    s = _hi_norm((message or "").translate(_TE_DIGITS))
     if not re.search(r"[\u0C00-\u0C7F]", s):
         return s
     s = re.sub(r"(\d+)\s*వ\b", r"\1", s)
@@ -368,6 +394,7 @@ def heuristic_fields(tool: str, message: str) -> Dict[str, Any]:
 
 
 _TENGLISH_HINT = (
+    "Hinglish (Hindi in Latin letters) is mapped to the same tokens: karo/kar do=add, kal=tomorrow, parso=day after, aaj=today, mein=in, tak=until, hai=is. "
     "Tenglish glossary: cheyyi/pettu/vesey=add, repu=tomorrow, ellundi=day after tomorrow, ee roju=today, next week lo=in 7 days, "
     "varaku=until, ki/ku=to/for, lo=in/at, nunchi=from, vadi/tho=using, ani=called/named, peru=name, kavali=wants/needs, undi=there is. "
     "Examples (message -> JSON): "

@@ -168,6 +168,22 @@ def health(db: Session = Depends(get_db)):
     return out
 
 
+@app.get("/sw.js")
+def service_worker():
+    # served from the site root so the worker's scope covers the whole app
+    if os.path.exists("static/sw.js"):
+        return FileResponse("static/sw.js", media_type="application/javascript", headers={"Cache-Control": "no-cache"})
+    raise HTTPException(status_code=404, detail="sw.js not found")
+
+
+@app.get("/manifest.json")
+def web_manifest():
+    if os.path.exists("static/manifest.json"):
+        return FileResponse("static/manifest.json", media_type="application/manifest+json")
+    raise HTTPException(status_code=404, detail="manifest.json not found")
+
+
+
 @app.get("/super-chat")
 def serve_super_chat():
     if os.path.exists("static/super-chat.html"):

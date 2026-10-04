@@ -39,6 +39,11 @@ form button{background:var(--pri);color:#2f3131;border:0;border-radius:6px;paddi
 .empty b{color:var(--pri);font-weight:500}
 .note{margin-top:40px;color:var(--mut);font-size:13px}
 </style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e0e10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="opai-shared.css">
 </head>
 <body>
 <header><div class="bar">
@@ -112,5 +117,7 @@ if(sc&&location.protocol!=='file:'&&!/\.html$/.test(location.pathname))sc.setAtt
 load();render();
 })();
 </script>
+<script src="guide.js" defer></script>
+<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
 </body>
 </html>

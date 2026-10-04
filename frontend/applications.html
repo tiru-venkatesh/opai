@@ -39,6 +39,11 @@ select{margin-top:10px;width:100%;background:var(--bg);color:var(--tx);border:1p
 .note{margin-top:40px;color:var(--mut);font-size:13px}
 @media (prefers-reduced-motion:no-preference){.card{transition:background .15s}.card:hover{background:var(--s3)}}
 </style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e0e10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="opai-shared.css">
 </head>
 <body>
 <header><div class="bar">
@@ -118,5 +123,7 @@ if(sc&&location.protocol!=='file:'&&!/\.html$/.test(location.pathname))sc.setAtt
 load();render();
 })();
 </script>
+<script src="guide.js" defer></script>
+<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
 </body>
 </html>

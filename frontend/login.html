@@ -7,6 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400..600&family=Bricolage+Grotesque:opsz,wght@12..96,300..700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400..700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <!-- Tailwind, scoped to the KARNA Study Workflow redesign only. Preflight is
      disabled so Tailwind's base-element reset never touches the rest of
@@ -44,7 +45,7 @@
    of this <style> re-skins them to the light look.
    ===================================================================== */
 :root{
-  --bg:#14161B;
+  --bg:#0e0e10;
   --surface:#1B1E27;
   --surface-2:#242833;
  
@@ -640,21 +641,21 @@ main{padding-top:78px}
    "PERSONAL AI" LIGHT SKIN — overrides everything above
    ===================================================================== */
 html:root:root, html:root:root[data-theme]{
-  --bg:#F7F5F0; --surface:#FFFFFF; --surface-2:#ECEEFA;
-  --ink:#1B2033; --ink-2:#4A5068; --ink-3:#636987;
-  --line:#E6E2D8; --line-2:#D5D0C2;
-  --accent:#4338CA; --accent-d:#3226A8; --accent-soft:#E8E6FB;
-  --good:#167A5A; --good-soft:#DDF3EA;
-  --warn:#A4520A; --warn-soft:#FDEBD6;
-  --bad:#B42F3D; --bad-soft:#FBE3E6;
-  --on-accent:#FFFFFF; --on-good:#FFFFFF; --on-warn:#FFFFFF; --on-bad:#FFFFFF; --live:#4ADE9F;
-  --c-app:#4338CA; --c-out:#D9692A; --c-proj:#167A5A; --c-acad:#9B4DCA; --c-req:#B8860B; --c-opp:#6B7280;
-  --side:#151A30;
-  --shadow-1:0 1px 2px rgba(27,32,51,.06); --shadow-2:0 14px 34px -18px rgba(27,32,51,.28); --glow:none;
-  --display:'Newsreader',Georgia,serif;
-  --body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
-  color-scheme:light;
+  --bg:#0e0e10; --surface:#131315; --surface-2:#1c1b1d;
+  --ink:#e5e1e4; --ink-2:#c4c7c8; --ink-3:#8e9192;
+  --line:#2a2a2c; --line-2:#444748;
+  --accent:#7F93FF; --accent-d:#A8B5FF; --accent-soft:#1C2450;
+  --good:#3DD6A0; --good-soft:#0E2C25;
+  --warn:#F2A54A; --warn-soft:#33240F;
+  --bad:#FF7A7A; --bad-soft:#3A1A1E;
+  --on-accent:#0e0e10; --on-good:#0e0e10; --on-warn:#0e0e10; --on-bad:#0e0e10; --live:#4ADE9F;
+  --c-app:#7F93FF; --c-out:#F2A54A; --c-proj:#3DD6A0; --c-acad:#B197FC; --c-req:#FF7A90; --c-opp:#6F7A96;
+  --side:#070A14;
+  --shadow-1:0 0 0 1px var(--line); --shadow-2:0 24px 60px -24px rgba(0,0,0,.7); --glow:none;
+  --display:'Bricolage Grotesque',system-ui,sans-serif;
+  --body:'Onest','Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  color-scheme:dark;
 }
 body{background:var(--bg);background-image:none;font-size:14px}
 .scanline{display:none}
@@ -668,11 +669,11 @@ body{background:var(--bg);background-image:none;font-size:14px}
 .panel{border-radius:12px;box-shadow:none}
  
 /* buttons */
-.btn{color:#fff;border-radius:8px;box-shadow:none}
+.btn{color:var(--on-accent);border-radius:8px;box-shadow:none}
 .btn:hover{box-shadow:none}
 .btn.soft{color:var(--accent-d)}
 .btn.ghost{color:var(--ink)}
-.m.you .bubble,.send,.cal-badge,.cal-d.sel{color:#fff;box-shadow:none}
+.m.you .bubble,.send,.cal-badge,.cal-d.sel{color:var(--on-accent);box-shadow:none}
  
 /* sidebar */
 .side{background:var(--side);border-right:0;color:#CFE0DB}
@@ -788,7 +789,12 @@ body.nav-open #page{left:min(300px,84vw);border-radius:20px 0 0 20px;box-shadow:
 .kh-step span{flex:1}.kh-bar{height:6px;border-radius:6px;background:var(--line);margin:8px 0 10px;overflow:hidden}.kh-bar b{display:block;height:100%;background:var(--accent)}
 .kh-can{display:flex;flex-wrap:wrap;gap:8px}.kh-can button{border:1px solid var(--line-2);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer}.kh-can button:hover{border-color:var(--accent);color:var(--accent)}
 </style>
-<link rel="stylesheet" href="opai-glass.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e0e10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="opai-shared.css">
+<script>try{document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 </head>
 <body>
 
@@ -942,5 +948,7 @@ function gateGuest() {
   });
 })();
 </script>
+<script src="guide.js" defer></script>
+<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
 </body>
 </html>
