@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DSA Roadmap · OPAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F6F4EE;--s1:#FBFAF6;--s2:#F2EFE7;--s3:#E3DFD3;--line:#D9D4C7;--tx:#16181A;--mut:#4A4F52;--dim:#7A7F80;--pri:#17504A;--pri-soft:#E1EEEA;--coral:#E8705A;--coral-ink:#C2452F;--coral-soft:#FCE4DC;--ok:#2E7D5B;
+  --font:'Geist',system-ui,-apple-system,Segoe UI,sans-serif;--mono:'JetBrains Mono',ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font:14px/22px var(--font);-webkit-font-smoothing:antialiased}
+main{max-width:1100px;margin:0 auto;padding:92px 20px 110px}
+h1{font-size:32px;line-height:38px;letter-spacing:-.03em;font-weight:500;margin:0 0 6px;color:var(--pri)}
+h2{font-size:16px;line-height:22px;font-weight:600;margin:0 0 10px;letter-spacing:-.01em}
+.tag{color:var(--mut);margin:0 0 22px;max-width:70ch}
+.card{background:var(--s1);border:1px solid #E3DFD399;border-radius:16px;padding:18px 20px}
+.grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;align-items:start;margin-top:16px}
+@media(max-width:860px){.grid2{grid-template-columns:1fr}main{padding-top:84px}}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px 18px;margin-bottom:14px}
+.facts div small{display:block;font:11px/14px var(--mono);letter-spacing:.05em;color:var(--dim);text-transform:uppercase}
+.facts div b{font-weight:500;font-size:15px}
+.bar{height:6px;background:var(--s3);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--pri);border-radius:6px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.chip{display:inline-flex;gap:6px;align-items:center;padding:3px 10px;border-radius:999px;font:11px/16px var(--mono);letter-spacing:.03em;background:var(--pri-soft);color:var(--pri)}
+.chip.warn{background:var(--coral-soft);color:var(--coral-ink)}
+.seg{display:inline-flex;padding:2px;border-radius:10px;background:var(--s2);border:1px solid #E3DFD3}
+.seg button{border:0;background:none;padding:3px 11px;border-radius:7px;font:12px/18px var(--font);color:var(--mut);cursor:pointer}
+.seg button.on{background:var(--pri);color:#fff;font-weight:600}
+.blk{display:grid;grid-template-columns:62px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid #E3DFD3}
+.blk:first-of-type{border-top:0}
+.blk .m{font:12px var(--mono);color:var(--pri)}
+.lnk{display:inline-block;padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:var(--s2);color:var(--pri);text-decoration:none;font:12px/18px var(--font);white-space:nowrap}
+.lnk:hover{background:var(--pri);color:#fff;border-color:var(--pri)}
+.btn{padding:7px 14px;border-radius:8px;border:1px solid var(--line);background:var(--s3);font:500 13px var(--font);cursor:pointer;color:var(--tx)}
+.btn:hover{background:#D9D4C6}.btn.p{background:var(--pri);color:#fff;border-color:var(--pri)}.btn.p:hover{background:#1F6A62}
+.btn:disabled{opacity:.5;cursor:default}
+.mark{margin-top:12px;padding:12px;border-radius:12px;background:var(--s2);border:1px dashed var(--line)}
+.mark p{margin:0 0 8px;color:var(--mut);font-size:13px}
+.conf{display:inline-flex;gap:6px;margin:0 8px 8px 0}.conf button{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--s1);font:500 13px var(--font);cursor:pointer}
+.conf button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+ul.plain{list-style:none;margin:0;padding:0}ul.plain li{padding:5px 0;display:flex;gap:9px}
+ul.plain li.d{color:var(--dim);text-decoration:line-through}
+.dot{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line);flex:none;margin-top:3px;display:grid;place-items:center;font-size:10px;color:#fff}
+li.d .dot{background:var(--ok);border-color:var(--ok)}
+.days{display:flex;gap:8px;margin-top:10px}
+.days span{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font:12px var(--mono);border:1px solid var(--line);color:var(--dim);background:var(--s2)}
+.days .done{background:var(--pri);color:#fff;border-color:var(--pri)}.days .skipped{background:var(--coral-soft);color:var(--coral-ink);border-color:#f2c3b6}
+.days .planned{border-color:var(--pri);color:var(--pri)}.days .missed{opacity:.55}
+.rules{margin:10px 0 0;padding:10px 14px;border-radius:12px;background:var(--coral-soft);color:var(--coral-ink);font-size:13px}
+.rules b{display:block;margin-bottom:2px}.rules ul{margin:0;padding-left:18px}
+details.ph{border:1px solid #E3DFD399;border-radius:14px;background:var(--s1);margin-top:10px;overflow:hidden}
+details.ph>summary{cursor:pointer;list-style:none;display:flex;gap:12px;align-items:center;padding:12px 16px;font-weight:500}
+details.ph>summary::-webkit-details-marker{display:none}
+details.ph>summary .n{font:11px var(--mono);color:var(--dim);width:22px}
+details.ph>summary .c{margin-left:auto;font:11px var(--mono);color:var(--mut)}
+details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);margin-left:6px}details.ph[open]>summary::after{content:"\2212"}
+.tp{display:grid;grid-template-columns:1fr auto auto;gap:6px 12px;padding:10px 16px;border-top:1px solid #E3DFD3;align-items:center}
+@media(max-width:700px){.tp{grid-template-columns:1fr}}
+.tp .nm{font-weight:500}.tp .nm em{font:normal 10.5px var(--mono);margin-left:8px;padding:1px 7px;border-radius:999px;background:var(--coral-soft);color:var(--coral-ink)}
+.tp .ln{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tp select,.f select,.f input,.ed input,.ed textarea{font:13px var(--font);padding:6px 9px;border-radius:8px;border:1px solid var(--line);background:var(--s2);color:var(--tx)}
+.ed{grid-column:1/-1;display:grid;gap:8px;padding:10px;border-radius:12px;background:var(--s2)}.ed input,.ed textarea{width:100%}.ed label{font:11px var(--mono);color:var(--dim)}
+.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:14px 0}.f label{display:block;font:11px var(--mono);letter-spacing:.05em;color:var(--dim);text-transform:uppercase;margin-bottom:5px}.f select{width:100%}
+.opt{display:flex;gap:8px;flex-wrap:wrap}.opt label{display:inline-flex;margin:0;text-transform:none;font:13px var(--font);letter-spacing:0;color:var(--tx);cursor:pointer}
+.opt input{position:absolute;opacity:0}.opt span{padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--s2)}.opt input:checked+span{background:var(--pri);color:#fff;border-color:var(--pri)}
+.opt input:focus-visible+span{outline:2px solid var(--pri);outline-offset:2px}
+.err{margin:12px 0;padding:10px 14px;border-radius:10px;background:var(--coral-soft);color:var(--coral-ink)}
+.note{margin-top:28px;color:var(--dim);font-size:13px;max-width:75ch}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.ghost{background:none;border:0;color:var(--dim);font:12px var(--mono);cursor:pointer;text-decoration:underline;padding:0}
+@media (prefers-reduced-motion:no-preference){.card,details.ph{animation:up .4s cubic-bezier(.2,.8,.2,1) both}@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#F6F4EE">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="opai-shared.css">
+</head>
+<body>
+<main>
+  <h1>DSA Roadmap</h1>
+  <p class="tag">Learn consistently, stay on track, and prepare for placements without losing focus on semester exams. OPAI plans, tracks, reminds and adapts. The actual practice happens on external sites.</p>
+  <div id="err" class="err" hidden role="alert"></div>
+  <div id="app" aria-live="polite"><div class="card">Loading your roadmap…</div></div>
+  <p class="note">No in-app coding editor, no judge, no problem statements, no solutions and no mock interviews. Open problems and articles on LeetCode, GeeksforGeeks, Codeforces or any site you prefer, then come back and mark progress. Each topic keeps one learning link and one practice link that you can change.</p>
+</main>
+<script src="opai-shell.js" defer></script>
+<script src="guide.js" defer></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const DEFAULT_API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8000' : 'https://opa-52ug.onrender.com';
+  const base = () => (localStorage.getItem('opa_api_base') || DEFAULT_API).replace(/\/+$/, '');
+
+  async function api(path, opts = {}) {
+    const res = await fetch(base() + path, { headers: opts.body ? { 'Content-Type': 'application/json' } : {}, ...opts });
+    if (!res.ok) {
+      let d = ''; try { d = (await res.json()).detail || ''; } catch (e) {}
+      if (Array.isArray(d)) d = d.map((x) => x.msg).join('; ');
+      throw new Error(d || (res.status + ' ' + res.statusText));
+    }
+    const t = await res.text(); return t ? JSON.parse(t) : null;
+  }
+  let uid = null;
+  async function ensureUser() {            // same identity rules as KARNA and Today
+    if (uid) return uid;
+    const email = new URLSearchParams(location.search).get('email') || localStorage.getItem('opai_sc_email');
+    if (email) { localStorage.setItem('opai_sc_email', email); uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(email), { method: 'POST' })).user_id; return uid; }
+    let gid = localStorage.getItem('opa_guest_uid');
+    if (gid) { try { await api('/v1/profile?user_id=' + encodeURIComponent(gid)); uid = gid; return uid; } catch (e) { if (!/404/.test(e.message) && !/not found/i.test(e.message)) throw e; } }
+    gid = (await api('/v1/auth/guest', { method: 'POST' })).user_id; localStorage.setItem('opa_guest_uid', gid); uid = gid; return uid;
+  }
+
+  let S = null, pendingConf = null; const openPh = new Set(), editing = new Set();
+  const err = (m) => { const e = $('err'); e.hidden = !m; e.textContent = m || ''; };
+
+  /* external-link buttons: label by site, only plain http(s) links */
+  function lnk(url, kind) {
+    if (!url || !/^https?:\/\//i.test(url)) return '';
+    let h = ''; try { h = new URL(url).hostname; } catch (e) { return ''; }
+    const label = /leetcode/.test(h) ? (kind === 'practice' ? 'Open LeetCode problem' : 'Open LeetCode') : /geeksforgeeks/.test(h) ? 'Open GeeksforGeeks article' : /codeforces/.test(h) ? 'Open Codeforces' : /neetcode/.test(h) ? 'Open NeetCode roadmap' : (kind === 'practice' ? 'Open practice link' : 'Open learning resource');
+    return '<a class="lnk" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(label) + ' ↗</a>';
+  }
+
+  function setup(o) {
+    const radios = (name, arr, def, fmt) => '<div class="opt">' + arr.map((v) => '<label><input type="radio" name="' + name + '" value="' + esc(v) + '"' + (v === def ? ' checked' : '') + '><span>' + esc(fmt ? fmt(v) : v) + '</span></label>').join('') + '</div>';
+    return '<section class="card"><h2>Create your DSA roadmap</h2><p class="tag" style="margin-bottom:0">Pick a goal, a language and the time you can give each day. OPAI builds an 11-phase, 12-week roadmap and puts one small DSA block in Today.</p>' +
+      '<div class="f"><div><label>Goal</label><select id="s-goal">' + o.goals.map((g) => '<option>' + esc(g) + '</option>').join('') + '</select></div>' +
+      '<div><label>Language</label>' + radios('lang', o.languages, 'Python') + '</div>' +
+      '<div><label>Daily time</label>' + radios('mins', o.daily_minutes, 60, (v) => v + ' min') + '</div>' +
+      '<div><label>Days per week</label>' + radios('dpw', o.days_per_week, 5) + '</div></div>' +
+      '<button class="btn p" data-act="create" type="button">Create roadmap</button></section>';
+  }
+
+  function main(s) {
+    const p = s.plan, g = s.progress, m = s.mode, c = s.consistency, pc = s.pace, t = s.today;
+    const paceChip = '<span class="chip' + (pc.state === 'behind' ? ' warn' : '') + '" title="' + esc(pc.message) + '">' + (pc.state === 'behind' ? 'Behind' : pc.state === 'ahead' ? 'Ahead' : 'On track') + '</span>';
+    const modeChip = m.mode === 'maintenance' ? '<span class="chip warn">DSA mode: Maintenance</span>' : '<span class="chip">DSA mode: Normal</span>';
+    let h = '<section class="card"><div class="row"><h2 style="margin:0">Overview</h2><div class="seg" role="group" aria-label="DSA mode">' +
+      [['auto', 'Auto'], ['normal', 'Normal'], ['maintenance', 'Maintenance']].map(([v, l]) => '<button type="button" data-act="mode" data-v="' + v + '" class="' + (m.override === v ? 'on' : '') + '">' + l + '</button>').join('') + '</div></div>' +
+      '<div class="facts" style="margin-top:14px"><div><small>Goal</small><b>' + esc(p.goal) + '</b></div><div><small>Language</small><b>' + esc(p.language) + '</b></div><div><small>Target</small><b>' + esc(p.target) + '</b></div>' +
+      '<div><small>Current phase</small><b>' + esc(g.current_phase) + '</b></div><div><small>Progress</small><b>Week ' + g.week + ' of ' + g.weeks + (g.overrun ? ' (past plan)' : '') + '</b></div><div><small>Topics advanced</small><b>' + g.advanced + ' of ' + g.total + '</b></div></div>' +
+      '<div class="bar" role="progressbar" aria-valuenow="' + g.percent + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + g.percent + '%"></i></div>' +
+      '<div class="chips">' + paceChip + modeChip + (m.reason ? '<span class="note" style="margin:0">' + esc(m.reason) + '</span>' : '') + '</div>' +
+      (m.mode === 'maintenance' ? '<div class="rules"><b>Exam season rules</b><ul><li>Only 15–20 minutes</li><li>Review concepts or watch one topic explanation</li><li>No new heavy DSA phase</li><li>Resume normal pace after exams</li></ul></div>' : '') + '</section>';
+
+    h += '<div class="grid2"><section class="card"><h2>Today' + (t ? ' · ' + esc(t.topic.name) : '') + '</h2>';
+    if (!t) h += '<p class="tag" style="margin:0">Nothing scheduled.</p>';
+    else {
+      h += t.blocks.map((b) => '<div class="blk"><span class="m">' + b.minutes + ' min</span><span>' + esc(b.label) + '</span><span>' + lnk(b.url, b.kind === 'practice' ? 'practice' : 'learn') + '</span></div>').join('');
+      if (t.status === 'done') h += '<div class="mark"><p><b>Done today</b>' + (t.confidence ? ' · confidence ' + t.confidence + '/5' : '') + '. Tomorrow\'s block adapts to how it went.</p></div>';
+      else if (t.status === 'skipped') h += '<div class="mark"><p>Skipped. Nothing is lost: tomorrow resumes with the same topic.</p></div>';
+      else h += '<div class="mark"><p>Back from the external site? Mark progress. How confident are you on <b>' + esc(t.topic.name) + '</b> now?</p>' +
+        '<div class="conf" role="group" aria-label="Confidence 1 to 5">' + [1, 2, 3, 4, 5].map((v) => '<button type="button" data-act="conf" data-v="' + v + '" class="' + (pendingConf === v ? 'on' : '') + '">' + v + '</button>').join('') + '</div>' +
+        '<button class="btn p" type="button" data-act="complete" data-id="' + esc(t.session_id) + '">Mark done</button> <button class="btn" type="button" data-act="skip" data-id="' + esc(t.session_id) + '">Skip today</button></div>';
+    }
+    h += '</section><div><section class="card"><h2>This week</h2><ul class="plain">' + s.this_week.map((b) => '<li class="' + (b.done ? 'd' : '') + '"><span class="dot">' + (b.done ? '✓' : '') + '</span><span>' + esc(b.text) + '</span></li>').join('') + '</ul></section>' +
+      '<section class="card" style="margin-top:16px"><h2>Weekly consistency</h2><div class="row"><span>Planned sessions <b>' + c.planned + '</b></span><span>Completed <b>' + c.completed + '</b></span></div><div class="days" aria-label="This week">' + c.days.map((d) => '<span class="' + d.state + '" title="' + esc(d.date + ' · ' + d.state) + '">' + esc(d.label) + '</span>').join('') + '</div></section></div></div>';
+
+    h += '<h2 style="margin:28px 0 0">Roadmap</h2>' + s.phases.map((ph) => {
+      const act = ph.topics.some((t) => t.is_active), open = openPh.has(ph.no) || (act && !openPh.has(-ph.no));
+      return '<details class="ph" data-ph="' + ph.no + '"' + (open ? ' open' : '') + '><summary><span class="n">' + String(ph.no).padStart(2, '0') + '</span>' + esc(ph.name) + '<span class="c">' + ph.advanced + '/' + ph.total + ' · wk ' + (ph.weeks[0] === ph.weeks[1] ? ph.weeks[0] : ph.weeks[0] + '–' + ph.weeks[1]) + '</span></summary>' +
+        ph.topics.map((t) => '<div class="tp" data-id="' + esc(t.id) + '"><div class="nm">' + esc(t.name) + (t.is_active ? '<em>current</em>' : '') + '</div>' +
+          '<select data-act="status" aria-label="Status of ' + esc(t.name) + '">' + s.options.statuses.map((o) => '<option value="' + o.id + '"' + (o.id === t.status ? ' selected' : '') + '>' + esc(o.label) + '</option>').join('') + '</select>' +
+          '<select data-act="confsel" aria-label="Confidence in ' + esc(t.name) + '"><option value="">Confidence –</option>' + [1, 2, 3, 4, 5].map((v) => '<option value="' + v + '"' + (t.confidence === v ? ' selected' : '') + '>Confidence ' + v + '/5</option>').join('') + '</select>' +
+          '<div class="ln">' + lnk(t.learn_url, 'learn') + lnk(t.practice_url, 'practice') + '<button class="ghost" type="button" data-act="edit">' + (editing.has(t.id) ? 'close' : 'edit links & notes') + '</button></div>' +
+          (editing.has(t.id) ? '<div class="ed"><label>Primary learning resource (https://…)</label><input data-f="learn_url" value="' + esc(t.learn_url || '') + '" maxlength="500"><label>Practice link (https://…)</label><input data-f="practice_url" value="' + esc(t.practice_url || '') + '" maxlength="500"><label>Notes (optional)</label><textarea data-f="notes" rows="2" maxlength="2000">' + esc(t.notes || '') + '</textarea><div><button class="btn p" type="button" data-act="savelinks">Save</button></div></div>' : '') + '</div>').join('') + '</details>';
+    }).join('');
+    h += '<p style="margin-top:18px"><button class="ghost" type="button" data-act="reset">Start over with a new roadmap</button></p>';
+    return h;
+  }
+
+  function render() {
+    $('app').innerHTML = S && S.plan ? main(S) : setup(S ? S.options : { goals: [], languages: [], daily_minutes: [], days_per_week: [] });
+  }
+  async function call(path, method, body) {
+    err('');
+    try { S = await api(path, { method, body: body ? JSON.stringify(Object.assign({ user_id: uid }, body)) : undefined }); render(); }
+    catch (e) { err(e.message); render(); }
+  }
+
+  document.addEventListener('toggle', (e) => {          // remember which phases the learner opened/closed
+    const d = e.target; if (!d.matches || !d.matches('details.ph')) return;
+    const n = +d.dataset.ph; if (d.open) { openPh.add(n); openPh.delete(-n); } else { openPh.delete(n); openPh.add(-n); }
+  }, true);
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-act]'); if (!b || b.tagName === 'SELECT') return; const a = b.dataset.act, row = b.closest('.tp');
+    if (a === 'create') {
+      const v = (n) => (document.querySelector('input[name=' + n + ']:checked') || {}).value;
+      call('/v1/dsa/plan', 'POST', { goal: $('s-goal').value, language: v('lang'), daily_minutes: +v('mins'), days_per_week: +v('dpw') });
+    } else if (a === 'mode') call('/v1/dsa/plan', 'PATCH', { mode_override: b.dataset.v });
+    else if (a === 'conf') { pendingConf = pendingConf === +b.dataset.v ? null : +b.dataset.v; render(); }
+    else if (a === 'complete') { const c = pendingConf; pendingConf = null; call('/v1/dsa/sessions/' + encodeURIComponent(b.dataset.id) + '/complete', 'POST', c ? { confidence: c } : {}); }
+    else if (a === 'skip') call('/v1/dsa/sessions/' + encodeURIComponent(b.dataset.id) + '/skip', 'POST', {});
+    else if (a === 'edit') { const id = row.dataset.id; editing.has(id) ? editing.delete(id) : editing.add(id); render(); }
+    else if (a === 'savelinks') {
+      const g = (f) => row.querySelector('[data-f=' + f + ']').value; editing.delete(row.dataset.id);
+      call('/v1/dsa/topics/' + encodeURIComponent(row.dataset.id), 'PATCH', { learn_url: g('learn_url'), practice_url: g('practice_url'), notes: g('notes') });
+    } else if (a === 'reset') { if (confirm('Delete this roadmap and all its progress, then start a new one?')) { err(''); api('/v1/dsa/plan?user_id=' + encodeURIComponent(uid), { method: 'DELETE' }).then((r) => { S = r; render(); }).catch((x) => err(x.message)); } }
+  });
+  document.addEventListener('change', (e) => {
+    const s = e.target; if (!s.matches || !s.matches('select[data-act]')) return; const id = s.closest('.tp').dataset.id;
+    if (s.dataset.act === 'status') call('/v1/dsa/topics/' + encodeURIComponent(id), 'PATCH', { status: s.value });
+    else if (s.dataset.act === 'confsel') call('/v1/dsa/topics/' + encodeURIComponent(id), 'PATCH', { confidence: s.value ? +s.value : null });
+  });
+
+  (async () => {
+    try { await ensureUser(); S = await api('/v1/dsa?user_id=' + encodeURIComponent(uid)); render(); }
+    catch (e) { $('app').innerHTML = '<div class="card">Could not reach the OPAI backend at ' + esc(base()) + '. If it is on a free host it may be waking up; retry in a minute.<br><small>' + esc(e.message) + '</small></div>'; }
+  })();
+})();
+</script>
+<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
+</body>
+</html>

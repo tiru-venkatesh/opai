@@ -2509,6 +2509,7 @@ const NAV = [
   { id:'outreach', l:'Internships', i:'mail' },
   { id:'projects', l:'Projects', i:'layers', g:'Work' },
   { id:'academics', l:'Academics', i:'book' },
+  { id:'dsa', l:'DSA Roadmap', i:'target', href:'dsa.html' },
   { id:'sems', l:'Exams & Courses', i:'grad' },
   { id:'requests', l:'Requests', i:'chat' },
   { id:'outbox', l:'Outbox', i:'send', g:'Tools' },

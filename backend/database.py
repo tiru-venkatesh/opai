@@ -401,6 +401,63 @@ class StudyBlock(Base):
     created_at = Column(DateTime, default=_dt.utcnow)
 
 
+class DsaPlan(Base):
+    """DSA Roadmap: a planning/tracking record only. No problems, solutions or code are stored here."""
+    __tablename__ = "dsa_plans"
+    __table_args__ = (Index("ix_dsa_plans_user", "user_id", "status"),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
+    goal = Column(String, default="Placement preparation")
+    language = Column(String, default="Python")
+    daily_minutes = Column(Integer, default=60)
+    days_per_week = Column(Integer, default=5)
+    weeks = Column(Integer, default=12)
+    start_date = Column(Date)
+    mode_override = Column(String, default="auto")   # auto | normal | maintenance
+    status = Column(String, default="active")         # active | archived
+    created_at = Column(DateTime, default=_dt.utcnow)
+
+
+class DsaTopic(Base):
+    __tablename__ = "dsa_topics"
+    __table_args__ = (Index("ix_dsa_topics_plan_pos", "plan_id", "position"), Index("ix_dsa_topics_user", "user_id"))
+    id = Column(String(36), primary_key=True, default=gen_id)
+    plan_id = Column(String(36), ForeignKey("dsa_plans.id", ondelete="CASCADE"))
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
+    position = Column(Integer, default=0)
+    phase_no = Column(Integer, default=1)
+    phase = Column(String)
+    name = Column(String, nullable=False)
+    planned_week = Column(Integer, default=1)
+    status = Column(String, default="not_started")   # not_started | learning | practicing | revised | comfortable
+    confidence = Column(Integer)                       # 1-5, the learner's own rating
+    learn_url = Column(String)                         # one primary learning resource (external)
+    practice_url = Column(String)                      # one practice link (external)
+    notes = Column(Text)
+    sessions_done = Column(Integer, default=0)
+    last_session = Column(Date)
+    updated_at = Column(DateTime, default=_dt.utcnow)
+
+
+class DsaSession(Base):
+    """One small DSA block per day, shown in Today."""
+    __tablename__ = "dsa_sessions"
+    __table_args__ = (Index("ux_dsa_session_day", "plan_id", "plan_date", unique=True), Index("ix_dsa_sessions_user_date", "user_id", "plan_date"))
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
+    plan_id = Column(String(36), ForeignKey("dsa_plans.id", ondelete="CASCADE"))
+    topic_id = Column(String(36), ForeignKey("dsa_topics.id", ondelete="CASCADE"))
+    plan_date = Column(Date, nullable=False)
+    minutes = Column(Integer, default=60)
+    mode = Column(String, default="normal")           # normal | maintenance
+    kind = Column(String, default="learn")            # learn | review | revise
+    status = Column(String, default="planned")        # planned | done | skipped
+    actual_minutes = Column(Integer)
+    confidence = Column(Integer)
+    created_at = Column(DateTime, default=_dt.utcnow)
+    completed_at = Column(DateTime)
+
+
 def _auto_migrate():
     """SQLite (and Postgres) support ADD COLUMN but create_all() never issues
     it for a table that already exists - so every time a model gains a new

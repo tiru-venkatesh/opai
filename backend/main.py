@@ -62,6 +62,8 @@ from today_api import router as today_router
 app.include_router(today_router)
 from rag_api import router as rag_router
 app.include_router(rag_router)
+from dsa_api import router as dsa_router
+app.include_router(dsa_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -184,6 +186,34 @@ def web_manifest():
         return FileResponse("static/manifest.json", media_type="application/manifest+json")
     raise HTTPException(status_code=404, detail="manifest.json not found")
 
+
+
+# Pages like /super-chat and /karna load their assets with relative URLs
+# (e.g. "opai-shell.js"), which resolve to the site root, not /static/.
+# Serve those shared assets from the root so they stop 404-ing.
+_ROOT_ASSETS = {
+    "opai-shell.js": "application/javascript",
+    "guide.js": "application/javascript",
+    "attach.js": "application/javascript",
+    "fx.js": "application/javascript",
+    "opai-shared.css": "text/css",
+    "opai-glass.css": "text/css",
+    "attach.css": "text/css",
+    "fx.css": "text/css",
+}
+
+
+def _register_root_asset(name: str, media: str):
+    def _serve():
+        path = os.path.join("static", name)
+        if os.path.exists(path):
+            return FileResponse(path, media_type=media)
+        raise HTTPException(status_code=404, detail=name + " not found")
+    app.add_api_route("/" + name, _serve, methods=["GET"], include_in_schema=False)
+
+
+for _n, _m in _ROOT_ASSETS.items():
+    _register_root_asset(_n, _m)
 
 
 @app.get("/super-chat")

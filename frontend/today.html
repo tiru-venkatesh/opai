@@ -141,7 +141,7 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
       '<div class="tags"><span class="tg ' + (urgent(i) ? 'c' : 't') + '">' + esc(i.due.startsWith('in') || /day|today|tomorrow|overdue/.test(i.due) ? 'DUE ' + i.due.toUpperCase() : i.due.toUpperCase()) + ' · ' + esc(i.priority_label) + '</span><span class="tg t">' + esc(i.category) + '</span><span class="idx">' + pad(n + 1) + ' / ' + pad(tot) + '</span></div>' +
       '<h3>' + esc(i.title) + '</h3><p class="sub">' + esc(i.subtitle) + '</p>' +
       '<div class="chk ' + (ob ? 'c' : '') + '">' + (ob ? MAIL : CHECK) + '<span>' + esc(i.check) + '</span></div>' +
-      main +
+      main + (i.kind === 'dsa' ? '<a class="big out" href="dsa.html">Open DSA Roadmap (links to external sites) ↗</a>' : '') +
       '<div class="mini">' + (ob ? '' : '<button data-a="done">Done</button><button data-a="move">Move</button><button data-a="skip">Skip</button>') + '<button data-a="why">Why this?</button><span class="state ' + i.state + '" style="margin-left:auto;align-self:center">' + (STATE[i.state] || i.state) + '</span></div>' +
       '<div class="ex" hidden><div><h4>Why is this important?</h4>' + esc(ex.why_important) + '</div><div><h4>If I delay it</h4>' + esc(ex.if_delayed) + '</div><div><h4>What OPAI used</h4>' + esc(ex.used.join(', ')) + '</div><div><h4>Change it</h4><ul>' + ex.change.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div></div>' +
       '<div class="conf" hidden>How confident are you on this topic now? ' + [1,2,3,4,5].map((v) => '<button data-conf="' + v + '">' + v + '</button>').join('') + '</div></article>';
@@ -177,7 +177,7 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
     const a = b.dataset.a;
     if (a === 'why') card.querySelector('.ex').hidden = !card.querySelector('.ex').hidden;
     else if (a === 'start') act(card, 'start');
-    else if (a === 'done') { if (card.dataset.kind === 'study_block') card.querySelector('.conf').hidden = false; else act(card, 'complete'); }
+    else if (a === 'done') { if (card.dataset.kind === 'study_block' || card.dataset.kind === 'dsa') card.querySelector('.conf').hidden = false; else act(card, 'complete'); }
     else if (a === 'move') act(card, 'snooze', { days: 1 });
     else if (a === 'skip') act(card, 'skip');
   });

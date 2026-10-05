@@ -134,13 +134,20 @@ def candidates(db: Session, uid: str, today: date, avail: int, energy: str) -> L
             c.append(dict(kind="academic", ref_id=ac.id, title=ac.task or f"Study {ac.subject}", subtitle=f"{ac.subject} · exam", minutes=mins,
                           days=d, importance=pr, stale=0, done=False, effort=mins, link="academics.html",
                           facts=dict(exam_in=_when(d), priority=ac.priority, weak_areas=ac.weak_areas or [])))
+
+    # --- DSA Roadmap: one small learning block per day (never a practice platform; links go to external sites) ---
+    try:
+        import dsa_service as DS
+        c.extend(DS.today_candidates(db, uid, today))
+    except Exception:                      # DSA must never break Today
+        db.rollback()
     return c
 
 
 def _category(x) -> str:
     k, f = x["kind"], x["facts"]
     return {"study_block": f"EXAM PREP · {str(f.get('course', '')).upper()}"[:42], "application": "APPLICATION", "task": "TASK",
-            "outbox": "OUTREACH · OUTBOX", "academic": "ACADEMICS"}.get(k, k.upper())
+            "outbox": "OUTREACH · OUTBOX", "academic": "ACADEMICS", "dsa": "DSA ROADMAP"}.get(k, k.upper())
 
 
 def _check(x) -> str:
@@ -154,6 +161,10 @@ def _check(x) -> str:
         return " · ".join(bits)
     if k == "application":
         return f"Status: {f.get('status') or 'To Apply'} · about {f.get('effort')} min of preparation"
+    if k == "dsa":
+        if f.get("mode") == "maintenance":
+            return "Maintenance: review concepts or watch one topic explanation. No new heavy topic."
+        return "Learn · practice one linked external question · write short notes"
     if k == "outbox":
         return "Awaiting your final sign-off before it is sent"
     if k == "task":
@@ -175,6 +186,13 @@ def explain(it: Dict[str, Any]) -> Dict[str, Any]:
         why = f"Due {f['due']}."
         late = "It rolls forward and competes with newer items tomorrow."
         used = ["due date", "estimated minutes", "task type"]
+    elif k == "dsa":
+        if f.get("mode") == "maintenance":
+            why = f"{f.get('exam_name') or 'An'} exam is {_when(f.get('exam_in_days'))}, so DSA is in maintenance: review only, about {f.get('minutes')} minutes."
+        else:
+            why = f"Week {f.get('week')} of 12 target ({f.get('phase')}). Small daily sessions beat long irregular ones."
+        late = "Nothing is lost: the roadmap slides, and tomorrow resumes with the same topic."
+        used = ["roadmap phase", "your topic progress", "exam calendar", "days since your last DSA session"]
     elif k == "outbox":
         why = "A draft is ready but nothing is sent until you review and approve it."
         late = "Replies and follow-ups cannot start until it is sent."
@@ -220,7 +238,7 @@ def build(db: Session, user_id: str, today: Optional[date] = None, minutes: Opti
         key = f"{x['kind']}:{x['ref_id']}"
         items.append({"category": _category(x), "check": _check(x), "priority_label": "HIGH PRIORITY" if x["score"] >= 65 else "MEDIUM PRIORITY" if x["score"] >= 40 else "LOWER PRIORITY",
                       "kind": x["kind"], "ref_id": x["ref_id"], "title": x["title"], "subtitle": x["subtitle"], "minutes": x["plan_minutes"],
-                      "score": x["score"], "due": _when(x["days"]), "reason": explain(x)["why_important"], "split": bool(x.get("split")),
+                      "score": x["score"], "due": "daily block" if x["kind"] == "dsa" else _when(x["days"]), "reason": explain(x)["why_important"], "split": bool(x.get("split")),
                       "state": states.get(key, "ai_suggested"), "link": x["link"], "explain": explain(x)})
     nxt = next((i for i in items if i["state"] != "paused"), None)
     return {"date": today.isoformat(), "energy": energy, "items": items, "later_count": len(later),

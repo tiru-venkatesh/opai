@@ -44,7 +44,7 @@ class CreateStudyBlock(BaseModel):
 
 
 class TodayOp(BaseModel):
-    kind: str                       # study_block | task | application | academic
+    kind: str                       # study_block | task | application | academic | dsa
     ref_id: str
     op: str                         # start | complete | skip | snooze
     actual_minutes: Optional[int] = Field(default=None, ge=1, le=600)
@@ -55,7 +55,7 @@ class TodayOp(BaseModel):
     @field_validator("kind")
     @classmethod
     def _k(cls, v):
-        if v not in {"study_block", "task", "application", "academic"}:
+        if v not in {"study_block", "task", "application", "academic", "dsa"}:
             raise ValueError("unknown item kind")
         return v
 
@@ -246,6 +246,16 @@ def _h_today_op(db, uid, p):
         a = _owner(db, Academic, rid, uid)
         if op == "complete":
             a.done = True; db.commit(); return {"state": "completed", "kind": kind, "ref_id": rid}
+        return {"state": "paused", "kind": kind, "ref_id": rid}
+    if kind == "dsa":                                # DSA Roadmap block: the learner marks progress after using the external site
+        import dsa_service as DS
+        try:
+            if op == "complete":
+                DS.complete_session(db, uid, rid, p.get("actual_minutes"), p.get("confidence_now"))
+                return {"state": "completed", "kind": kind, "ref_id": rid}
+            DS.skip_session(db, uid, rid)            # skip / snooze: tomorrow resumes with the same topic
+        except DS.DsaError as e:
+            raise ActionError(e.status, e.detail)
         return {"state": "paused", "kind": kind, "ref_id": rid}
     ap = _owner(db, Application, rid, uid)           # application: "complete" = preparation done, NEVER submitted
     if op == "complete":

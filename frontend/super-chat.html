@@ -172,7 +172,7 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
   @keyframes ripple{0%{transform:scale(.5);opacity:.85}100%{transform:scale(2.3);opacity:0}}
   .dot.ok::after{animation:ripple 2.2s var(--ease) infinite}
   @keyframes wordin{from{opacity:0;filter:blur(5px);transform:translateY(3px)}to{opacity:1;filter:none;transform:none}}
-  .w{display:inline-block;white-space:pre-wrap;opacity:0;animation:wordin .45s var(--ease) forwards;animation-delay:var(--d,0ms)}
+  .w{display:inline-block;white-space:pre-wrap;opacity:0;animation:wordin .45s var(--ease) forwards;animation-delay:calc(var(--d,0ms) + var(--wb,0ms))}
 }
 @media (max-width:1380px){#agent-chip{display:none}}
 @media (max-width:720px){
@@ -187,6 +187,7 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#F6F4EE">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="opai-shared.css">
@@ -199,6 +200,28 @@ nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;bo
 .msg.you .bubble{background:var(--teal)!important;color:#fff!important}
 .btn.primary{color:#fff}
 @media(max-width:1500px){header>.chip,header .chip{display:none}}
+/* ---- KARNA reply entrance (cinematic): Slide In -> Iris In -> Wipe In, Iris Out on the thinking bubble ---- */
+.fx-on .msg.user{animation:fxUser .5s cubic-bezier(.16,1,.3,1) both}
+.fx-on .msg.agent.fx-fresh{animation:none}
+.fx-on .msg.agent.fx-fresh .av{position:relative;animation:fxav .7s cubic-bezier(.34,1.56,.64,1) both}
+.fx-on .msg.agent.fx-fresh .av::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:2px solid var(--primary);opacity:0;animation:fxpulse 1s .15s ease-out both}
+.fx-on .msg.agent.fx-fresh .meta{animation:fxmeta .6s .1s cubic-bezier(.16,1,.3,1) both}
+.fx-ring{position:absolute;border-radius:50%;pointer-events:none;border:3px solid #2fa593;box-shadow:0 0 26px 4px rgba(47,165,147,.5),inset 0 0 26px rgba(47,165,147,.4);z-index:3}
+.fx-scan{position:absolute;top:0;bottom:0;left:0;width:3px;border-radius:3px;pointer-events:none;z-index:3;
+  background:linear-gradient(180deg,rgba(47,165,147,0),#2fa593 10%,#17504a 50%,#2fa593 90%,rgba(47,165,147,0));
+  box-shadow:0 0 16px 5px rgba(47,165,147,.55),0 0 40px 10px rgba(47,165,147,.25)}
+.fxf{animation:fxfoot .55s var(--ease) both;animation-delay:var(--fd,0ms)}
+@keyframes fxRow{from{opacity:0;transform:translateX(-44px)}to{opacity:1;transform:none}}
+@keyframes fxUser{from{opacity:0;transform:translateX(44px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes fxav{from{transform:scale(.2);opacity:0}to{transform:none;opacity:1}}
+@keyframes fxpulse{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.8);opacity:0}}
+@keyframes fxmeta{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+@keyframes fxfoot{from{opacity:0;transform:translate(var(--fx,-24px),var(--fy,0px))}to{opacity:1;transform:none}}
+.fx-scan.fx-scan-h{top:0;bottom:auto;right:auto;height:3px;width:100%;background:linear-gradient(90deg,rgba(47,165,147,0),#2fa593 10%,#17504a 50%,#2fa593 90%,rgba(47,165,147,0))}
+@keyframes fxwave{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-5px);opacity:1}}
+.fx-on .typing i{animation:fxwave 1.1s ease-in-out infinite}.fx-on .typing i:nth-child(2){animation-delay:.14s}.fx-on .typing i:nth-child(3){animation-delay:.28s}
+.fx-on .dot.ok::after{animation:fxripple 2.2s ease-out infinite}
+@keyframes fxripple{0%{transform:scale(.5);opacity:.85}100%{transform:scale(2.3);opacity:0}}
 </style>
 </head>
 <body>
@@ -310,7 +333,7 @@ nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;bo
   }
 
   /* ---------- nav ---------- */
-  const NAV = [['Today','today.html'],['Plan','plan.html'],['Applications','applications.html'],['Projects','projects.html'],['Academics','academics.html'],['Overview','app.html'],['Console','agent-console.html']];
+  const NAV = [['Today','today.html'],['Plan','plan.html'],['Applications','applications.html'],['Projects','projects.html'],['Academics','academics.html'],['DSA','dsa.html'],['Overview','app.html'],['Console','agent-console.html']];
   const TIP = {}; ((window.OPAI_GUIDE && OPAI_GUIDE.sections) || []).forEach((g) => { TIP[g.h] = g.d; });
   $('nav').innerHTML = NAV.map(([l, h], i) => (i === 1 ? '<a aria-current="page" href="#" title="Chat agent: add things by typing, ask about your data">KARNA</a>' : '') + '<a href="' + h + '" title="' + esc(TIP[h] || l) + '">' + l + '</a>').join('');
 
@@ -369,6 +392,105 @@ nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;bo
       });
       n.parentNode.replaceChild(f, n);
     });
+  }
+
+  /* ---------- cinematic transitions: Slide In, Iris In/Out, Wipe In ---------- */
+  /* Always on by default, even if the OS has "reduce motion" set (the page's other animations are gated by it, which is why nothing moved).
+     To switch off: add ?fx=0 to the URL once, or run localStorage.opai_fx='0' in the console. */
+  const fxOK = () => { try { return !(/[?&]fx=0/.test(location.search) || localStorage.getItem('opai_fx') === '0'); } catch (e) { return true; } };
+  if (fxOK()) document.documentElement.classList.add('fx-on');
+  const IO = '20px 20px';   /* iris centre: just under the K avatar, top-left of the box */
+
+  /* Eight directions. Each reply picks the next one from a shuffled bag, so the same transition never repeats back to back. */
+  const VARIANTS = [
+    { k: 'tl', t: 'diag', ox: 0, oy: 0, n: 'top-left \u2192 bottom-right' },
+    { k: 'bl', t: 'diag', ox: 0, oy: 1, n: 'bottom-left \u2192 top-right' },
+    { k: 'tb', t: 'edge', d: 'down',  n: 'top \u2192 bottom' },
+    { k: 'lr', t: 'edge', d: 'right', n: 'left \u2192 right' },
+    { k: 'tr', t: 'diag', ox: 1, oy: 0, n: 'top-right \u2192 bottom-left' },
+    { k: 'br', t: 'diag', ox: 1, oy: 1, n: 'bottom-right \u2192 top-left' },
+    { k: 'bt', t: 'edge', d: 'up',    n: 'bottom \u2192 top' },
+    { k: 'rl', t: 'edge', d: 'left',  n: 'right \u2192 left' }
+  ];
+  let bag = [], nextV = VARIANTS[0];
+  const pickV = () => { if (!bag.length) bag = VARIANTS.slice().sort(() => Math.random() - 0.5); return bag.pop(); };
+  /* where the iris opens/closes: the starting corner or edge-middle */
+  function irisPt(v, W, H) {
+    if (v.t === 'diag') return [v.ox ? W - 20 : 20, v.oy ? H - 20 : 20];
+    return v.d === 'down' ? [W / 2, 16] : v.d === 'up' ? [W / 2, H - 16] : v.d === 'right' ? [16, H / 2] : [W - 16, H / 2];
+  }
+  const circ = (r, p) => 'circle(' + r + 'px at ' + Math.round(p[0]) + 'px ' + Math.round(p[1]) + 'px)';
+
+  /* Iris Out: the thinking bubble closes toward the corner/edge the reply will open from */
+  function irisOut(row, done) {
+    let fin = false; const go = () => { if (!fin) { fin = true; done(); } };
+    const b = row && row.querySelector('.bubble');
+    if (!fxOK() || !b || !b.animate) { go(); return; }
+    const W = b.offsetWidth, H = b.offsetHeight, p = irisPt(nextV, W, H), R = Math.hypot(W, H) + 10;
+    const a = b.animate([{ clipPath: circ(R, p) }, { clipPath: circ(0, p) }], { duration: 300, easing: 'cubic-bezier(.6,0,.85,.35)', fill: 'forwards' });
+    a.onfinish = go; setTimeout(go, 500);
+  }
+
+  function materialize(row) {
+    const b = row.querySelector('.bubble'); if (!b || !fxOK() || !b.animate) return;
+    const W = b.offsetWidth, H = b.offsetHeight; if (W < 40 || H < 20) return;
+    const v = nextV; nextV = pickV();
+    const R = Math.hypot(W, H) + 12, IRIS = 800, T0 = 420, WIPE = 950, EASE = 'cubic-bezier(.65,0,.35,1)', ip = irisPt(v, W, H);
+    row.classList.add('fx-fresh');
+    /* the whole row slides in from the side the transition starts on */
+    const sx = v.t === 'diag' ? (v.ox ? 44 : -44) : v.d === 'right' ? -44 : v.d === 'left' ? 44 : 0;
+    const sy = v.t === 'diag' ? (v.oy ? 26 : -26) : v.d === 'down' ? -34 : v.d === 'up' ? 34 : 0;
+    row.style.setProperty('--fx', sx + 'px'); row.style.setProperty('--fy', sy + 'px');
+    row.animate([{ opacity: 0, transform: 'translate(' + sx + 'px,' + sy + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 560, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'backwards' });
+    const prevOv = b.style.overflow, prevPos = b.style.position;
+    b.style.overflow = 'hidden'; if (getComputedStyle(b).position === 'static') b.style.position = 'relative';
+    const wrap = document.createElement('div'); wrap.className = 'fx-wipe';
+    while (b.firstChild) wrap.appendChild(b.firstChild);
+    b.appendChild(wrap);
+    const w = wrap.offsetWidth, h = wrap.offsetHeight, oL = wrap.offsetLeft, oT = wrap.offsetTop;
+    /* 1) IRIS IN from the starting corner / edge */
+    b.animate([{ clipPath: circ(0, ip) }, { clipPath: circ(R, ip) }], { duration: IRIS, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'backwards' });
+    const ring = document.createElement('div'); ring.className = 'fx-ring';
+    ring.style.cssText = 'width:' + (2 * R) + 'px;height:' + (2 * R) + 'px;left:' + (ip[0] - R) + 'px;top:' + (ip[1] - R) + 'px';
+    b.appendChild(ring);
+    ring.animate([{ transform: 'scale(0)', opacity: 1 }, { transform: 'scale(1)', opacity: 0.9, offset: 0.8 }, { transform: 'scale(1)', opacity: 0 }], { duration: IRIS, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'both' });
+    /* 2) WIPE IN along the chosen direction, with a glowing scan-line on the leading edge */
+    const scan = document.createElement('div'); scan.className = 'fx-scan';
+    const opt = { duration: WIPE, delay: T0, easing: EASE, fill: 'both' };
+    const fade = (a, z) => [Object.assign({ opacity: 0 }, a), { opacity: 1, offset: 0.08 }, { opacity: 1, offset: 0.9 }, Object.assign({ opacity: 0 }, z)];
+    if (v.t === 'diag') {
+      const S = w + h, flip = (x, y) => [v.ox ? w - x : x, v.oy ? h - y : y];
+      const poly = (d) => {
+        const X = Math.min(d, w), Y = Math.min(d, h);
+        return 'polygon(' + [[0, 0], [X, 0], [X, Math.max(0, d - w)], [Math.max(0, d - h), Y], [0, Y]].map((q) => { const f = flip(q[0], q[1]); return f[0].toFixed(1) + 'px ' + f[1].toFixed(1) + 'px'; }).join(',') + ')';
+      };
+      const ds = [0, Math.min(w, h), Math.max(w, h), S];
+      wrap.animate(ds.map((d) => ({ clipPath: poly(d), offset: S ? d / S : 0 })), opt);
+      /* scan-line: a long bar rotated 45deg that rides the x+y=d front */
+      const L = 2 * S, ang = (v.ox ^ v.oy) ? -45 : 45, pos = (d) => { const c = flip(d / 2, d / 2); return 'translate(' + (oL + c[0]) + 'px,' + (oT + c[1]) + 'px) rotate(' + ang + 'deg)'; };
+      scan.style.cssText = 'left:-1.5px;top:' + (-L / 2) + 'px;height:' + L + 'px;bottom:auto';
+      scan.animate(fade({ transform: pos(0) }, { transform: pos(S) }), opt);
+    } else if (v.d === 'right' || v.d === 'left') {
+      const r = v.d === 'right';
+      wrap.animate([{ clipPath: r ? 'inset(0 100% 0 0)' : 'inset(0 0 0 100%)' }, { clipPath: 'inset(0 0 0 0)' }], opt);
+      scan.style.left = oL + 'px';
+      scan.animate(fade({ transform: 'translateX(' + (r ? 0 : w) + 'px)' }, { transform: 'translateX(' + (r ? w : 0) + 'px)' }), opt);
+    } else {
+      const dn = v.d === 'down';
+      wrap.animate([{ clipPath: dn ? 'inset(0 0 100% 0)' : 'inset(100% 0 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], opt);
+      scan.classList.add('fx-scan-h'); scan.style.left = oL + 'px'; scan.style.width = w + 'px'; scan.style.top = oT + 'px';
+      scan.animate(fade({ transform: 'translateY(' + (dn ? 0 : h) + 'px)' }, { transform: 'translateY(' + (dn ? h : 0) + 'px)' }), opt);
+    }
+    b.appendChild(scan);
+    /* 3) SLIDE IN: sources / tool trace follow from the same side */
+    row.querySelectorAll('.trace,.srcs').forEach((e, i) => { e.style.setProperty('--fd', Math.round(T0 + WIPE * 0.75 + i * 110) + 'ms'); e.classList.add('fxf'); });
+    setTimeout(() => {
+      wrap.getAnimations().forEach((a) => a.cancel());
+      while (wrap.firstChild) b.insertBefore(wrap.firstChild, wrap);
+      wrap.remove(); ring.remove(); scan.remove();
+      b.style.overflow = prevOv; b.style.position = prevPos;
+      row.querySelectorAll('.fxf').forEach((e) => { e.classList.remove('fxf'); e.style.removeProperty('--fd'); });
+    }, T0 + WIPE + 450);
   }
 
   /* ---------- conversation store (per device/user, localStorage) ---------- */
@@ -457,7 +579,7 @@ nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;bo
   function addMsg(m, fresh) {
     const e = $('empty'); if (e) e.remove();
     const d = buildMsg(m); thread.insertBefore(d, gate.parentNode ? gate : null);
-    if (fresh && m.role === 'agent') reveal(d.querySelector('.bubble'));
+    if (fresh && m.role === 'agent') materialize(d);
     scrollEnd(); return d;
   }
   function renderAll() {
@@ -644,7 +766,7 @@ nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;bo
         if (r.action === 'task') refreshDocs();
       }
       am.ts = Date.now(); am.ms = performance.now() - t0; c.msgs.push(am); c.msgs = c.msgs.slice(-200);
-      clearInterval(t._iv); t.remove(); addMsg(am, true);
+      clearInterval(t._iv); irisOut(t, () => { t.remove(); addMsg(am, true); });
       if (store.mode === 'ws') refreshGate();
     } catch (e) {
       clearInterval(t._iv); t.remove();
@@ -757,6 +879,28 @@ nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;bo
     } catch (e) { /* surfaced on first send */ }
   }
   window.OPAI_CHAT = { md };   // exposed for tests
+  console.info('[KARNA fx] cinematic transitions loaded; enabled =', fxOK());
+  /* Demo: open the page with ?fxdemo=1 to play all 8 directions one after another, without the backend. */
+  if (/[?&]fxdemo=1/.test(location.search)) setTimeout(function demo() {
+    const e = $('empty'); if (e) e.remove();
+    let i = 0;
+    (function one() {
+      if (i >= VARIANTS.length) return;
+      nextV = VARIANTS[i];
+      const t = typingEl();
+      setTimeout(() => {
+        clearInterval(t._iv);
+        irisOut(t, () => {
+          t.remove();
+          addMsg({ role: 'agent', mode: 'general', ts: Date.now(), ms: 1300,
+            text: '## RAG \u2013 Retrieval Augmented Generation\n\n**Transition ' + (i + 1) + '/8: ' + VARIANTS[i].n + '**\n\n**Retrieval**: the model searches your documents first.\n**Augmented Generation**: then it writes the answer from what it found [1].\n\n| Problem | Traditional LLM | RAG |\n|---|---|---|\n| Out of knowledge | Fixed training data | Looks up fresh info |\n| Accuracy | Can hallucinate | Grounded in documents |',
+            sources: [{ n: 1, title: 'notes.pdf', type: 'file', page: 2, score: 0.91, snippet: 'RAG retrieves relevant passages before generating.' }],
+            tool_calls: [{ tool: 'search_docs', arguments: { q: 'RAG' }, result: { ok: true } }] }, true);
+          nextV = pickV(); i++; setTimeout(one, 2600);
+        });
+      }, 1100);
+    })();
+  }, 900);
   boot();
 })();
 </script>

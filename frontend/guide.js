@@ -6,6 +6,7 @@
    {id:'plan',t:'Plan',h:'plan.html',d:'Weekly plan and study blocks. Build or change your schedule here.',k:'plan planner schedule timetable study blocks week yojana'},
    {id:'applications',t:'Applications',h:'applications.html',d:'Internships, jobs and programs you applied to, with status.',k:'applications application apply internship job intern status kahan ekkada undi'},
    {id:'projects',t:'Projects',h:'projects.html',d:'Your projects, stack and progress.',k:'projects project app build stack prayog'},
+   {id:'dsa',t:'DSA Roadmap',h:'dsa.html',d:'Phase-based DSA plan for placements: one small block in Today, links to external practice sites, progress tracking. Not a coding-practice platform.',k:'dsa roadmap data structures algorithms placement leetcode arrays hashing dp graphs learning plan interview prep'},
    {id:'academics',t:'Academics',h:'academics.html',d:'Exams, subjects, timetable and grades. Add an exam here.',k:'academics exam exams subject timetable grades marks semester padhai chaduvu add cheyali kaise'},
    {id:'karna',t:'KARNA (chat)',h:'super-chat.html',d:'Chat agent. Add things by typing, ask about your data and documents.',k:'karna chat agent super assistant ask puchho adugu'},
    {id:'console',t:'Agent Console',h:'agent-console.html',d:'See what the agent did, approvals and logs.',k:'agent console approvals logs outbox audit history'}
