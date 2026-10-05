@@ -2,6 +2,7 @@
 (function(){
   if(window.OPAI_KARNA_POPUP)return;window.OPAI_KARNA_POPUP=1;
   var page=(location.pathname.split('/').pop()||'').replace(/\.html$/,'');
+  if(/^super-chat/.test(page)){window.OPAI_KARNA_POPUP=0;return}
   var CTX={
     projects:{label:'Projects',chips:['Which project is in progress?','Add project: Portfolio v2, stack React','What should I work on next?']},
     academics:{label:'Academics',chips:['What exams are coming up?','Add exam: OS on 20 Nov','Which subject needs the most revision?']}

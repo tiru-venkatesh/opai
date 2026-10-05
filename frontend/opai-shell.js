@@ -3,7 +3,7 @@
   if(window.OPAI_SHELL)return;window.OPAI_SHELL=1;
   var path=(location.pathname.split('/').pop()||'today.html').replace(/\/$/,'')||'today.html';
   if(path==='super-chat'||path==='')path='super-chat.html';
-  var NAV=[['Today','today.html'],['KARNA','super-chat.html'],['Plan','plan.html'],['Applications','applications.html'],['Projects','projects.html'],['Academics','academics.html'],['DSA','dsa.html'],['Overview','app.html'],['Console','agent-console.html']];
+  var NAV=[['Today','today.html'],['KARNA','super-chat.html'],['Plan','plan.html'],['Internships','applications.html'],['Projects','projects.html'],['Academics','academics.html'],['DSA','dsa.html'],['Overview','app.html'],['Console','agent-console.html']];
   var isChat=/super-chat/.test(path);
   var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
   var uid=localStorage.getItem('opa_guest_uid'),mail=localStorage.getItem('opai_sc_email');
@@ -64,7 +64,8 @@
     if(!uid)return;fetch(API+'/v1/profile?user_id='+encodeURIComponent(uid)).then(function(r){return r.ok?r.json():null}).then(function(p){if(!p)return;
       var n=p.name&&!/^guest/i.test(p.name)?p.name:(mail?mail.split('@')[0]:'Guest');un.textContent=n;av.textContent=(n[0]||'G').toUpperCase();us.textContent=[p.branch,p.degree].filter(Boolean).join(' · ')||'Personal workspace'}).catch(function(){});
   }
-  function boot(){var hd=header();dock();timer();if(hd){who();document.getElementById('opai-k').onclick=function(){window.OPAI_GUIDE&&OPAI_GUIDE.open('')};
+  function karna(){if(isChat||window.OPAI_KARNA_POPUP||document.querySelector('script[src*="karna-popup.js"]'))return;var k=document.createElement('script');k.src='karna-popup.js';k.defer=true;document.body.appendChild(k)}
+  function boot(){var hd=header();dock();timer();karna();if(hd){who();document.getElementById('opai-k').onclick=function(){window.OPAI_GUIDE&&OPAI_GUIDE.open('')};
       addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();window.OPAI_GUIDE&&OPAI_GUIDE.open('')}})}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
