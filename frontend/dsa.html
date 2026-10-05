@@ -210,7 +210,20 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
   });
 
   (async () => {
-    try { await ensureUser(); S = await api('/v1/dsa?user_id=' + encodeURIComponent(uid)); render(); }
+    try {
+      await ensureUser();
+      try { S = await api('/v1/dsa?user_id=' + encodeURIComponent(uid)); }
+      catch (e1) {
+        // Server forgot this user (e.g. its database was reset): drop the stale guest id, make a new one, retry once.
+        if (/user not found/i.test(e1.message) && !new URLSearchParams(location.search).get('email') && !localStorage.getItem('opai_sc_email')) {
+          localStorage.removeItem('opa_guest_uid'); uid = null; await ensureUser();
+          S = await api('/v1/dsa?user_id=' + encodeURIComponent(uid));
+        } else if (/^not found$/i.test(e1.message)) {
+          throw new Error('The backend at ' + base() + ' is running an older version without the DSA roadmap (/v1/dsa). Redeploy the latest backend code.');
+        } else throw e1;
+      }
+      render();
+    }
     catch (e) { $('app').innerHTML = '<div class="card">Could not reach the OPAI backend at ' + esc(base()) + '. If it is on a free host it may be waking up; retry in a minute.<br><small>' + esc(e.message) + '</small></div>'; }
   })();
 })();
