@@ -64,6 +64,8 @@ from rag_api import router as rag_router
 app.include_router(rag_router)
 from dsa_api import router as dsa_router
 app.include_router(dsa_router)
+from extras_api import router as extras_router
+app.include_router(extras_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -939,6 +941,14 @@ def approve_outbox(outbox_id: UUID, db: Session = Depends(get_db)):
         row.status = "expired"
         db.commit()
         raise HTTPException(status_code=410, detail="This approval has expired - ask the agent to re-draft it")
+    if (row.ref or {}).get("kind") == "contact":
+        import outreach_guard as _og
+        _c = db.query(Contact).filter(Contact.id == (row.ref or {}).get("id")).first()
+        if _c:
+            try:
+                _og.check_can_send(db, row.user_id, _c)
+            except _og.Blocked as _e:
+                raise HTTPException(status_code=_e.status, detail=_e.detail)
     since = datetime.utcnow() - timedelta(days=1)
     approved_today = (
         db.query(OutboxItem)
@@ -1099,6 +1109,8 @@ def confirm_memory_item(item_id: UUID, payload: MemoryItemConfirm, db: Session =
     if payload.status not in ("active", "forgotten"):
         raise HTTPException(status_code=400, detail="status must be active or forgotten")
     item.status = payload.status
+    if payload.status == "active":
+        item.last_verified_at = datetime.utcnow()
     db.commit()
     db.refresh(item)
     rag.safe(rag.index_memory_item, db, item)
@@ -1511,6 +1523,11 @@ def get_current_study_plan(user_id: UUID, plan_date: date = None, db: Session = 
         .order_by(StudyBlock.priority_score.desc().nulls_last()).all()
     )
     return _enrich_study_blocks(blocks, db)
+
+
+@app.get("/v1/study-plans/today", response_model=List[StudyBlockOut])
+def get_today_study_plan(user_id: UUID, db: Session = Depends(get_db)):
+    return get_current_study_plan(user_id, date.today(), db)
 
 
 @app.post("/v1/study-blocks/{block_id}/complete", response_model=StudyBlockOut)

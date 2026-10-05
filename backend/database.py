@@ -108,6 +108,8 @@ class Application(Base):
     cover_letter = Column(Text)
     follow_up_date = Column(Date)
     effort_minutes = Column(Integer, default=60)
+    resume_id = Column(String(36))            # resume version tailored for this application
+    tailored_at = Column(DateTime)
 
 
 class Contact(Base):
@@ -152,6 +154,7 @@ class Project(Base):
     github_link = Column(String)
     status = Column(String, default="Planning")  # Planning, In Progress, Done
     milestones = Column(JSON, default=list)
+    blocker = Column(Text)                    # current blocker, shown on the project dashboard
 
 
 class Task(Base):
@@ -165,6 +168,7 @@ class Task(Base):
     due_date = Column(Date)
     estimated_minutes = Column(Integer, default=45)
     status = Column(String, default="todo")
+    milestone_id = Column(String(36))         # links a task to a project milestone
 
 
 class Opportunity(Base):
@@ -286,6 +290,7 @@ class MemoryItem(Base):
     status = Column(String, default="unconfirmed")
     created_at = Column(DateTime, default=_dt.utcnow)
     updated_at = Column(DateTime, default=_dt.utcnow, onupdate=_dt.utcnow)
+    last_verified_at = Column(DateTime)       # set when the user confirms the fact
 
 
 class AgentActivityLog(Base):
@@ -456,6 +461,84 @@ class DsaSession(Base):
     confidence = Column(Integer)
     created_at = Column(DateTime, default=_dt.utcnow)
     completed_at = Column(DateTime)
+
+
+# ---------------- OPAI extras: outreach safety, research briefs, quizzes, mastery ----------------
+class SuppressedContact(Base):
+    """Do-not-contact / bounce list. Checked before any outreach is drafted or approved."""
+    __tablename__ = "suppressed_contacts"
+    __table_args__ = (Index("uq_suppressed_user_email", "user_id", "email", unique=True),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
+    email = Column(String, nullable=False)
+    reason = Column(String, default="do_not_contact")   # do_not_contact | bounced | unsubscribed | replied_no
+    created_at = Column(DateTime, default=_dt.utcnow)
+
+
+class ResearchBrief(Base):
+    """Grounded brief about a contact, built BEFORE any draft. Every claim lists its source."""
+    __tablename__ = "research_briefs"
+    __table_args__ = (Index("ix_briefs_user_contact", "user_id", "contact_id"),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
+    contact_id = Column(String(36), ForeignKey("contacts.id", ondelete="CASCADE"))
+    content = Column(JSON, default=dict)
+    relevance = Column(Integer, default=0)               # 0-100, deterministic overlap score
+    verification = Column(String, default="unverified")  # verified | partial | unverified
+    created_at = Column(DateTime, default=_dt.utcnow)
+    verified_at = Column(DateTime)
+
+
+class Quiz(Base):
+    """Generated quiz. Correct answers stay server-side until an attempt is submitted."""
+    __tablename__ = "quizzes"
+    __table_args__ = (Index("ix_quizzes_user_topic", "user_id", "topic_id"),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
+    topic_id = Column(String(36), ForeignKey("sems_topics.id", ondelete="CASCADE"))
+    kind = Column(String, default="mcq")                 # mcq | recall
+    source = Column(String, default="groq")              # groq | template
+    questions = Column(JSON, default=list)
+    created_at = Column(DateTime, default=_dt.utcnow)
+
+
+class QuizAttempt(Base):
+    __tablename__ = "quiz_attempts"
+    __table_args__ = (Index("ix_attempts_user_topic", "user_id", "topic_id"),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
+    quiz_id = Column(String(36), ForeignKey("quizzes.id", ondelete="CASCADE"))
+    topic_id = Column(String(36), ForeignKey("sems_topics.id", ondelete="CASCADE"))
+    answers = Column(JSON, default=dict)
+    score = Column(Integer, default=0)
+    total = Column(Integer, default=0)
+    created_at = Column(DateTime, default=_dt.utcnow)
+
+
+class TopicMastery(Base):
+    __tablename__ = "topic_mastery"
+    __table_args__ = (Index("uq_mastery_user_topic", "user_id", "topic_id", unique=True),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
+    topic_id = Column(String(36), ForeignKey("sems_topics.id", ondelete="CASCADE"))
+    mastery = Column(Numeric(4, 3), default=0)           # 0..1, exponential moving average of quiz scores
+    attempts = Column(Integer, default=0)
+    last_score = Column(Numeric(4, 3))
+    updated_at = Column(DateTime, default=_dt.utcnow, onupdate=_dt.utcnow)
+
+
+class Milestone(Base):
+    """Project milestone. Separate table because Project.milestones is a legacy list of plain strings."""
+    __tablename__ = "project_milestones"
+    __table_args__ = (Index("ix_milestones_project", "project_id", "position"),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
+    project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"))
+    title = Column(String, nullable=False)
+    due_date = Column(Date)
+    status = Column(String, default="todo")      # todo | in_progress | done
+    position = Column(Integer, default=0)
+    created_at = Column(DateTime, default=_dt.utcnow)
 
 
 def _auto_migrate():

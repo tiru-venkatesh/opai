@@ -94,7 +94,7 @@ def close_day(p: DayClose, db: Session = Depends(get_db)):
     """Evening ritual: records what actually happened so tomorrow is planned from reality."""
     uid = _user(db, p.user_id)
     today = date.today()
-    start = datetime.combine(today, datetime.min.time())
+    start = T.local_day_start_utc(today)
     ops = (db.query(ActionRecord).filter(ActionRecord.user_id == uid, ActionRecord.intent == "today_op",
                                          ActionRecord.status == "executed", ActionRecord.created_at >= start).all())
     done = sum(1 for o in ops if (o.result_json or {}).get("state") == "completed")

@@ -327,6 +327,7 @@ class MemoryItemOut(BaseModel):
     confidence: float
     status: str
     created_at: Optional[Any] = None
+    last_verified_at: Optional[Any] = None
 
 
 class MemoryItemConfirm(BaseModel):

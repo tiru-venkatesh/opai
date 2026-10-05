@@ -58,9 +58,19 @@ def available_minutes(db: Session, uid: str, override: Optional[int]) -> int:
     return (sem.daily_study_minutes if sem and sem.daily_study_minutes else DEFAULT_MINUTES)
 
 
+def local_day_start_utc(day: date):
+    """Naive-UTC datetime of local midnight on `day`.
+
+    created_at columns are stamped with utcnow(), so comparing them with local midnight
+    drops everything done between 00:00 and the UTC offset (e.g. 00:00-05:30 in India)."""
+    import datetime as _d
+    local_midnight = _d.datetime.combine(day, _d.time.min)
+    return _d.datetime.fromtimestamp(local_midnight.timestamp(), tz=_d.timezone.utc).replace(tzinfo=None)
+
+
 def _states(db: Session, uid: str, today: date) -> Dict[str, str]:
     """Latest Today state per item, from today's executed today_op actions."""
-    start = __import__("datetime").datetime.combine(today, __import__("datetime").time.min)
+    start = local_day_start_utc(today)
     out: Dict[str, str] = {}
     rows = (db.query(ActionRecord).filter(ActionRecord.user_id == uid, ActionRecord.intent == "today_op",
                                           ActionRecord.status == "executed", ActionRecord.created_at >= start)
