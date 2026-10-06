@@ -28,7 +28,7 @@
     guide:'<svg width="20" height="20" viewBox="0 0 24 24" '+s+'><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/></svg>',
     term:'<svg width="20" height="20" viewBox="0 0 24 24" '+s+'><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>',
     dl:'<svg width="20" height="20" viewBox="0 0 24 24" '+s+'><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>'}}
-  var deferred=null;addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e});
+  var deferred=null;addEventListener('beforeinstallprompt',function(e){if(isChat)return;e.preventDefault();deferred=e});
   function dock(){
     if(isChat)return;var I=icons();
     var d=h('<div class="opai-dock" role="toolbar" aria-label="Quick actions"><a href="today.html" title="Today" '+(path==='today.html'?'aria-current="page"':'')+'>'+I.today+'</a><a href="super-chat.html" title="Ask KARNA">'+I.chat+'</a><a href="plan.html" title="Plan" '+(path==='plan.html'?'aria-current="page"':'')+'>'+I.plan+'</a><button type="button" id="dk-guide" title="Guide: which section does what">'+I.guide+'</button><a href="agent-console.html" title="Agent console" '+(path==='agent-console.html'?'aria-current="page"':'')+'>'+I.term+'</a><button type="button" id="dk-install" title="Install OPAI as an app">'+I.dl+'</button></div>');

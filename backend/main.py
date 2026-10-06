@@ -1,3 +1,4 @@
+import re
 import os
 from dotenv import load_dotenv
 load_dotenv()  # reads backend/.env if present, before any os.environ.get() calls below
@@ -61,19 +62,24 @@ app.include_router(attach_router)
 from today_api import router as today_router
 app.include_router(today_router)
 from rag_api import router as rag_router
+from syllabus_api import router as syllabus_router
+app.include_router(syllabus_router)
 app.include_router(rag_router)
 from dsa_api import router as dsa_router
 app.include_router(dsa_router)
 from extras_api import router as extras_router
 app.include_router(extras_router)
 
+_CORS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()] or ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_CORS,          # set CORS_ORIGINS=https://www.opai.live,https://opai.live to lock down
+    allow_credentials=False,      # the frontend sends no cookies; "*" with credentials is invalid per the CORS spec
     allow_methods=["*"],
     allow_headers=["*"],
+    max_age=600,
 )
+
 
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -1209,19 +1215,46 @@ def _general_rate_limit(ip: str):
     _GENERAL_HITS[ip] = hits
 
 
+_PERSONAL_DATA = re.compile(
+    r"\b(my|mine)\s+(plan|schedule|calendar|tasks?|todos?|exams?|timetable|applications?|deadlines?|projects?|"
+    r"resume|cv|uploaded\s+\w+|documents?|docs?|files?|notes|outbox|emails?)\b|"
+    r"\bwhat(?:'s| is)\s+(?:on\s+)?(?:my\s+)?(?:plan|schedule)\b|\bsummari[sz]e\s+my\b", re.I)
+
+GENERAL_GUARD = (
+    "You are KARNA, a concise assistant for a student and independent builder.\n"
+    "HONESTY RULES (follow strictly):\n"
+    "- You have NO access to the user's plan, calendar, tasks, documents or any personal data in this mode. "
+    "Never invent them. If asked, say to switch to Workspace mode.\n"
+    "- Do not state specific facts you are not sure of: birth dates, wives/husbands, awards, box-office figures, "
+    "film years, directors, cameo appearances, quotes, statistics. If unsure, say \"I'm not certain\" and give only "
+    "what you are confident about, or tell the user to verify.\n"
+    "- For slang, dialect words or phrases you do not recognise, say you don't recognise them and ask for context. "
+    "Do NOT guess a meaning.\n"
+    "- Never fabricate sources, papers, or links. No fake citations.\n"
+    "- Keep answers short unless asked for detail. Reply in the user's language/script as instructed."
+)
+
+
 @app.post("/v1/chat/general")
 def general_chat(req: GeneralChatRequest, request: Request):
     from agent import groq_client
     _general_rate_limit(request.client.host if request.client else "unknown")
     if not groq_client.groq_enabled():
         raise HTTPException(503, "GROQ_API_KEY is not configured on the backend")
-    msgs = [{"role": "system", "content": (req.system or "You are KARNA, a helpful general-purpose assistant.")[:2000]}]
+    last_user = next((m.content for m in reversed(req.messages) if m.role == "user"), "")
+    if _PERSONAL_DATA.search(last_user or ""):
+        return {"reply": "That depends on your own data (plan, tasks, documents), and General mode can't see it. "
+                         "Switch the Context to **Workspace** and ask again, and I will answer from your OPAI data with sources."}
+    # Client system prompt is only used for style (language); the honesty rules always come first.
+    style = (req.system or "")[:600]
+    msgs = [{"role": "system", "content": GENERAL_GUARD + ("\nStyle hint from app: " + style if style else "")}]
     for m in req.messages[-12:]:
         if m.role in ("user", "assistant"):
             msgs.append({"role": m.role, "content": m.content[:6000]})
     try:
         out = groq_client.get_client().chat.completions.create(
-            model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), messages=msgs, temperature=0.6, max_tokens=1500,
+            model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), messages=msgs,
+            temperature=float(os.getenv("GENERAL_TEMPERATURE", "0.2")), max_tokens=1500,
         ).choices[0].message.content or ""
     except Exception as e:
         raise HTTPException(502, f"AI chat failed: {e}")
@@ -1595,4 +1628,4 @@ def import_courses_csv_confirm(payload: CourseCsvConfirm, db: Session = Depends(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")), reload=os.getenv("RELOAD", "1") == "1" and not os.getenv("PORT"))

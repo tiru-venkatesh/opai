@@ -159,11 +159,10 @@ def handle_message(user_id: UUID, message: str, db: Session, history=None, doc_i
 
     if decision.intent == "summarize_workspace":
         summary = summarize_recent_activity(user_id, db)
-        return JarvisChatResponse(
-            action="chat",
-            reply="Here is the latest workspace summary.",
-            payload={"summary": summary.model_dump()},
-        )
+        data = summary.model_dump()
+        text = ((data.get("summary") or {}).get("recent_outcomes") if isinstance(data.get("summary"), dict) else None) \
+            or "Nothing recorded in the past week yet. Add tasks, applications or notes and I will summarise them."
+        return JarvisChatResponse(action="chat", reply=text, payload={"answer_mode": "workspace_summary"})
 
     if decision.intent == "create_task":
         import re as _re

@@ -3,7 +3,7 @@
   if(window.OPAI_SHELL)return;window.OPAI_SHELL=1;
   var path=(location.pathname.split('/').pop()||'today.html').replace(/\/$/,'')||'today.html';
   if(path==='super-chat'||path==='')path='super-chat.html';
-  var NAV=[['Today','today.html'],['KARNA','super-chat.html'],['Plan','plan.html'],['Applications','applications.html'],['Projects','projects.html'],['Academics','academics.html'],['DSA','dsa.html'],['Overview','app.html'],['Console','agent-console.html']];
+  var NAV=[['Today','today.html'],['KARNA','super-chat.html'],['Plan','plan.html'],['Internships','applications.html'],['Projects','projects.html'],['Academics','academics.html'],['DSA','dsa.html'],['Overview','app.html'],['Console','agent-console.html']];
   var isChat=/super-chat/.test(path);
   var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
   var uid=localStorage.getItem('opa_guest_uid'),mail=localStorage.getItem('opai_sc_email');
@@ -28,7 +28,7 @@
     guide:'<svg width="20" height="20" viewBox="0 0 24 24" '+s+'><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/></svg>',
     term:'<svg width="20" height="20" viewBox="0 0 24 24" '+s+'><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>',
     dl:'<svg width="20" height="20" viewBox="0 0 24 24" '+s+'><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>'}}
-  var deferred=null;addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e});
+  var deferred=null;addEventListener('beforeinstallprompt',function(e){if(isChat)return;e.preventDefault();deferred=e});
   function dock(){
     if(isChat)return;var I=icons();
     var d=h('<div class="opai-dock" role="toolbar" aria-label="Quick actions"><a href="today.html" title="Today" '+(path==='today.html'?'aria-current="page"':'')+'>'+I.today+'</a><a href="super-chat.html" title="Ask KARNA">'+I.chat+'</a><a href="plan.html" title="Plan" '+(path==='plan.html'?'aria-current="page"':'')+'>'+I.plan+'</a><button type="button" id="dk-guide" title="Guide: which section does what">'+I.guide+'</button><a href="agent-console.html" title="Agent console" '+(path==='agent-console.html'?'aria-current="page"':'')+'>'+I.term+'</a><button type="button" id="dk-install" title="Install OPAI as an app">'+I.dl+'</button></div>');
@@ -64,7 +64,8 @@
     if(!uid)return;fetch(API+'/v1/profile?user_id='+encodeURIComponent(uid)).then(function(r){return r.ok?r.json():null}).then(function(p){if(!p)return;
       var n=p.name&&!/^guest/i.test(p.name)?p.name:(mail?mail.split('@')[0]:'Guest');un.textContent=n;av.textContent=(n[0]||'G').toUpperCase();us.textContent=[p.branch,p.degree].filter(Boolean).join(' · ')||'Personal workspace'}).catch(function(){});
   }
-  function boot(){var hd=header();dock();timer();if(hd){who();document.getElementById('opai-k').onclick=function(){window.OPAI_GUIDE&&OPAI_GUIDE.open('')};
+  function karna(){if(isChat||window.OPAI_KARNA_POPUP||document.querySelector('script[src*="karna-popup.js"]'))return;var k=document.createElement('script');k.src='karna-popup.js';k.defer=true;document.body.appendChild(k)}
+  function boot(){var hd=header();dock();timer();karna();if(hd){who();document.getElementById('opai-k').onclick=function(){window.OPAI_GUIDE&&OPAI_GUIDE.open('')};
       addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();window.OPAI_GUIDE&&OPAI_GUIDE.open('')}})}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
