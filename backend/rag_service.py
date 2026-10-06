@@ -59,7 +59,11 @@ def _load_fastembed():
     global _fe_model, _fe_failed
     if _fe_model is not None or _fe_failed:
         return _fe_model
-    if os.getenv("RAG_EMBEDDER", "auto").lower() == "hash":
+    # On Render's free tier (512 MB) the fastembed model download + load can exhaust RAM or the request
+    # timeout; the worker dies and the browser reports a CORS error. Default to the light hashed embedder
+    # there. Set RAG_EMBEDDER=fastembed on a bigger instance to opt back in.
+    _mode = os.getenv("RAG_EMBEDDER") or ("hash" if os.getenv("RENDER") else "auto")
+    if _mode.lower() == "hash":
         _fe_failed = True
         return None
     try:
@@ -67,7 +71,7 @@ def _load_fastembed():
         _fe_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
     except Exception as e:  # import error, offline model download, etc.
         _fe_failed = True
-        if os.getenv("RAG_EMBEDDER", "auto").lower() == "fastembed":
+        if _mode.lower() == "fastembed":
             raise
         log.warning("fastembed unavailable (%s); using hashed fallback embedder", e)
     return _fe_model
