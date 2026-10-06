@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 import rag_api
 import rag_service as rag
 from database import Course, Exam, Semester, Topic, User, get_db
-from syllabus_parse import extract_structure
+from syllabus_parse import course_labels, extract_structure, pick_course, split_courses
 
 log = logging.getLogger("opa.syllabus")
 router = APIRouter(prefix="/v1/academics", tags=["academics-intake"])
@@ -56,6 +56,18 @@ def _course(db: Session, uid: str, sem: Semester, name: str, code: Optional[str]
 
 def build_from_text(db: Session, uid: str, text: str, filename: str, course_name: str = "",
                     course_code: str = "") -> Dict:
+    courses = split_courses(text)
+    if len(courses) >= 3:                                     # a whole booklet: build ONE course, never the whole book
+        i = pick_course(courses, course_name)
+        if i is None:
+            labels = course_labels(courses)
+            return {"ok": True, "needs_choice": True, "filename": filename,
+                    "message": f"This file has {len(courses)} courses. Which one should I build?",
+                    "courses": [{"label": l, "title": c["title"], "year_sem": c["year_sem"]}
+                                for l, c in zip(labels, courses)]}
+        course_name = course_labels(courses)[i]
+        text = courses[i]["text"]
+    text = text.replace("\f", "\n")
     st = extract_structure(text)
     name = (course_name or "").strip() or os.path.splitext(filename)[0].replace("_", " ").strip() or "New course"
     code = (course_code or "").strip() or st["code"]
@@ -96,7 +108,7 @@ async def upload_syllabus(user_id: str = Form(...), course_name: str = Form(""),
         try:
             data = await f.read(rag_api.MAX_FILE_BYTES + 1)
             pages = rag_api.parse_file(fname, data)
-            text = "\n".join(p["text"] for p in pages)
+            text = "\n\f\n".join(p["text"] for p in pages)
             out.append({"ok": True, "filename": fname, **build_from_text(db, uid, text, fname, course_name, course_code)})
         except rag_api.ParseError as e:
             out.append({"ok": False, "filename": fname, "error": str(e)})
