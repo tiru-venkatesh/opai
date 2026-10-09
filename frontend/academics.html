@@ -186,37 +186,13 @@ button.go.working::after{content:"";position:absolute;inset:0;background:linear-
   });
 
   /* ---------- build from file / text ---------- */
-  let lastFiles = null, lastText = '';
-  function offerChoice(r) {
-    const cs = r.courses || [];
-    const groups = {};
-    cs.forEach((c, i) => { const g = c.year_sem || 'Other'; (groups[g] = groups[g] || []).push(i); });
-    say('k', esc(r.message || 'Which course should I build?') + ' Tap one, or type its name in the course name box and upload again.' +
-      Object.keys(groups).map((g) => '<div style="margin-top:10px"><b>' + esc(g) + '</b><div class="chips">' +
-        groups[g].map((i) => '<button type="button" class="chip pickc" data-i="' + i + '">' + esc(cs[i].title) + '</button>').join('') + '</div></div>').join(''));
-    document.querySelectorAll('.pickc').forEach((b) => { b.onclick = () => buildChoice(cs[+b.dataset.i].label); });
-  }
-  async function buildChoice(label) {
-    $('cname').value = label;
-    busy(true, 'Building ' + label + '…');
-    try {
-      const u = await ensureUser();
-      say('u', esc(label));
-      if (lastFiles && lastFiles.length) {
-        const fd = new FormData(); fd.append('user_id', u); fd.append('course_name', label);
-        [...lastFiles].forEach((f) => fd.append('files', f));
-        const r = await api('/v1/academics/syllabus', { method: 'POST', body: fd });
-        for (const x of r.results) await afterBuild(x);
-      } else if (lastText) {
-        const r = await api('/v1/academics/syllabus/text', { method: 'POST', body: JSON.stringify({ user_id: u, text: lastText, course_name: label }) });
-        await afterBuild({ ok: true, ...r });
-      } else { say('k', 'Please upload the file again, then tap a course.', 'err'); }
-    } catch (e) { say('k', 'Could not build: ' + esc(e.message), 'err'); }
-    busy(false); $('cname').value = '';
-  }
   async function afterBuild(r) {
-    if (r.ok && r.needs_choice) { offerChoice(r); return; }
     if (!r.ok) { say('k', esc(r.filename ? r.filename + ': ' : '') + esc(r.error || 'Could not read this file.'), 'err'); return; }
+    if (r.booklet) {
+      say('k', 'This file has <b>' + r.choose.length + ' courses</b> (a full university booklet). Which one do you want to build? Tap it, or type its name in the course name box.' +
+        '<div class="chips" style="margin-top:8px;max-height:260px;overflow:auto">' + r.choose.map((c, i) => '<button type="button" class="chip" style="--i:' + Math.min(i, 12) + '" data-pick="' + esc(c.title) + '" title="' + esc(c.sem) + '">' + esc(c.title) + '</button>').join('') + '</div>');
+      return;
+    }
     current = r; answers = { exams: [], unit_confidence: {} };
     const n = r.units.reduce((a, u) => a + u.topics.length, 0);
     say('k', 'I read <b>' + esc(r.course) + '</b>' + (r.code ? ' (' + esc(r.code) + ')' : '') + ' and found <b>' + r.units.length + ' units</b> and <b>' + n + ' topics</b>. Please check them:' +
@@ -225,14 +201,20 @@ button.go.working::after{content:"";position:absolute;inset:0;background:linear-
     if (!r.units.length) return;
     loadCourses(); askConfidence();
   }
+  let lastFiles = [], lastText = '';
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-pick]'); if (!b) return;
+    $('cname').value = b.dataset.pick;
+    if (lastFiles.length) submitFiles(lastFiles); else if (lastText) { $('paste').value = lastText; $('build').click(); }
+  });
   async function submitFiles(files) {
     if (!files.length) return;
     busy(true, 'Reading and indexing…');
     try {
+      lastFiles = [...files];
       const u = await ensureUser(), fd = new FormData();
       fd.append('user_id', u); fd.append('course_name', $('cname').value.trim());
       [...files].forEach((f) => fd.append('files', f));
-      lastFiles = [...files]; lastText = '';
       say('u', esc([...files].map((f) => f.name).join(', ')));
       const r = await api('/v1/academics/syllabus', { method: 'POST', body: fd });
       for (const x of r.results) await afterBuild(x);
@@ -250,10 +232,10 @@ button.go.working::after{content:"";position:absolute;inset:0;background:linear-
     busy(true, 'Reading and indexing…');
     try {
       const u = await ensureUser();
-      lastText = text; lastFiles = null;
+      lastText = text; lastFiles = [];
       say('u', esc(text.slice(0, 160)) + (text.length > 160 ? '…' : ''));
       const r = await api('/v1/academics/syllabus/text', { method: 'POST', body: JSON.stringify({ user_id: u, text, course_name: $('cname').value.trim() }) });
-      if (!r.needs_choice) $('paste').value = ''; await afterBuild({ ok: true, ...r });
+      $('paste').value = ''; await afterBuild({ ok: true, ...r });
     } catch (e) { say('k', 'Could not build: ' + esc(e.message), 'err'); }
     busy(false);
   });

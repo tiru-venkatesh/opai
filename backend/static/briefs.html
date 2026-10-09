@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>OPAI · Briefs</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0b0f17">
+<style>
+:root{--bg:#0b0f17;--card:#141a26;--line:#25304a;--tx:#e8edf7;--mut:#8b97b3;--ac:#4f8cff;--ok:#2fbf71;--warn:#f0b429;--bad:#ef5350}
+@media(prefers-color-scheme:light){:root{--bg:#f4f6fb;--card:#fff;--line:#dfe5f1;--tx:#111827;--mut:#5b6784}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;padding:max(12px,env(safe-area-inset-top)) 12px 90px}
+.wrap{max-width:760px;margin:0 auto}
+nav{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px}nav button{white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--tx);border-radius:999px;padding:7px 13px;font:inherit;cursor:pointer}
+nav button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+h1{font-size:21px;margin:6px 0 4px}.sum{color:var(--mut);margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sp{flex:1}
+.pill{font-size:12px;border-radius:999px;padding:2px 9px;border:1px solid var(--line);color:var(--mut)}
+.high{color:var(--bad);border-color:var(--bad)}.medium{color:var(--warn);border-color:var(--warn)}.low{color:var(--ok);border-color:var(--ok)}
+.rank{width:26px;height:26px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+.t{font-weight:650}.m{color:var(--mut);font-size:13px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.b{border:1px solid var(--line);background:transparent;color:var(--tx);border-radius:10px;padding:8px 12px;font:inherit;cursor:pointer}
+.b.p{background:var(--ac);border-color:var(--ac);color:#fff}.b[disabled]{opacity:.5;cursor:default}.b.d{border-color:var(--bad);color:var(--bad)}
+.bar{height:8px;border-radius:6px;background:var(--line);overflow:hidden;display:flex}.bar i{display:block;height:100%}
+.al{border-left:4px solid var(--warn);padding:8px 10px;margin:8px 0;background:var(--card);border-radius:8px}.al.critical{border-color:var(--bad)}.al.info{border-color:var(--ac)}
+.why{display:none;margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(79,140,255,.08)}.why.on{display:block}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}code{font-size:12px;background:rgba(127,127,127,.15);padding:1px 6px;border-radius:6px}
+.pv{white-space:pre-wrap;font-size:13px;background:rgba(127,127,127,.1);padding:8px;border-radius:8px;margin-top:6px}
+input{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;min-width:0}
+#msg{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#111;color:#fff;padding:10px 14px;border-radius:12px;display:none;max-width:90vw;z-index:9}
+</style></head><body><div class="wrap">
+<nav id="nav"></nav><div id="tools"></div><div id="out"><p class="sum">Loading…</p></div></div><div id="msg"></div>
+<script>
+(function(){
+var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
+var uid=null,cur=null,qs=new URLSearchParams(location.search),BRIEF_ID=qs.get('brief')||qs.get('brief_id');
+function safeUrl(u){try{var x=new URL(u,location.href);if(x.protocol==='https:'||x.protocol==='http:')return x.href}catch(e){}return null}
+function fmtTime(i){try{return new Date(i).toLocaleString()}catch(e){return ''}}
+var TABS=[['daily_plan','Today'],['exam_readiness','Exam'],['dsa_roadmap','DSA'],['weekly_review','Weekly'],['recovery','Recovery'],['approval','Approvals'],['decision','Decide']];
+var PATH={daily_plan:'daily',exam_readiness:'exam',dsa_roadmap:'dsa',weekly_review:'weekly',recovery:'recovery',approval:'approval',decision:'decision'};
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function say(s){var m=document.getElementById('msg');m.textContent=s;m.style.display='block';clearTimeout(say.t);say.t=setTimeout(function(){m.style.display='none'},3500)}
+async function api(p,o){o=o||{};var r=await fetch(API+p,Object.assign({headers:o.body?{'Content-Type':'application/json'}:{}},o));var t=await r.text(),j=t?JSON.parse(t):null;
+  if(!r.ok){var d=j&&j.detail;throw new Error(typeof d==='string'?d:Array.isArray(d)?d.map(function(x){return x.msg}).join('; '):r.status+'')}return j}
+async function user(){if(uid)return uid;var e=localStorage.getItem('opai_sc_email');
+  if(e){uid=(await api('/v1/auth/dev-login?email='+encodeURIComponent(e),{method:'POST'})).user_id;return uid}
+  var g=localStorage.getItem('opa_guest_uid');if(g){uid=g;return uid}
+  uid=(await api('/v1/auth/guest',{method:'POST'})).user_id;localStorage.setItem('opa_guest_uid',uid);return uid}
+
+function nav(type){var n=document.getElementById('nav');n.textContent='';TABS.forEach(function(t){var b=el('button',t[0]===type?'on':'',t[1]);b.onclick=function(){load(t[0])};n.appendChild(b)})}
+function tools(type){var t=document.getElementById('tools');t.textContent='';
+  if(type==='daily_plan'){var r=el('div','row');r.appendChild(el('span','m','I only have'));var i=el('input');i.type='number';i.min=10;i.max=720;i.value=60;i.style.width='80px';r.appendChild(i);r.appendChild(el('span','m','minutes'));
+    var b=el('button','b','Re-plan');b.onclick=function(){load('daily_plan',{capacity_override:+i.value})};r.appendChild(b);t.appendChild(r)}
+  if(type==='decision'){var r2=el('div','row');var q=el('input');q.placeholder='Should I …?';q.style.flex='1';var m=el('input');m.type='number';m.placeholder='min';m.style.width='72px';var b2=el('button','b p','Decide');
+    b2.onclick=function(){if(q.value.trim().length<4)return say('Type your question first');load('decision',{question:q.value.trim(),estimated_minutes:m.value?+m.value:null})};r2.appendChild(q);r2.appendChild(m);r2.appendChild(b2);t.appendChild(r2)}}
+
+async function load(type,body){nav(type);tools(type);var out=document.getElementById('out');out.textContent='';out.appendChild(el('p','sum','Building your brief…'));
+  try{var u=await user(),b;
+    if(BRIEF_ID&&!body&&!load.first){load.first=1;b=await api('/v1/briefs/'+encodeURIComponent(BRIEF_ID)+'?user_id='+u);nav(b.type);tools(b.type)}
+    else if(type==='daily_plan'&&!body){b=await api('/v1/briefs/daily?user_id='+u)}
+    else{b=await api('/v1/briefs/'+PATH[type],{method:'POST',body:JSON.stringify(Object.assign({user_id:u},body||{}))})}
+    render(b)}catch(e){fail(e,function(){load(type,body)})}}
+function fail(e,retry){var out=document.getElementById('out');out.textContent='';var c=el('div','card');
+  c.appendChild(el('div','t',navigator.onLine===false?"You're offline":'Could not load this brief'));c.appendChild(el('div','m',navigator.onLine===false?'Reconnect and it will retry automatically.':(e&&e.message)||'Unknown error'));
+  var r=el('button','b p','Retry');r.style.marginTop='10px';r.onclick=retry;c.appendChild(r);out.appendChild(c)}
+addEventListener('online',function(){if(cur)load(cur);else load('daily_plan')});
+
+function actionBtn(a,brief){var b=el('button','b'+(a.primary?' p':'')+(a.type==='reject'?' d':''),a.label);
+  if(a.kind==='execute'&&['expired','superseded','dismissed'].indexOf(brief.lifecycle)>=0&&a.status==='available'){b.disabled=true;b.title='This brief is out of date. Refresh it.';return b}
+  if(a.status==='executed'||a.status==='closed'||a.status==='rejected'){b.disabled=true;b.textContent=(a.status==='executed'?'✓ ':'')+a.label;return b}
+  if(a.status==='pending_approval'){b.disabled=true;b.textContent=a.label+' (awaiting approval)';return b}
+  b.onclick=async function(){b.disabled=true;try{
+    if(a.kind==='decision'){var it=(brief.approval_items||[]).find(function(x){return x.approve_action_id===a.action_id||x.reject_action_id===a.action_id});
+      if(a.type==='approve'&&!confirm('Approve: '+(it?it.title:'this action')+'?')){b.disabled=false;return}
+      await api('/v1/actions/'+a.action_id+'/'+a.type,{method:'POST',body:JSON.stringify({user_id:uid,payload_hash:a.type==='approve'&&it?it.payload_hash:null})});say(a.type==='approve'?'Approved':'Rejected');return load(cur)}
+    var r=await api('/v1/actions/'+a.action_id+'/execute',{method:'POST',body:JSON.stringify({user_id:uid})});
+    if(r.status==='needs_confirmation'){if(!confirm(a.label+'?\n\nRisk: '+a.risk+'. Nothing has changed yet.')){b.disabled=false;return}
+      r=await api('/v1/actions/'+a.action_id+'/execute',{method:'POST',body:JSON.stringify({user_id:uid,confirm:true})})}
+    if(r.navigate&&r.status==='executed'&&a.kind==='navigate'){var nu=safeUrl(r.navigate);if(nu)location.href=nu;return}
+    say(r.status==='pending_approval'?'Sent for your approval. Nothing has run yet.':'Done: '+a.label);
+    var fresh=await api('/v1/briefs/'+brief.brief_id+'?user_id='+uid);render(fresh)}catch(e){say(e.message);b.disabled=false}};return b}
+
+function priority(p,brief){var c=el('div','card'),h=el('div','row');h.appendChild(el('div','rank',p.rank));var tt=el('div','sp');tt.appendChild(el('div','t',p.title));
+  var meta=[p.duration_min?p.duration_min+' min':'',p.due||'',p.window?p.window.start+'–'+p.window.end:''].filter(Boolean).join(' · ');if(meta)tt.appendChild(el('div','m',meta));h.appendChild(tt);h.appendChild(el('span','pill '+p.urgency,p.urgency));c.appendChild(h);
+  if(p.reason_text)c.appendChild(el('div','m',p.reason_text)).style.marginTop='8px';
+  var acts=el('div','acts');(p.actions||[]).forEach(function(a){acts.appendChild(actionBtn(a,brief))});
+  var w=el('div','why');w.appendChild(el('b','',"Why this?"));var ch=el('div','chips');(p.reason_codes||[]).forEach(function(x){ch.appendChild(el('code','',x))});w.appendChild(ch);
+  if(p.if_delayed)w.appendChild(el('div','m','If delayed: '+p.if_delayed));var wb=el('button','b','Why this?');wb.onclick=function(){w.classList.toggle('on')};acts.appendChild(wb);c.appendChild(acts);c.appendChild(w);return c}
+
+function render(b){cur=b.type;var out=document.getElementById('out');out.textContent='';nav(b.type);
+  var h=el('div','row');h.appendChild(el('h1','',b.title));h.lastChild.className='sp';h.lastChild.style.fontSize='21px';h.lastChild.style.fontWeight='700';
+  h.appendChild(el('span','pill','confidence '+Math.round(b.confidence*100)+'%'));h.appendChild(el('span','pill',b.lifecycle||b.status));out.appendChild(h);
+  out.appendChild(el('p','sum',b.summary));
+  if(['expired','superseded','dismissed'].indexOf(b.lifecycle)>=0){var st=el('div','al warning');st.appendChild(el('b','','This brief is '+b.lifecycle+'.'));st.appendChild(el('div','m','Refresh it to get current priorities before acting.'));out.appendChild(st)}if(b.explanation&&b.explanation.narrative)out.appendChild(el('p','m',b.explanation.narrative));
+  if(b.capacity){var c=el('div','card'),cap=b.capacity,bar=el('div','bar'),tot=Math.max(cap.available_min,1);
+    [[cap.done_min||0,'var(--ok)'],[cap.planned_min,'var(--ac)']].forEach(function(s){var i=el('i');i.style.width=(100*s[0]/tot)+'%';i.style.background=s[1];bar.appendChild(i)});
+    c.appendChild(el('div','m',cap.planned_min+' planned · '+cap.buffer_min+' buffer · '+cap.available_min+' available (min)'));c.appendChild(bar);out.appendChild(c)}
+  (b.alerts||[]).forEach(function(a){var d=el('div','al '+a.severity);d.appendChild(el('b','',a.title));if(a.detail)d.appendChild(el('div','m',a.detail));var su=a.link&&safeUrl(a.link);if(su){var l=el('a','m','Open');l.href=su;d.appendChild(l)}out.appendChild(d)});
+  (b.priorities||[]).forEach(function(p){out.appendChild(priority(p,b))});
+  (b.approval_items||[]).filter(function(i){return i.source==='action'}).forEach(function(i){var c=el('div','card');c.appendChild(el('div','t',i.title));c.appendChild(el('span','pill '+(i.risk==='high'?'high':'medium'),i.risk+' risk'));
+    var pv=el('div','pv',Object.keys(i.preview||{}).map(function(k){return k+': '+i.preview[k]}).join('\n'));c.appendChild(pv);out.appendChild(c)});
+  if(b.options){var o=el('div','card');o.appendChild(el('div','t','Trade-offs'));b.options.forEach(function(x){o.appendChild(el('div','m',x.id+') '+x.title+' — '+x.trade_off))});(b.assumptions||[]).forEach(function(a){o.appendChild(el('div','m','• '+a))});out.appendChild(o)}
+  if(b.exam){var e=el('div','card');e.appendChild(el('div','t',b.exam.course+' · '+b.exam.risk_level+' risk'));e.appendChild(el('div','m','Preparation estimate '+b.exam.preparation_estimate+'% · '+(b.exam.days_remaining==null?'no date':b.exam.days_remaining+' days left')+' · '+b.plan.remaining_estimated_min+' min of study remaining'));out.appendChild(e)}
+  if(b.today&&b.today.external_resources&&b.today.external_resources.length){var r=el('div','card');r.appendChild(el('div','t','Today · '+(b.today.learning_target||'')));b.today.external_resources.forEach(function(x){var xu=safeUrl(x.url);if(!xu)return;var a=el('a','m',x.title+' ↗');a.href=xu;a.target='_blank';a.rel='noopener noreferrer';r.appendChild(a);r.appendChild(document.createElement('br'))});out.appendChild(r)}
+  if(b.review){var rv=el('div','card'),s=b.review.study;rv.appendChild(el('div','t','This week'));rv.appendChild(el('div','m',s.done+'/'+s.planned+' study blocks · '+s.minutes_done+' min · '+b.review.dsa.done+' DSA sessions'));out.appendChild(rv)}
+  if(b.changes){var cg=el('div','card');cg.appendChild(el('div','t','What changed'));cg.appendChild(el('div','m',b.changes.missed_blocks.length+' missed blocks · '+b.changes.overdue_tasks.length+' overdue tasks · '+b.changes.dsa_skipped+' DSA skipped'));out.appendChild(cg)}
+  var loose=(b.actions||[]).filter(function(a){return !(b.priorities||[]).some(function(p){return (p.actions||[]).some(function(x){return x.action_id===a.action_id})})&&a.kind!=='decision'});
+  if(loose.length){var lc=el('div','card'),la=el('div','acts');la.style.marginTop='0';loose.forEach(function(a){la.appendChild(actionBtn(a,b))});lc.appendChild(la);out.appendChild(lc)}
+  if(!(b.priorities||[]).length&&!(b.alerts||[]).length&&!loose.length)out.appendChild(el('div','card m','Nothing needs your attention here.'));
+  if(b.sources&&b.sources.length){var sc=el('div','card');sc.appendChild(el('div','t','Sources'));b.sources.forEach(function(x){var u=x.url&&safeUrl(x.url),line=u?el('a','m',x.title+' ↗'):el('div','m',x.title);if(u){line.href=u;line.target='_blank';line.rel='noopener noreferrer'}sc.appendChild(line)});out.appendChild(sc)}
+  var wc=el('div','card'),wb=el('button','b','Why this brief?'),ww=el('div','why');ww.appendChild(el('div','m',(b.explanation&&b.explanation.short)||''));var cc=el('div','chips');((b.explanation&&b.explanation.reason_codes)||[]).forEach(function(x){cc.appendChild(el('code','',x))});ww.appendChild(cc);
+  var ctxs=Object.keys(b.context||{}).filter(function(k){return typeof b.context[k]!=='object'&&b.context[k]!==null&&k!=='user_id'}).map(function(k){return k+': '+b.context[k]}).join(' · ');if(ctxs)ww.appendChild(el('div','m',ctxs));
+  wb.onclick=function(){ww.classList.toggle('on')};wc.appendChild(wb);wc.appendChild(ww);out.appendChild(wc);
+  out.appendChild(el('div','m','Updated '+fmtTime(b.generated_at)+(b.expires_at?' · expires '+fmtTime(b.expires_at+'Z'):'')));
+  var f=el('div','row');f.style.marginTop='14px';var rf=el('button','b','Refresh');rf.onclick=async function(){try{render(await api('/v1/briefs/'+b.brief_id+'/refresh',{method:'POST',body:JSON.stringify({user_id:uid})}))}catch(e){say(e.message)}};f.appendChild(rf);
+  var ds=el('button','b','Dismiss');ds.onclick=async function(){try{await api('/v1/briefs/'+b.brief_id+'/dismiss',{method:'POST',body:JSON.stringify({user_id:uid})});say('Dismissed');load('daily_plan')}catch(e){say(e.message)}};f.appendChild(ds);out.appendChild(f)}
+
+if(navigator.onLine===false)fail(null,function(){location.reload()});var t0=qs.get('type');load(TABS.some(function(t){return t[0]===t0})?t0:'daily_plan');
+if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+})();
+</script><script src="notify.js" defer></script></body></html>

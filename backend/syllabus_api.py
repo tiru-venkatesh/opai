@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 import rag_api
 import rag_service as rag
 from database import Course, Exam, Semester, Topic, User, get_db
-from syllabus_parse import course_labels, extract_structure, pick_course, split_courses
+from syllabus_parse import extract_structure, pick_course, split_courses
 
 log = logging.getLogger("opa.syllabus")
 router = APIRouter(prefix="/v1/academics", tags=["academics-intake"])
@@ -54,20 +54,19 @@ def _course(db: Session, uid: str, sem: Semester, name: str, code: Optional[str]
     return c
 
 
+def _booklet(text: str, course_name: str):
+    """Whole-university PDFs hold dozens of courses. Returns (text, name, choose): build one course, or ask which."""
+    courses = split_courses(text)
+    if not courses:
+        return text, course_name, None
+    pick = pick_course(courses, course_name)
+    if pick:
+        return pick["text"], pick["title"], None
+    return text, course_name, [{"title": c["title"], "sem": c["sem"]} for c in courses]
+
+
 def build_from_text(db: Session, uid: str, text: str, filename: str, course_name: str = "",
                     course_code: str = "") -> Dict:
-    courses = split_courses(text)
-    if len(courses) >= 3:                                     # a whole booklet: build ONE course, never the whole book
-        i = pick_course(courses, course_name)
-        if i is None:
-            labels = course_labels(courses)
-            return {"ok": True, "needs_choice": True, "filename": filename,
-                    "message": f"This file has {len(courses)} courses. Which one should I build?",
-                    "courses": [{"label": l, "title": c["title"], "year_sem": c["year_sem"]}
-                                for l, c in zip(labels, courses)]}
-        course_name = course_labels(courses)[i]
-        text = courses[i]["text"]
-    text = text.replace("\f", "\n")
     st = extract_structure(text)
     name = (course_name or "").strip() or os.path.splitext(filename)[0].replace("_", " ").strip() or "New course"
     code = (course_code or "").strip() or st["code"]
@@ -108,8 +107,12 @@ async def upload_syllabus(user_id: str = Form(...), course_name: str = Form(""),
         try:
             data = await f.read(rag_api.MAX_FILE_BYTES + 1)
             pages = rag_api.parse_file(fname, data)
-            text = "\n\f\n".join(p["text"] for p in pages)
-            out.append({"ok": True, "filename": fname, **build_from_text(db, uid, text, fname, course_name, course_code)})
+            text = "\n".join(p["text"] for p in pages)
+            text, cname, choose = _booklet(text, course_name)
+            if choose:
+                out.append({"ok": True, "booklet": True, "filename": fname, "choose": choose, "units": [], "questions": []})
+                continue
+            out.append({"ok": True, "filename": fname, **build_from_text(db, uid, text, fname, cname, course_code)})
         except rag_api.ParseError as e:
             out.append({"ok": False, "filename": fname, "error": str(e)})
         except Exception as e:
@@ -131,8 +134,10 @@ def syllabus_from_text(body: SyllabusText, db: Session = Depends(get_db)):
     uid = _user(db, body.user_id)
     if len(body.text.strip()) < 20:
         raise HTTPException(400, "Paste the syllabus text (units and topics)")
-    return build_from_text(db, uid, body.text[:rag_api.MAX_DOC_CHARS], body.course_name or "Pasted syllabus",
-                           body.course_name, body.course_code)
+    text, cname, choose = _booklet(body.text[:rag_api.MAX_DOC_CHARS], body.course_name)
+    if choose:
+        return {"booklet": True, "choose": choose, "units": [], "questions": []}
+    return build_from_text(db, uid, text, body.course_name or "Pasted syllabus", cname, body.course_code)
 
 
 class Answers(BaseModel):
