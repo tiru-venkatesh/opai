@@ -180,6 +180,7 @@ class Task(Base):
     estimated_minutes = Column(Integer, default=45)
     status = Column(String, default="todo")
     milestone_id = Column(String(36))         # links a task to a project milestone
+    source_ref = Column(String, index=True)   # e.g. "program_cycle:<id>:<step>"; lets generators stay idempotent
 
 
 class Opportunity(Base):
@@ -564,6 +565,54 @@ class Milestone(Base):
     created_at = Column(DateTime, default=_dt.utcnow)
 
 
+
+
+# ================= Programs & Challenges (hackathons, open-source programs, fellowships ...) =================
+class Program(Base):
+    """A recurring program a user follows. Dates live on ProgramCycle (one row per edition)."""
+    __tablename__ = "programs"
+    __table_args__ = (Index("ix_programs_user_status", "user_id", "status"),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    catalog_id = Column(String)
+    name = Column(String, nullable=False)
+    organizer = Column(String)
+    program_type = Column(String)
+    official_url = Column(String)
+    recurrence = Column(String, default="annual")   # annual | recurring | one_off
+    focus_tags = Column(JSON, default=list)
+    notes = Column(Text)
+    status = Column(String, default="active")       # active | dismissed
+    created_at = Column(DateTime, default=_dt.utcnow)
+
+
+class ProgramCycle(Base):
+    __tablename__ = "program_cycles"
+    __table_args__ = (Index("ix_program_cycles_program", "program_id"),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    program_id = Column(String(36), ForeignKey("programs.id", ondelete="CASCADE"))
+    label = Column(String, nullable=False)
+    year = Column(Integer)
+    announced = Column(Boolean)                     # None unknown, False = not announced yet
+    applications_open = Column(Date)
+    deadline = Column(Date)
+    event_start = Column(Date)
+    event_end = Column(Date)
+    eligibility = Column(Text)
+    team_min = Column(Integer)
+    team_max = Column(Integer)
+    time_commitment = Column(String)
+    stages = Column(JSON, default=list)
+    reward = Column(String)
+    requirements = Column(JSON, default=list)
+    source_url = Column(String)
+    source_checked_at = Column(DateTime)
+    verification = Column(String, default="unverified")   # official | third_party | unverified
+    needs_review = Column(JSON, default=list)
+    participation = Column(String, default="Interested")
+    history = Column(JSON, default=list)
+    created_at = Column(DateTime, default=_dt.utcnow)
 
 # ---- Outbox integrity: one central hash so EVERY creation/edit path is covered ----
 import hashlib as _hl

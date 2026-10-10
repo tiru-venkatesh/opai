@@ -1,6 +1,7 @@
 """DSA Roadmap endpoints: /v1/dsa*. Planning and tracking only; no problems, judge, editor or solutions."""
 from __future__ import annotations
 
+from datetime import date, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,7 +10,7 @@ from sqlalchemy.orm import Session
 
 import dsa_service as S
 from audit.logger import record as audit
-from database import User, get_db
+from database import DsaSession, User, get_db
 
 router = APIRouter()
 
@@ -110,3 +111,38 @@ def skip(session_id: str, p: UserBody, db: Session = Depends(get_db)):
     uid = _user(db, p.user_id)
     _wrap(S.skip_session, db, uid, session_id)
     return S.state(db, uid)
+
+@router.get("/v1/dsa/streak")
+def dsa_streak(user_id: str, db: Session = Depends(get_db)):
+    """Streak over PLANNED days only (rest days never break it). Today stays open until it ends."""
+    uid = _user(db, user_id)
+    today = date.today()
+    rows = (db.query(DsaSession).filter(DsaSession.user_id == uid, DsaSession.plan_date <= today)
+            .order_by(DsaSession.plan_date.desc()).all())
+    today_row = next((r for r in rows if r.plan_date == today), None)
+    past = [r for r in rows if r.plan_date < today]
+    current = 0
+    for r in past:
+        if r.status != "done":
+            break
+        current += 1
+    today_done = bool(today_row and today_row.status == "done")
+    if today_done:
+        current += 1
+    longest = run = 0
+    for r in reversed(past + ([today_row] if today_done else [])):
+        run = run + 1 if r.status == "done" else 0
+        longest = max(longest, run)
+    missed = lost = 0
+    if past and past[0].status != "done":
+        i = 0
+        while i < len(past) and past[i].status != "done":
+            missed += 1
+            i += 1
+        while i < len(past) and past[i].status == "done":
+            lost += 1
+            i += 1
+    today_status = today_row.status if today_row else "rest_day"
+    return {"current": current, "longest": longest, "today_status": today_status,
+            "at_risk": bool(today_row and not today_done and current > 0),
+            "lost_streak": lost if (missed and not today_done) else 0, "missed_days": missed if not today_done else 0}

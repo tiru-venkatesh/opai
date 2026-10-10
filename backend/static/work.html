@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Work · OPAI</title>
+<meta name="theme-color" content="#F6F4EE">
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="opai-shared.css">
+<style>
+:root{--bg:#F6F4EE;--ink:#16181A;--mut:#5a6064;--pri:#17504A;--line:#e4e0d6;--font:'Geist',system-ui,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/22px var(--font);display:flex;flex-direction:column}
+.wk-bar{position:sticky;top:64px;z-index:20;background:rgba(246,244,238,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:0 12px}
+.wk-tabs{max-width:1100px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.wk-tabs button{border:0;background:none;padding:12px 14px;font:500 14px var(--font);color:var(--mut);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}
+.wk-tabs button[aria-selected=true]{color:var(--pri);border-color:var(--pri);font-weight:600}
+.wk-tabs button:focus-visible{outline:2px solid var(--pri);outline-offset:-2px}
+.wk-frames{flex:1;position:relative;min-height:0}
+iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);display:none}
+iframe.on{display:block}
+body.opai-pad{padding-top:64px}
+@media(max-width:700px){.wk-bar{top:56px}}
+</style>
+</head>
+<body>
+<div class="wk-bar"><div class="wk-tabs" role="tablist" aria-label="Work sections" id="tabs"></div></div>
+<div class="wk-frames" id="frames"></div>
+<script>
+/* Work = one home for everything you build and apply for. Each tab loads its page inside this shell (lazy). */
+var TABS=[
+ ['internship','Internship','opportunities.html?embed=1'],
+ ['dsa','DSA','dsa.html?embed=1'],
+ ['projects','Projects','projects.html?view=projects&embed=1'],
+ ['resume','Resume','app.html?embed=1#/resume-lab'],
+ ['programs','Programs','projects.html?view=programs&embed=1'],
+ ['academics','Academics','academics.html?embed=1']
+];
+var tabsEl=document.getElementById('tabs'),fr=document.getElementById('frames'),loaded={};
+tabsEl.innerHTML=TABS.map(function(t){return '<button role="tab" id="t-'+t[0]+'" aria-selected="false" data-k="'+t[0]+'">'+t[1]+'</button>'}).join('');
+TABS.forEach(function(t){var f=document.createElement('iframe');f.id='f-'+t[0];f.title=t[1];fr.appendChild(f)});
+function show(k,push){
+  if(!TABS.some(function(t){return t[0]===k}))k='internship';
+  TABS.forEach(function(t){var on=t[0]===k;document.getElementById('t-'+t[0]).setAttribute('aria-selected',on);
+    var f=document.getElementById('f-'+t[0]);f.classList.toggle('on',on);
+    if(on&&!loaded[t[0]]){f.src=t[2];loaded[t[0]]=1}});
+  try{localStorage.setItem('opai_work_tab',k)}catch(e){}
+  if(push!==false&&location.hash!=='#'+k)history.replaceState(null,'','#'+k);
+  document.title=TABS.filter(function(t){return t[0]===k})[0][1]+' · Work · OPAI';
+}
+tabsEl.addEventListener('click',function(e){var b=e.target.closest('button[data-k]');if(b)show(b.dataset.k)});
+tabsEl.addEventListener('keydown',function(e){
+  if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;
+  var ks=TABS.map(function(t){return t[0]}),i=ks.indexOf(document.querySelector('[aria-selected=true]').dataset.k);
+  i=(i+(e.key==='ArrowRight'?1:ks.length-1))%ks.length;show(ks[i]);document.getElementById('t-'+ks[i]).focus();
+});
+addEventListener('hashchange',function(){show(location.hash.slice(1),false)});
+var start=location.hash.slice(1);try{start=start||localStorage.getItem('opai_work_tab')||''}catch(e){}
+show(start,false);
+</script>
+<script src="opai-shell.js" defer></script>
+<script src="guide.js" defer></script>
+<script src="karna-popup.js" defer></script>
+<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
+</body>
+</html>
