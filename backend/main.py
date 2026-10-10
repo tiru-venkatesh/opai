@@ -69,12 +69,12 @@ from dsa_api import router as dsa_router
 app.include_router(dsa_router)
 from extras_api import router as extras_router
 app.include_router(extras_router)
-from opportunities_api import router as opportunities_router
-app.include_router(opportunities_router)
+from opportunities_api import router as opp_router
+app.include_router(opp_router)
+from faculty_api import router as faculty_router
+app.include_router(faculty_router)
 from programs_api import router as programs_router
 app.include_router(programs_router)
-from resume_lab_api import router as resume_lab_router
-app.include_router(resume_lab_router)
 
 _CORS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()] or ["*"]
 app.add_middleware(
@@ -152,7 +152,7 @@ def health(db: Session = Depends(get_db)):
         "tables": {},
     }
     if dialect == "sqlite":
-        out["warning"] = "DATABASE_URL is not set: SQLite on Render is wiped on every deploy/restart. Data and user accounts will disappear."
+        out["warning"] = "DATABASE_URL is not set: SQLite on Render is wiped on every deploy/restart. Data and guest users will disappear."
     try:
         cols = {t: [c["name"] for c in _inspect(_engine).get_columns(t)] for t in ("projects", "academics", "users")}
     except Exception as e:
@@ -271,11 +271,32 @@ def dev_login(email: str = "student@university.edu", name: str = None, db: Sessi
         db.add(user)
         db.commit()
         db.refresh(user)
-    elif name and user.name == "User":
+    elif name and user.name in {"User", "Guest"}:
         user.name = name
         db.commit()
         db.refresh(user)
     return {"user_id": str(user.id), "name": user.name, "email": user.email}
+
+
+@app.post("/v1/auth/guest")
+def guest_login(db: Session = Depends(get_db)):
+    """Every guest gets a brand-new, isolated user record.
+    (Previously all guests logged in as the same hardcoded email, so they
+    shared one account and saw each other's data.)"""
+    import uuid as _uuid
+    token = _uuid.uuid4().hex[:12]
+    user = User(
+        email=f"guest-{token}@opa.local",
+        name="Guest",
+        branch="",
+        degree="",
+        targets={},
+        preferences={},
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return {"user_id": str(user.id), "name": user.name, "email": user.email, "guest": True}
 
 
 # ================= PROFILE =================
@@ -901,6 +922,12 @@ def list_outbox(user_id: UUID, db: Session = Depends(get_db)):
         if row.status == "pending" and row.expires_at and row.expires_at < now:
             row.status = "expired"
             changed = True
+    from opportunities_api import payload_hash as _ph
+    for row in rows:
+        h = _ph(row)
+        if row.payload_hash != h:
+            row.payload_hash = h
+            changed = True
     if changed:
         db.commit()
     return rows
@@ -922,25 +949,22 @@ def create_outbox(payload: OutboxCreate, db: Session = Depends(get_db)):
 
 
 @app.post("/v1/outbox/{outbox_id}/approve", response_model=OutboxOut)
-def approve_outbox(outbox_id: UUID, payload_hash: str = None, db: Session = Depends(get_db)):
+def approve_outbox(outbox_id: UUID, reviewed_hash: Optional[str] = None, db: Session = Depends(get_db)):
     row = db.query(OutboxItem).filter(OutboxItem.id == str(outbox_id)).first()
     if not row:
         raise HTTPException(status_code=404, detail="Outbox item not found")
-    from database import outbox_content_hash as _och
-    _cur = _och(row.channel, row.payload)
-    _pipeline = (row.ref or {}).get("pipeline") == "opportunities"
-    # Approval is bound to the exact content the user reviewed. Pipeline items MUST
-    # present the hash they saw; legacy callers may omit it but a wrong one is rejected.
-    if payload_hash is None and _pipeline:
-        raise HTTPException(status_code=422, detail="payload_hash is required: approve the exact content you reviewed")
-    if payload_hash is not None and payload_hash != _cur:
-        raise HTTPException(status_code=409, detail="Content changed since you reviewed it - review the new version")
     if row.status != "pending":
         raise HTTPException(status_code=409, detail=f"Item is already '{row.status}', not pending")
     if row.expires_at and row.expires_at < datetime.utcnow():
         row.status = "expired"
         db.commit()
         raise HTTPException(status_code=410, detail="This approval has expired - ask the agent to re-draft it")
+    if row.channel == "email":
+        from opportunities_api import payload_hash as _ph
+        _cur = _ph(row)
+        if reviewed_hash != _cur:
+            raise HTTPException(status_code=409, detail="Review required: approve email with the hash of the exact message you reviewed (reviewed_hash). If the message was edited, review it again.")
+        row.reviewed_hash = _cur
     if (row.ref or {}).get("kind") == "contact":
         import outreach_guard as _og
         _c = db.query(Contact).filter(Contact.id == (row.ref or {}).get("id")).first()
@@ -958,11 +982,8 @@ def approve_outbox(outbox_id: UUID, payload_hash: str = None, db: Session = Depe
     if approved_today >= MAX_OUTBOX_APPROVALS_PER_DAY:
         raise HTTPException(status_code=429, detail="Daily outbox approval limit reached - try again tomorrow")
     row.status = "approved"
-    row.approved_hash = _cur
     ref = row.ref or {}
-    if ref.get("pipeline") == "opportunities":
-        pass  # approved != sent: contact/history/follow-up are recorded by POST /v1/opp/outbox/{id}/send
-    elif ref.get("kind") == "contact":
+    if ref.get("kind") == "contact":
         contact = db.query(Contact).filter(Contact.id == ref.get("id")).first()
         if contact:
             contact.status = "Sent"

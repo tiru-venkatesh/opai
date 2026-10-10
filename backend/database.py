@@ -110,12 +110,12 @@ class Application(Base):
     effort_minutes = Column(Integer, default=60)
     resume_id = Column(String(36))            # resume version tailored for this application
     tailored_at = Column(DateTime)
+    # Opportunities pipeline (user-submitted externally; OPAI never submits)
     opportunity_id = Column(String(36))
-    submitted_on = Column(Date)
-    stage_history = Column(JSON, default=list)     # [{stage, at, note}]
-    checklist = Column(JSON, default=list)         # [{text, done}]
-    referral_contact = Column(String)
-    follow_up_state = Column(String)               # pending | replied | not_yet | closed
+    source_type = Column(String)             # linkedin_user_saved | career_page | email_alert | referral | manual ...
+    answers = Column(JSON, default=list)     # tailored answers: [{question, answer}]
+    submitted_at = Column(DateTime)          # set only when the USER marks Applied
+    contact_ref = Column(String)             # referral / recruiter name or email the user supplied
 
 
 class Contact(Base):
@@ -134,11 +134,11 @@ class Contact(Base):
     # outreach endpoints (draft/mark-sent/reject).
     status = Column(String, default="Not started")  # Not started, Drafted, Sent
     sent_on = Column(Date)
-    source_url = Column(String)                    # official faculty page
-    source_checked_at = Column(DateTime)
-    email_verification = Column(String, default="unverified")  # unverified | public_page | user_confirmed
-    recent_work = Column(Text)                     # paper/project the user confirmed
-    owner_user_id = Column(String(36))             # NULL = seed dataset
+    # Provenance - every contact keeps where it came from and when that was last checked
+    source_url = Column(String)                  # official faculty page
+    source_checked_on = Column(Date)
+    email_verification = Column(String, default="unverified")  # unverified | public_on_page | user_confirmed
+    relevant_work = Column(Text)                 # paper / project the user confirmed as the connection
 
 
 class OutreachHistory(Base):
@@ -180,7 +180,7 @@ class Task(Base):
     estimated_minutes = Column(Integer, default=45)
     status = Column(String, default="todo")
     milestone_id = Column(String(36))         # links a task to a project milestone
-    source_ref = Column(String, index=True)   # e.g. "program_cycle:<id>:<step>"; lets generators stay idempotent
+    source_ref = Column(String)               # e.g. "program_cycle:<id>:verify" - lets plan creation be idempotent
 
 
 class Opportunity(Base):
@@ -199,13 +199,13 @@ class Opportunity(Base):
     eligibility_note = Column(Text)          # e.g. "Final-year only" - free text, optional
     last_verified_at = Column(DateTime, default=_dt.utcnow)
     duplicate_of = Column(String(36), ForeignKey("opportunities.id", ondelete="SET NULL"), nullable=True)
-    # Opportunities pipeline (user-scoped; NULL user_id = legacy/shared row)
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
-    source_type = Column(String, default="manual")  # linkedin_user_saved | career_page | email_alert | referral | pasted | manual
+    # Opportunities pipeline
+    user_id = Column(String(36))                 # owner for user-submitted items (legacy rows have none)
+    source_type = Column(String)                 # linkedin_user_saved | email_alert | career_page | faculty_page | referral | manual
     location = Column(String)
-    work_mode = Column(String)                      # remote | hybrid | onsite
-    description_text = Column(Text)
-    facts = Column(JSON, default=dict)              # fields stated in the posting (verified facts)
+    work_mode = Column(String)                   # remote | hybrid | onsite
+    requirements = Column(JSON, default=list)    # requirement strings stated in the posting
+    field_sources = Column(JSON, default=dict)   # {field: "posting" | "user" | "inferred"}
 
 
 class Academic(Base):
@@ -273,11 +273,12 @@ class OutboxItem(Base):
     approval_scope = Column(String, default="single_use")
     expires_at = Column(DateTime)
     created_at = Column(DateTime, default=_dt.utcnow)
-    payload_hash = Column(String(64))      # sha256 of the exact content (set centrally, see _outbox_hash_events)
-    approved_hash = Column(String(64))     # hash the user approved; send requires payload_hash == approved_hash
+    # Approval is bound to the exact content the user reviewed
+    payload_hash = Column(String(64))            # sha256 of current recipient/subject/body/attachments
+    reviewed_hash = Column(String(64))           # hash the user approved; must equal payload_hash at send time
+    sent_via = Column(String)                    # gmail_api | manual
+    provider_message_id = Column(String)
     sent_at = Column(DateTime)
-    provider_message_id = Column(String)   # Gmail message id after a real send
-    send_state = Column(String, default="not_sent")  # not_sent | sent | failed
 
 
 class UserMemory(Base):
@@ -565,83 +566,54 @@ class Milestone(Base):
     created_at = Column(DateTime, default=_dt.utcnow)
 
 
-
-
-# ================= Programs & Challenges (hackathons, open-source programs, fellowships ...) =================
+# ---------------- Programs & Challenges (open source, hackathons, competitions, fellowships, ...) ----------------
 class Program(Base):
-    """A recurring program a user follows. Dates live on ProgramCycle (one row per edition)."""
+    """A recurring program/event the user is tracking. The *cycle* (year/edition) carries dates and status,
+    so an old edition's dates are never shown as current."""
     __tablename__ = "programs"
-    __table_args__ = (Index("ix_programs_user_status", "user_id", "status"),)
+    __table_args__ = (Index("ix_programs_user", "user_id"), Index("uq_programs_user_name", "user_id", "name", unique=True))
     id = Column(String(36), primary_key=True, default=gen_id)
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), index=True)
-    catalog_id = Column(String)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     name = Column(String, nullable=False)
     organizer = Column(String)
-    program_type = Column(String)
-    official_url = Column(String)
-    recurrence = Column(String, default="annual")   # annual | recurring | one_off
-    focus_tags = Column(JSON, default=list)
+    program_type = Column(String, nullable=False)       # see programs_catalog.TYPES
+    official_url = Column(String)                       # the organizer's own page: the only source of truth
+    catalog_id = Column(String)                         # set when added from OPAI's starter catalog
+    recurrence = Column(String, default="annual")       # annual | recurring | one_off
+    focus_tags = Column(JSON, default=list)             # matched against the user's confirmed skills
     notes = Column(Text)
-    status = Column(String, default="active")       # active | dismissed
+    status = Column(String, default="tracking")         # tracking | dismissed
     created_at = Column(DateTime, default=_dt.utcnow)
 
 
 class ProgramCycle(Base):
     __tablename__ = "program_cycles"
-    __table_args__ = (Index("ix_program_cycles_program", "program_id"),)
+    __table_args__ = (Index("ix_pcycles_program", "program_id"), Index("ix_pcycles_user", "user_id"))
     id = Column(String(36), primary_key=True, default=gen_id)
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
     program_id = Column(String(36), ForeignKey("programs.id", ondelete="CASCADE"))
-    label = Column(String, nullable=False)
-    year = Column(Integer)
-    announced = Column(Boolean)                     # None unknown, False = not announced yet
+    label = Column(String, nullable=False)              # "2026", "Summer 2027", "Next announced cycle"
+    year = Column(Integer)                              # for ordering; NULL for the placeholder next cycle
+    announced = Column(Boolean)                         # False = organizer has not announced it; NULL = unknown
     applications_open = Column(Date)
     deadline = Column(Date)
     event_start = Column(Date)
     event_end = Column(Date)
     eligibility = Column(Text)
+    stages = Column(JSON, default=list)
+    requirements = Column(JSON, default=list)           # documents / deliverables
     team_min = Column(Integer)
     team_max = Column(Integer)
     time_commitment = Column(String)
-    stages = Column(JSON, default=list)
-    reward = Column(String)
-    requirements = Column(JSON, default=list)
-    source_url = Column(String)
+    reward = Column(String)                             # stipend/prize, only if officially stated
+    source_url = Column(String)                         # where these dates were read
     source_checked_at = Column(DateTime)
-    verification = Column(String, default="unverified")   # official | third_party | unverified
-    needs_review = Column(JSON, default=list)
+    verification = Column(String, default="unverified") # unverified | official | third_party
+    needs_review = Column(JSON, default=list)           # fields the parser guessed or could not find
     participation = Column(String, default="Interested")
-    history = Column(JSON, default=list)
+    history = Column(JSON, default=list)                # [{at, from, to, note}]
+    notes = Column(Text)
     created_at = Column(DateTime, default=_dt.utcnow)
-
-# ---- Outbox integrity: one central hash so EVERY creation/edit path is covered ----
-import hashlib as _hl
-import json as _json
-from sqlalchemy import event as _event
-
-
-def outbox_content_hash(channel, payload) -> str:
-    """sha256 over the exact reviewable content: channel + recipient/subject/body/attachments."""
-    p = payload or {}
-    canon = {"channel": channel or "email", "to": (p.get("to") or "").strip().lower(),
-             "subject": p.get("subject") or "", "body": p.get("body") or "",
-             "attachments": p.get("attachments") or []}
-    return _hl.sha256(_json.dumps(canon, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-
-
-@_event.listens_for(OutboxItem, "before_insert")
-def _outbox_hash_insert(mapper, conn, t):
-    t.payload_hash = outbox_content_hash(t.channel, t.payload)
-
-
-@_event.listens_for(OutboxItem, "before_update")
-def _outbox_hash_update(mapper, conn, t):
-    new = outbox_content_hash(t.channel, t.payload)
-    t.payload_hash = new
-    # Any edit after approval revokes the approval: it must be reviewed again.
-    if t.status == "approved" and t.approved_hash and t.approved_hash != new and t.send_state != "sent":
-        t.status = "pending"
-        t.approved_hash = None
 
 
 def _auto_migrate():
@@ -729,3 +701,18 @@ class ActionApproval(Base):
     decision = Column(String, nullable=False)            # approved | rejected
     approved_payload_hash = Column(String(64))
     approved_at = Column(DateTime, default=_dt.utcnow)
+
+
+class ApplicationEvent(Base):
+    """Status history and interview events for one application."""
+    __tablename__ = "application_events"
+    __table_args__ = (Index("ix_appevents_app", "application_id", "created_at"),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
+    application_id = Column(String(36), ForeignKey("applications.id", ondelete="CASCADE"))
+    kind = Column(String, default="status")      # status | note | interview | followup
+    from_status = Column(String)
+    to_status = Column(String)
+    note = Column(Text)
+    event_at = Column(DateTime)                  # interview time etc.
+    created_at = Column(DateTime, default=_dt.utcnow)

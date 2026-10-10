@@ -111,7 +111,7 @@ def repair(path: Path, email: str, name: str) -> dict:
     canonical = users[0]
     canonical_id = canonical["id"]
 
-    # Development DB had a second, unrelated identity containing unrelated resume data.
+    # Development DB had a second guest identity containing unrelated resume data.
     other_users = con.execute("SELECT id,email,name FROM users WHERE id<>?", (canonical_id,)).fetchall()
 
     # Preserve the one semester record already present, but attach it to the real
@@ -124,7 +124,7 @@ def repair(path: Path, email: str, name: str) -> dict:
                 con.execute("UPDATE semesters SET user_id=? WHERE id=?", (canonical_id, sem["id"]))
             con.execute("UPDATE sems_study_blocks SET user_id=? WHERE user_id=?", (canonical_id, uid))
 
-        # Remove all other demonstration data, especially the unrelated resume.
+        # Remove all other guest/demonstration data, especially the unrelated resume.
         delete_user_scoped_rows(con, uid)
         con.execute("DELETE FROM users WHERE id=?", (uid,))
 

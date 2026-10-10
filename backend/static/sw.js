@@ -1,5 +1,5 @@
 /* OPAI service worker: cache static shell, never cache API calls. */
-const V='opai-v8',SHELL=['/super-chat','/static/opai-shared.css','/static/guide.js','/manifest.json'];
+const V='opai-v7',SHELL=['/super-chat','/static/opai-shared.css','/static/guide.js','/manifest.json'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>Promise.allSettled(SHELL.map(u=>c.add(u)))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{const r=e.request,u=new URL(r.url);
