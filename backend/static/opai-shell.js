@@ -3,7 +3,7 @@
   if(window.OPAI_SHELL)return;window.OPAI_SHELL=1;
   var path=(location.pathname.split('/').pop()||'today.html').replace(/\/$/,'')||'today.html';
   if(path==='super-chat'||path==='')path='super-chat.html';
-  var NAV=[['Today','today.html'],['KARNA','super-chat.html'],['Plan','plan.html'],['Internships','applications.html'],['Projects','projects.html'],['Academics','academics.html'],['DSA','dsa.html'],['Overview','app.html'],['Console','agent-console.html']];
+  var NAV=[['Today','today.html'],['KARNA','super-chat.html'],['Plan','plan.html'],['Opportunities','opportunities.html'],['Projects','projects.html'],['Academics','academics.html'],['DSA','dsa.html'],['Overview','app.html'],['Console','agent-console.html']];
   var isChat=/super-chat/.test(path);
   var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
   var uid=localStorage.getItem('opa_guest_uid'),mail=localStorage.getItem('opai_sc_email');

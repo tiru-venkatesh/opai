@@ -110,6 +110,12 @@ class Application(Base):
     effort_minutes = Column(Integer, default=60)
     resume_id = Column(String(36))            # resume version tailored for this application
     tailored_at = Column(DateTime)
+    opportunity_id = Column(String(36))
+    submitted_on = Column(Date)
+    stage_history = Column(JSON, default=list)     # [{stage, at, note}]
+    checklist = Column(JSON, default=list)         # [{text, done}]
+    referral_contact = Column(String)
+    follow_up_state = Column(String)               # pending | replied | not_yet | closed
 
 
 class Contact(Base):
@@ -128,6 +134,11 @@ class Contact(Base):
     # outreach endpoints (draft/mark-sent/reject).
     status = Column(String, default="Not started")  # Not started, Drafted, Sent
     sent_on = Column(Date)
+    source_url = Column(String)                    # official faculty page
+    source_checked_at = Column(DateTime)
+    email_verification = Column(String, default="unverified")  # unverified | public_page | user_confirmed
+    recent_work = Column(Text)                     # paper/project the user confirmed
+    owner_user_id = Column(String(36))             # NULL = seed dataset
 
 
 class OutreachHistory(Base):
@@ -187,6 +198,13 @@ class Opportunity(Base):
     eligibility_note = Column(Text)          # e.g. "Final-year only" - free text, optional
     last_verified_at = Column(DateTime, default=_dt.utcnow)
     duplicate_of = Column(String(36), ForeignKey("opportunities.id", ondelete="SET NULL"), nullable=True)
+    # Opportunities pipeline (user-scoped; NULL user_id = legacy/shared row)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    source_type = Column(String, default="manual")  # linkedin_user_saved | career_page | email_alert | referral | pasted | manual
+    location = Column(String)
+    work_mode = Column(String)                      # remote | hybrid | onsite
+    description_text = Column(Text)
+    facts = Column(JSON, default=dict)              # fields stated in the posting (verified facts)
 
 
 class Academic(Base):
@@ -254,6 +272,11 @@ class OutboxItem(Base):
     approval_scope = Column(String, default="single_use")
     expires_at = Column(DateTime)
     created_at = Column(DateTime, default=_dt.utcnow)
+    payload_hash = Column(String(64))      # sha256 of the exact content (set centrally, see _outbox_hash_events)
+    approved_hash = Column(String(64))     # hash the user approved; send requires payload_hash == approved_hash
+    sent_at = Column(DateTime)
+    provider_message_id = Column(String)   # Gmail message id after a real send
+    send_state = Column(String, default="not_sent")  # not_sent | sent | failed
 
 
 class UserMemory(Base):
@@ -539,6 +562,37 @@ class Milestone(Base):
     status = Column(String, default="todo")      # todo | in_progress | done
     position = Column(Integer, default=0)
     created_at = Column(DateTime, default=_dt.utcnow)
+
+
+
+# ---- Outbox integrity: one central hash so EVERY creation/edit path is covered ----
+import hashlib as _hl
+import json as _json
+from sqlalchemy import event as _event
+
+
+def outbox_content_hash(channel, payload) -> str:
+    """sha256 over the exact reviewable content: channel + recipient/subject/body/attachments."""
+    p = payload or {}
+    canon = {"channel": channel or "email", "to": (p.get("to") or "").strip().lower(),
+             "subject": p.get("subject") or "", "body": p.get("body") or "",
+             "attachments": p.get("attachments") or []}
+    return _hl.sha256(_json.dumps(canon, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
+@_event.listens_for(OutboxItem, "before_insert")
+def _outbox_hash_insert(mapper, conn, t):
+    t.payload_hash = outbox_content_hash(t.channel, t.payload)
+
+
+@_event.listens_for(OutboxItem, "before_update")
+def _outbox_hash_update(mapper, conn, t):
+    new = outbox_content_hash(t.channel, t.payload)
+    t.payload_hash = new
+    # Any edit after approval revokes the approval: it must be reviewed again.
+    if t.status == "approved" and t.approved_hash and t.approved_hash != new and t.send_state != "sent":
+        t.status = "pending"
+        t.approved_hash = None
 
 
 def _auto_migrate():

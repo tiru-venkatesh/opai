@@ -69,6 +69,8 @@ from dsa_api import router as dsa_router
 app.include_router(dsa_router)
 from extras_api import router as extras_router
 app.include_router(extras_router)
+from opportunities_api import router as opportunities_router
+app.include_router(opportunities_router)
 
 _CORS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()] or ["*"]
 app.add_middleware(
@@ -937,10 +939,19 @@ def create_outbox(payload: OutboxCreate, db: Session = Depends(get_db)):
 
 
 @app.post("/v1/outbox/{outbox_id}/approve", response_model=OutboxOut)
-def approve_outbox(outbox_id: UUID, db: Session = Depends(get_db)):
+def approve_outbox(outbox_id: UUID, payload_hash: str = None, db: Session = Depends(get_db)):
     row = db.query(OutboxItem).filter(OutboxItem.id == str(outbox_id)).first()
     if not row:
         raise HTTPException(status_code=404, detail="Outbox item not found")
+    from database import outbox_content_hash as _och
+    _cur = _och(row.channel, row.payload)
+    _pipeline = (row.ref or {}).get("pipeline") == "opportunities"
+    # Approval is bound to the exact content the user reviewed. Pipeline items MUST
+    # present the hash they saw; legacy callers may omit it but a wrong one is rejected.
+    if payload_hash is None and _pipeline:
+        raise HTTPException(status_code=422, detail="payload_hash is required: approve the exact content you reviewed")
+    if payload_hash is not None and payload_hash != _cur:
+        raise HTTPException(status_code=409, detail="Content changed since you reviewed it - review the new version")
     if row.status != "pending":
         raise HTTPException(status_code=409, detail=f"Item is already '{row.status}', not pending")
     if row.expires_at and row.expires_at < datetime.utcnow():
@@ -964,8 +975,11 @@ def approve_outbox(outbox_id: UUID, db: Session = Depends(get_db)):
     if approved_today >= MAX_OUTBOX_APPROVALS_PER_DAY:
         raise HTTPException(status_code=429, detail="Daily outbox approval limit reached - try again tomorrow")
     row.status = "approved"
+    row.approved_hash = _cur
     ref = row.ref or {}
-    if ref.get("kind") == "contact":
+    if ref.get("pipeline") == "opportunities":
+        pass  # approved != sent: contact/history/follow-up are recorded by POST /v1/opp/outbox/{id}/send
+    elif ref.get("kind") == "contact":
         contact = db.query(Contact).filter(Contact.id == ref.get("id")).first()
         if contact:
             contact.status = "Sent"

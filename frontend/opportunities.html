@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Opportunities · OPAI</title>
+<meta name="theme-color" content="#F6F4EE">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="opai-shared.css">
+<style>
+:root{--bg:#F6F4EE;--card:#fff;--ink:#16181A;--mut:#5a6064;--pri:#17504A;--coral:#E8705A;--line:#e4e0d6;--ok:#2f7d4f;--warn:#b7791f;--font:'Geist',system-ui,sans-serif}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/22px var(--font);padding-bottom:96px}
+main{max-width:980px;margin:0 auto;padding:20px 16px}
+h1{font-size:28px;letter-spacing:-.03em;margin:8px 0 4px;color:var(--pri)}h2{font-size:17px;margin:0 0 8px}
+.sub{color:var(--mut);margin:0 0 16px}
+.tabs{display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs button{border:0;background:none;padding:10px 12px;font:500 14px var(--font);color:var(--mut);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}
+.tabs button.on{color:var(--pri);border-color:var(--pri)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.sp{justify-content:space-between}
+.pill{font:600 12px/18px var(--font);padding:2px 10px;border-radius:999px;background:#eceae2}
+.pill.Strong,.pill.ok{background:#dff1e6;color:var(--ok)}.pill.Moderate,.pill.warn{background:#fbefd5;color:var(--warn)}.pill.Weak,.pill.bad{background:#fbe3de;color:#b4402b}
+.btn{border:1px solid var(--pri);background:var(--pri);color:#fff;border-radius:10px;padding:7px 14px;font:500 14px var(--font);cursor:pointer}
+.btn.ghost{background:#fff;color:var(--pri)}.btn.sm{padding:4px 10px;font-size:13px}.btn:disabled{opacity:.5}
+input,textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:14px var(--font);background:#fff;margin:4px 0}
+textarea{min-height:110px}label{font-size:13px;color:var(--mut)}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.k{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:10px 0 2px}
+ul.t{margin:2px 0;padding-left:18px}.note{background:#fff7e6;border:1px solid #f0dcae;border-radius:10px;padding:8px 12px;font-size:13px;margin:8px 0}
+.stat{font-size:26px;font-weight:700;color:var(--pri)}pre.body{white-space:pre-wrap;font:14px/21px var(--font);background:#faf9f5;border:1px solid var(--line);border-radius:10px;padding:10px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;display:none;z-index:50}
+</style>
+</head>
+<body>
+<main>
+  <h1>Opportunities</h1>
+  <p class="sub">Discover → Evaluate → Prepare → Apply or reach out → Follow up → Learn. You review and approve every send and every submission.</p>
+  <div class="card" id="today"></div>
+  <div class="tabs" id="tabs"></div>
+  <div id="view"></div>
+</main>
+<div class="toast" id="toast"></div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const base=()=>(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
+let uid=null,tab='matches';
+async function api(p,o={}){const r=await fetch(base()+p,Object.assign({headers:{'Content-Type':'application/json'}},o));let d=null;try{d=await r.json()}catch(e){}
+  if(!r.ok)throw new Error((d&&(typeof d.detail==='string'?d.detail:JSON.stringify(d.detail)))||('Error '+r.status));return d}
+const P=(p,b)=>api(p,{method:'POST',body:JSON.stringify(Object.assign({user_id:uid},b||{}))});
+const Q=(p,x)=>api(p+(p.includes('?')?'&':'?')+'user_id='+uid+(x||''));
+function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',3500)}
+async function act(fn){try{await fn()}catch(e){toast(e.message)}}
+async function login(){const em=new URLSearchParams(location.search).get('email')||localStorage.getItem('opai_sc_email');
+  if(em){localStorage.setItem('opai_sc_email',em);return (await api('/v1/auth/dev-login?email='+encodeURIComponent(em),{method:'POST'})).user_id}
+  let g=localStorage.getItem('opa_guest_uid');if(g){try{await api('/v1/profile?user_id='+g);return g}catch(e){}}
+  g=(await api('/v1/auth/guest',{method:'POST'})).user_id;localStorage.setItem('opa_guest_uid',g);return g}
+
+const TABS=[['matches',"Today's Matches"],['saved','Saved Opportunities'],['apps','Applications'],['prof','Professor Outreach'],['mail','Email & Follow-ups'],['reports','Reports']];
+function tabs(){$('tabs').innerHTML=TABS.map(([k,l])=>`<button class="${k===tab?'on':''}" onclick="go('${k}')">${l}</button>`).join('')}
+function go(k){tab=k;tabs();render()}
+async function summary(){const s=await Q('/v1/opp/summary');
+  $('today').innerHTML=`<h2>Your internship search</h2><div class="grid">${[['strong_matches','strong matches to review'],['deadlines_this_week','deadlines this week'],['applications_waiting','ready to submit'],['drafts_awaiting_approval','drafts awaiting approval'],['followups_due','follow-ups due']].map(([k,l])=>`<div><div class="stat">${s[k]}</div>${l}</div>`).join('')}</div><p class="note">Next: ${esc(s.recommended_next_action)}</p>`}
+async function render(){$('view').innerHTML='<p class="sub">Loading…</p>';try{await ({matches,saved,apps,prof,mail,reports})[tab]()}catch(e){$('view').innerHTML='<div class="card">'+esc(e.message)+'</div>'}}
+const ul=a=>a&&a.length?'<ul class="t">'+a.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'<div class="sub">—</div>';
+
+/* ---- matches + intake ---- */
+function intakeCard(){return `<div class="card"><h2>Add from LinkedIn or anywhere</h2>
+<p class="sub">Save the job on LinkedIn (or turn on a job alert), then paste its link and the posting text here. OPAI never opens, scrapes or automates LinkedIn.</p>
+<label>Link</label><input id="in-url" placeholder="https://www.linkedin.com/jobs/view/…"><label>Posting text or job-alert email</label><textarea id="in-text"></textarea>
+<button class="btn" onclick="doIntake()">Extract details</button><div id="in-out"></div></div>`}
+async function doIntake(){act(async()=>{const r=await P('/v1/opp/intake',{url:$('in-url').value||null,text:$('in-text').value||null});const f=r.fields;
+  const cand=r.job_alert_candidates.length?`<div class="note">Found ${r.job_alert_candidates.length} job link(s) in this email. Paste each posting separately to track it:<ul class="t">${r.job_alert_candidates.map(c=>'<li>'+esc(c.source_url)+'</li>').join('')}</ul></div>`:'';
+  $('in-out').innerHTML=cand+`<div class="k">Confirm details${r.ai_suggested_fields.length?' (AI-suggested: '+r.ai_suggested_fields.join(', ')+')':''}</div><div class="grid">
+${[['title','Title'],['organization','Organization'],['location','Location'],['work_mode','Work mode (remote/hybrid/onsite)'],['role_type','Role type'],['deadline','Deadline (YYYY-MM-DD)']].map(([k,l])=>`<div><label>${l}${r.unknown.includes(k)?' — not found, please fill':''}</label><input id="c-${k}" value="${esc(f[k]||'')}"></div>`).join('')}</div>
+<button class="btn" onclick='doConfirm(${JSON.stringify({st:r.source_type,url:f.source_url||null,facts:{min_gpa:f.min_gpa,eligibility_text:f.eligibility_text}}).replace(/'/g,"&#39;")})'>Confirm and track</button>`})}
+async function doConfirm(m){act(async()=>{const v=k=>$('c-'+k).value.trim()||null;const facts={};Object.entries(m.facts).forEach(([k,x])=>{if(x!=null)facts[k]=x});
+  await P('/v1/opp/intake/confirm',{title:v('title'),organization:v('organization'),source_type:m.st,source_url:m.url,location:v('location'),work_mode:v('work_mode'),role_type:v('role_type')||'internship',deadline:v('deadline'),description_text:$('in-text').value||null,facts});
+  toast('Saved');summary();go('matches')})}
+function briefCard(b){return `<div class="card"><div class="row sp"><div><b>${esc(b.title)}</b> · ${esc(b.organization)}</div><div class="row"><span class="pill ${b.match}">Match: ${b.match}</span>${b.deadline?`<span class="pill">${esc(b.deadline)} · ${esc(b.deadline_note)}</span>`:''}</div></div>
+<div class="k">Eligibility</div>${esc(b.eligibility)}
+<div class="k">Verified facts (from the posting)</div>${ul(b.verified_facts)}
+<div class="k">Profile match</div>${ul(b.profile_match)}
+<div class="k">Gaps</div>${ul(b.gaps)}
+<div class="k">Unknown — please verify</div>${ul(b.unknown)}
+<div class="k">${esc(b.ai_suggestion.label)}</div>${esc(b.ai_suggestion.next_step)} (~${b.ai_suggestion.estimated_prep_minutes} min prep)
+<div class="row" style="margin-top:10px"><button class="btn sm" onclick="trackOpp('${b.opportunity_id}')">Track application</button><button class="btn sm ghost" onclick="openSrc('${b.opportunity_id}')">Open source</button><button class="btn sm ghost" onclick="dismissOpp('${b.opportunity_id}')">Not interested</button></div></div>`}
+let SRC={};async function openSrc(id){const o=(await Q('/v1/opp/opportunities')).find(x=>x.id===id);if(o&&o.source_url)open(o.source_url,'_blank','noopener');else toast('No source link saved')}
+async function trackOpp(id){act(async()=>{await P('/v1/opp/opportunities/'+id+'/track?user_id='+uid);toast('Added to Applications');summary();go('apps')})}
+async function dismissOpp(id){act(async()=>{await P('/v1/opp/opportunities/'+id+'/dismiss?user_id='+uid);summary();render()})}
+async function matches(){const [m,p]=await Promise.all([Q('/v1/opp/matches'),Q('/v1/opp/profile')]);
+  $('view').innerHTML=(p.confirmed?'':'<div class="note">Your opportunity profile is not confirmed, so matches are provisional. <a href="#" onclick="profileForm();return false">Confirm profile</a></div>')+intakeCard()+(m.length?m.map(briefCard).join(''):'<div class="card">No open matches. Add one above.</div>')}
+async function profileForm(){const p=await Q('/v1/opp/profile');const f=(k,l,v)=>`<div><label>${l}</label><input id="p-${k}" value="${esc(Array.isArray(v)?v.join(', '):v||'')}"></div>`;
+  $('view').innerHTML=`<div class="card"><h2>Candidate profile</h2><p class="sub">Only what you enter here is used for eligibility. Nothing is inferred.</p><div class="grid">${f('degree','Degree',p.degree)}${f('year','Year (e.g. pre-final)',p.year)}${f('branch','Branch',p.branch)}${f('college','College',p.college)}${f('graduation_year','Graduation year',p.graduation_year)}${f('gpa','CGPA',p.gpa)}${f('skills','Skills (comma separated)',p.skills)}${f('role_types','Role types',p.role_types)}${f('work_modes','Work modes',p.work_modes)}${f('locations','Locations',p.locations)}${f('availability','Availability',p.availability)}${f('resume_url','Resume link',p.resume_url)}</div><button class="btn" onclick="saveProfile()">Confirm profile</button></div>`}
+async function saveProfile(){act(async()=>{const g=k=>$('p-'+k).value.trim(),L=k=>g(k).split(',').map(s=>s.trim()).filter(Boolean),b={confirmed:true};
+  ['degree','year','branch','college','availability','resume_url'].forEach(k=>{if(g(k))b[k]=g(k)});['skills','role_types','work_modes','locations'].forEach(k=>{if(L(k).length)b[k]=L(k)});
+  if(g('graduation_year'))b.graduation_year=+g('graduation_year');if(g('gpa'))b.gpa=+g('gpa');await api('/v1/opp/profile',{method:'PUT',body:JSON.stringify(Object.assign({user_id:uid},b))});toast('Profile confirmed');go('matches')})}
+
+async function saved(){const o=await Q('/v1/opp/opportunities');$('view').innerHTML=o.length?o.map(x=>`<div class="card row sp"><div><b>${esc(x.title)}</b> · ${esc(x.organization)}<div class="sub">${esc(x.source_type)} · ${esc(x.status)}${x.deadline?' · deadline '+esc(x.deadline):''} · checked ${esc((x.last_verified_at||'').slice(0,10))}</div></div><div class="row"><button class="btn sm ghost" onclick="openSrc('${x.id}')">Open source</button><button class="btn sm ghost" onclick="reverify('${x.id}')">I re-checked it</button></div></div>`).join(''):'<div class="card">Nothing saved yet.</div>'}
+async function reverify(id){act(async()=>{await P('/v1/opp/opportunities/'+id+'/reverify?user_id='+uid);toast('Marked as re-checked');render()})}
+
+/* ---- applications ---- */
+async function apps(){const r=await Q('/v1/opp/applications');
+  $('view').innerHTML=r.items.length?r.items.map(a=>`<div class="card"><div class="row sp"><div><b>${esc(a.role)}</b> · ${esc(a.company)}<div class="sub">${a.deadline?'Deadline '+esc(a.deadline)+' · ':''}${a.submitted_on?'Applied '+esc(a.submitted_on)+' · ':''}${a.follow_up_date?'Follow-up '+esc(a.follow_up_date):''}</div></div>
+<select style="width:auto" onchange="setStage('${a.id}',this.value)">${r.stages.map(s=>`<option ${s===a.stage?'selected':''}>${s}</option>`).join('')}</select></div>
+<div class="k">Checklist</div>${a.checklist.map((c,i)=>`<label style="display:block"><input type="checkbox" style="width:auto" ${c.done?'checked':''} onchange="tick('${a.id}')" data-a="${a.id}"> ${esc(c.text)}</label>`).join('')}
+<div class="row" style="margin-top:8px">${a.source_url?`<button class="btn sm ghost" onclick="window.open('${esc(a.source_url)}','_blank','noopener')">Open original application page</button>`:''}${a.stage==='Applied'?`<button class="btn sm" onclick="appFollow('${a.id}')">Draft follow-up</button>`:''}</div>
+<details><summary class="sub">Status history</summary>${ul(a.stage_history.map(h=>h.stage+' · '+h.at.slice(0,10)+(h.note?' · '+h.note:'')))}</details></div>`).join(''):'<div class="card">No applications yet. Track one from Today\'s Matches.</div>'}
+async function setStage(id,s){act(async()=>{if(s==='Applied'&&!confirm('Mark as Applied? Only do this after YOU submitted it on the original page.')){return render()}await P('/v1/opp/applications/'+id+'/stage',{stage:s});summary();render()})}
+async function tick(id){act(async()=>{const done=[...document.querySelectorAll(`input[data-a="${id}"]`)].map((c,i)=>c.checked?i:-1).filter(i=>i>=0);await api('/v1/opp/applications/'+id,{method:'PATCH',body:JSON.stringify({user_id:uid,checklist_done:done})})})}
+async function appFollow(id){act(async()=>{const to=prompt('Recruiter / referral email (you supply this):');if(!to)return;const src=prompt('Where did you get this address?','Careers page');if(!src)return;await P('/v1/opp/applications/'+id+'/followup-draft',{to,recipient_source:src});toast('Draft is in Email & Follow-ups');go('mail')})}
+
+/* ---- professors ---- */
+async function prof(){const l=await Q('/v1/opp/professors');
+  $('view').innerHTML=`<div class="card"><h2>Add a professor (official page required)</h2><div class="grid"><div><label>Name</label><input id="pf-name"></div><div><label>Institution</label><input id="pf-inst"></div><div><label>Department / lab</label><input id="pf-dept"></div><div><label>Official faculty page URL</label><input id="pf-src"></div><div><label>Email (if shown)</label><input id="pf-email"></div><div><label>Research areas (comma separated)</label><input id="pf-areas"></div></div>
+<label>Recent paper or project you read (optional, your words)</label><input id="pf-work"><label style="display:block"><input type="checkbox" id="pf-shown" style="width:auto"> This email is shown on the official page</label><button class="btn" onclick="addProf()">Add</button><p class="sub">Start small: a few individually researched emails, never bulk.</p></div>`+
+  (l.length?l.map(p=>`<div class="card"><div class="row sp"><div><b>${esc(p.name)}</b> · ${esc(p.institution)}<div class="sub">${esc((p.research_areas||[]).join(', '))}</div></div><span class="pill">${esc(p.outreach_status)}</span></div>
+<div class="sub">Source: <a href="${esc(p.source_url)}" target="_blank" rel="noopener">official page</a> · checked ${esc((p.source_checked_at||'').slice(0,10))} · email: ${esc(p.email||'none')} (<span class="pill ${p.email_verification==='unverified'?'warn':'ok'}">${esc(p.email_verification)}</span>)</div>
+<div class="row" style="margin-top:8px">${p.email&&p.email_verification==='unverified'?`<button class="btn sm ghost" onclick="confirmEmail('${p.id}')">I verified this email</button>`:''}<button class="btn sm" onclick="profDraft('${p.id}')">Research brief + draft</button>${p.last_outreach&&p.last_outreach.status==='Sent'?`<button class="btn sm ghost" onclick="profFollow('${p.id}')">Draft follow-up</button>`:''}</div></div>`).join(''):'')}
+async function addProf(){act(async()=>{const g=k=>$('pf-'+k).value.trim();await P('/v1/opp/professors',{name:g('name'),institution:g('inst'),department:g('dept')||null,source_url:g('src'),email:g('email')||null,email_shown_on_source:$('pf-shown').checked,research_areas:g('areas').split(',').map(s=>s.trim()).filter(Boolean),recent_work:g('work')||null});toast('Added');render()})}
+async function confirmEmail(id){act(async()=>{await P('/v1/opp/professors/'+id+'/confirm-email');render()})}
+async function profDraft(id){act(async()=>{const r=await P('/v1/opp/professors/'+id+'/draft?user_id='+uid);toast('Draft ready for review');summary();go('mail')})}
+async function profFollow(id){act(async()=>{await P('/v1/opp/professors/'+id+'/followup-draft?user_id='+uid);toast('Follow-up draft ready');go('mail')})}
+
+/* ---- email & follow-ups ---- */
+async function mail(){const [ob,fu]=await Promise.all([Q('/v1/opp/outbox'),Q('/v1/opp/followups')]);
+  $('view').innerHTML=`<h2>Follow-ups due</h2>`+(fu.length?fu.map(f=>`<div class="card row sp"><div><b>${esc(f.title)}</b><div class="sub">due ${esc(f.due)} · ${esc(f.question)}</div></div><div class="row"><button class="btn sm" onclick="ans('${f.kind}','${f.id}','yes')">Yes</button><button class="btn sm ghost" onclick="ans('${f.kind}','${f.id}','not_yet')">Not yet</button><button class="btn sm ghost" onclick="ans('${f.kind}','${f.id}','later')">Remind me later</button></div></div>`).join(''):'<div class="card sub">Nothing due. OPAI does not read your inbox; you tell it when someone replies.</div>')+
+  `<h2 style="margin-top:18px">Outbox — review exact content</h2>`+(ob.length?ob.map(o=>`<div class="card"><div class="row sp"><div><b>To:</b> ${esc(o.to)} <span class="pill ${o.recipient.email_verification==='unverified'?'warn':'ok'}">${esc(o.recipient.email_verification||o.recipient.recipient_source||'user supplied')}</span></div><span class="pill">${o.send_state==='sent'?'sent':esc(o.status)}</span></div>
+<div class="k">Subject</div><input id="s-${o.id}" value="${esc(o.subject)}" ${o.send_state==='sent'?'disabled':''}><div class="k">Body</div>${o.send_state==='sent'?`<pre class="body">${esc(o.body)}</pre>`:`<textarea id="b-${o.id}">${esc(o.body)}</textarea>`}
+<div class="sub">Attachments: ${o.attachments.length?esc(o.attachments.join(', ')):'none'} · Action: ${esc(o.action)}</div>
+${o.send_state==='sent'?`<div class="sub">Sent ${esc(o.sent_at.slice(0,16))} · Gmail id ${esc(o.provider_message_id)}</div>`:`<div class="row" style="margin-top:8px"><button class="btn sm ghost" onclick="saveEdit('${o.id}')">Save edits</button>${o.status==='approved'?`<button class="btn sm" onclick="sendMail('${o.id}')">Send via Gmail</button>`:`<button class="btn sm" onclick="approve('${o.id}','${o.payload_hash}')">Approve this exact version</button>`}<button class="btn sm ghost" onclick="reject('${o.id}')">Reject</button></div>`}</div>`).join(''):'<div class="card sub">No drafts.</div>')}
+async function ans(k,id,a){act(async()=>{const r=await P(`/v1/opp/followups/${k}/${id}/answer`,{answer:a});if(a==='not_yet'&&k==='professor')toast('You can draft a follow-up from Professor Outreach');summary();render()})}
+async function saveEdit(id){act(async()=>{await api('/v1/opp/outbox/'+id,{method:'PATCH',body:JSON.stringify({user_id:uid,subject:$('s-'+id).value,body:$('b-'+id).value})});toast('Saved. Any earlier approval was cleared; review again.');render()})}
+async function approve(id,h){act(async()=>{await api(`/v1/outbox/${id}/approve?payload_hash=${h}`,{method:'POST'});toast('Approved. Nothing is sent until you press Send.');render()})}
+async function reject(id){act(async()=>{await api(`/v1/outbox/${id}/reject`,{method:'POST'});render()})}
+function gToken(){return new Promise((res,rej)=>{const cid=localStorage.getItem('opa_google_client_id');if(!cid)return rej(new Error('Set your Google OAuth client ID once: localStorage.setItem("opa_google_client_id","…")'));
+  if(!window.google||!google.accounts)return rej(new Error('Google sign-in script not loaded'));
+  google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/gmail.send',callback:r=>r.access_token?res(r.access_token):rej(new Error('Gmail access was not granted'))}).requestAccessToken()})}
+async function sendMail(id){act(async()=>{if(!confirm('Send this exact email now via your Gmail account?'))return;const t=await gToken();await P(`/v1/opp/outbox/${id}/send`,{access_token:t});toast('Sent');summary();render()})}
+
+/* ---- reports ---- */
+async function reports(){const r=await Q('/v1/opp/reports');const f=r.funnel,po=r.professor_outreach;
+  $('view').innerHTML=`<div class="card"><h2>Funnel</h2><div class="grid">${Object.entries(f).map(([k,v])=>`<div><div class="stat">${v}</div>${k}</div>`).join('')}</div>${r.bottleneck?`<p class="note">${esc(r.bottleneck)}</p>`:''}</div>
+<div class="card"><h2>By source</h2>${Object.keys(r.by_source).length?'<ul class="t">'+Object.entries(r.by_source).map(([k,v])=>`<li>${esc(k)}: ${v.tracked} tracked, ${v.applied} applied, ${v.interviews} interviews</li>`).join('')+'</ul>':'<span class="sub">No data yet.</span>'}</div>
+<div class="card"><h2>Professor outreach</h2>${po.sent} sent · ${po.replied} replied${po.reply_rate!=null?' ('+po.reply_rate+'%)':''}</div>`}
+(async()=>{try{uid=await login();tabs();await summary();render()}catch(e){$('view').innerHTML='<div class="card">Could not reach the OPAI backend: '+esc(e.message)+'</div>'}})();
+</script>
+<script src="opai-shell.js" defer></script>
+</body>
+</html>
