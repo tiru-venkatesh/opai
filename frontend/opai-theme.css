@@ -1,0 +1,122 @@
+/* OPAI theme + motion layer. Loaded after opai-shared.css on every section page.
+   Dark mode = html[data-theme=dark] (set by opai-ux.js, remembered in localStorage). */
+
+/* ================= DARK THEME ================= */
+html[data-theme=dark]{
+  color-scheme:dark;
+  --paper:#0f1211;--bg:#0f1211;--card:#171b1a;--card-2:#1c2120;--well:#212726;--hair:#2a3130;--line:#2c3433;--line-2:#38413f;
+  --s1:#171b1a;--s2:#1c2120;--s3:#2a3130;
+  --ink:#ECEAE3;--tx:#ECEAE3;--ink-2:#B1B7B3;--mut:#A3AAA6;--ink-3:#868D89;
+  --teal:#2F8F82;--pri:#2F8F82;--teal-2:#3AA394;--teal-soft:#1B3A36;--coral:#F08A75;--coral-ink:#F5A08C;--coral-soft:#3A2520;
+  --ok:#4FBF8A;--good:#4FBF8A;--warn:#E3A844;--bad:#F0786A;--ac:#6B9CFF;
+  --shadow:0 1px 0 rgba(255,255,255,.04) inset,0 10px 30px -18px rgba(0,0,0,.8);
+  /* Tailwind-page channels (see tailwind config in app/agent-console/academics-full) */
+}
+html[data-theme=dark],html[data-theme=dark] body{background-color:var(--paper);color:var(--ink)}
+html[data-theme=dark] ::selection{background:#3a4a46;color:#fff}
+html[data-theme=dark] .opai-hd{background:rgba(15,18,17,.86);border-bottom-color:var(--hair)}
+html[data-theme=dark] .opai-pills a[aria-current=page]{background:#ECEAE3;color:#0f1211}
+html[data-theme=dark] .opai-dock{background:rgba(23,27,26,.86)}
+html[data-theme=dark] .opai-user .av{background:var(--teal)}
+html[data-theme=dark] #opai-guide{background:rgba(0,0,0,.55)}
+html[data-theme=dark] #opai-guide a.gi,html[data-theme=dark] #opai-guide input{background:var(--card-2)}
+html[data-theme=dark] .opai-logo svg rect:last-child{fill:#3AA394}
+
+/* hard-coded light surfaces inside pages */
+html[data-theme=dark] .conf button,html[data-theme=dark] .en button,html[data-theme=dark] dialog textarea,
+html[data-theme=dark] .addbox,html[data-theme=dark] .cc,html[data-theme=dark] .msg,html[data-theme=dark] button.chip,
+html[data-theme=dark] label.chip,html[data-theme=dark] .dots button,html[data-theme=dark] .composer input,
+html[data-theme=dark] .composer textarea,html[data-theme=dark] .mic,html[data-theme=dark] button.b.alt,
+html[data-theme=dark] a.b.alt,html[data-theme=dark] button.b.dng,html[data-theme=dark] input,
+html[data-theme=dark] textarea,html[data-theme=dark] select,html[data-theme=dark] .modal>div,
+html[data-theme=dark] .big.out:hover{background:var(--card-2);color:var(--ink);border-color:var(--hair)}
+html[data-theme=dark] button.chip,html[data-theme=dark] label.chip,html[data-theme=dark] .mic,html[data-theme=dark] button.b.alt,html[data-theme=dark] a.b.alt{color:#7FD0C2;border-color:#2F8F82}
+html[data-theme=dark] button.b.dng{color:var(--bad);border-color:var(--bad)}
+html[data-theme=dark] .msg.u,html[data-theme=dark] .dots button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+html[data-theme=dark] .msg.err{background:var(--coral-soft);border-color:var(--coral)}
+html[data-theme=dark] .pend{background:#2a1d19;border-color:#6b3a2e}
+html[data-theme=dark] .note,html[data-theme=dark] .banner{background:#2d2616;border-color:#5a4a1f;color:#EBD9A6}
+html[data-theme=dark] .col{background:#1a1f1e}
+html[data-theme=dark] pre.mail,html[data-theme=dark] .bul{background:var(--card-2);border-color:var(--hair)}
+html[data-theme=dark] .meter,html[data-theme=dark] .bar{background:#2a3130}
+html[data-theme=dark] .repo,html[data-theme=dark] .blk,html[data-theme=dark] .tp{border-top-color:var(--hair)}
+html[data-theme=dark] .seg{border-color:var(--hair)}
+html[data-theme=dark] .btn:hover:not(.p):not(.accent){background:var(--well)}
+html[data-theme=dark] .course:hover,html[data-theme=dark] .course[aria-pressed=true],html[data-theme=dark] .drop.over{background:var(--teal-soft)}
+/* tinted status pills */
+html[data-theme=dark] .pill,html[data-theme=dark] .src.ok,html[data-theme=dark] .btn.on,html[data-theme=dark] .pill.ok{background:#1B3A36;color:#9ADBCE;border-color:#1B3A36}
+html[data-theme=dark] .pill.soon,html[data-theme=dark] .src.warn,html[data-theme=dark] .pill.Partial,html[data-theme=dark] .pill.warn{background:#3a2f14;color:#F0CB7A}
+html[data-theme=dark] .pill.hot,html[data-theme=dark] .pill.Poor,html[data-theme=dark] .pill.bad,html[data-theme=dark] .pill.crit{background:#3a1f1b;color:#F5A396}
+html[data-theme=dark] .pill.Strong,html[data-theme=dark] .pill.good,html[data-theme=dark] .pill.Good{background:#173a2b;color:#8FE0B5}
+html[data-theme=dark] .pill.line,html[data-theme=dark] .pill.coral{background:transparent;color:var(--ink-2)}
+html[data-theme=dark] .toast,html[data-theme=dark] #msg{background:#ECEAE3;color:#0f1211}
+html[data-theme=dark] .card:hover{box-shadow:0 8px 22px rgba(0,0,0,.45);border-color:var(--line-2)}
+html[data-theme=dark] img:not([src$=".svg"]){filter:brightness(.92)}
+
+/* briefs.html keeps its own variable names; make it follow the toggle */
+html[data-theme=dark] body{--ac:#6B9CFF}
+html[data-theme=light]{color-scheme:light}
+html[data-theme=light]:has(#tools){--bg:#f4f6fb;--card:#fff;--line:#dfe5f1;--tx:#111827;--mut:#5b6784}
+html[data-theme=light] .why{background:rgba(79,140,255,.08)}
+
+/* Tailwind-page colour channels (tailwind config maps every colour to rgb(var(--c-name) / alpha)) */
+:root{--c-tertiary-fixed:225 238 234;--c-primary-fixed:225 238 234;--c-surface-container-low:251 250 246;--c-on-tertiary-container:23 80 74;--c-on-tertiary-fixed:15 53 49;--c-on-primary-container:23 80 74;--c-on-tertiary-fixed-variant:44 90 82;--c-tertiary:59 110 102;--c-surface-container-high:239 235 226;--c-primary-fixed-dim:191 216 210;--c-on-primary-fixed-variant:23 80 74;--c-on-secondary:255 255 255;--c-inverse-primary:127 181 171;--c-outline:122 127 128;--c-error-container:251 227 222;--c-on-surface-variant:74 79 82;--c-primary-container:225 238 234;--c-surface-bright:251 250 246;--c-inverse-on-surface:246 244 238;--c-secondary-container:252 228 220;--c-on-surface:22 24 26;--c-on-secondary-fixed:92 27 15;--c-outline-variant:217 212 199;--c-on-tertiary:255 255 255;--c-background:246 244 238;--c-tertiary-fixed-dim:191 216 210;--c-on-primary:255 255 255;--c-surface-tint:23 80 74;--c-on-primary-fixed:15 53 49;--c-secondary:232 112 90;--c-surface-variant:227 223 211;--c-surface-container:248 246 240;--c-surface-container-highest:230 226 216;--c-surface:246 244 238;--c-on-error:255 255 255;--c-on-background:22 24 26;--c-inverse-surface:22 24 26;--c-surface-dim:237 233 223;--c-secondary-fixed:252 228 220;--c-surface-container-lowest:246 244 238;--c-on-secondary-fixed-variant:143 47 29;--c-primary:23 80 74;--c-secondary-fixed-dim:245 185 171;--c-on-error-container:122 29 18;--c-tertiary-container:225 238 234;--c-on-secondary-container:143 47 29;--c-error:179 56 44;}
+html[data-theme=dark]{--c-tertiary-fixed:27 58 54;--c-primary-fixed:27 58 54;--c-surface-container-low:20 24 23;--c-on-tertiary-container:154 219 206;--c-on-tertiary-fixed:205 234 228;--c-on-primary-container:154 219 206;--c-on-tertiary-fixed-variant:154 219 206;--c-tertiary:127 181 171;--c-surface-container-high:31 37 36;--c-primary-fixed-dim:42 82 76;--c-on-primary-fixed-variant:154 219 206;--c-on-secondary:58 18 10;--c-inverse-primary:47 143 130;--c-outline:134 141 137;--c-error-container:58 31 27;--c-on-surface-variant:177 183 179;--c-primary-container:27 58 54;--c-surface-bright:28 33 32;--c-inverse-on-surface:22 24 26;--c-secondary-container:58 37 32;--c-on-surface:236 234 227;--c-on-secondary-fixed:250 211 200;--c-outline-variant:47 55 53;--c-on-tertiary:8 32 28;--c-background:15 18 17;--c-tertiary-fixed-dim:42 82 76;--c-on-primary:8 32 28;--c-surface-tint:127 181 171;--c-on-primary-fixed:205 234 228;--c-secondary:240 138 117;--c-surface-variant:42 49 48;--c-surface-container:23 27 26;--c-surface-container-highest:38 45 43;--c-surface:15 18 17;--c-on-error:58 13 8;--c-on-background:236 234 227;--c-inverse-surface:236 234 227;--c-surface-dim:11 14 13;--c-secondary-fixed:58 37 32;--c-surface-container-lowest:15 18 17;--c-on-secondary-fixed-variant:245 185 171;--c-primary:79 163 150;--c-secondary-fixed-dim:90 51 40;--c-on-error-container:245 163 150;--c-tertiary-container:27 58 54;--c-on-secondary-container:245 185 171;--c-error:240 120 106;}
+
+/* ================= TOGGLE BUTTON ================= */
+.opai-theme{width:36px;height:36px;border-radius:50%;border:1px solid var(--hair,#E3DFD3);background:var(--well,#EDE9DF);color:var(--ink-2,#4A4F52);display:grid;place-items:center;cursor:pointer;padding:0;flex:none;position:relative;overflow:hidden;transition:background .25s,border-color .25s,transform .2s}
+.opai-theme:hover{color:var(--ink,#16181A);transform:rotate(-12deg) scale(1.06)}
+.opai-theme svg{position:absolute;width:18px;height:18px;transition:transform .5s cubic-bezier(.34,1.56,.64,1),opacity .3s}
+.opai-theme .sun{transform:rotate(0) scale(1);opacity:1}.opai-theme .moon{transform:rotate(-90deg) scale(.4);opacity:0}
+html[data-theme=dark] .opai-theme .sun{transform:rotate(90deg) scale(.4);opacity:0}
+html[data-theme=dark] .opai-theme .moon{transform:rotate(0) scale(1);opacity:1}
+.opai-theme.float{position:fixed;top:14px;right:14px;z-index:80;box-shadow:0 6px 18px -8px rgba(0,0,0,.35)}
+/* smooth colour cross-fade when toggling (class added for ~450ms by opai-ux.js) */
+html.opai-swap *,html.opai-swap *::before,html.opai-swap *::after{transition:background-color .4s ease,color .4s ease,border-color .4s ease,box-shadow .4s ease,fill .4s ease!important}
+
+/* ================= MOTION ================= */
+:root{--o-ease:cubic-bezier(.22,.61,.36,1);--o-spring:cubic-bezier(.34,1.56,.64,1)}
+/* scroll / load reveal. Hidden only once JS marks the page (.o-js), so no-JS still shows everything */
+.o-js .o-rv{opacity:0;transform:translateY(18px) scale(.985);transition:opacity .55s var(--o-ease),transform .6s var(--o-ease);transition-delay:var(--o-d,0ms);will-change:opacity,transform}
+.o-js .o-rv.o-in{opacity:1;transform:none}
+/* items added later by JS (lists, cards after fetch): quick stagger-in */
+@keyframes oPop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+.o-new{animation:oPop .45s var(--o-ease) backwards;animation-delay:var(--o-d,0ms)}
+/* tab / section switch */
+@keyframes oSwap{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.o-swap{animation:oSwap .35s var(--o-ease) both}
+/* hover lift on every card-like block */
+.card,.panel,.cc,.addbox,.course,.col>*,.task,.kpi,.stat,.proj,.opp,.row.item{transition:transform .25s var(--o-ease),box-shadow .25s var(--o-ease),border-color .25s,background-color .25s}
+.card:hover,.course:hover,.cc:hover{transform:translateY(-3px)}
+/* buttons: press + soft lift */
+button,.btn,.b,.big,.chip,a.b{transition:transform .18s var(--o-ease),background-color .2s,border-color .2s,color .2s,box-shadow .2s}
+button:not(:disabled):active,.btn:active,.b:active,.big:active,.chip:active{transform:scale(.96)}
+.btn:hover,.b:hover,.big:hover{transform:translateY(-1px)}
+/* header pills: sliding feel */
+.opai-pills a{transition:background-color .25s,color .25s,box-shadow .25s}
+.opai-dock a,.opai-dock button{transition:background-color .2s,color .2s,transform .25s var(--o-spring)}
+.opai-dock a:hover,.opai-dock button:hover{transform:translateY(-4px) scale(1.08)}
+.opai-dock{animation:oDock .6s var(--o-spring) .25s backwards}
+@keyframes oDock{from{opacity:0;transform:translate(-50%,24px)}}
+.opai-hd{animation:oDown .5s var(--o-ease) backwards}
+@keyframes oDown{from{opacity:0;transform:translateY(-14px)}}
+/* progress bars grow in */
+.o-js .meter>*,.o-js .bar>i,.o-js .track>*,.o-js .prog>*{transform-origin:0 50%}
+@keyframes oGrow{from{transform:scaleX(0)}}
+.o-in .meter>*,.o-in .bar>i,.o-in .track>*,.o-in .prog>*,.meter>.o-new,.bar>i.o-new{animation:oGrow .9s var(--o-ease) .15s backwards}
+/* dialogs / modals */
+dialog[open]{animation:oPop .3s var(--o-ease)}
+.modal>div{animation:oPop .3s var(--o-spring)}
+#opai-guide.open .gp{animation:oPop .3s var(--o-ease)}
+/* page-level scroll progress */
+#o-prog{position:fixed;top:0;left:0;height:2px;width:100%;z-index:9998;background:var(--coral,#E8705A);transform-origin:0 50%;transform:scaleX(0);pointer-events:none}
+/* soft attention pulse for urgent things */
+@keyframes oPulse{0%,100%{box-shadow:0 0 0 0 rgba(232,112,90,.35)}60%{box-shadow:0 0 0 7px rgba(232,112,90,0)}}
+.pill.crit,.pill.hot{animation:oPulse 2s ease-out infinite}
+
+@media (prefers-reduced-motion:reduce){
+  .o-js .o-rv{opacity:1!important;transform:none!important;transition:none!important}
+  .o-new,.o-swap,.opai-dock,.opai-hd,dialog[open],.modal>div,.pill.crit,.pill.hot{animation:none!important}
+  .card:hover,.btn:hover,.b:hover,.big:hover{transform:none}
+  html.opai-swap *{transition:none!important}
+}

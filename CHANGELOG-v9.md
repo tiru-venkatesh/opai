@@ -30,3 +30,10 @@ Tests: `cd backend && python -m pytest tests -q` → **223 passing** (55 new).
 
 ## Not done (needs infrastructure or a decision)
 Postgres + `FOR UPDATE SKIP LOCKED` (compare-and-set gives the same guarantee today), Redis/job queue, WhatsApp adapter, `GET /v1/conversations/{id}` + stored transcripts, email fallback for failed push, module re-layout to `app/…`, real-device Web Push testing (Android / installed PWA).
+
+## Theme toggle + section animations (frontend)
+* `opai-ux.js` + `opai-theme.css`, loaded on Today, Work, Plan, Projects, Academics, Opportunities, Resume Lab, DSA, Applications, Briefs, Overview, Agent Console. **KARNA chat (super-chat.html) is untouched.**
+* Dark/light toggle (sun/moon button in the header; floating on pages without the shell header). Choice is saved in `localStorage.opai_theme`; first visit follows the system setting. Work-tab iframes follow the toggle live.
+* Tailwind pages (app, agent-console, academics-full) now read colours from CSS variables (`--c-*`), so they switch too.
+* Animations: header/dock entrance, scroll-reveal with stagger, pop-in for cards rendered after data loads, progress bars grow in, hover lift, button press, modal pop, smooth colour cross-fade on toggle, scroll progress line. All disabled under `prefers-reduced-motion`.
+* `sw.js` is now v17: hard refresh after deploying.
