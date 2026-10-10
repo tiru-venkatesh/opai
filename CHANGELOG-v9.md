@@ -37,3 +37,10 @@ Postgres + `FOR UPDATE SKIP LOCKED` (compare-and-set gives the same guarantee to
 * Tailwind pages (app, agent-console, academics-full) now read colours from CSS variables (`--c-*`), so they switch too.
 * Animations: header/dock entrance, scroll-reveal with stagger, pop-in for cards rendered after data loads, progress bars grow in, hover lift, button press, modal pop, smooth colour cross-fade on toggle, scroll progress line. All disabled under `prefers-reduced-motion`.
 * `sw.js` is now v17: hard refresh after deploying.
+
+### Motion v2 (more animation)
+* Page-to-page transitions (header + dock stay fixed), circular reveal from the sun/moon button when switching theme.
+* Slow drifting ambient glow behind pages; header shrinks on scroll; sliding hover pill in the nav; logo wiggle; live pulse on status dots.
+* Headings rise in word by word; big numbers count up; "Loading…" text shimmers; progress bars get a moving sheen.
+* Cards get a cursor spotlight; buttons ripple on click; dock icons magnify near the cursor; tabs/chips spring when selected; toasts, dialogs and the guide fade/pop in.
+* All of it is off under `prefers-reduced-motion`.

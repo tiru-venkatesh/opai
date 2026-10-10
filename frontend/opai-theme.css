@@ -120,3 +120,94 @@ dialog[open]{animation:oPop .3s var(--o-ease)}
   .card:hover,.btn:hover,.b:hover,.big:hover{transform:none}
   html.opai-swap *{transition:none!important}
 }
+
+/* ================= MOTION v2 (more of everything) ================= */
+/* page-to-page transitions (Chrome/Edge/Safari 18+; others just navigate normally). Header + dock stay put. */
+@view-transition{navigation:auto}
+.opai-hd{view-transition-name:opai-hd}.opai-dock{view-transition-name:opai-dock}
+::view-transition-old(root){animation:oVtOut .22s var(--o-ease) both}
+::view-transition-new(root){animation:oVtIn .38s var(--o-ease) .06s both}
+@keyframes oVtOut{to{opacity:0;transform:translateY(-8px) scale(.995)}}
+@keyframes oVtIn{from{opacity:0;transform:translateY(14px) scale(.995)}}
+/* theme toggle: circular reveal from the button */
+html.opai-vt::view-transition-old(root),html.opai-vt::view-transition-new(root){animation:none;mix-blend-mode:normal}
+html.opai-vt::view-transition-old(root){z-index:1}html.opai-vt::view-transition-new(root){z-index:2}
+
+/* ambient glow behind everything (very low contrast, never blocks clicks) */
+#o-amb{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;opacity:.55}
+#o-amb i{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
+#o-amb i:nth-child(1){width:46vw;height:46vw;left:-12vw;top:-14vw;background:rgba(23,80,74,.13);animation:oDrift1 26s ease-in-out infinite alternate}
+#o-amb i:nth-child(2){width:38vw;height:38vw;right:-10vw;top:20vh;background:rgba(232,112,90,.11);animation:oDrift2 31s ease-in-out infinite alternate}
+#o-amb i:nth-child(3){width:34vw;height:34vw;left:30vw;bottom:-18vw;background:rgba(23,80,74,.09);animation:oDrift3 36s ease-in-out infinite alternate}
+html[data-theme=dark] #o-amb{opacity:.9}
+html[data-theme=dark] #o-amb i:nth-child(1){background:rgba(47,143,130,.16)}
+html[data-theme=dark] #o-amb i:nth-child(2){background:rgba(240,138,117,.10)}
+html[data-theme=dark] #o-amb i:nth-child(3){background:rgba(47,143,130,.11)}
+@keyframes oDrift1{to{transform:translate(14vw,10vh) scale(1.15)}}
+@keyframes oDrift2{to{transform:translate(-12vw,-8vh) scale(1.2)}}
+@keyframes oDrift3{to{transform:translate(-16vw,-6vh) scale(.9)}}
+
+/* cursor spotlight on cards */
+.o-spot{background-image:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(47,143,130,.10),transparent 55%)!important}
+html[data-theme=dark] .o-spot{background-image:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(127,213,194,.09),transparent 55%)!important}
+
+/* header: sliding hover pill, scroll state, logo wiggle, live dots */
+.opai-pills{position:relative}
+.o-ind{position:absolute;top:4px;bottom:4px;left:0;border-radius:999px;background:var(--card,#FBFAF6);box-shadow:0 1px 3px rgba(0,0,0,.10);opacity:0;pointer-events:none;transition:transform .35s var(--o-spring),width .35s var(--o-spring),opacity .2s;z-index:0}
+.opai-pills a{position:relative;z-index:1}
+.opai-pills a[aria-current=page]{z-index:1}
+.opai-hd{transition:height .3s var(--o-ease),box-shadow .3s,background-color .3s}
+.opai-hd.o-sc{height:56px;box-shadow:0 10px 30px -18px rgba(0,0,0,.35)}
+body.opai-pad{transition:padding-top .3s var(--o-ease)}
+.opai-logo svg rect{transition:transform .5s var(--o-spring);transform-box:fill-box;transform-origin:50% 100%}
+.opai-logo:hover svg rect:first-child{transform:rotate(-18deg)}.opai-logo:hover svg rect:last-child{transform:rotate(14deg) translateY(-1px)}
+@keyframes oLive{0%,100%{box-shadow:0 0 0 0 rgba(47,143,130,.55)}70%{box-shadow:0 0 0 7px rgba(47,143,130,0)}}
+.opai-st i,.opai-timer.on i{animation:oLive 2s ease-out infinite}
+.opai-st.off i{animation:none}
+.opai-user .av{transition:transform .35s var(--o-spring)}.opai-user:hover .av{transform:rotate(-8deg) scale(1.1)}
+
+/* heading words rise in */
+.o-w{display:inline-block;overflow:hidden;vertical-align:bottom;line-height:1.15;padding-bottom:.08em}
+.o-w>span{display:inline-block;transform:translateY(110%);animation:oWord .7s var(--o-ease) forwards;animation-delay:calc(var(--w,0)*55ms + 80ms)}
+@keyframes oWord{to{transform:none}}
+
+/* selected tab / chip / pill springs in when it becomes active */
+@keyframes oSel{0%{transform:scale(.9)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+.tabs [aria-selected=true],.chip[aria-pressed=true],.chip.on,.seg button.on,.dots button.on,.opai-pills a[aria-current=page],nav button.on,.conf button.on{animation:oSel .4s var(--o-spring)}
+
+/* rows, lists, tables */
+main li,.wrap li,.blk,.tp,.repo,.task,tbody tr{transition:transform .2s var(--o-ease),background-color .2s}
+main li:hover,.wrap li:hover{transform:translateX(3px)}
+.blk:hover,.tp:hover,.repo:hover,tbody tr:hover{background-color:rgba(127,127,127,.06)}
+/* progress bars: moving sheen */
+.o-in .meter>*,.o-in .bar>i,.o-in .track>*,.o-in .prog>*{position:relative;overflow:hidden}
+.o-in .meter>*::after,.o-in .bar>i::after,.o-in .track>*::after,.o-in .prog>*::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-100%);animation:oSheen 2.8s ease-in-out 1.1s infinite}
+@keyframes oSheen{60%,100%{transform:translateX(100%)}}
+/* loading text shimmer + dots */
+.o-shim{background:linear-gradient(90deg,var(--ink-3,#7A7F80) 30%,var(--ink,#16181A) 50%,var(--ink-3,#7A7F80) 70%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:oShim 1.6s linear infinite}
+@keyframes oShim{to{background-position:-220% 0}}
+/* ripple */
+.o-rip-host{position:relative;overflow:hidden}
+.o-rip{position:absolute;border-radius:50%;background:currentColor;opacity:.22;transform:scale(0);animation:oRip .6s var(--o-ease) forwards;pointer-events:none}
+@keyframes oRip{to{transform:scale(1);opacity:0}}
+/* toasts + live regions */
+.toast,#msg{animation:oToast .4s var(--o-spring)}
+@keyframes oToast{from{opacity:0;transform:translate(-50%,16px) scale(.96)}}
+dialog::backdrop{animation:oFade .3s ease both}@keyframes oFade{from{opacity:0}}
+#opai-guide.open{animation:oFade .25s ease both}
+/* "Ask KARNA" floating button: gentle float */
+[class*=ask-karna],#karna-fab,.karna-fab{animation:oFloat 4s ease-in-out infinite}
+@keyframes oFloat{50%{transform:translateY(-4px)}}
+/* focus ring that breathes */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{animation:oFocus 1.6s ease-in-out infinite}
+@keyframes oFocus{50%{outline-offset:4px}}
+/* inputs: lift on focus */
+input:focus,textarea:focus,select:focus{box-shadow:0 0 0 4px rgba(47,143,130,.15);transition:box-shadow .25s}
+
+@media (prefers-reduced-motion:reduce){
+  #o-amb,.o-ind{display:none}
+  .o-w>span{animation:none!important;transform:none!important}
+  .opai-st i,.opai-timer.on i,.o-in .meter>*::after,.o-in .bar>i::after,.o-shim,[class*=ask-karna],a:focus-visible,button:focus-visible{animation:none!important}
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important}
+  .tabs [aria-selected=true],.chip[aria-pressed=true],.seg button.on,.opai-pills a[aria-current=page]{animation:none!important}
+}
