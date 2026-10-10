@@ -9,38 +9,29 @@ Nothing is submitted or sent anywhere.
 from __future__ import annotations
 
 import hashlib
+import os
 import re
+from datetime import datetime
 from collections import Counter
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 import rag_service as rag
 from audit.logger import record as audit
-from database import DocumentChunk, Opportunity, Resume, User, get_db
+from database import Application, DocumentChunk, Opportunity, Resume, User, get_db
+
+from resume_lab_core import (  # noqa: F401  (pure logic lives in resume_lab_core so it can be tested without FastAPI)
+    RENDERERS, _BULLET_START, _METRIC, _SECTION, _STOP, _TERM_RE, _VERBS, _WEAK, _contains, _h, _norm_b, ats_review,
+    build_tailored, bullet_stats, coach_bullet, compare_versions, doc_bullets, parse_resume, render_txt, rewrite_is_grounded,
+)
 
 router = APIRouter()
 
 MAX_VERSIONS = 10
 BULLET = "resume_bullet"
-_BULLET_START = re.compile(r"^\s*(?:[-*•–●▪>]|\d+[.)])\s+")
-_SECTION = re.compile(r"^\s*(education|experience|work experience|projects?|skills|technical skills|achievements|"
-                      r"certifications?|summary|objective|publications?|research|positions? of responsibility|"
-                      r"extra[- ]?curriculars?|awards?)\s*:?\s*$", re.I)
-_METRIC = re.compile(r"(\d+(?:\.\d+)?\s?%|\b\d[\d,]*\+?\s?(?:k|m|x|ms|users|requests|queries|docs|documents|students|records|"
-                     r"samples|models|apis?|endpoints|tests|hours|days|reps|stars)\b|\$\s?\d|\b\d{2,}\b)", re.I)
-_VERBS = set("""built developed designed implemented created led engineered optimized reduced improved increased automated
-deployed trained fine-tuned finetuned integrated architected analyzed researched wrote launched migrated refactored
-scaled shipped evaluated benchmarked managed organized authored published contributed collaborated mentored
-proposed prototyped debugged tested containerized orchestrated extracted classified detected generated""".split())
-_WEAK = ["responsible for", "worked on", "helped", "involved in", "assisted", "various", "etc", "team player",
-         "hard working", "hardworking", "duties included", "familiar with"]
-_STOP = set("""the and for with you our your will are this that from have has not but all any can able work working team
-role intern internship company looking candidate strong good must skills experience years year including etc
-who what when where into over such their they them also more than using use used new""".split())
-_TERM_RE = re.compile(r"[a-z][a-z0-9+#.\-]{1,}")
 
 
 def _user(db: Session, uid: str) -> User:
@@ -50,55 +41,10 @@ def _user(db: Session, uid: str) -> User:
     return u
 
 
-def _h(text: str) -> str:
-    return hashlib.sha256(re.sub(r"\s+", " ", (text or "").strip().lower()).encode()).hexdigest()
 
 
 def _own_resumes(db: Session, uid: str) -> List[Resume]:
     return db.query(Resume).filter(Resume.user_id == str(uid)).order_by(Resume.created_at).all()
-
-
-# ---------------------------------------------------------------- parsing
-def parse_resume(text: str) -> Dict[str, Any]:
-    """Splits a resume into sections and bullets. Pure text processing."""
-    sections: Dict[str, List[str]] = {}
-    bullets: List[Dict[str, str]] = []
-    cur = "header"
-    for raw in (text or "").splitlines():
-        ln = raw.strip()
-        if not ln:
-            continue
-        m = _SECTION.match(ln)
-        if m:
-            cur = m.group(1).lower()
-            sections.setdefault(cur, [])
-            continue
-        sections.setdefault(cur, []).append(ln)
-        is_b = bool(_BULLET_START.match(ln))
-        body = _BULLET_START.sub("", ln).strip()
-        first = (body.split() or [""])[0].lower().strip(",.:;")
-        if cur in ("skills", "technical skills", "header", "education"):
-            continue
-        if is_b or (len(body) >= 45 and first in _VERBS):
-            if len(body) >= 12:
-                bullets.append({"text": body, "section": cur})
-    return {"sections": sections, "bullets": bullets}
-
-
-def bullet_stats(bullets: List[Dict[str, str]]) -> Dict[str, Any]:
-    n = len(bullets)
-    if not n:
-        return {"bullets": 0, "metric_ratio": 0.0, "verb_ratio": 0.0, "avg_words": 0.0, "weak": {}}
-    metric = sum(1 for b in bullets if _METRIC.search(b["text"]))
-    verb = sum(1 for b in bullets if (b["text"].split() or [""])[0].lower().strip(",.:;") in _VERBS)
-    weak = Counter()
-    for b in bullets:
-        low = b["text"].lower()
-        for w in _WEAK:
-            if w in low:
-                weak[w] += 1
-    return {"bullets": n, "metric_ratio": round(metric / n, 2), "verb_ratio": round(verb / n, 2),
-            "avg_words": round(sum(len(b["text"].split()) for b in bullets) / n, 1), "weak": dict(weak)}
 
 
 # ---------------------------------------------------------------- bullet bank (RAG)
@@ -161,8 +107,6 @@ def job_terms(text: str, limit: int = 25) -> List[str]:
     return out[:limit]
 
 
-def _contains(text_low: str, term: str) -> bool:
-    return re.search(r"(?<![a-z0-9+#])" + re.escape(term) + r"(?![a-z0-9+#])", text_low) is not None
 
 
 # ---------------------------------------------------------------- analysis (Groq if available, deterministic otherwise)
@@ -202,7 +146,7 @@ def offline_analysis(text: str, target_role: Optional[str] = None) -> Dict[str, 
                       "notes": notes, "method": "offline"}}
 
 
-def _create(db: Session, uid: str, label: str, target_role: Optional[str], text: str) -> Resume:
+def _analyze(text: str, target_role: Optional[str]) -> Dict[str, Any]:
     data = None
     try:
         from agent.groq_client import groq_enabled
@@ -213,6 +157,11 @@ def _create(db: Session, uid: str, label: str, target_role: Optional[str], text:
         data = None
     if not isinstance(data, dict) or not isinstance(data.get("score"), dict):
         data = offline_analysis(text, target_role)
+    return data
+
+
+def _create(db: Session, uid: str, label: str, target_role: Optional[str], text: str) -> Resume:
+    data = _analyze(text, target_role)
     row = Resume(user_id=str(uid), label=label, target_role=target_role, raw_text=text, skills=data.get("skills", []),
                  summary=data.get("summary", ""), suggested_bullets=data.get("suggested_bullets", []), score=data["score"])
     db.add(row)
@@ -394,3 +343,193 @@ def tailor(p: TailorBody, db: Session = Depends(get_db)):
             "consider_from_other_versions": [fmt(h) for h in from_others],
             "gaps": m["gaps_in_every_version"],
             "note": "These are your own bullets, unchanged. Review before use; nothing is saved or submitted."}
+
+
+# ====================================================================================================
+# Review / coach / compare / tailored build / export / attach
+# Everything below is derived from the student's own text. Nothing is sent or submitted anywhere.
+# ====================================================================================================
+def _resume(db: Session, uid: str, rid: str) -> Resume:
+    r = db.query(Resume).filter(Resume.id == str(rid), Resume.user_id == str(uid)).first()
+    if not r:
+        raise HTTPException(404, "Resume not found")
+    return r
+
+
+def _opt_terms(db: Session, uid: str, job_text: Optional[str], opportunity_id: Optional[str]) -> Optional[List[str]]:
+    if (job_text and job_text.strip()) or opportunity_id:
+        return job_terms(_job_text(db, uid, job_text, opportunity_id)) or None
+    return None
+
+
+class ReviewBody(MatchBody):
+    resume_id: str
+
+
+@router.post("/v1/resume-lab/review")
+def review(p: ReviewBody, db: Session = Depends(get_db)):
+    """ATS-readiness checklist for one of your versions, optionally against a posting's keywords."""
+    u = _user(db, p.user_id)
+    r = _resume(db, u.id, p.resume_id)
+    out = ats_review(r.raw_text, _opt_terms(db, u.id, p.job_text, p.opportunity_id))
+    out.update({"resume_id": r.id, "label": r.label})
+    audit(db, u.id, "resume_lab.review", {"resume": r.id}, {"score": out["score"]}, "low")
+    return out
+
+
+class CoachBody(MatchBody):
+    bullet: str = Field(min_length=3, max_length=600)
+    facts: str = Field(default="", max_length=600)      # extra TRUE details the student supplies (e.g. "200 students used it")
+    use_ai: bool = True
+
+
+def _ai_rewrite(original: str, facts: str) -> Optional[str]:
+    try:
+        from agent.groq_client import get_client, groq_enabled
+        if not groq_enabled():
+            return None
+        r = get_client().chat.completions.create(
+            model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), temperature=0.2, max_tokens=120,
+            messages=[{"role": "system", "content": "Rewrite ONE resume bullet to be clearer. Use ONLY facts present in ORIGINAL or FACTS. "
+                       "Do not add numbers, tools, employers, people or outcomes. Start with an action verb. One line, at most 25 words. "
+                       "Reply with the bullet text only."},
+                      {"role": "user", "content": f"ORIGINAL: {original}\nFACTS: {facts or 'none'}"}])
+        out = (r.choices[0].message.content or "").strip().strip('"').lstrip("-* ").strip()
+        return out or None
+    except Exception:
+        return None
+
+
+@router.post("/v1/resume-lab/coach")
+def coach(p: CoachBody, db: Session = Depends(get_db)):
+    """Diagnose one bullet and ask the student for the missing TRUE details. An AI rewrite is shown only if it adds nothing new."""
+    u = _user(db, p.user_id)
+    terms = _opt_terms(db, u.id, p.job_text, p.opportunity_id)
+    out = coach_bullet(p.bullet, terms)
+    out["rewrite"], out["rewrite_note"] = None, None
+    if p.use_ai and not out["ok"]:
+        cand = _ai_rewrite(out["bullet"], p.facts)
+        if cand:
+            try:
+                from opportunities_api import TECH_TERMS
+                known = list(TECH_TERMS)
+            except Exception:
+                known = []
+            ok, probs = rewrite_is_grounded(out["bullet"], cand, p.facts, known + (terms or []))
+            if ok:
+                out["rewrite"] = cand
+                out["rewrite_note"] = "Suggestion only. It uses nothing beyond what you wrote; check it is accurate before using it."
+            else:
+                out["rewrite_note"] = "An AI rewrite was discarded because it " + "; ".join(probs) + "."
+    audit(db, u.id, "resume_lab.coach", {}, {"issues": len(out["issues"]), "rewrite": bool(out["rewrite"])}, "low")
+    return out
+
+
+class CompareBody(MatchBody):
+    a_id: str
+    b_id: str
+
+
+@router.post("/v1/resume-lab/compare")
+def compare(p: CompareBody, db: Session = Depends(get_db)):
+    u = _user(db, p.user_id)
+    if p.a_id == p.b_id:
+        raise HTTPException(422, "Pick two different versions")
+    a, b = _resume(db, u.id, p.a_id), _resume(db, u.id, p.b_id)
+    out = compare_versions(a.raw_text, b.raw_text, _opt_terms(db, u.id, p.job_text, p.opportunity_id))
+    out["a"], out["b"] = {"id": a.id, "label": a.label}, {"id": b.id, "label": b.label}
+    return out
+
+
+class ExtraIn(BaseModel):
+    text: str = Field(min_length=5, max_length=600)
+    section: Optional[str] = Field(default=None, max_length=40)
+
+
+class BuildBody(MatchBody):
+    resume_id: str
+    exclude: List[str] = Field(default_factory=list, max_length=40)
+    extras: List[ExtraIn] = Field(default_factory=list, max_length=12)
+    reorder: bool = True
+    max_per_group: Optional[int] = Field(default=None, ge=1, le=12)
+
+
+def _build(db: Session, p: BuildBody):
+    u = _user(db, p.user_id)
+    base = _resume(db, u.id, p.resume_id)
+    if p.extras:  # extras must be the student's own bullets, verbatim, from any of their versions
+        own = {_norm_b(b["text"]) for r in _own_resumes(db, u.id) for b in parse_resume(r.raw_text)["bullets"]}
+        bad = [e.text for e in p.extras if _norm_b(e.text) not in own]
+        if bad:
+            raise HTTPException(422, "These are not bullets from your own versions, so they were not added: " + " | ".join(bad[:3]))
+    terms = _opt_terms(db, u.id, p.job_text, p.opportunity_id)
+    doc = build_tailored(base.raw_text, p.exclude, [e.model_dump() for e in p.extras], terms if p.reorder else None, p.max_per_group)
+    return u, base, doc, terms
+
+
+@router.post("/v1/resume-lab/build")
+def build(p: BuildBody, db: Session = Depends(get_db)):
+    """Preview a tailored resume: your base version with bullets re-ordered or removed, plus your own bullets from other versions."""
+    u, base, doc, terms = _build(db, p)
+    return {"base": {"id": base.id, "label": base.label}, "sections": doc["sections"], "dropped": doc["dropped"], "added": doc["added"],
+            "bullets": len(doc_bullets(doc)), "text": render_txt(doc),
+            "review": ats_review(render_txt(doc), terms),
+            "note": "Your wording is unchanged. Review before use; nothing is saved or sent."}
+
+
+class ExportBody(BuildBody):
+    format: str = Field(default="docx", pattern="^(txt|docx|pdf)$")
+
+
+@router.post("/v1/resume-lab/export")
+def export(p: ExportBody, db: Session = Depends(get_db)):
+    u, base, doc, _ = _build(db, p)
+    mime, fn = RENDERERS[p.format]
+    try:
+        data = fn(doc)
+    except ImportError:
+        raise HTTPException(501, f"{p.format.upper()} export needs an extra package on the server (python-docx / reportlab)")
+    safe = re.sub(r"[^A-Za-z0-9 _-]+", "", base.label).strip() or "resume"
+    audit(db, u.id, "resume_lab.export", {"resume": base.id, "format": p.format}, {"bytes": len(data)}, "low")
+    return Response(content=data, media_type=mime, headers={"Content-Disposition": f'attachment; filename="Tailored - {safe}.{p.format}"'})
+
+
+class AttachBody(BuildBody):
+    application_id: str
+
+
+@router.post("/v1/resume-lab/attach")
+def attach(p: AttachBody, db: Session = Depends(get_db)):
+    """Save the tailored resume as a version and link it to one application. Does not submit anything."""
+    u, base, doc, _ = _build(db, p)
+    app = db.query(Application).filter(Application.id == str(p.application_id), Application.user_id == u.id).first()
+    if not app:
+        raise HTTPException(404, "Application not found")
+    text = render_txt(doc)
+    label = f"Tailored: {app.company} - {app.role}"[:80]
+    prev = db.query(Resume).filter(Resume.id == app.resume_id, Resume.user_id == u.id).first() if app.resume_id else None
+    if prev and (prev.label or "").startswith("Tailored: "):
+        data = _analyze(text, app.role)
+        prev.raw_text, prev.label, prev.target_role = text, label, app.role
+        prev.skills, prev.summary, prev.score = data.get("skills", []), data.get("summary", ""), data["score"]
+        db.commit()
+        rag.delete_source(db, u.id, rag.RESUME, prev.id)
+        rag.index_resume(db, u.id, prev.id, text, label=label, target_role=app.role or "")
+        row, replaced = prev, True
+    else:
+        existing = _own_resumes(db, u.id)
+        if len(existing) >= MAX_VERSIONS:
+            raise HTTPException(409, f"Your library is full ({MAX_VERSIONS} versions). Delete one, then attach again.")
+        taken = {r.label.strip().lower() for r in existing}
+        lab, n = label, 2
+        while lab.strip().lower() in taken:
+            lab = f"{label[:74]} ({n})"
+            n += 1
+        row, replaced = _create(db, u.id, lab, app.role, text), False
+    app.resume_id, app.tailored_at = row.id, datetime.utcnow()
+    app.resume_bullets = doc_bullets(doc)[:6]
+    db.commit()
+    sync_bank(db, u.id)
+    audit(db, u.id, "resume_lab.attach", {"application": app.id, "base": base.id}, {"resume": row.id, "replaced": replaced}, "low")
+    return {"resume_id": row.id, "label": row.label, "application_id": app.id, "replaced_previous": replaced,
+            "bullets": len(doc_bullets(doc)), "added_from_other_versions": len(doc["added"]), "note": "Saved to your library and linked to this application. Nothing was submitted."}

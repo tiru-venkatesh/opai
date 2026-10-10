@@ -1,5 +1,6 @@
 """Run: cd backend && python -m pytest tests/test_extras_api.py -q
 Groq is forced off so every deterministic fallback path is exercised."""
+import uuid as _uuid
 import os
 import sys
 import tempfile
@@ -24,7 +25,7 @@ def c():
 
 @pytest.fixture()
 def uid(c):
-    u = c.post("/v1/auth/guest").json()["user_id"]
+    u = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     c.patch("/v1/profile", params={"user_id": u}, json={"skills": "python, rag, sql", "highlight": "Built OPAI, an agent with RAG."})
     return u
 

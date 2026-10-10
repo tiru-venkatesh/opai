@@ -1,4 +1,5 @@
 """Run: cd backend && python -m pytest tests/test_opportunities_api.py -q   (Groq forced off; Gmail stubbed)"""
+import uuid as _uuid
 import os
 import sys
 import tempfile
@@ -30,7 +31,7 @@ def c():
 
 @pytest.fixture()
 def uid(c):
-    u = c.post("/v1/auth/guest").json()["user_id"]
+    u = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     c.patch("/v1/profile", params={"user_id": u}, json={"skills": "python, rag", "highlight": "Built OPAI, an agent with RAG."})
     return u
 
@@ -105,7 +106,7 @@ def test_gpa_below_requirement_flags_ineligible(c, uid):
 
 def test_opportunities_are_user_scoped(c, uid):
     _, o = track(c, uid)
-    other = c.post("/v1/auth/guest").json()["user_id"]
+    other = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     assert c.get(f"/v1/opp/opportunities/{o.json()['id']}/brief", params={"user_id": other}).status_code == 404
     assert c.post(f"/v1/opp/opportunities/{o.json()['id']}/track", params={"user_id": other}).status_code == 404
 
@@ -258,3 +259,26 @@ def test_summary_and_reports(c, uid):
     assert r["funnel"]["Saved"] == 1 and r["funnel"]["Applied"] == 1
     assert r["by_source"]["linkedin_user_saved"]["applied"] == 1
     assert r["bottleneck"].startswith("Applications are going out")
+
+
+def test_today_matches_shape_for_the_page(c, uid):
+    # empty workspace: 200 with an empty list, not a 404
+    r = c.get("/v1/opp/today-matches", params={"user_id": uid})
+    assert r.status_code == 200 and r.json() == {"items": []}
+    track(c, uid)
+    items = c.get("/v1/opp/today-matches", params={"user_id": uid}).json()["items"]
+    assert len(items) == 1
+    b = items[0]
+    # exactly what the Today tab reads
+    assert b["title"] == "Machine Learning Intern" and b["organization"] == "Example AI"
+    assert b["source"]["url"] == "https://www.linkedin.com/jobs/view/123456"
+    assert isinstance(b["eligibility"]["summary"], str) and b["eligibility"]["summary"]
+    assert isinstance(b["estimated_prep_minutes"], int) and b["recommended_next_step"]
+    assert b["match"] in ("Strong", "Moderate", "Unknown", "Weak") and b["days_left"] > 0
+    # the original list endpoint is unchanged
+    old = c.get("/v1/opp/matches", params={"user_id": uid}).json()
+    assert isinstance(old, list) and old[0]["opportunity_id"] == b["opportunity_id"]
+    # another user's workspace stays separate
+    other = c.post("/v1/auth/dev-login", params={"email": "o-" + _uuid.uuid4().hex[:8] + "@test.local"}).json()["user_id"]
+    assert c.get("/v1/opp/today-matches", params={"user_id": other}).json() == {"items": []}
+    assert c.get("/v1/opp/today-matches", params={"user_id": "nope"}).status_code == 404

@@ -425,15 +425,36 @@ def brief(oid: str, user_id: str, db: Session = Depends(get_db)):
     return build_brief(_own_opp(db, oid, u.id), _profile(db, u))
 
 
+def _ranked_matches(db: Session, u: User, limit: int):
+    """Open (status New, deadline not passed) opportunities as (row, brief) pairs, best match first."""
+    prof = _profile(db, u)
+    rank = {"Strong": 0, "Moderate": 1, "Unknown": 2, "Weak": 3}
+    pairs = [(o, build_brief(o, prof)) for o in db.query(Opportunity).filter(Opportunity.user_id == u.id, Opportunity.status == "New").all()]
+    pairs = [(o, b) for o, b in pairs if b["deadline_note"] != "Deadline passed"]
+    pairs.sort(key=lambda p: (rank[p[1]["match"]], p[1]["deadline"] or "9999"))
+    return pairs[:limit]
+
+
 @router.get("/v1/opp/matches")
 def todays_matches(user_id: str, limit: int = 5, db: Session = Depends(get_db)):
     u = _user(db, user_id)
-    prof = _profile(db, u)
-    rank = {"Strong": 0, "Moderate": 1, "Unknown": 2, "Weak": 3}
-    out = [build_brief(o, prof) for o in db.query(Opportunity).filter(Opportunity.user_id == u.id, Opportunity.status == "New").all()]
-    out = [b for b in out if b["deadline_note"] != "Deadline passed"]
-    out.sort(key=lambda b: (rank[b["match"]], b["deadline"] or "9999"))
-    return out[:limit]
+    return [b for _, b in _ranked_matches(db, u, limit)]
+
+
+@router.get("/v1/opp/today-matches")
+def today_matches(user_id: str, limit: int = 5, db: Session = Depends(get_db)):
+    """Same ranking as /v1/opp/matches, shaped for the Today's Matches tab: {"items": [...]}."""
+    u = _user(db, user_id)
+    items = []
+    for o, b in _ranked_matches(db, u, limit):
+        days = (o.deadline - date.today()).days if o.deadline else None
+        items.append({**b,
+                      "eligibility": {"summary": b["eligibility"]},
+                      "estimated_prep_minutes": b["ai_suggestion"]["estimated_prep_minutes"],
+                      "recommended_next_step": b["ai_suggestion"]["next_step"],
+                      "days_left": days,
+                      "source": {"url": o.link or "", "type": o.source_type or o.source}})
+    return {"items": items}
 
 
 @router.post("/v1/opp/opportunities/{oid}/dismiss")

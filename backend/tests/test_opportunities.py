@@ -1,4 +1,5 @@
 """Run: cd backend && python -m pytest tests/test_opportunities.py -q"""
+import uuid as _uuid
 import os, sys, tempfile
 from datetime import date, timedelta
 import pytest
@@ -19,7 +20,7 @@ def c():
 
 @pytest.fixture()
 def uid(c):
-    u = c.post("/v1/auth/guest").json()["user_id"]
+    u = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     c.patch("/v1/profile", params={"user_id": u}, json={"skills": "python, rag, sql", "highlight": "Built OPAI"})
     return u
 
@@ -101,7 +102,7 @@ def test_applied_requires_user_confirmation_and_history(c, uid):
     assert r["stage"] == "Applied" and r["submitted_at"] and r["follow_up_date"]
     assert [h["to"] for h in r["history"]] == ["Saved", "Applied"]
     assert c.post(f"/v1/opp/opportunities/{oid}/track", json={"user_id": uid}).status_code == 409
-    other = c.post("/v1/auth/guest").json()["user_id"]
+    other = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     assert c.get(f"/v1/opp/applications/{a['id']}", params={"user_id": other}).status_code == 404
 
 
@@ -187,7 +188,7 @@ def test_faculty_search_and_add(c, uid):
 
 
 def test_faculty_browse_when_nothing_to_rank_by(c):
-    fresh = c.post("/v1/auth/guest").json()["user_id"]          # no skills, no query
+    fresh = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]          # no skills, no query
     r = c.get("/v1/opp/faculty/search", params={"user_id": fresh}).json()
     assert r["browse"] and r["items"] and r["total"] > 400
     ism = c.get("/v1/opp/faculty/search", params={"user_id": fresh, "institute": "IIT (ISM) Dhanbad", "limit": 5}).json()
@@ -269,7 +270,7 @@ def test_gmail_other_users_cannot_send(c, uid, monkeypatch):
     import gmail_send
     monkeypatch.setattr(gmail_send, "send", lambda *a, **k: "x")
     prof, oid = _approved(c, uid, "gowner@iitx.ac.in")
-    other = c.post("/v1/auth/guest").json()["user_id"]
+    other = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     assert c.post(f"/v1/opp/outbox/{oid}/send", json={"user_id": other}, headers={"X-Gmail-Token": "t"}).status_code == 404
 
 

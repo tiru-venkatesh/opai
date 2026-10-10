@@ -54,8 +54,7 @@ function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';cle
 async function act(fn){try{await fn()}catch(e){toast(e.message)}}
 async function login(){const em=new URLSearchParams(location.search).get('email')||localStorage.getItem('opai_sc_email');
   if(em){localStorage.setItem('opai_sc_email',em);return (await api('/v1/auth/dev-login?email='+encodeURIComponent(em),{method:'POST'})).user_id}
-  let g=localStorage.getItem('opa_guest_uid');if(g){try{await api('/v1/profile?user_id='+g);return g}catch(e){}}
-  g=(await api('/v1/auth/guest',{method:'POST'})).user_id;localStorage.setItem('opa_guest_uid',g);return g}
+  location.replace('login.html');throw new Error('Please sign in')}
 
 const TABS=[['matches',"Today's Matches"],['saved','Saved Opportunities'],['apps','Applications'],['prof','Professor Outreach'],['mail','Email & Follow-ups'],['reports','Reports']];
 function tabs(){$('tabs').innerHTML=TABS.map(([k,l])=>`<button class="${k===tab?'on':''}" onclick="go('${k}')">${l}</button>`).join('')}

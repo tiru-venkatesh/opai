@@ -1,5 +1,6 @@
 """Brief System. Run: cd backend && python -m pytest tests/test_briefs.py -q
 Groq is forced off, so every deterministic path is exercised."""
+import uuid as _uuid
 import os, sys, tempfile
 os.environ["RAG_EMBEDDER"] = "hash"
 os.environ["GROQ_API_KEY"] = ""
@@ -27,7 +28,7 @@ def c():
 
 @pytest.fixture()
 def uid(c):
-    u = c.post("/v1/auth/guest").json()["user_id"]
+    u = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     c.patch("/v1/profile", params={"user_id": u}, json={"skills": "python, rag, sql", "highlight": "Built OPAI."})
     return u
 
@@ -200,7 +201,7 @@ def test_dismiss_and_expiry(c, uid):
 def test_briefs_are_private_to_their_owner(c, uid):
     seed_exam(uid)
     b = post_daily(c, uid)
-    other = c.post("/v1/auth/guest").json()["user_id"]
+    other = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     assert c.get(f"/v1/briefs/{b['brief_id']}", params={"user_id": other}).status_code == 404
     act = b["priorities"][0]["actions"][0]["action_id"]
     assert c.post(f"/v1/actions/{act}/execute", json={"user_id": other}).status_code == 404

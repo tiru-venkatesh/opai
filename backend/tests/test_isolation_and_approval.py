@@ -1,5 +1,6 @@
 """Regression tests: per-user isolation on the legacy endpoints, approve != sent, cap counts approvals.
 Run: cd backend && python -m pytest tests/test_isolation_and_approval.py -q"""
+import uuid as _uuid
 import os, sys, tempfile
 import pytest
 
@@ -21,7 +22,7 @@ def c():
 
 
 def new_user(c):
-    u = c.post("/v1/auth/guest").json()["user_id"]
+    u = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     c.patch("/v1/profile", params={"user_id": u}, json={"skills": "python"})
     return u
 

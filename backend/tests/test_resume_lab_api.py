@@ -1,4 +1,5 @@
 """Run: cd backend && python -m pytest tests/test_resume_lab_api.py -q"""
+import uuid as _uuid
 import os
 import sys
 import tempfile
@@ -41,7 +42,7 @@ def c():
 
 @pytest.fixture()
 def uid(c):
-    return c.post("/v1/auth/guest").json()["user_id"]
+    return c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
 
 
 def imp(c, uid, items):
@@ -126,8 +127,81 @@ def test_insights_needs_two_then_reports(c, uid):
 
 def test_isolation(c, uid):
     two(c, uid)
-    other = c.post("/v1/auth/guest").json()["user_id"]
+    other = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     assert c.get("/v1/resume-lab/library", params={"user_id": other}).json()["count"] == 0
     assert c.post("/v1/resume-lab/match", json={"user_id": other, "job_text": "python"}).status_code == 409
     r = c.post("/v1/resume-lab/bullets/search", json={"user_id": other, "query": "python rag"}).json()
     assert r["results"] == []
+
+
+# ---------------------------------------------------------------- review / coach / compare / build / export / attach
+def _ids(c, uid):
+    return {v["label"]: v["id"] for v in c.get("/v1/resume-lab/library", params={"user_id": uid}).json()["versions"]}
+
+
+def test_review_endpoint_scores_and_checks_keywords(c, uid):
+    two(c, uid)
+    ids = _ids(c, uid)
+    r = c.post("/v1/resume-lab/review", json={"user_id": uid, "resume_id": ids["ML"], "job_text": "Python PyTorch Kubernetes Kubernetes Python"}).json()
+    assert 0 <= r["score"] <= 100 and r["checks"] and "kubernetes" in r["keywords"]["missing"]
+    other = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
+    assert c.post("/v1/resume-lab/review", json={"user_id": other, "resume_id": ids["ML"]}).status_code == 404
+
+
+def test_coach_returns_questions_and_never_a_ungrounded_rewrite(c, uid):
+    r = c.post("/v1/resume-lab/coach", json={"user_id": uid, "bullet": "- Responsible for various tasks in the team", "use_ai": False}).json()
+    assert not r["ok"] and r["questions"] and r["rewrite"] is None
+    # even if an AI were enabled, a rewrite that invents content is rejected (unit-tested in test_resume_lab_core)
+
+
+def test_compare_endpoint(c, uid):
+    two(c, uid)
+    ids = _ids(c, uid)
+    r = c.post("/v1/resume-lab/compare", json={"user_id": uid, "a_id": ids["ML"], "b_id": ids["Web"]}).json()
+    assert r["a"]["label"] == "ML" and r["only_in_a"] and r["only_in_b"]
+    assert c.post("/v1/resume-lab/compare", json={"user_id": uid, "a_id": ids["ML"], "b_id": ids["ML"]}).status_code == 422
+
+
+def test_build_only_accepts_own_bullets_as_extras(c, uid):
+    two(c, uid)
+    ids = _ids(c, uid)
+    ok = c.post("/v1/resume-lab/build", json={"user_id": uid, "resume_id": ids["ML"], "job_text": "Python PyTorch RAG internship",
+                "exclude": ["Responsible for various tasks in the team"],
+                "extras": [{"text": "Designed a React dashboard with TypeScript that reduced report time by 40%"}]})
+    assert ok.status_code == 200, ok.text
+    j = ok.json()
+    assert "Responsible for various tasks in the team" in j["dropped"] and j["added"] and "React dashboard" in j["text"]
+    bad = c.post("/v1/resume-lab/build", json={"user_id": uid, "resume_id": ids["ML"], "extras": [{"text": "Led a team of 50 engineers at Google"}]})
+    assert bad.status_code == 422
+
+
+@pytest.mark.parametrize("fmt,magic", [("txt", b"Asha"), ("docx", b"PK"), ("pdf", b"%PDF")])
+def test_export_formats(c, uid, fmt, magic):
+    two(c, uid)
+    ids = _ids(c, uid)
+    r = c.post("/v1/resume-lab/export", json={"user_id": uid, "resume_id": ids["ML"], "format": fmt})
+    assert r.status_code == 200 and r.content.startswith(magic) and "attachment" in r.headers["content-disposition"]
+
+
+def test_attach_links_application_and_replaces_on_repeat(c, uid):
+    two(c, uid)
+    ids = _ids(c, uid)
+    app = c.post("/v1/applications", json={"user_id": uid, "company": "Example AI", "role": "ML Intern"}).json()
+    body = {"user_id": uid, "resume_id": ids["ML"], "application_id": app["id"], "job_text": "Python PyTorch RAG"}
+    r1 = c.post("/v1/resume-lab/attach", json=body).json()
+    assert r1["replaced_previous"] is False and r1["label"].startswith("Tailored: Example AI")
+    n1 = c.get("/v1/resume-lab/library", params={"user_id": uid}).json()["count"]
+    r2 = c.post("/v1/resume-lab/attach", json={**body, "exclude": ["Responsible for various tasks in the team"]}).json()
+    assert r2["replaced_previous"] is True and r2["resume_id"] == r1["resume_id"]
+    assert c.get("/v1/resume-lab/library", params={"user_id": uid}).json()["count"] == n1       # no duplicate versions
+    other = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
+    assert c.post("/v1/resume-lab/attach", json={**body, "user_id": other}).status_code in (404, 409)
+
+
+def test_attach_respects_library_limit(c, uid):
+    items = [{"label": f"v{i}", "text": WEB + f"\n- Built project number {i} with extra detail for uniqueness here"} for i in range(10)]
+    imp(c, uid, items)
+    ids = _ids(c, uid)
+    app = c.post("/v1/applications", json={"user_id": uid, "company": "X", "role": "Y"}).json()
+    r = c.post("/v1/resume-lab/attach", json={"user_id": uid, "resume_id": ids["v0"], "application_id": app["id"]})
+    assert r.status_code == 409
