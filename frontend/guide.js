@@ -4,7 +4,7 @@
    {id:'overview',t:'Overview',h:'app.html',d:'Whole-workspace summary: counts, deadlines, status of everything.',k:'overview home dashboard summary status mukhya home dikhao'},
    {id:'today',t:'Today',h:'today.html',d:'What to do today: tasks, classes, deadlines due now.',k:'today aaj ivala eroju tasks todo kaam pani deadline schedule'},
    {id:'plan',t:'Plan',h:'plan.html',d:'Weekly plan and study blocks. Build or change your schedule here.',k:'plan planner schedule timetable study blocks week yojana'},
-   {id:'applications',t:'Internships',h:'applications.html',d:'Coming soon: internship tracking.',k:'applications application apply internship job intern status kahan ekkada undi'},
+   {id:'applications',t:'Opportunities',h:'opportunities.html',d:'Find, evaluate and track internships and research roles; professor outreach; approved emails and follow-ups.',k:'applications application apply internship job intern status kahan ekkada undi'},
    {id:'projects',t:'Projects',h:'projects.html',d:'Your projects, stack and progress.',k:'projects project app build stack prayog'},
    {id:'dsa',t:'DSA Roadmap',h:'dsa.html',d:'Phase-based DSA plan for placements: one small block in Today, links to external practice sites, progress tracking. Not a coding-practice platform.',k:'dsa roadmap data structures algorithms placement leetcode arrays hashing dp graphs learning plan interview prep'},
    {id:'academics',t:'Academics',h:'academics.html',d:'Coming soon: exams, subjects and study planning.',k:'academics exam exams subject timetable grades marks semester padhai chaduvu add cheyali kaise'},

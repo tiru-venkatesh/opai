@@ -690,7 +690,7 @@ nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;bo
       gate.innerHTML = '<h2>Waiting for your approval <span class="pill mono">' + pend.length + '</span></h2>' + pend.map((o) => {
         const p = o.payload || {};
         const exp = o.expires_at ? new Date(o.expires_at + (/[zZ]|[+-]\d\d:?\d\d$/.test(o.expires_at) ? '' : 'Z')).toLocaleString() : '';
-        return '<div class="card" data-id="' + esc(o.id) + '"><div class="row"><span>' + esc(o.channel) + '</span><span class="risk-' + esc(o.risk_level) + '">risk ' + esc(o.risk_level) + '</span>' + (exp ? '<span>expires ' + esc(exp) + '</span>' : '') + '</div>' +
+        return '<div class="card" data-id="' + esc(o.id) + '" data-hash="' + esc(o.payload_hash || '') + '"><div class="row"><span>' + esc(o.channel) + '</span><span class="risk-' + esc(o.risk_level) + '">risk ' + esc(o.risk_level) + '</span>' + (exp ? '<span>expires ' + esc(exp) + '</span>' : '') + '</div>' +
           '<div class="subj">' + esc(p.subject || '(no subject)') + '</div><div class="row">To: ' + esc(p.to || 'no address yet') + '</div><div class="preview">' + esc(p.body || '') + '</div>' +
           (o.note ? '<div class="note">' + esc(o.note) + '</div>' : '') +
           '<div class="btns"><button class="btn primary" data-act="approve" type="button">Approve draft</button><button class="btn" data-act="reject" type="button">Reject</button></div><div class="note" data-msg></div></div>';
@@ -701,7 +701,7 @@ nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;bo
     const b = ev.target.closest('button[data-act]'); if (!b) return;
     const card = b.closest('.card'), id = card.dataset.id, act = b.dataset.act, msg = card.querySelector('[data-msg]');
     card.querySelectorAll('button').forEach((x) => x.disabled = true);
-    try { await api('/v1/outbox/' + encodeURIComponent(id) + '/' + act, { method: 'POST' }); msg.textContent = act === 'approve' ? 'Approved.' : 'Rejected.'; setTimeout(refreshGate, 600); }
+    try { await api('/v1/outbox/' + encodeURIComponent(id) + '/' + act + (act === 'approve' ? '?reviewed_hash=' + encodeURIComponent(card.dataset.hash || '') : ''), { method: 'POST' }); msg.textContent = act === 'approve' ? 'Approved.' : 'Rejected.'; setTimeout(refreshGate, 600); }
     catch (e) { msg.textContent = e.message; msg.className = 'note risk-high'; if (e.status === 409 || e.status === 410) setTimeout(refreshGate, 900); else card.querySelectorAll('button').forEach((x) => x.disabled = false); }
   });
 
