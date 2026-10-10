@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Resume Lab · OPAI</title>
+<meta name="theme-color" content="#F6F4EE">
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="opai-shared.css">
+<style>
+:root{--bg:#F6F4EE;--card:#fff;--ink:#16181A;--mut:#5a6064;--pri:#17504A;--line:#e3e0d6;--warn:#b4580f;--bad:#b3261e;--good:#17704a;--font:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/22px var(--font);min-height:100vh}
+main{max-width:1000px;margin:0 auto;padding:20px 16px 120px}
+h1{font-size:26px;letter-spacing:-.03em;margin:4px 0 2px;color:var(--pri)} h2{font-size:17px;margin:0 0 8px}
+.sub,.mut{color:var(--mut)} .mut{font-size:13px} .sub{margin:0 0 14px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:none;padding:8px 12px;border-radius:999px;font:500 14px var(--font);color:var(--mut);cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected=true]{background:var(--pri);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.sp{justify-content:space-between}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font:600 12px/18px var(--font);background:#eef2f0;color:var(--pri);margin:2px 4px 2px 0}
+.pill.good{background:#dff3e8;color:var(--good)}.pill.warn{background:#fdecd9;color:var(--warn)}.pill.bad{background:#fbe0dd;color:var(--bad)}
+button.b,a.b{border:1px solid var(--pri);background:var(--pri);color:#fff;border-radius:10px;padding:7px 12px;font:600 13px var(--font);cursor:pointer;text-decoration:none;display:inline-block}
+button.b.alt,a.b.alt{background:#fff;color:var(--pri)} button:disabled{opacity:.5;cursor:default}
+input,textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:14px var(--font);background:#fff;color:var(--ink)}
+textarea{min-height:140px;resize:vertical} label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin:8px 0 3px}
+.bar{height:8px;border-radius:99px;background:#eceae2;overflow:hidden}.bar i{display:block;height:100%;background:var(--pri)}
+.note{background:#fff7e6;border:1px solid #f1d9a6;border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}
+.bul{border-left:3px solid var(--pri);padding:4px 10px;margin:6px 0;background:#faf9f5;border-radius:0 8px 8px 0}
+ul{margin:4px 0;padding-left:18px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;display:none;z-index:99}
+@media (prefers-reduced-motion:no-preference){.card{transition:box-shadow .2s ease,border-color .2s ease}.card:hover{box-shadow:0 8px 22px rgba(23,80,74,.10)}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Resume Lab</h1>
+  <p class="sub">Your own resume versions, searchable. OPAI selects from what you wrote and flags gaps; it never invents experience.</p>
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div id="view" aria-live="polite"></div>
+</main>
+<div class="toast" id="toast"></div>
+<script src="opai-shell.js" defer></script>
+<script>
+(function(){
+var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
+var uid=null;try{uid=localStorage.getItem('opa_guest_uid')}catch(e){}
+var TABS=[['lib','Library'],['match','Match a posting'],['find','Find a bullet'],['ins','Insights']];
+var tab=(location.hash||'#lib').slice(1);if(!TABS.some(function(t){return t[0]===tab}))tab='lib';
+var state={lastMatch:null};
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function toast(m){var t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){t.style.display='none'},3500)}
+async function api(path,opt){opt=opt||{};var q=path+(path.indexOf('?')<0?'?':'&')+'user_id='+encodeURIComponent(uid);
+  var r=await fetch(API+q,{method:opt.method||'GET',headers:{'Content-Type':'application/json'},body:opt.body?JSON.stringify(Object.assign({user_id:uid},opt.body)):undefined});
+  var d=null;try{d=await r.json()}catch(e){}
+  if(!r.ok){var m=d&&d.detail;if(Array.isArray(m))m=m.map(function(x){return x.msg}).join('; ');throw new Error(m||('Request failed ('+r.status+')'))}return d}
+async function ensureUser(){if(uid)return;var r=await fetch(API+'/v1/auth/guest',{method:'POST'});var d=await r.json();uid=d.user_id;try{localStorage.setItem('opa_guest_uid',uid)}catch(e){}}
+function pills(a,cls){return (a&&a.length)?a.map(function(x){return '<span class="pill '+(cls||'')+'">'+esc(x)+'</span>'}).join(''):'<span class="mut">none</span>'}
+function bar(p){return '<div class="bar" role="img" aria-label="'+esc(p)+' percent"><i style="width:'+Math.max(0,Math.min(100,+p||0))+'%"></i></div>'}
+function sel(){return '<label for="opp">Or use a saved opportunity</label><select id="opp"><option value="">None</option></select>'}
+
+function renderTabs(){$('tabs').innerHTML=TABS.map(function(t){return '<button role="tab" aria-selected="'+(t[0]===tab)+'" data-k="'+t[0]+'">'+esc(t[1])+'</button>'}).join('')}
+$('tabs').addEventListener('click',function(e){var b=e.target.closest('button[data-k]');if(!b)return;tab=b.dataset.k;history.replaceState(null,'','#'+tab);go()});
+
+async function go(){renderTabs();var v=$('view');v.textContent='Loading…';
+  try{await ensureUser();await ({lib:vLib,match:vMatch,find:vFind,ins:vIns})[tab](v)}
+  catch(e){v.innerHTML='<div class="card">Could not load: '+esc(e.message)+' <button class="b alt" id="retry">Retry</button></div>';$('retry').onclick=go}}
+
+async function vLib(v){
+  var d=await api('/v1/resume-lab/library');
+  var h='<div class="row sp"><h2>Your versions ('+esc(d.count)+' of '+esc(d.limit)+')</h2><a class="b alt" href="app.html?embed=1#/resume-lab" target="_top">Classic Resume Lab</a></div>';
+  if(!d.versions.length)h+='<div class="card">No resumes yet. Paste them below, one at a time. Up to '+esc(d.limit)+' versions.</div>';
+  h+='<div class="grid">'+d.versions.map(function(r){
+    return '<div class="card"><div class="row sp"><b>'+esc(r.label)+'</b><span class="pill '+(r.overall_score>=7?'good':r.overall_score>=5?'warn':'bad')+'">'+esc(r.overall_score==null?'–':r.overall_score)+'/10</span></div>'
+    +'<div class="mut">'+esc(r.target_role||'No target role')+' · '+esc(r.words)+' words · '+esc(r.bullets)+' bullets</div>'
+    +'<div class="mut">Bullets with numbers: '+Math.round(100*r.metric_ratio)+'%</div>'+bar(100*r.metric_ratio)
+    +'<div style="margin-top:6px">'+pills((r.skills||[]).slice(0,8))+'</div></div>'}).join('')+'</div>';
+  h+='<div class="card"><h2>Add a version</h2><label for="lbl">Label</label><input id="lbl" maxlength="80" placeholder="e.g. ML Research v2">'
+    +'<label for="role">Target role (optional)</label><input id="role" maxlength="120" placeholder="e.g. ML intern">'
+    +'<label for="txt">Resume text</label><textarea id="txt" placeholder="Paste the full text of one resume"></textarea>'
+    +'<div class="row" style="margin-top:8px"><button class="b" id="add">Add to library</button><span class="mut">Duplicates are skipped, never overwritten.</span></div></div>';
+  v.innerHTML=h;
+  $('add').onclick=async function(){var b=this;b.disabled=true;
+    try{var r=await api('/v1/resume-lab/import',{method:'POST',body:{resumes:[{label:$('lbl').value.trim(),target_role:$('role').value.trim()||null,text:$('txt').value}]}});
+      toast(r.created.length?'Added':'Skipped: '+(r.skipped[0]&&r.skipped[0].reason));go()}
+    catch(e){toast(e.message);b.disabled=false}}}
+
+async function loadOpps(){try{var o=await api('/v1/opp/opportunities');var s=$('opp');if(!s)return;
+  o.forEach(function(x){var op=document.createElement('option');op.value=x.id;op.textContent=x.title+' · '+x.organization;s.appendChild(op)})}catch(e){}}
+function jobBody(){var t=$('job').value.trim(),o=$('opp').value;return t?{job_text:t}:(o?{opportunity_id:o}:null)}
+
+async function vMatch(v){
+  v.innerHTML='<div class="card"><h2>Which version fits this posting?</h2><label for="job">Paste the posting text</label><textarea id="job"></textarea>'+sel()
+    +'<div class="row" style="margin-top:8px"><button class="b" id="go">Rank my versions</button><button class="b alt" id="tl">Suggest bullets to lead with</button></div></div><div id="out"></div>';
+  loadOpps();
+  $('go').onclick=async function(){var b=jobBody();if(!b)return toast('Paste a posting or choose an opportunity');
+    try{var r=await api('/v1/resume-lab/match',{method:'POST',body:b});
+      $('out').innerHTML='<div class="card"><h2>Ranking</h2>'+r.ranking.map(function(x,i){return '<div style="margin:8px 0"><div class="row sp"><b>'+(i?'':'Best: ')+esc(x.label)+'</b><span>'+esc(x.fit)+'/100</span></div>'+bar(x.fit)
+        +'<div class="mut">Missing here: '+pills(x.terms_missing.slice(0,8),'warn')+'</div></div>'}).join('')+'</div>'
+        +'<div class="card"><h2>Gaps in every version</h2>'+pills(r.gaps_in_every_version,'bad')+'<div class="note">'+esc(r.note)+'</div></div>'}catch(e){toast(e.message)}};
+  $('tl').onclick=async function(){var b=jobBody();if(!b)return toast('Paste a posting or choose an opportunity');
+    try{var r=await api('/v1/resume-lab/tailor',{method:'POST',body:b});
+      var f=function(a){return a.length?a.map(function(x){return '<div class="bul">'+esc(x.bullet)+'<div class="mut">from '+esc(x.from)+'</div></div>'}).join(''):'<div class="mut">None</div>'};
+      $('out').innerHTML='<div class="card"><h2>Start from: '+esc(r.base_resume.label)+'</h2><b>Lead with</b>'+f(r.lead_with)+'<b>Also consider (other versions)</b>'+f(r.consider_from_other_versions)
+        +'</div><div class="card"><h2>Not in any resume</h2>'+pills(r.gaps,'bad')+'<div class="note">'+esc(r.note)+'</div></div>'}catch(e){toast(e.message)}}}
+
+async function vFind(v){
+  v.innerHTML='<div class="card"><h2>Search your own bullets</h2><div class="row"><input id="q" placeholder="e.g. deployed an API, improved accuracy" style="flex:1"><button class="b" id="s">Search</button></div></div><div id="out"></div>';
+  async function run(){var q=$('q').value.trim();if(q.length<2)return;
+    try{var r=await api('/v1/resume-lab/bullets/search',{method:'POST',body:{query:q,k:8}});
+      $('out').innerHTML=r.results.length?r.results.map(function(x){return '<div class="card"><div>'+esc(x.bullet)+'</div><div class="mut">'+esc(x.from)+' · '+esc(x.section)+'</div></div>'}).join(''):'<div class="card mut">No matching bullets.</div>'}catch(e){toast(e.message)}}
+  $('s').onclick=run;$('q').addEventListener('keydown',function(e){if(e.key==='Enter')run()})}
+
+async function vIns(v){
+  var d=await api('/v1/resume-lab/insights');
+  if(!d.ready){v.innerHTML='<div class="card">'+esc(d.note)+'</div>';return}
+  var t=d.traits,pc=function(x){return x==null?'–':Math.round(100*x)+'%'};
+  v.innerHTML='<div class="card"><h2>Your strongest versions</h2>'+pills(d.best_versions,'good')+'<p class="mut">Compared with the rest of your library.</p>'
+    +'<div class="grid"><div><b>Bullets with numbers</b><div>'+pc(t.metric_ratio.best)+' vs '+pc(t.metric_ratio.others)+'</div></div>'
+    +'<div><b>Start with an action verb</b><div>'+pc(t.verb_ratio.best)+' vs '+pc(t.verb_ratio.others)+'</div></div></div></div>'
+    +'<div class="card"><h2>What to fix</h2>'+(d.tips.length?'<ul>'+d.tips.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>':'<span class="mut">Nothing stands out.</span>')+'</div>'
+    +'<div class="card"><h2>Skills</h2><b>Common to most versions</b><div>'+pills(d.common_skills)+'</div><b>Only in one version</b><div>'+pills(d.skills_in_only_one_version)+'</div></div>'
+    +'<p class="mut">'+esc(d.basis)+'</p>'}
+go();
+})();
+</script>
+</body>
+</html>

@@ -73,6 +73,8 @@ from opportunities_api import router as opportunities_router
 app.include_router(opportunities_router)
 from programs_api import router as programs_router
 app.include_router(programs_router)
+from resume_lab_api import router as resume_lab_router
+app.include_router(resume_lab_router)
 
 _CORS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()] or ["*"]
 app.add_middleware(
