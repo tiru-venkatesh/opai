@@ -81,3 +81,8 @@ def test_hinglish_questions_and_tasks_not_captured(msg):
 
 def test_hinglish_dates():
     assert parse_date("kal") == D(1) and parse_date("parso") == D(2) and parse_date("aaj") == D(0)
+
+
+def test_opportunity_with_modifier_word():
+    f = heuristic_fields("create_opportunity", "Microsoft lo summer internship undi 5 Jan deadline")
+    assert f["company_or_lab"] == "Microsoft" and f["title"] == "Internship at Microsoft"
