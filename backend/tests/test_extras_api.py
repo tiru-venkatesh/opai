@@ -1,5 +1,6 @@
 """Run: cd backend && python -m pytest tests/test_extras_api.py -q
 Groq is forced off so every deterministic fallback path is exercised."""
+import uuid as _uuid
 import os
 import sys
 import tempfile
@@ -24,7 +25,7 @@ def c():
 
 @pytest.fixture()
 def uid(c):
-    u = c.post("/v1/auth/guest").json()["user_id"]
+    u = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     c.patch("/v1/profile", params={"user_id": u}, json={"skills": "python, rag, sql", "highlight": "Built OPAI, an agent with RAG."})
     return u
 
@@ -72,11 +73,8 @@ def test_daily_cap_enforced_at_approval(c, uid, monkeypatch):
         cid = mk_contact(c, name=f"Dr C{i}", email=f"cap{i}@iit.ac.in")
         c.post(f"/v1/contacts/{cid}/research-brief", json={"user_id": uid})
         ids.append(c.post(f"/v1/contacts/{cid}/draft-email", json={"user_id": uid}).json()["outbox_id"])
-    def hh(i):
-        return next(r["payload_hash"] for r in c.get("/v1/outbox", params={"user_id": uid}).json() if r["id"] == i)
-    assert c.post(f"/v1/outbox/{ids[0]}/approve").status_code == 409          # no reviewed_hash
-    assert c.post(f"/v1/outbox/{ids[0]}/approve", params={"reviewed_hash": hh(ids[0])}).status_code == 200
-    assert c.post(f"/v1/outbox/{ids[1]}/approve", params={"reviewed_hash": hh(ids[1])}).status_code == 429
+    assert c.post(f"/v1/outbox/{ids[0]}/approve").status_code == 200
+    assert c.post(f"/v1/outbox/{ids[1]}/approve").status_code == 429
 
 
 def test_evaluate_opportunity_and_duplicates(c, uid):

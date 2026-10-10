@@ -137,10 +137,9 @@ button.go.working::after{content:"";position:absolute;inset:0;background:linear-
   }
   async function ensureUser() {
     if (uid) return uid;
-    const gid = localStorage.getItem('opa_guest_uid');
-    if (gid) { try { await api('/v1/profile?user_id=' + encodeURIComponent(gid)); uid = gid; return uid; } catch (e) { if (e.status !== 404) throw e; } }
-    const g = (await api('/v1/auth/guest', { method: 'POST' })).user_id;
-    localStorage.setItem('opa_guest_uid', g); uid = g; return uid;
+    const em = localStorage.getItem('opai_sc_email');
+    if (!em) { location.replace('login.html'); throw new Error('Please sign in'); }
+    uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(em), { method: 'POST' })).user_id; return uid;
   }
 
   const thread = $('thread');

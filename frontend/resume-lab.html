@@ -79,11 +79,21 @@ async function vLib(v){
     +'<div class="mut">'+esc(r.target_role||'No target role')+' · '+esc(r.words)+' words · '+esc(r.bullets)+' bullets</div>'
     +'<div class="mut">Bullets with numbers: '+Math.round(100*r.metric_ratio)+'%</div>'+bar(100*r.metric_ratio)
     +'<div style="margin-top:6px">'+pills((r.skills||[]).slice(0,8))+'</div></div>'}).join('')+'</div>';
+  h+='<div class="card"><h2>Upload your resumes</h2><p class="mut">Select up to 10 PDF, DOCX or TXT files at once. Each bullet is indexed so Match and Tailor can reuse your best lines.</p>'
+    +'<label for="files">Resume files</label><input id="files" type="file" multiple accept=".pdf,.docx,.txt,.md"><label for="frole">Target role for all (optional)</label><input id="frole" maxlength="120" placeholder="e.g. ML intern">'
+    +'<div class="row" style="margin-top:8px"><button class="b" id="upl">Upload and index</button><span class="mut" id="upmsg"></span></div></div>';
   h+='<div class="card"><h2>Add a version</h2><label for="lbl">Label</label><input id="lbl" maxlength="80" placeholder="e.g. ML Research v2">'
     +'<label for="role">Target role (optional)</label><input id="role" maxlength="120" placeholder="e.g. ML intern">'
     +'<label for="txt">Resume text</label><textarea id="txt" placeholder="Paste the full text of one resume"></textarea>'
     +'<div class="row" style="margin-top:8px"><button class="b" id="add">Add to library</button><span class="mut">Duplicates are skipped, never overwritten.</span></div></div>';
   v.innerHTML=h;
+  $('upl').onclick=async function(){var b=this,fs=$('files').files;if(!fs.length){toast('Choose at least one file');return}
+    b.disabled=true;$('upmsg').textContent='Uploading…';
+    try{var fd=new FormData();fd.append('user_id',uid);if($('frole').value.trim())fd.append('target_role',$('frole').value.trim());for(var i=0;i<fs.length;i++)fd.append('files',fs[i]);
+      var res=await fetch(API+'/v1/resume-lab/import-files',{method:'POST',body:fd});var r=await res.json();
+      if(!res.ok)throw new Error(typeof r.detail==='string'?r.detail:'Upload failed');
+      toast(r.created.length+' added'+(r.skipped.length?', '+r.skipped.length+' skipped: '+r.skipped.map(function(x){return x.label+' ('+x.reason+')'}).join('; '):''));go()}
+    catch(e){toast(e.message);b.disabled=false;$('upmsg').textContent=''}};
   $('add').onclick=async function(){var b=this;b.disabled=true;
     try{var r=await api('/v1/resume-lab/import',{method:'POST',body:{resumes:[{label:$('lbl').value.trim(),target_role:$('role').value.trim()||null,text:$('txt').value}]}});
       toast(r.created.length?'Added':'Skipped: '+(r.skipped[0]&&r.skipped[0].reason));go()}

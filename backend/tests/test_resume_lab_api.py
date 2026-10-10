@@ -205,3 +205,19 @@ def test_attach_respects_library_limit(c, uid):
     app = c.post("/v1/applications", json={"user_id": uid, "company": "X", "role": "Y"}).json()
     r = c.post("/v1/resume-lab/attach", json={"user_id": uid, "resume_id": ids["v0"], "application_id": app["id"]})
     assert r.status_code == 409
+
+
+def test_import_files_uploads_indexes_and_skips_duplicates(c, uid):
+    import io
+    body = ("Asha Rao\nSkills: Python, FastAPI, RAG\nExperience\n- Built a RAG assistant in Python that cut support lookup time by 40%\n"
+            "- Developed REST APIs with FastAPI serving 2000 requests per day\nProjects\n- Created a resume parser using spaCy for 500 documents\n")
+    if True:
+        files = [("files", ("ML_v1.txt", io.BytesIO(body.encode()), "text/plain")),
+                 ("files", ("copy.txt", io.BytesIO(body.encode()), "text/plain")),
+                 ("files", ("bad.exe", io.BytesIO(b"x" * 200), "application/octet-stream"))]
+        r = c.post("/v1/resume-lab/import-files", data={"user_id": uid, "target_role": "ML intern"}, files=files).json()
+        assert [x["label"] for x in r["created"]] == ["ML_v1"]
+        reasons = " ".join(x["reason"] for x in r["skipped"])
+        assert "identical text" in reasons and "unsupported" in reasons
+        hits = c.post("/v1/resume-lab/bullets/search", params={"user_id": uid}, json={"query": "FastAPI REST APIs", "k": 3}).json()
+        assert "FastAPI" in str(hits)

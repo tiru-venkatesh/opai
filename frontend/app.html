@@ -130,13 +130,13 @@
   var sc = $('nav-superchat');
   if (sc && location.protocol !== 'file:' && !/\.html$/.test(location.pathname)) sc.setAttribute('href', '/super-chat');
 
-  /* ---- read the same workspace app.js saves (opa_demo_v3 for guests, opa_ws_<uid> when signed in) ---- */
+  /* ---- read the same workspace app.js saves (opa_ws_<uid> when signed in) ---- */
   function findWorkspace() {
     var best = null, bt = -1;
     try {
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
-        if (k !== 'opa_demo_v3' && !/^opa_ws_/.test(k)) continue;
+        if (!/^opa_ws_/.test(k)) continue;
         var o; try { o = JSON.parse(localStorage.getItem(k)); } catch (e) { continue; }
         if (!o || typeof o !== 'object') continue;
         var t = Date.parse(o.history && o.history[0] && o.history[0].at) || 0;

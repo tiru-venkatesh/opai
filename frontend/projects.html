@@ -38,12 +38,57 @@ form button{background:var(--pri);color:#FFFFFF;border:0;border-radius:6px;paddi
 .empty{background:var(--s1);border-radius:10px;padding:18px;color:var(--mut)}
 .empty b{color:var(--pri);font-weight:500}
 .note{margin-top:40px;color:var(--mut);font-size:13px}
+
+.sec{font-size:28px;line-height:34px;letter-spacing:-.03em;font-weight:600;margin:0;color:var(--pri)}
+.sec-sub{color:var(--mut);margin:4px 0 18px;max-width:78ch}
+#hack{margin:0 0 56px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.chip{background:var(--s1);color:var(--tx);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font:inherit;font-weight:500;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--pri);border-color:var(--pri);color:#fff}
+.hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px;align-items:stretch}
+.hk{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.hk-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{display:inline-block;border-radius:999px;padding:4px 12px;font-size:13px;line-height:20px;font-weight:600;background:#DCEBE8;color:#0F3F39}
+.pill.soon{background:#F6E7C4;color:#6B4400}.pill.hot{background:#F8D9D1;color:#8A2E1B}.pill.done{background:var(--s3);color:var(--mut)}
+.src{font-size:12px;line-height:18px;font-weight:600;border-radius:6px;padding:2px 8px}
+.src.ok{background:#DCEBE8;color:#0F3F39}.src.warn{background:#F6E7C4;color:#6B4400}
+.hk h3{font-size:22px;line-height:28px;letter-spacing:-.02em;font-weight:600;margin:0;color:var(--tx)}
+.hk-dl small{display:block;color:var(--mut);font-size:12px;line-height:16px;text-transform:uppercase;letter-spacing:.06em}
+.hk-dl b{display:block;font-size:26px;line-height:32px;letter-spacing:-.02em;color:var(--pri)}
+.hk-dl span{color:var(--mut);font-size:13px}
+.hk dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px;line-height:20px}
+.hk dt{color:var(--mut)}.hk dd{margin:0}
+.hk-note{margin:0;color:var(--mut)}
+.hk-act{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap;padding-top:6px}
+.btn{display:inline-block;background:var(--pri);color:#fff;text-decoration:none;border:0;border-radius:8px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}
+.btn.alt{background:transparent;color:var(--pri);border:1px solid var(--pri)}
+.btn.on{background:#DCEBE8;color:#0F3F39;border-color:#DCEBE8}
+.banner{background:#F6E7C4;color:#4A2F00;border-radius:10px;padding:12px 16px;margin:0 0 16px}
+.also{margin:22px 0 0;color:var(--mut);font-size:14px}
+.also a{color:var(--pri);font-weight:600}
+details.closed{margin-top:22px}
+details.closed summary{cursor:pointer;color:var(--mut);font-weight:600;padding:6px 0}
+.hk.past{opacity:.72}
+.fine{color:var(--mut);font-size:13px;margin:16px 0 0}
+@media (max-width:420px){.hgrid{grid-template-columns:1fr}.hk-dl b{font-size:22px}}
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#F6F4EE">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="opai-shared.css">
+<script>document.documentElement.setAttribute('data-view',new URLSearchParams(location.search).get('view')||'all')</script>
+<style>
+html[data-view=projects] #hack,html[data-view=projects] #comp{display:none}
+html[data-view=programs] #projwrap{display:none}
+.addbox{background:#fff;border:1px solid #e4e0d6;border-radius:14px;padding:14px 16px;margin:0 0 14px}
+.addbox h3{margin:0 0 8px;font-size:16px}.addbox .r{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.addbox input{flex:1;min-width:150px;border:1px solid #e4e0d6;border-radius:10px;padding:8px 10px;font:inherit}
+.repo{display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid #eee;padding:8px 0}
+.repo small{color:#5a6064;display:block}
+.cgrid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.cc{background:#fff;border:1px solid #e4e0d6;border-radius:14px;padding:14px 16px}.cc h3{margin:0 0 4px;font-size:16px}.cc p{margin:0 0 10px;color:#5a6064;font-size:14px}
+</style>
 </head>
 <body>
 <header><div class="bar">
@@ -59,10 +104,41 @@ form button{background:var(--pri);color:#FFFFFF;border:0;border-radius:6px;paddi
 <a href="app.html#/agent">Agent</a>
 </nav></div></header>
 <main>
-<h1>Projects</h1>
+<section id="hack" aria-labelledby="hh">
+<h1 class="sec" id="hh">Upcoming hackathons</h1>
+<p class="sec-sub" id="hsub"></p>
+<div id="hbanner"></div>
+<div class="chips" role="group" aria-label="Filter hackathons">
+<button type="button" class="chip" data-f="all" aria-pressed="true">All open</button>
+<button type="button" class="chip" data-f="week" aria-pressed="false">Closing in 7 days</button>
+<button type="button" class="chip" data-f="official" aria-pressed="false">Official page only</button>
+</div>
+<div id="hlist" class="hgrid"></div>
+<details class="closed" id="hclosed" hidden><summary id="hclosed-s"></summary><div id="hclosed-l" class="hgrid" style="margin-top:12px"></div></details>
+<p class="also" id="halso"></p>
+<p class="fine" id="hfine"></p>
+</section>
+<div id="projwrap">
+<h2 class="sec" style="font-size:24px">Your projects</h2>
 <p class="sub" id="sum"></p>
+<div class="addbox"><h3>Add a project manually</h3>
+<form id="mform" class="r"><input name="n" placeholder="Project name" aria-label="Project name" required maxlength="120"><input name="d" placeholder="One-line description (optional)" aria-label="Description" maxlength="300"><button class="btn">Add project</button></form></div>
+<div class="addbox"><h3>Import from GitHub</h3>
+<form id="gform" class="r"><input name="u" placeholder="GitHub username" aria-label="GitHub username" required maxlength="39" pattern="[A-Za-z0-9-]+"><button class="btn">Show my public repos</button></form>
+<div id="grepos"></div>
+<p class="fine" style="margin:6px 0 0">Reads your public repositories only, straight from GitHub in your browser. Private repos need a GitHub sign-in, which is not set up yet.</p></div>
 <div id="list"></div>
 <p class="note" id="note"></p>
+</div>
+<section id="comp" aria-labelledby="ch"><h2 class="sec" id="ch" style="font-size:24px;margin-top:28px">Coding contests and competitions</h2>
+<p class="sec-sub">Official pages only. These run all year, so check each page for the next date and the registration rules.</p>
+<div class="cgrid">
+<div class="cc"><h3>ICPC</h3><p>Team programming contest run through your university. Ask your college about its team and regional rounds.</p><a class="btn alt" href="https://icpc.global/" target="_blank" rel="noopener noreferrer">Official site ↗</a></div>
+<div class="cc"><h3>Codeforces</h3><p>Regular rated rounds. The contest list shows upcoming rounds and times.</p><a class="btn alt" href="https://codeforces.com/contests" target="_blank" rel="noopener noreferrer">Contest list ↗</a></div>
+<div class="cc"><h3>CodeChef</h3><p>Starters, Cook-Off and Lunchtime contests.</p><a class="btn alt" href="https://www.codechef.com/contests" target="_blank" rel="noopener noreferrer">Contest list ↗</a></div>
+<div class="cc"><h3>LeetCode</h3><p>Weekly and biweekly contests.</p><a class="btn alt" href="https://leetcode.com/contest/" target="_blank" rel="noopener noreferrer">Contests ↗</a></div>
+<div class="cc"><h3>Kaggle</h3><p>Machine learning competitions with their own deadlines.</p><a class="btn alt" href="https://www.kaggle.com/competitions" target="_blank" rel="noopener noreferrer">Competitions ↗</a></div>
+</div></section>
 </main>
 <script>
 (function(){
@@ -84,6 +160,7 @@ function load(){
 function save(){try{if(WS)localStorage.setItem(WS.key,JSON.stringify(S))}catch(e){}}
 function log(t){S.history.unshift({id:'h'+Date.now(),at:new Date().toISOString(),text:t})}
 function render(){
+  renderHack();
   var ps=S.projects,open=0;
   ps.forEach(function(p){open+=p.tasks.filter(function(t){return !t.done}).length});
   $('sum').textContent=ps.length?ps.length+' projects, '+open+' open tasks.':'';
@@ -98,6 +175,81 @@ function render(){
     '<form data-p="'+esc(p.id)+'"><input name="n" placeholder="Add a task" aria-label="New task for '+esc(p.name)+'" required><button>Add</button></form></section>'}).join('')+'</div>';
   $('note').textContent='Changes save to the same workspace the main app uses, in this browser.';
 }
+
+/* ===== Upcoming hackathons =====
+   Curated, dated list. Every entry keeps its source link; CHECKED is when the list was last verified.
+   Deadlines are shown in IST. Date-only deadlines are treated as end of day IST. */
+var CHECKED='2026-10-10',STALE_DAYS=14,TRK='opai_hack_tracked',HF='all';
+var H=[
+{id:'raksham',n:'Raksham AI Cybersecurity Hackathon',d:'2026-10-12T23:59:00+05:30',dOnly:1,ev:'Not stated in the listing',u:'https://www.anandabazar.com/amp/education-career/iit-delhi-has-launched-raksham-a-national-level-ai-cybersecurity-hackathon-2026-dgtl/cid/1718463',o:0,note:'IIT Delhi, national level, student-focused. Theme: AI, deepfakes and cyber-fraud. This deadline comes from a news article, so confirm it on the official registration page.'},
+{id:'mandi-mm',n:'Multimodal AI Hackathon, IIT Mandi',d:'2026-10-13T23:59:00+05:30',dOnly:1,ev:'Showcase and winners Oct 21',u:'https://unstop.com/hackathons/multimodal-ai-hackathon-2026-iit-mandi-1755408/amp',o:0,note:'The online build period is already running. Confirm registration is still open before you plan around it.'},
+{id:'ai-good',n:'AI for Good Hackathon',d:'2026-10-15T23:59:00+05:30',dOnly:1,ev:'Nov 7 to 9',elig:'Ages 14 to 22 (per listing)',u:'https://internshala.com/competitions/ai-for-good-hackathon-2026/',o:0,note:'48-hour hybrid sprint. Online participation is possible.'},
+{id:'hackiiitd',n:'HackIIITD at Esya’26',d:'2026-10-16T23:59:00+05:30',dOnly:1,ev:'Oct 24 to 25',elig:'Students across India',team:'2 to 4',u:'https://unstop.com/hackathons/hackiiitd-esya26-indraprastha-institute-of-information-technology-iiit-delhi-1761212/amp',o:0,note:'IIIT Delhi. Form your team early; teams must be 2 to 4 people.'},
+{id:'hackcache',n:'Hackcache’26',d:'2026-10-20T23:59:00+05:30',dOnly:1,ev:'Oct 23 to 24',u:'https://unstop.com/hackathons/hackcache26-government-college-of-engineering-and-technology-jammu-1744316/amp',o:0,note:'48-hour hackathon in Jammu. Check the listing for travel and location requirements.'},
+{id:'devhack',n:'DevHack 2026',d:'2026-10-22T23:59:00+05:30',dOnly:1,ev:'See listing',u:'https://unstop.com/hackathons/devhack-2026-devhost-2026-sahyadri-open-source-community-1759829/amp',o:0,note:'Registration and the PPT submission share this one deadline.'},
+{id:'aws-agent',n:'AWS Agent Experience Hackathon',d:'2026-10-23T23:59:00+05:30',dOnly:1,ev:'Runs Oct 16 to 30',u:'https://builder.aws.com/build/hackathons/4f50957c-1d08-37ab-b11c-97516b9adeb4/agent-experience-hackathon',o:1,note:'Build an AWS agent with Amazon Bedrock. Project due Oct 23. Read the official page for who can enter and what to submit.'},
+{id:'build-ai',n:'Build With AI: Basics',d:'2026-10-26T17:00:00-04:00',ev:'Judging Oct 27 to 30',u:'https://learn-ai-basics.devpost.com/rules',o:1,note:'Build a working proof of concept using the required Devpost Learn Skill Pack.'},
+{id:'codehack',n:'CodeHack India',d:'2026-10-27T23:59:00+05:30',dOnly:1,ev:'Oct 28 to Nov 10',u:'https://unstop.com/hackathons/codehack-india-national-level-hackathon-wecodecoders-1762158/amp',o:0,note:'National-level online hackathon.'},
+{id:'paypal-ai',n:'PayPal AI Hackathon',d:'2026-11-12T12:00:00-08:00',ev:'Submissions open Oct 1 to Nov 12',u:'https://paypalaihackathon.devpost.com/rules',o:1,note:'The project must use PayPal’s developer platform together with an AI tool. Read the rules for eligibility.'}
+];
+var IST='Asia/Kolkata';
+function fmt(d,o){return new Intl.DateTimeFormat('en-IN',Object.assign({timeZone:IST},o)).format(d)}
+function ms(h){return Date.parse(h.d)}
+function left(h){var m=ms(h)-Date.now();return m}
+function leftTxt(m){
+  if(m<=0)return 'Closed';
+  var hrs=Math.floor(m/36e5);if(hrs<24)return hrs<=1?'Closes within the hour':'Closes in '+hrs+' hours';
+  var dd=Math.floor(m/864e5);return dd+(dd===1?' day left':' days left');
+}
+function tone(m){return m<=0?'done':m<3*864e5?'hot':m<7*864e5?'soon':''}
+function stale(){var c=Date.parse(CHECKED+'T00:00:00+05:30');return (Date.now()-c)/864e5>STALE_DAYS}
+function trk(){try{return JSON.parse(localStorage.getItem(TRK)||'{}')||{}}catch(e){return{}}}
+function setTrk(o){try{localStorage.setItem(TRK,JSON.stringify(o))}catch(e){}}
+function isTracked(h){var t=trk()[h.id];return !!(t&&S.projects.some(function(p){return String(p.id)===t}))}
+function card(h,past){
+  var m=left(h),d=new Date(ms(h)),tr=isTracked(h);
+  var dl=fmt(d,{weekday:'short',day:'numeric',month:'short'});
+  var tm=h.dOnly?'Time not stated, treated as end of day IST':fmt(d,{day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true})+' IST';
+  var rows='<dt>Event</dt><dd>'+esc(h.ev)+'</dd>'+(h.team?'<dt>Team size</dt><dd>'+esc(h.team)+'</dd>':'')+'<dt>Eligibility</dt><dd>'+esc(h.elig||'Check the official rules')+'</dd>';
+  return '<article class="hk'+(past?' past':'')+'"><div class="hk-top"><span class="pill '+tone(m)+'">'+esc(leftTxt(m))+'</span>'+
+    '<span class="src '+(h.o?'ok':'warn')+'">'+(h.o?'Official rules page':'Third-party listing: verify')+'</span></div>'+
+    '<h3>'+esc(h.n)+'</h3>'+
+    '<div class="hk-dl"><small>Deadline</small><b>'+esc(dl)+'</b><span>'+esc(tm)+'</span></div>'+
+    '<dl>'+rows+'</dl><p class="hk-note">'+esc(h.note)+'</p>'+
+    '<div class="hk-act"><a class="btn alt" href="'+esc(h.u)+'" target="_blank" rel="noopener noreferrer">Open page ↗</a>'+
+    (past?'':'<button type="button" class="btn'+(tr?' on':'')+'" data-track="'+esc(h.id)+'"'+(tr?' disabled':'')+'>'+(tr?'Tracking in Projects':'Track this')+'</button>')+'</div></article>';
+}
+function renderHack(){
+  var open=H.filter(function(h){return left(h)>0}).sort(function(a,b){return ms(a)-ms(b)});
+  var past=H.filter(function(h){return left(h)<=0}).sort(function(a,b){return ms(b)-ms(a)});
+  var shown=open.filter(function(h){return HF==='week'?left(h)<7*864e5:HF==='official'?h.o:true});
+  $('hsub').textContent=open.length+' open now, soonest deadline first. Last checked '+fmt(new Date(CHECKED+'T12:00:00+05:30'),{day:'numeric',month:'long',year:'numeric'})+'. Deadlines are in IST.';
+  $('hbanner').innerHTML=stale()?'<div class="banner" role="status"><b>This list is more than '+STALE_DAYS+' days old.</b> Deadlines may have changed or new hackathons may be open. Check each page before you rely on a date.</div>':'';
+  $('hlist').innerHTML=shown.length?shown.map(function(h){return card(h,false)}).join(''):'<div class="empty" style="grid-column:1/-1"><b>'+(open.length?'Nothing matches this filter.':'No open hackathons in the list right now.')+'</b><br>'+(open.length?'Try “All open”.':'Every listed deadline has passed. The list needs a refresh.')+'</div>';
+  var det=$('hclosed');det.hidden=!past.length;
+  $('hclosed-s').textContent='Closed ('+past.length+')';
+  $('hclosed-l').innerHTML=past.map(function(h){return card(h,true)}).join('');
+  document.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',c.getAttribute('data-f')===HF?'true':'false')});
+  $('halso').innerHTML='Also running: <a href="https://hacktoberfest.com/" target="_blank" rel="noopener noreferrer">Hacktoberfest</a> is open all October, and MLH Global Hack Week runs Oct 9 to 15. GSoC 2026 applications closed on March 31; the next cycle’s dates are not announced yet (<a href="https://developers.google.com/open-source/gsoc/timeline" target="_blank" rel="noopener noreferrer">timeline</a>). More programs are under Opportunities.';
+  $('hfine').textContent='Listings from Unstop, Internshala and news sites are marked “verify”. Confirm dates, eligibility and team rules on the organizer’s page before you register.';
+}
+function trackHack(id){
+  var h=H.find(function(x){return x.id===id});if(!h||left(h)<=0)return;
+  if(!WS){alert('No workspace found in this browser. Open the main app on this site first, then track again.');return}
+  if(isTracked(h))return;
+  var dl=fmt(new Date(ms(h)),{day:'numeric',month:'short'});
+  var p={id:'p'+Date.now(),name:'Hackathon: '+h.n,description:'Deadline '+dl+' (IST). Verify on the official page: '+h.u,
+    tasks:[{n:'Read the rules and eligibility on the official page'},{n:'Register before '+dl},{n:'Decide the idea and '+(h.team?'find a team of '+h.team:'whether you go solo or with a team')},{n:'Build a working demo'},{n:'Submit before '+dl}]
+    .map(function(t,i){return{id:'t'+Date.now()+i,name:t.n,done:false}})};
+  S.projects.unshift(p);log('Tracking hackathon: '+h.n);save();
+  var t=trk();t[h.id]=p.id;setTrk(t);render();
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('[data-track]');if(b){trackHack(b.getAttribute('data-track'));return}
+  var c=e.target.closest&&e.target.closest('.chip[data-f]');if(c){HF=c.getAttribute('data-f');renderHack()}
+});
+setInterval(function(){renderHack()},60000);
+
 function proj(id){return S.projects.find(function(x){return String(x.id)===id})}
 document.addEventListener('change',function(e){
   var el=e.target;if(!el.matches||!el.matches('input[type=checkbox][data-t]'))return;
@@ -114,6 +266,27 @@ document.addEventListener('submit',function(e){
 window.addEventListener('storage',function(e){if(WS&&e.key===WS.key){load();render()}});
 var sc=$('n-chat');
 if(sc&&location.protocol!=='file:'&&!/\.html$/.test(location.pathname))sc.setAttribute('href','/super-chat');
+function addProject(name,desc){
+  if(!WS){alert('No workspace found in this browser. Open the main app on this site first, then add again.');return false}
+  if(S.projects.some(function(p){return p.name.toLowerCase()===name.toLowerCase()}))return 'dup';
+  S.projects.unshift({id:'p'+Date.now(),name:name,description:desc||'',tasks:[]});
+  log('Added project: '+name);save();render();return true;
+}
+$('mform').addEventListener('submit',function(e){e.preventDefault();var f=e.target,r=addProject(f.elements.n.value.trim(),f.elements.d.value.trim());
+  if(r==='dup')alert('You already have a project with that name.');else if(r)f.reset()});
+var REPOS=[];
+$('gform').addEventListener('submit',function(e){e.preventDefault();var u=e.target.elements.u.value.trim(),box=$('grepos');
+  box.innerHTML='<p class="fine">Loading…</p>';
+  fetch('https://api.github.com/users/'+encodeURIComponent(u)+'/repos?sort=updated&per_page=30&type=owner',{headers:{Accept:'application/vnd.github+json'}})
+  .then(function(r){if(r.status===404)throw new Error('No GitHub user named '+u);if(r.status===403)throw new Error('GitHub rate limit reached. Try again in a few minutes.');if(!r.ok)throw new Error('GitHub error '+r.status);return r.json()})
+  .then(function(rs){REPOS=rs.filter(function(x){return !x.fork});
+    box.innerHTML=REPOS.length?REPOS.map(function(x,i){var have=S.projects.some(function(p){return p.name.toLowerCase()===x.name.toLowerCase()});
+      return '<div class="repo"><div><b>'+esc(x.name)+'</b><small>'+esc(x.description||'No description')+(x.language?' · '+esc(x.language):'')+'</small></div><button type="button" class="btn alt" data-repo="'+i+'"'+(have?' disabled':'')+'>'+(have?'Added':'Add')+'</button></div>'}).join(''):'<p class="fine">No public repositories found.</p>'})
+  .catch(function(err){box.innerHTML='<p class="fine" role="alert">'+esc(err.message)+'</p>'});
+});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-repo]');if(!b)return;
+  var x=REPOS[+b.getAttribute('data-repo')];if(!x)return;
+  var r=addProject(x.name,(x.description?x.description+' · ':'')+x.html_url);if(r===true){b.textContent='Added';b.disabled=true}});
 load();render();
 })();
 </script>

@@ -15,7 +15,7 @@ from datetime import datetime
 from collections import Counter
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -207,6 +207,49 @@ def import_resumes(p: ImportBody, db: Session = Depends(get_db)):
         created.append({"id": row.id, "label": row.label})
     sync_bank(db, u.id)
     audit(db, u.id, "resume_lab.import", {"n": len(p.resumes)}, {"created": len(created), "skipped": len(skipped)}, "low")
+    return {"created": created, "skipped": skipped, "total_versions": len(existing) + len(created), "limit": MAX_VERSIONS}
+
+
+@router.post("/v1/resume-lab/import-files")
+async def import_resume_files(user_id: str = Form(...), target_role: Optional[str] = Form(None),
+                              files: List[UploadFile] = File(...), db: Session = Depends(get_db)):
+    """Upload PDF / DOCX / TXT resumes (several at once). Same rules as /import: exact duplicates and a full
+    library are skipped with a reason, and every bullet is indexed into the bullet bank."""
+    import rag_api
+    u = _user(db, user_id)
+    existing = _own_resumes(db, u.id)
+    seen = {_h(r.raw_text) for r in existing}
+    labels = {r.label.strip().lower() for r in existing}
+    created, skipped = [], []
+    for f in files[:MAX_VERSIONS * 2]:
+        name = f.filename or "resume"
+        label = re.sub(r"\.[A-Za-z0-9]+$", "", name).strip()[:80] or "Resume"
+        data = await f.read(5 * 1024 * 1024 + 1)
+        if len(data) > 5 * 1024 * 1024:
+            skipped.append({"label": name, "reason": "file is larger than 5 MB"})
+            continue
+        try:
+            text = "\n".join(pg["text"] for pg in rag_api.parse_file(name, data)).strip()
+        except rag_api.ParseError as e:
+            skipped.append({"label": name, "reason": str(e)})
+            continue
+        if len(text) < 80:
+            skipped.append({"label": name, "reason": "no readable text (a scanned image PDF?)"})
+            continue
+        if _h(text) in seen:
+            skipped.append({"label": name, "reason": "identical text already in your library"})
+            continue
+        if label.lower() in labels:
+            label = f"{label[:70]} ({len(existing) + len(created) + 1})"
+        if len(existing) + len(created) >= MAX_VERSIONS:
+            skipped.append({"label": name, "reason": f"library is full ({MAX_VERSIONS} versions); delete one first"})
+            continue
+        row = _create(db, u.id, label, (target_role or "").strip()[:120] or None, text[:40000])
+        seen.add(_h(text))
+        labels.add(label.lower())
+        created.append({"id": row.id, "label": row.label})
+    sync_bank(db, u.id)
+    audit(db, u.id, "resume_lab.import_files", {"n": len(files)}, {"created": len(created), "skipped": len(skipped)}, "low")
     return {"created": created, "skipped": skipped, "total_versions": len(existing) + len(created), "limit": MAX_VERSIONS}
 
 

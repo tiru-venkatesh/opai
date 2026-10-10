@@ -108,7 +108,7 @@ def candidates(db: Session, uid: str, today: date, avail: int, energy: str) -> L
             continue
         c.append(dict(kind="task", ref_id=t.id, title=t.title, subtitle=f"Task · {t.type or 'general'}", minutes=int(t.estimated_minutes or 45),
                       days=d, importance=0.5 if (t.type or "") != "general" else 0.4, stale=0, done=False, effort=int(t.estimated_minutes or 45),
-                      link="opportunities.html#programs" if t.type == "program" else "app.html#/today", facts=dict(due=_when(d), type=t.type)))
+                      link="app.html#/today", facts=dict(due=_when(d), type=t.type)))
 
     # --- applications: deadline or follow-up due, not already submitted ---
     for a in db.query(Application).filter(Application.user_id == uid).all():
@@ -122,7 +122,7 @@ def candidates(db: Session, uid: str, today: date, avail: int, energy: str) -> L
             continue
         mins = int(a.effort_minutes or 60)
         c.append(dict(kind="application", ref_id=a.id, title=f"Prepare {a.role} at {a.company}", subtitle=f"Application · {a.status or 'To Apply'}",
-                      minutes=mins, days=d if d is not None else fu, importance=0.8, stale=0, done=False, effort=mins, link="opportunities.html",
+                      minutes=mins, days=d if d is not None else fu, importance=0.8, stale=0, done=False, effort=mins, link="applications.html",
                       facts=dict(deadline=_when(d), status=a.status, effort=mins, link=a.link)))
 
     # --- drafts waiting in the Outbox (needs the user's sign-off; sending itself stays in the Outbox flow) ---

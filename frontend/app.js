@@ -64,16 +64,7 @@ async function ensureUser() {
   if (AUTH.user && AUTH.user.email) {
     r = await POST('/v1/auth/dev-login?email=' + encodeURIComponent(AUTH.user.email) + '&name=' + encodeURIComponent(AUTH.user.name || ''));
   } else {
-    // Guests get their own isolated backend user, remembered on this device only.
-    let gid = null; try { gid = localStorage.getItem('opa_guest_uid'); } catch (e) {}
-    if (gid) {
-      // The backend DB may have been reset (e.g. SQLite on a free host). If this guest no longer exists, make a new one instead of 404-ing everywhere.
-      let alive = true;
-      try { await GET('/v1/profile?user_id=' + gid); } catch (e) { if (/404|not found/i.test(String(e && e.message))) alive = false; }
-      if (alive) { BACKEND.userId = gid; return gid; }
-    }
-    r = await POST('/v1/auth/guest');
-    try { localStorage.setItem('opa_guest_uid', r.user_id); } catch (e) {}
+    throw new Error('Not signed in');
   }
   BACKEND.userId = r.user_id;
   return BACKEND.userId;
@@ -2758,7 +2749,7 @@ document.addEventListener('mousedown', (e) => { if (calOpen && !e.target.closest
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && calOpen) calToggle(); });
 const _renderBase = render;
 function hdrFill() {
-  const n = (S.profile.name || (AUTH.user && AUTH.user.name) || 'Guest').trim() || 'Guest';
+  const n = (S.profile.name || (AUTH.user && AUTH.user.name) || 'User').trim() || 'User';
   const a = $('hdr-av'), b = $('hdr-name');
   if (a) a.textContent = n[0].toUpperCase();
   if (b) b.textContent = n;
@@ -2782,9 +2773,8 @@ const FB_CONFIG = {
   measurementId: "G-G3ZY2JC3WG"
 };
 const LS_SESSION = 'opa_session';
-const GUEST_KEY = 'opa_demo_v3';
 const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.send';
-const AUTH = { user: null, guest: false };
+const AUTH = { user: null };
 const GMAIL = { token: null, exp: 0 };
 let FB = null;
  
@@ -2858,42 +2848,33 @@ async function connectGmail() {
 function wsKey(uid) { return 'opa_ws_' + uid; }
 function enterUser(u) {
   BACKEND.userId = null; rlReset(); semsReset();
-  AUTH.user = { uid: u.uid, email: u.email || '', name: u.displayName || '', photo: u.photoURL || '' }; AUTH.guest = false;
-  try { localStorage.setItem(LS_SESSION, 'google'); } catch (e) {}
+  AUTH.user = { uid: u.uid, email: u.email || '', name: u.displayName || '', photo: u.photoURL || '' };
+  try { localStorage.setItem(LS_SESSION, 'google'); if (u.email) localStorage.setItem('opai_sc_email', u.email); } catch (e) {}
   LS_KEY = wsKey(u.uid);
   let has = false; try { has = !!localStorage.getItem(LS_KEY); } catch (e) {}
   if (has) S = load();
   else {
-    let first = false, guestRaw = null;
-    try { first = !localStorage.getItem('opa_migrated'); guestRaw = localStorage.getItem(GUEST_KEY); } catch (e) {}
-    if (first && guestRaw) { try { S = JSON.parse(guestRaw); } catch (e) { S = seed(); } try { localStorage.setItem('opa_migrated', u.uid); } catch (e) {} }
-    else S = seed();
+    S = seed();
     if (!S.profile.email) S.profile.email = AUTH.user.email;
-    if (u.displayName && (!first || !guestRaw)) S.profile.name = u.displayName;
+    if (u.displayName) S.profile.name = u.displayName;
     log('Signed in as ' + AUTH.user.email); save();
   }
   renderUser(); render(true);
-  syncBackend().then(() => { updateConnBadge(); render(true); });
-}
-function appEnterGuest() {
-  BACKEND.userId = null; rlReset(); semsReset();
-  AUTH.user = null; AUTH.guest = true;
-  LS_KEY = GUEST_KEY; S = load(); renderUser(); render(true);
   syncBackend().then(() => { updateConnBadge(); render(true); });
 }
 function renderUser() {
   const c = $('userchip'); if (!c) return;
   c.style.display = '';
   const u = AUTH.user;
-  const nm = u ? (u.name || u.email) : 'Guest';
-  const av = u && u.photo ? '<img src="' + escA(u.photo) + '" alt="" referrerpolicy="no-referrer">' : esc((nm[0] || 'G').toUpperCase());
-  c.innerHTML = '<div class="av">' + av + '</div><div><b>' + esc(nm) + '</b><span>' + (u ? esc(u.email) : 'Demo workspace') + '</span></div><button class="icon-btn" onclick="signOutNow()" aria-label="Sign out" title="Sign out">' + icon('x', 15) + '</button>';
+  const nm = u ? (u.name || u.email) : 'User';
+  const av = u && u.photo ? '<img src="' + escA(u.photo) + '" alt="" referrerpolicy="no-referrer">' : esc((nm[0] || 'U').toUpperCase());
+  c.innerHTML = '<div class="av">' + av + '</div><div><b>' + esc(nm) + '</b><span>' + (u ? esc(u.email) : '') + '</span></div><button class="icon-btn" onclick="signOutNow()" aria-label="Sign out" title="Sign out">' + icon('x', 15) + '</button>';
 }
 function signOutNow() {
   BACKEND.userId = null; rlReset(); semsReset();
   const a = FB;
-  AUTH.user = null; AUTH.guest = false; GMAIL.token = null; GMAIL.exp = 0;
-  try { localStorage.removeItem(LS_SESSION); } catch (e) {}
+  AUTH.user = null; GMAIL.token = null; GMAIL.exp = 0;
+  try { localStorage.removeItem(LS_SESSION); localStorage.removeItem('opai_sc_email'); } catch (e) {}
   $('userchip').style.display = 'none';
   const done = () => location.replace('login.html');
   if (a) a.signOut().then(done, done); else done();
@@ -2901,7 +2882,7 @@ function signOutNow() {
 function accountPanel() {
   const u = AUTH.user;
   const h = '<section class="panel form-panel" style="margin-top:20px"><h3 style="font-family:var(--display);font-size:18px;font-weight:650;margin-bottom:8px">Account</h3>';
-  if (!u) return h + '<p class="row-s" style="margin-bottom:16px">You are using a guest workspace. Sign in with Google to get your own workspace and send email from Gmail.</p><div class="data-actions"><button class="btn" onclick="signOutNow()">Sign in with Google</button></div></section>';
+  if (!u) return h + '<p class="row-s" style="margin-bottom:16px">You are not signed in.</p><div class="data-actions"><button class="btn" onclick="signOutNow()">Sign in</button></div></section>';
   const on = !!gmailToken();
   const until = on ? new Date(GMAIL.exp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
   return h + '<p class="row-s" style="margin-bottom:6px">Signed in as <b>' + esc(u.email) + '</b></p><p class="row-s" style="margin-bottom:16px">Gmail: ' + (on ? 'connected until about ' + until : 'not connected. You will be asked to click OK when you approve a draft.') + '</p><div class="data-actions">' + (on ? '' : '<button class="btn" onclick="askGmail()">Connect Gmail</button>') + '<button class="btn ghost" onclick="signOutNow()">Sign out</button></div></section>';
@@ -2913,14 +2894,12 @@ function accountPanel() {
     const n = location.hash.replace('#/', '');
     cur = VIEWS[n] ? n : 'today';
   } catch (e) { cur = 'today'; }
-  let sess = null; try { sess = localStorage.getItem(LS_SESSION); } catch (e) {}
-  if (sess === 'guest') { appEnterGuest(); return; }
   const a = fbInit();
   if (!a) { location.replace('login.html'); return; }
   let first = true;
   a.onAuthStateChanged((u) => {
     if (u) { if (!AUTH.user || AUTH.user.uid !== u.uid) enterUser(u); }
-    else if (first && !AUTH.guest) location.replace('login.html');
+    else if (first) location.replace('login.html');
     first = false;
   });
 })();

@@ -146,14 +146,3 @@ schema are configured. The exact Jev transport remains provider-agnostic.
 
 `POST /v1/seed` is disabled by default and only exists for explicit local testing
 when `ENABLE_DEV_SEED=true`.
-
-## Opportunities pipeline (`/v1/opp/*`, page: `frontend/opportunities.html`)
-
-Discover → Evaluate → Prepare → Apply/Reach out → Follow up → Learn. Code: `opportunities_api.py`, `opp_parse.py`; tests: `tests/test_opportunities.py`.
-
-Hard boundaries (enforced in code):
-- LinkedIn is user-controlled: pasted links/text and pasted job-alert emails only. No scraping, no URL fetching, no automation.
-- OPAI never submits applications: `Applied` needs `user_confirms_submitted=true`.
-- Email approval is bound to a SHA-256 of recipient/subject/body/attachments. Editing invalidates review. Approval returns a Gmail compose link; the user sends, then confirms with `/sent`.
-- Replies are never auto-detected; the follow-up flow asks "Have they replied?". One follow-up per contact, daily cap and do-not-contact list still apply.
-- Legacy `POST /v1/outbox/{id}/approve` now requires `?reviewed_hash=` for email items (hash is returned by `GET /v1/outbox`).

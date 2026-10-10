@@ -1119,37 +1119,3 @@ backend/
 
 The existing `agent_service.py` remains the compatibility layer while capabilities
 are migrated behind these typed boundaries.
-
-
-## Opportunities: sending approved email through Gmail (optional)
-
-Without any setup, approving a message gives you an **Open in Gmail** compose link; you send it yourself and press
-*I sent it myself*. To let OPAI send the approved message for you, create a Google OAuth *Web* client
-(Google Cloud Console -> APIs & Services -> Credentials), add your site as an authorised JavaScript origin, enable the
-Gmail API, and set:
-
-    GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
-
-The browser then asks for the **send-only** scope (`gmail.send`) when you press *Send with Gmail*. The short-lived
-token travels with that single request, is never stored or logged, and cannot read your inbox. The send is refused
-if the content changed after approval, if it was already sent, or if the recipient is on your do-not-contact list.
-The Gmail message id is saved and the follow-up reminder is scheduled only after Gmail accepts the message.
-
-
-## Opportunities: Programs & Challenges
-
-Open-source programs, hackathons, startup competitions, fellowships, company/research programs, government internships and
-online challenges live in one tab, each with its own type (they are not forced into "internship"). Every program is tracked
-by **cycle** (year/edition):
-
-* A status (Open, Opens soon, Active, Closed, Ended) is shown **only** for dates you confirmed on the organizer's own
-  domain (https, host check) and re-checked within 14 days. Otherwise the card says *Verify current cycle* or *Not announced*.
-* Dates from a third-party page are stored as `third_party` and never trusted. Editing confirmed dates without
-  re-confirming drops the badge.
-* The starter catalog (GSoC, Hacktoberfest, Outreachy, MLH Fellowship, Imagine Cup, NVIDIA student programs) has **no dates**;
-  it is a discovery aid. Verify each official URL before relying on it.
-* *Add to my plan* creates at most 3 dated preparation tasks (idempotent) that appear in Today. Registering/submitting is
-  always done by you on the official site; *Submitted* needs your explicit confirmation.
-
-API: `/v1/opp/programs` (list/add), `/catalog`, `/types`, `/parse`, `PUT /cycles/{id}`, `POST /cycles/{id}/plan`,
-`POST /cycles/{id}/participation`, `POST /{id}/cycles`, `POST /{id}/dismiss`, `DELETE /{id}`.

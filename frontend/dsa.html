@@ -85,6 +85,7 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
   <h1>DSA Roadmap</h1>
   <p class="tag">Learn consistently, stay on track, and prepare for placements without losing focus on semester exams. OPAI plans, tracks, reminds and adapts. The actual practice happens on external sites.</p>
   <div id="err" class="err" hidden role="alert"></div>
+  <div id="streak"></div>
   <div id="app" aria-live="polite"><div class="card">Loading your roadmap…</div></div>
   <p class="note">No in-app coding editor, no judge, no problem statements, no solutions and no mock interviews. Open problems and articles on LeetCode, GeeksforGeeks, Codeforces or any site you prefer, then come back and mark progress. Each topic keeps one learning link and one practice link that you can change.</p>
 </main>
@@ -111,9 +112,7 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
     if (uid) return uid;
     const email = new URLSearchParams(location.search).get('email') || localStorage.getItem('opai_sc_email');
     if (email) { localStorage.setItem('opai_sc_email', email); uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(email), { method: 'POST' })).user_id; return uid; }
-    let gid = localStorage.getItem('opa_guest_uid');
-    if (gid) { try { await api('/v1/profile?user_id=' + encodeURIComponent(gid)); uid = gid; return uid; } catch (e) { if (!/404/.test(e.message) && !/not found/i.test(e.message)) throw e; } }
-    gid = (await api('/v1/auth/guest', { method: 'POST' })).user_id; localStorage.setItem('opa_guest_uid', gid); uid = gid; return uid;
+    location.replace('login.html'); throw new Error('Please sign in');
   }
 
   let S = null, pendingConf = null; const openPh = new Set(), editing = new Set();
@@ -209,20 +208,44 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
     else if (s.dataset.act === 'confsel') call('/v1/dsa/topics/' + encodeURIComponent(id), 'PATCH', { confidence: s.value ? +s.value : null });
   });
 
+
+  /* ---- streak + reminder (streak counts planned days only; rest days never break it) ---- */
+  async function loadStreak() {
+    let k; try { k = await api('/v1/dsa/streak?user_id=' + encodeURIComponent(uid)); } catch (e) { return; }
+    const box = $('streak'); if (!box) return;
+    const on = localStorage.getItem('opai_dsa_notify') === '1' && window.Notification && Notification.permission === 'granted';
+    let msg;
+    if (k.lost_streak) msg = 'You lost a ' + k.lost_streak + '-day streak (' + k.missed_days + ' planned day' + (k.missed_days > 1 ? 's' : '') + ' missed). Finish today\'s block to start a new one. Your longest is ' + k.longest + '.';
+    else if (k.at_risk) msg = k.current + '-day streak. Finish today\'s block to keep it.';
+    else if (k.today_status === 'done') msg = k.current + '-day streak. Today is done.';
+    else if (k.today_status === 'rest_day') msg = k.current ? k.current + '-day streak. Today is a rest day, so it is safe.' : 'No streak yet. Your next planned day starts one.';
+    else msg = k.current ? k.current + '-day streak.' : 'No streak yet. Finish today\'s block to start one.';
+    box.innerHTML = '<div class="card" style="margin-bottom:14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between' + (k.lost_streak ? ';border-color:#e8705a' : '') + '"><div><b style="font-size:22px">' + k.current + '</b> <span>day streak</span><div style="color:#5a6064">' + esc(msg) + '</div></div>' +
+      (window.Notification ? '<button type="button" class="btn" id="dsa-notify">' + (on ? 'Reminders on (turn off)' : 'Remind me to study') + '</button>' : '') + '</div>' +
+      (window.Notification ? '<p class="fine" style="margin:-6px 0 14px;color:#5a6064;font-size:13px">Reminders appear while OPAI is open in your browser. They are not background push notifications.</p>' : '');
+    const b = $('dsa-notify');
+    if (b) b.onclick = async () => {
+      if (on) { localStorage.removeItem('opai_dsa_notify'); return loadStreak(); }
+      const p = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+      if (p === 'granted') localStorage.setItem('opai_dsa_notify', '1'); else alert('Notifications are blocked for this site. Allow them in your browser settings to use reminders.');
+      loadStreak();
+    };
+    const key = 'opai_dsa_notified', day = new Date().toDateString();
+    if (on && (k.at_risk || k.lost_streak || k.today_status === 'planned') && localStorage.getItem(key) !== day) {
+      localStorage.setItem(key, day);
+      try { new Notification('OPAI · DSA', { body: k.lost_streak ? 'Your streak ended. Start a new one with today\'s block.' : k.at_risk ? 'Finish today\'s DSA block to keep your ' + k.current + '-day streak.' : 'Today\'s DSA block is waiting.' }); } catch (e) {}
+    }
+  }
   (async () => {
     try {
       await ensureUser();
       try { S = await api('/v1/dsa?user_id=' + encodeURIComponent(uid)); }
       catch (e1) {
-        // Server forgot this user (e.g. its database was reset): drop the stale guest id, make a new one, retry once.
-        if (/user not found/i.test(e1.message) && !new URLSearchParams(location.search).get('email') && !localStorage.getItem('opai_sc_email')) {
-          localStorage.removeItem('opa_guest_uid'); uid = null; await ensureUser();
-          S = await api('/v1/dsa?user_id=' + encodeURIComponent(uid));
-        } else if (/^not found$/i.test(e1.message)) {
+        if (/^not found$/i.test(e1.message)) {
           throw new Error('The backend at ' + base() + ' is running an older version without the DSA roadmap (/v1/dsa). Redeploy the latest backend code.');
         } else throw e1;
       }
-      render();
+      render(); loadStreak();
     }
     catch (e) { $('app').innerHTML = '<div class="card">Could not reach the OPAI backend at ' + esc(base()) + '. If it is on a free host it may be waking up; retry in a minute.<br><small>' + esc(e.message) + '</small></div>'; }
   })();

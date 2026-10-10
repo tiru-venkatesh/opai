@@ -520,7 +520,6 @@ class OutboxOut(BaseModel):
     risk_level: str = "medium"
     approval_scope: str = "single_use"
     expires_at: Optional[Any] = None
-    payload_hash: Optional[str] = None
 
 
 # ================= HISTORY & BACKGROUND JOBS =================
