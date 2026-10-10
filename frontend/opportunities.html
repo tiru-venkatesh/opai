@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><script src="opai-ux.js"></script>
+<link rel="stylesheet" href="opai-shared.css">
 <style>
 :root{--bg:#F6F4EE;--card:#fff;--ink:#16181A;--mut:#5a6064;--pri:#17504A;--coral:#E8705A;--line:#e3e0d6;--warn:#b4580f;--bad:#b3261e;--good:#17704a;--font:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif}
 *{box-sizing:border-box}html,body{margin:0}
@@ -88,7 +88,7 @@ input:focus,textarea:focus,select:focus{outline:0;border-color:var(--pri);box-sh
 <script>
 (function(){
 var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
-var uid=null;
+var uid=localStorage.getItem('opa_guest_uid');
 var TABS=[['today','Today\u2019s Matches'],['saved','Saved Opportunities'],['apps','Applications'],['prof','Professor Outreach'],['programs','Programs & Challenges'],['email','Email & Follow-ups'],['docs','Documents'],['reports','Reports']];
 var tab=(location.hash||'#today').slice(1);if(!TABS.some(function(t){return t[0]===tab}))tab='today';
 function $(i){return document.getElementById(i)}
@@ -99,7 +99,7 @@ async function api(path,opt){opt=opt||{};var q=path+(path.indexOf('?')<0?'?':'&'
   var d=null;try{d=await r.json()}catch(e){}
   if(!r.ok){var m=d&&d.detail;if(Array.isArray(m))m=m.map(function(x){return x.msg}).join('; ');throw new Error(m||('Request failed ('+r.status+')'))}return d}
 function post(p,b){return api(p,{method:'POST',body:b||{}})}
-async function ensureUser(){if(uid)return;var e=null;try{e=localStorage.getItem('opai_sc_email')}catch(x){}if(!e){location.replace('login.html');throw new Error('Please sign in')}var r=await fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(e),{method:'POST'});var d=await r.json();uid=d.user_id}
+async function ensureUser(){if(uid)return;var r=await fetch(API+'/v1/auth/guest',{method:'POST'});var d=await r.json();uid=d.user_id;localStorage.setItem('opa_guest_uid',uid)}
 
 function stagger(root){var n=0;root.querySelectorAll(':scope > *, .board .col, .col .card, #fc_out > .card').forEach(function(el){el.style.setProperty('--i',Math.min(n++,14))})}
 function countUp(root){root.querySelectorAll('[data-n]').forEach(function(el){var to=+el.dataset.n,t0=null;if(!to||matchMedia('(prefers-reduced-motion:reduce)').matches){el.textContent=to;return}

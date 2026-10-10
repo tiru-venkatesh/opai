@@ -1,6 +1,5 @@
 """Refinement plan: typed intents, one chat contract, timezones, durable scheduling, payload binding, observability.
 Run: cd backend && python -m pytest tests/test_refinement.py -q"""
-import uuid as _uuid
 import os, re, sys, tempfile
 os.environ["RAG_EMBEDDER"] = "hash"; os.environ["GROQ_API_KEY"] = ""; os.environ["OPAI_SCHEDULER"] = "0"
 os.environ["DATABASE_URL"] = "sqlite:///" + tempfile.NamedTemporaryFile(suffix=".db", delete=False).name
@@ -38,7 +37,7 @@ def c():
 
 @pytest.fixture()
 def uid(c):
-    u = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
+    u = c.post("/v1/auth/guest").json()["user_id"]
     assert c.put("/v1/notifications/settings", json={"user_id": u, "timezone": "Asia/Kolkata"}).status_code == 200
     return u
 
@@ -161,7 +160,7 @@ def test_ist_input_utc_storage_ist_display_on_a_utc_server(c, uid):
 
 
 def test_user_zone_differs_from_server_zone(c):
-    u = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
+    u = c.post("/v1/auth/guest").json()["user_id"]
     c.put("/v1/notifications/settings", json={"user_id": u, "timezone": "America/Los_Angeles"})
     s = db()
     r = RC.handle(u, "remind me at 9am to call", s, now=datetime(2026, 10, 7, 20, 0))            # 1pm PDT
@@ -179,7 +178,7 @@ def test_tomorrow_across_midnight(c, uid):
 
 
 def test_daily_recurrence_keeps_local_wall_time_across_dst_change(c):
-    u = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
+    u = c.post("/v1/auth/guest").json()["user_id"]
     c.put("/v1/notifications/settings", json={"user_id": u, "timezone": "America/New_York"})
     s = db(); fn = RM.offset_fn(s, u)
     old = datetime(2026, 10, 31, 11, 30)                                                                      # 07:30 EDT
@@ -192,7 +191,7 @@ def test_daily_recurrence_keeps_local_wall_time_across_dst_change(c):
 
 
 def test_wall_time_in_a_dst_zone_is_parsed_with_the_offset_at_that_instant(c):
-    u = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
+    u = c.post("/v1/auth/guest").json()["user_id"]
     c.put("/v1/notifications/settings", json={"user_id": u, "timezone": "America/New_York"})
     s = db(); fn = RM.offset_fn(s, u)
     now = datetime(2026, 10, 31, 20, 0)                                                                       # still EDT
@@ -241,7 +240,7 @@ def test_idempotency_key_blocks_a_replayed_occurrence(c, uid):
 
 
 def test_two_users_are_isolated(c, uid):
-    other = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
+    other = c.post("/v1/auth/guest").json()["user_id"]
     mk_reminder(c, uid, "mine"); mk_reminder(c, other, "theirs")
     s = db(); RM.fire_due(s, user_id=uid)
     assert len(notifs(uid)) == 1 and notifs(other) == []
@@ -354,7 +353,7 @@ def test_reminder_patch_and_validation(c, uid):
     assert p["title"] == "Lab record" and p["local_time"] == "10:30 AM"
     c.post(f"/v1/reminders/{rid}/complete", json={"user_id": uid})
     assert c.patch(f"/v1/reminders/{rid}", json={"user_id": uid, "title": "x"}).status_code == 409
-    other = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
+    other = c.post("/v1/auth/guest").json()["user_id"]
     assert c.patch(f"/v1/reminders/{rid}", json={"user_id": other, "title": "x"}).status_code == 404
 
 

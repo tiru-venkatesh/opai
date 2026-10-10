@@ -58,7 +58,7 @@ def _words(text: Optional[str]) -> set:
 
 def _user_skill_set(db: Session, u: User) -> set:
     skills = set(_terms(u.skills))
-    for r in db.query(Resume).filter(Resume.user_id == u.id).all():
+    for r in db.query(Resume).filter(Resume.user_id == u.id, Resume.kind.is_distinct_from("reference")).all():
         for s in (r.skills or []):
             skills.add(str(s).strip().lower())
     for p in db.query(Project).filter(Project.user_id == u.id).all():
@@ -410,7 +410,7 @@ def tailor_resume(application_id: str, p: TailorBody, db: Session = Depends(get_
         raise HTTPException(404, "Application not found")
     target = " ".join([a.role or "", a.company or "", a.notes or "", p.job_description or ""])
     kw = _words(target) - {"the", "and", "for", "with", "intern", "internship", "company", "role", "will", "you", "our"}
-    resumes = db.query(Resume).filter(Resume.user_id == u.id).all()
+    resumes = db.query(Resume).filter(Resume.user_id == u.id, Resume.kind.is_distinct_from("reference")).all()
     if p.resume_id:
         resumes = [r for r in resumes if r.id == p.resume_id]
     if not resumes:

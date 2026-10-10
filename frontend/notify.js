@@ -14,8 +14,9 @@
   }
   function ensureUser() {
     if (uid) return Promise.resolve(uid);
-    var email = localStorage.getItem('opai_sc_email');
+    var email = localStorage.getItem('opai_sc_email'), gid = localStorage.getItem('opa_guest_uid');
     if (email) return api('/v1/auth/dev-login?email=' + encodeURIComponent(email), { method: 'POST' }).then(function (r) { return (uid = r.user_id); });
+    if (gid) { uid = gid; return Promise.resolve(uid); }
     return Promise.resolve(null);                       // not signed in yet; try again on the next tick
   }
   function swReady() { return ('serviceWorker' in navigator) ? navigator.serviceWorker.ready.catch(function () { return null; }) : Promise.resolve(null); }

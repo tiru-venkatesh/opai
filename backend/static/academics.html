@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><script src="opai-ux.js"></script>
+<link rel="stylesheet" href="opai-shared.css">
 <style>
 :root{--bg:#F6F4EE;--ink:#16181A;--mut:#4A4F52;--pri:#17504A;--coral:#E8705A;--card:#FBFAF6;--hair:#E3DFD3;--well:#EDE9DF;--font:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace}
 *{box-sizing:border-box}html,body{margin:0}
@@ -137,9 +137,10 @@ button.go.working::after{content:"";position:absolute;inset:0;background:linear-
   }
   async function ensureUser() {
     if (uid) return uid;
-    const em = localStorage.getItem('opai_sc_email');
-    if (!em) { location.replace('login.html'); throw new Error('Please sign in'); }
-    uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(em), { method: 'POST' })).user_id; return uid;
+    const gid = localStorage.getItem('opa_guest_uid');
+    if (gid) { try { await api('/v1/profile?user_id=' + encodeURIComponent(gid)); uid = gid; return uid; } catch (e) { if (e.status !== 404) throw e; } }
+    const g = (await api('/v1/auth/guest', { method: 'POST' })).user_id;
+    localStorage.setItem('opa_guest_uid', g); uid = g; return uid;
   }
 
   const thread = $('thread');

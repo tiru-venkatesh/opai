@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#F6F4EE">
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><script src="opai-ux.js"></script>
+<link rel="stylesheet" href="opai-shared.css">
 <style>
 :root{--bg:#F6F4EE;--card:#fff;--ink:#16181A;--mut:#5a6064;--pri:#17504A;--line:#e3e0d6;--warn:#b4580f;--bad:#b3261e;--good:#17704a;--font:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif}
 *{box-sizing:border-box}html,body{margin:0}
@@ -32,6 +32,17 @@ textarea{min-height:140px;resize:vertical} label{display:block;font-size:12px;fo
 .bul{border-left:3px solid var(--pri);padding:4px 10px;margin:6px 0;background:#faf9f5;border-radius:0 8px 8px 0}
 ul{margin:4px 0;padding-left:18px}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;display:none;z-index:99}
+.chk{border-left:3px solid var(--line);padding:6px 10px;margin:6px 0;background:#faf9f5;border-radius:0 8px 8px 0}
+.chk.pass{border-color:var(--good)}.chk.warn{border-color:var(--warn)}.chk.fail{border-color:var(--bad)}
+.chk summary{cursor:pointer;color:var(--mut);font-size:13px}
+.ed .sec{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:10px 0;background:#fff}
+.ed .item{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:start;margin:6px 0;padding:6px;border-radius:8px;background:#faf9f5}
+.ed .item.line textarea{font-weight:600}.ed .item textarea{min-height:44px;height:auto;resize:vertical}
+.ed .tools{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.ed .tools button,.mini{border:1px solid var(--line);background:#fff;border-radius:8px;padding:3px 8px;font:600 12px var(--font);cursor:pointer;color:var(--pri)}
+.ed label.chkbox{display:flex;gap:6px;align-items:center;font-weight:500;color:var(--mut);margin:2px 0 0;font-size:12px}.ed label.chkbox input{width:auto}
+.two{display:grid;gap:10px;grid-template-columns:1fr 1fr}@media(max-width:640px){.two{grid-template-columns:1fr}}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}.tbl td,.tbl th{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left}
 @media (prefers-reduced-motion:no-preference){.card{transition:box-shadow .2s ease,border-color .2s ease}.card:hover{box-shadow:0 8px 22px rgba(23,80,74,.10)}}
 </style>
 </head>
@@ -47,18 +58,18 @@ ul{margin:4px 0;padding-left:18px}
 <script>
 (function(){
 var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
-var uid=null;
-var TABS=[['lib','Library'],['match','Match a posting'],['build','Tailor & export'],['review','ATS review'],['coach','Bullet coach'],['compare','Compare'],['find','Find a bullet'],['ins','Insights']];
+var uid=null;try{uid=localStorage.getItem('opa_guest_uid')}catch(e){}
+var TABS=[['lib','Library'],['match','Match a posting'],['review','Review'],['coach','Bullet coach'],['build','Build'],['compare','Compare'],['apply','Applications'],['find','Find a bullet'],['ins','Insights']];
 var tab=(location.hash||'#lib').slice(1);if(!TABS.some(function(t){return t[0]===tab}))tab='lib';
-var state={lastMatch:null,excl:[],extras:[],base:''};
+var state={lastMatch:null};
 function $(i){return document.getElementById(i)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function toast(m){var t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){t.style.display='none'},3500)}
 async function api(path,opt){opt=opt||{};var q=path+(path.indexOf('?')<0?'?':'&')+'user_id='+encodeURIComponent(uid);
   var r=await fetch(API+q,{method:opt.method||'GET',headers:{'Content-Type':'application/json'},body:opt.body?JSON.stringify(Object.assign({user_id:uid},opt.body)):undefined});
   var d=null;try{d=await r.json()}catch(e){}
-  if(!r.ok){var m=d&&d.detail;if(Array.isArray(m))m=m.map(function(x){return x.msg}).join('; ');throw new Error(m||('Request failed ('+r.status+')'))}return d}
-async function ensureUser(){if(uid)return;var e=null;try{e=localStorage.getItem('opai_sc_email')}catch(x){}if(!e){location.replace('login.html');throw new Error('Please sign in')}var r=await fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(e),{method:'POST'});var d=await r.json();uid=d.user_id}
+  if(!r.ok){var m=d&&d.detail,errs=null;if(m&&!Array.isArray(m)&&typeof m==='object'){errs=m.errors||null;m=m.message}if(Array.isArray(m))m=m.map(function(x){return x.msg}).join('; ');var er=new Error(m||('Request failed ('+r.status+')'));er.errors=errs;throw er}return d}
+async function ensureUser(){if(uid)return;var r=await fetch(API+'/v1/auth/guest',{method:'POST'});var d=await r.json();uid=d.user_id;try{localStorage.setItem('opa_guest_uid',uid)}catch(e){}}
 function pills(a,cls){return (a&&a.length)?a.map(function(x){return '<span class="pill '+(cls||'')+'">'+esc(x)+'</span>'}).join(''):'<span class="mut">none</span>'}
 function bar(p){return '<div class="bar" role="img" aria-label="'+esc(p)+' percent"><i style="width:'+Math.max(0,Math.min(100,+p||0))+'%"></i></div>'}
 function sel(){return '<label for="opp">Or use a saved opportunity</label><select id="opp"><option value="">None</option></select>'}
@@ -67,7 +78,7 @@ function renderTabs(){$('tabs').innerHTML=TABS.map(function(t){return '<button r
 $('tabs').addEventListener('click',function(e){var b=e.target.closest('button[data-k]');if(!b)return;tab=b.dataset.k;history.replaceState(null,'','#'+tab);go()});
 
 async function go(){renderTabs();var v=$('view');v.textContent='Loading…';
-  try{await ensureUser();await ({lib:vLib,match:vMatch,build:vBuild,review:vReview,coach:vCoach,compare:vCompare,find:vFind,ins:vIns})[tab](v)}
+  try{await ensureUser();await ({lib:vLib,match:vMatch,find:vFind,ins:vIns,review:vReview,coach:vCoach,compare:vCompare,build:vBuild,apply:vApply})[tab](v)}
   catch(e){v.innerHTML='<div class="card">Could not load: '+esc(e.message)+' <button class="b alt" id="retry">Retry</button></div>';$('retry').onclick=go}}
 
 async function vLib(v){
@@ -78,12 +89,27 @@ async function vLib(v){
     return '<div class="card"><div class="row sp"><b>'+esc(r.label)+'</b><span class="pill '+(r.overall_score>=7?'good':r.overall_score>=5?'warn':'bad')+'">'+esc(r.overall_score==null?'–':r.overall_score)+'/10</span></div>'
     +'<div class="mut">'+esc(r.target_role||'No target role')+' · '+esc(r.words)+' words · '+esc(r.bullets)+' bullets</div>'
     +'<div class="mut">Bullets with numbers: '+Math.round(100*r.metric_ratio)+'%</div>'+bar(100*r.metric_ratio)
-    +'<div style="margin-top:6px">'+pills((r.skills||[]).slice(0,8))+'</div></div>'}).join('')+'</div>';
+    +'<div style="margin-top:6px">'+pills((r.skills||[]).slice(0,8))+'</div>'
+    +'<div class="row" style="margin-top:8px"><button class="mini" data-act="review" data-id="'+esc(r.id)+'">Review</button><button class="mini" data-act="coach" data-id="'+esc(r.id)+'">Coach</button>'
+    +'<button class="mini" data-act="docx" data-id="'+esc(r.id)+'">DOCX</button><button class="mini" data-act="pdf" data-id="'+esc(r.id)+'">PDF</button></div></div>'}).join('')+'</div>';
   h+='<div class="card"><h2>Add a version</h2><label for="lbl">Label</label><input id="lbl" maxlength="80" placeholder="e.g. ML Research v2">'
     +'<label for="role">Target role (optional)</label><input id="role" maxlength="120" placeholder="e.g. ML intern">'
     +'<label for="txt">Resume text</label><textarea id="txt" placeholder="Paste the full text of one resume"></textarea>'
     +'<div class="row" style="margin-top:8px"><button class="b" id="add">Add to library</button><span class="mut">Duplicates are skipped, never overwritten.</span></div></div>';
+  h+='<div class="card"><h2>Upload a file</h2><label for="file">PDF, DOCX or TXT</label><input id="file" type="file" accept=".pdf,.docx,.txt,.md">'
+    +'<label style="display:flex;gap:8px;align-items:center;font-weight:500;color:var(--ink)"><input id="isref" type="checkbox" style="width:auto"> This is not my resume (use only as an anonymous benchmark)</label>'
+    +'<div class="row" style="margin-top:8px"><button class="b" id="up">Upload</button><span class="mut">Reference resumes have emails, phone numbers and links removed, and never appear in your matches.</span></div></div>';
+  var rf=await api('/v1/resume-lab/references');
+  if(rf.count){h+='<div class="card"><h2>Reference resumes ('+esc(rf.count)+')</h2><div class="mut">Used only for statistics. Their text is never shown or reused.</div>'
+    +rf.references.map(function(r){return '<div class="row sp" style="margin-top:6px"><span>'+esc(r.label)+' <span class="mut">· '+esc(r.bullets)+' bullets, '+Math.round(100*r.metric_ratio)+'% with numbers</span></span><button class="b alt" data-del="'+esc(r.id)+'">Remove</button></div>'}).join('')+'</div>'}
   v.innerHTML=h;
+  v.querySelectorAll('[data-act]').forEach(function(b){b.onclick=function(){var a=b.dataset.act;if(a==='docx'||a==='pdf')return dl(b.dataset.id,a);state.pick=b.dataset.id;tab=a;history.replaceState(null,'','#'+tab);go()}});
+  $('up').onclick=async function(){var f=$('file').files[0];if(!f)return toast('Choose a file first');var b=this;b.disabled=true;
+    try{var fd=new FormData();fd.append('user_id',uid);fd.append('kind',$('isref').checked?'reference':'own');fd.append('file',f);
+      var r=await fetch(API+'/v1/resume-lab/import-file',{method:'POST',body:fd});var d=await r.json().catch(function(){return null});
+      if(!r.ok)throw new Error((d&&d.detail)||('Upload failed ('+r.status+')'));
+      toast(d.created?'Added':'Skipped: '+d.skipped.reason);go()}catch(e){toast(e.message);b.disabled=false}};
+  v.querySelectorAll('[data-del]').forEach(function(x){x.onclick=async function(){try{await api('/v1/resume-lab/references/'+x.dataset.del,{method:'DELETE'});go()}catch(e){toast(e.message)}}});
   $('add').onclick=async function(){var b=this;b.disabled=true;
     try{var r=await api('/v1/resume-lab/import',{method:'POST',body:{resumes:[{label:$('lbl').value.trim(),target_role:$('role').value.trim()||null,text:$('txt').value}]}});
       toast(r.created.length?'Added':'Skipped: '+(r.skipped[0]&&r.skipped[0].reason));go()}
@@ -108,104 +134,6 @@ async function vMatch(v){
       $('out').innerHTML='<div class="card"><h2>Start from: '+esc(r.base_resume.label)+'</h2><b>Lead with</b>'+f(r.lead_with)+'<b>Also consider (other versions)</b>'+f(r.consider_from_other_versions)
         +'</div><div class="card"><h2>Not in any resume</h2>'+pills(r.gaps,'bad')+'<div class="note">'+esc(r.note)+'</div></div>'}catch(e){toast(e.message)}}}
 
-/* ---------- shared helpers for the newer tabs ---------- */
-async function versionsSelect(id,label){var d=await api('/v1/resume-lab/library');
-  if(!d.versions.length)return {html:'<div class="card">Add at least one resume in the Library tab first.</div>',n:0};
-  return {n:d.versions.length,html:'<label for="'+id+'">'+esc(label)+'</label><select id="'+id+'">'+d.versions.map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.label)+'</option>'}).join('')+'</select>'}}
-function jobBox(){return '<label for="job">Posting text (optional)</label><textarea id="job" style="min-height:90px" placeholder="Paste a posting to check keywords against"></textarea>'+sel()}
-function jobOpt(){var t=($('job')||{}).value,o=($('opp')||{}).value;t=(t||'').trim();return t?{job_text:t}:(o?{opportunity_id:o}:{})}
-function sev(s){return s==='ok'?'good':s==='warn'?'warn':'bad'}
-function btnBusy(b,on){b.disabled=on}
-
-async function vReview(v){
-  var s=await versionsSelect('rv','Which version?');if(!s.n){v.innerHTML=s.html;return}
-  v.innerHTML='<div class="card"><h2>ATS-readiness check</h2>'+s.html+jobBox()+'<div class="row" style="margin-top:8px"><button class="b" id="run">Check this version</button></div></div><div id="out"></div>';
-  loadOpps();
-  $('run').onclick=async function(){var b=this;btnBusy(b,true);
-    try{var r=await api('/v1/resume-lab/review',{method:'POST',body:Object.assign({resume_id:$('rv').value},jobOpt())});
-      $('out').innerHTML='<div class="card"><div class="row sp"><h2>'+esc(r.label)+'</h2><span class="pill '+(r.score>=85?'good':r.score>=65?'warn':'bad')+'">'+esc(r.score)+'/100 · '+esc(r.grade)+'</span></div>'+bar(r.score)
-        +r.checks.map(function(c){return '<div style="margin:8px 0"><span class="pill '+sev(c.status)+'">'+esc(c.status==='ok'?'OK':c.status==='warn'?'Check':'Fix')+'</span><b>'+esc(c.label)+'</b><div class="mut">'+esc(c.detail)+(c.fix?' '+esc(c.fix):'')+'</div></div>'}).join('')
-        +(r.keywords?'<h2 style="margin-top:12px">Posting keywords</h2><div>Present: '+pills(r.keywords.present,'good')+'</div><div>Missing: '+pills(r.keywords.missing,'warn')+'</div><div class="note">'+esc(r.keywords.note)+'</div>':'')
-        +'<div class="mut">'+esc(r.method)+'</div></div>'}
-    catch(e){toast(e.message)}btnBusy(b,false)}}
-
-async function vCoach(v){
-  v.innerHTML='<div class="card"><h2>Improve one bullet</h2><label for="bl">Your bullet</label><textarea id="bl" style="min-height:70px" maxlength="600" placeholder="e.g. Responsible for various tasks in the team"></textarea>'
-    +'<label for="facts">True extra details (optional)</label><input id="facts" maxlength="600" placeholder="e.g. used by 200 students; built with Flask">'+jobBox()
-    +'<div class="row" style="margin-top:8px"><button class="b" id="run">Coach me</button><span class="mut">Only add numbers that are true.</span></div></div><div id="out"></div>';
-  loadOpps();
-  $('run').onclick=async function(){var b=this,t=$('bl').value.trim();if(t.length<3)return toast('Paste a bullet first');btnBusy(b,true);
-    try{var r=await api('/v1/resume-lab/coach',{method:'POST',body:Object.assign({bullet:t,facts:$('facts').value.trim()},jobOpt())});
-      $('out').innerHTML='<div class="card"><div class="row sp"><h2>Diagnosis</h2><span class="pill '+(r.ok?'good':'warn')+'">'+(r.ok?'Looks solid':'Can be stronger')+'</span></div>'
-        +(r.issues.length?r.issues.map(function(i){return '<div style="margin:6px 0"><span class="pill '+(i.severity==='high'?'bad':'warn')+'">'+esc(i.severity)+'</span>'+esc(i.message)+'</div>'}).join(''):'<div class="mut">No problems found.</div>')
-        +(r.questions.length?'<h2 style="margin-top:12px">Answer these (honestly)</h2><ul>'+r.questions.map(function(q){return '<li>'+esc(q)+'</li>'}).join('')+'</ul>':'')
-        +(r.verb_options.length?'<div>Verbs to start with: '+pills(r.verb_options)+'</div>':'')
-        +'<h2 style="margin-top:12px">Shape to aim for</h2><div class="bul">'+esc(r.skeleton)+'</div>'
-        +(r.rewrite?'<h2 style="margin-top:12px">Suggested rewrite</h2><div class="bul">'+esc(r.rewrite)+'</div>':'')
-        +(r.rewrite_note?'<div class="note">'+esc(r.rewrite_note)+'</div>':'')
-        +(r.posting_terms_only_if_true.length?'<div style="margin-top:8px">Posting mentions (use only if true): '+pills(r.posting_terms_only_if_true)+'</div>':'')+'</div>'}
-    catch(e){toast(e.message)}btnBusy(b,false)}}
-
-async function vCompare(v){
-  var d=await api('/v1/resume-lab/library');
-  if(d.versions.length<2){v.innerHTML='<div class="card">Add at least 2 versions to compare.</div>';return}
-  var opts=d.versions.map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.label)+'</option>'}).join('');
-  v.innerHTML='<div class="card"><h2>Compare two versions</h2><div class="grid"><div><label for="ca">Version A</label><select id="ca">'+opts+'</select></div><div><label for="cb">Version B</label><select id="cb">'+opts+'</select></div></div>'+jobBox()
-    +'<div class="row" style="margin-top:8px"><button class="b" id="run">Compare</button></div></div><div id="out"></div>';
-  $('cb').selectedIndex=1;loadOpps();
-  var list=function(a){return a.length?a.map(function(x){return '<div class="bul">'+esc(x)+'</div>'}).join(''):'<div class="mut">None</div>'};
-  $('run').onclick=async function(){var b=this;if($('ca').value===$('cb').value)return toast('Pick two different versions');btnBusy(b,true);
-    try{var r=await api('/v1/resume-lab/compare',{method:'POST',body:Object.assign({a_id:$('ca').value,b_id:$('cb').value},jobOpt())});
-      var dl=r.stats.delta_b_minus_a,pc=function(x){return (x>0?'+':'')+Math.round(100*x)+'%'};
-      $('out').innerHTML='<div class="card"><h2>'+esc(r.a.label)+' vs '+esc(r.b.label)+'</h2><div class="grid"><div><b>Numbers in bullets</b><div>'+pc(dl.metric_ratio)+' for B</div></div><div><b>Action verbs</b><div>'+pc(dl.verb_ratio)+' for B</div></div><div><b>Bullet count</b><div>'+(dl.bullets>0?'+':'')+esc(dl.bullets)+' for B</div></div></div>'
-        +(r.posting?'<div style="margin-top:8px">Posting coverage: A '+Math.round(100*r.posting.a.coverage)+'% · B '+Math.round(100*r.posting.b.coverage)+'%</div>':'')+'</div>'
-        +'<div class="grid"><div class="card"><h2>Only in A</h2>'+list(r.only_in_a)+'</div><div class="card"><h2>Only in B</h2>'+list(r.only_in_b)+'</div></div>'
-        +(r.reworded.length?'<div class="card"><h2>Reworded between versions</h2>'+r.reworded.map(function(x){return '<div class="bul"><b>A:</b> '+esc(x.a)+'<br><b>B:</b> '+esc(x.b)+'</div>'}).join('')+'</div>':'')
-        +'<div class="card"><h2>Skills</h2><div>Only A: '+pills(r.skills.only_in_a)+'</div><div>Only B: '+pills(r.skills.only_in_b)+'</div><div>Shared: '+pills(r.skills.shared)+'</div></div>'
-        +'<div class="card"><h2>Same in both ('+esc(r.common_bullets.length)+')</h2>'+list(r.common_bullets.slice(0,6))+'</div>'}
-    catch(e){toast(e.message)}btnBusy(b,false)}}
-
-async function vBuild(v){
-  var s=await versionsSelect('bv','Start from which version?');if(!s.n){v.innerHTML=s.html;return}
-  state.excl=[];state.extras=[];
-  v.innerHTML='<div class="card"><h2>Tailor a resume for a posting</h2><div class="note">Your wording stays exactly as you wrote it. You choose which of your own bullets stay, and can add bullets from your other versions.</div>'+s.html+jobBox()
-    +'<div class="row" style="margin-top:8px"><button class="b" id="pv">Preview</button><button class="b alt" id="sg">Suggest bullets from my other versions</button></div></div><div id="sug"></div><div id="out"></div>';
-  loadOpps();
-  function body(){return Object.assign({resume_id:$('bv').value,exclude:state.excl,extras:state.extras},jobOpt())}
-  function collect(){state.excl=[].slice.call(document.querySelectorAll('input[data-k=in]')).filter(function(x){return !x.checked}).map(function(x){return x.dataset.t});
-    state.extras=[].slice.call(document.querySelectorAll('input[data-k=ex]')).filter(function(x){return x.checked}).map(function(x){return {text:x.dataset.t}})}
-  async function preview(){
-    var r=await api('/v1/resume-lab/build',{method:'POST',body:body()});
-    var sec=r.sections.map(function(sc){
-      var items=sc.items.map(function(it){return it.kind==='bullet'
-        ?'<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;color:var(--ink);font-size:14px;margin:4px 0"><input type="checkbox" data-k="in" checked style="width:auto;margin-top:5px" data-t="'+esc(it.text)+'"><span class="bul" style="margin:0;flex:1">'+esc(it.text)+(it.origin==='other_version'?' <span class="pill good">from another version</span>':'')+'</span></label>'
-        :'<div class="mut" style="margin:4px 0">'+esc(it.text)+'</div>'}).join('');
-      return (sc.title?'<h2 style="margin-top:12px">'+esc(sc.title)+'</h2>':'')+items}).join('');
-    var dr=r.dropped.length?'<h2 style="margin-top:12px">Left out</h2>'+r.dropped.map(function(t){return '<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;color:var(--mut);font-size:14px;margin:4px 0"><input type="checkbox" data-k="in" style="width:auto;margin-top:5px" data-t="'+esc(t)+'"><span>'+esc(t)+'</span></label>'}).join(''):'';
-    $('out').innerHTML='<div class="card"><div class="row sp"><h2>Preview · '+esc(r.bullets)+' bullets</h2><span class="pill '+(r.review.score>=85?'good':r.review.score>=65?'warn':'bad')+'">ATS check '+esc(r.review.score)+'/100</span></div>'+sec+dr
-      +'<div class="row" style="margin-top:12px"><button class="b alt" id="up">Update preview</button></div></div>'
-      +'<div class="card"><h2>Use it</h2><div class="row"><button class="b" data-f="docx">Download Word</button><button class="b" data-f="pdf">Download PDF</button><button class="b alt" data-f="txt">Download text</button></div>'
-      +'<h2 style="margin-top:14px">Attach to an application</h2><div class="row"><select id="ap" style="flex:1"><option value="">Choose an application</option></select><button class="b" id="at">Attach</button></div>'
-      +'<div class="mut" style="margin-top:6px">Saves this as a version in your library and links it to the application. Nothing is submitted.</div></div>';
-    $('up').onclick=async function(){collect();try{await preview()}catch(e){toast(e.message)}};
-    document.querySelectorAll('button[data-f]').forEach(function(bn){bn.onclick=function(){collect();download(bn.dataset.f,body(),bn)}});
-    try{var apps=await fetch(API+'/v1/applications?user_id='+encodeURIComponent(uid)).then(function(x){return x.json()});
-      apps.forEach(function(a){var o=document.createElement('option');o.value=a.id;o.textContent=a.role+' · '+a.company;$('ap').appendChild(o)})}catch(e){}
-    $('at').onclick=async function(){if(!$('ap').value)return toast('Choose an application first');collect();var b=this;btnBusy(b,true);
-      try{var a=await api('/v1/resume-lab/attach',{method:'POST',body:Object.assign(body(),{application_id:$('ap').value})});toast(a.replaced_previous?'Updated the attached version':'Attached: '+a.label)}
-      catch(e){toast(e.message)}btnBusy(b,false)}}
-  async function download(fmt,b,btn){btnBusy(btn,true);
-    try{var r=await fetch(API+'/v1/resume-lab/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({user_id:uid,format:fmt},b))});
-      if(!r.ok){var d=null;try{d=await r.json()}catch(e){}throw new Error((d&&d.detail)||('Export failed ('+r.status+')'))}
-      var blob=await r.blob(),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Tailored resume.'+fmt;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},2000)}
-    catch(e){toast(e.message)}btnBusy(btn,false)}
-  $('pv').onclick=async function(){var b=this;btnBusy(b,true);state.excl=[];state.extras=[].slice.call(document.querySelectorAll('input[data-k=ex]')).filter(function(x){return x.checked}).map(function(x){return {text:x.dataset.t}});try{await preview()}catch(e){toast(e.message)}btnBusy(b,false)};
-  $('sg').onclick=async function(){var b=this,jb=jobOpt();if(!jb.job_text&&!jb.opportunity_id)return toast('Paste a posting or choose an opportunity first');btnBusy(b,true);
-    try{var r=await api('/v1/resume-lab/tailor',{method:'POST',body:Object.assign({resume_id:$('bv').value},jb)});
-      $('sug').innerHTML='<div class="card"><h2>From your other versions</h2>'+(r.consider_from_other_versions.length?r.consider_from_other_versions.map(function(x){
-        return '<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;color:var(--ink);font-size:14px;margin:4px 0"><input type="checkbox" data-k="ex" style="width:auto;margin-top:5px" data-t="'+esc(x.bullet)+'"><span class="bul" style="margin:0;flex:1">'+esc(x.bullet)+'<div class="mut">from '+esc(x.from)+'</div></span></label>'}).join('')+'<div class="mut">Tick the ones to add, then press Preview or Update preview.</div>':'<div class="mut">Nothing relevant in your other versions.</div>')+'</div>'}
-    catch(e){toast(e.message)}btnBusy(b,false)}}
-
 async function vFind(v){
   v.innerHTML='<div class="card"><h2>Search your own bullets</h2><div class="row"><input id="q" placeholder="e.g. deployed an API, improved accuracy" style="flex:1"><button class="b" id="s">Search</button></div></div><div id="out"></div>';
   async function run(){var q=$('q').value.trim();if(q.length<2)return;
@@ -220,9 +148,180 @@ async function vIns(v){
   v.innerHTML='<div class="card"><h2>Your strongest versions</h2>'+pills(d.best_versions,'good')+'<p class="mut">Compared with the rest of your library.</p>'
     +'<div class="grid"><div><b>Bullets with numbers</b><div>'+pc(t.metric_ratio.best)+' vs '+pc(t.metric_ratio.others)+'</div></div>'
     +'<div><b>Start with an action verb</b><div>'+pc(t.verb_ratio.best)+' vs '+pc(t.verb_ratio.others)+'</div></div></div></div>'
+    +(d.benchmark?'<div class="card"><h2>Versus '+esc(d.benchmark.references)+' reference resume(s)</h2><div class="grid"><div><b>Bullets with numbers</b><div>'+pc(d.benchmark.metric_ratio.yours)+' yours vs '+pc(d.benchmark.metric_ratio.references)+'</div></div>'
+      +'<div><b>Action-verb starts</b><div>'+pc(d.benchmark.verb_ratio.yours)+' yours vs '+pc(d.benchmark.verb_ratio.references)+'</div></div>'
+      +'<div><b>Bullets per resume</b><div>'+esc(d.benchmark.bullets.yours)+' yours vs '+esc(d.benchmark.bullets.references)+'</div></div></div></div>':'')
     +'<div class="card"><h2>What to fix</h2>'+(d.tips.length?'<ul>'+d.tips.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>':'<span class="mut">Nothing stands out.</span>')+'</div>'
     +'<div class="card"><h2>Skills</h2><b>Common to most versions</b><div>'+pills(d.common_skills)+'</div><b>Only in one version</b><div>'+pills(d.skills_in_only_one_version)+'</div></div>'
     +'<p class="mut">'+esc(d.basis)+'</p>'}
+/* ---------- shared helpers for review / coach / compare / build / apply ---------- */
+async function getVersions(force){
+  if(!force&&state.vers)return state.vers;
+  var lib=await api('/v1/resume-lab/library'),b=await api('/v1/resume-lab/builds');
+  state.vers={own:lib.versions,builds:b.builds};return state.vers}
+function verSelect(id,vers,tailored,selected){
+  var o=vers.own.map(function(r){return '<option value="'+esc(r.id)+'"'+(r.id===selected?' selected':'')+'>'+esc(r.label)+'</option>'}).join('');
+  if(tailored&&vers.builds.length)o+='<optgroup label="Tailored resumes">'+vers.builds.map(function(r){return '<option value="'+esc(r.id)+'"'+(r.id===selected?' selected':'')+'>'+esc(r.label)+'</option>'}).join('')+'</optgroup>';
+  return '<select id="'+id+'" aria-label="Resume version">'+o+'</select>'}
+function postingBox(){return '<label for="job">Posting text (optional)</label><textarea id="job" style="min-height:90px"></textarea>'+sel()}
+function needVersions(v,vers,n){if(vers.own.length>=n)return false;v.innerHTML='<div class="card">Add '+(n>1?'at least '+n+' versions':'a resume')+' in the Library tab first.</div>';return true}
+function dl(rid,fmt){
+  fetch(API+'/v1/resume-lab/resumes/'+encodeURIComponent(rid)+'/export?user_id='+encodeURIComponent(uid)+'&format='+fmt).then(async function(r){
+    if(!r.ok){var d=await r.json().catch(function(){return null});throw new Error((d&&typeof d.detail==='string'&&d.detail)||('Export failed ('+r.status+')'))}
+    var w=r.headers.get('X-Export-Warnings'),cd=r.headers.get('Content-Disposition')||'',m=/filename="([^"]+)"/.exec(cd),blob=await r.blob();
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=m?m[1]:('resume.'+fmt);document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href)},2000);toast(w?'Downloaded. Some characters could not be shown in the PDF: '+w:'Downloaded')
+  }).catch(function(e){toast(e.message)})}
+function dlButtons(id){return ['docx','pdf','txt'].map(function(f){return '<button class="mini" data-dl="'+f+'" data-id="'+esc(id)+'">'+f.toUpperCase()+'</button>'}).join('')}
+function wireDl(root){root.querySelectorAll('[data-dl]').forEach(function(b){b.onclick=function(){dl(b.dataset.id,b.dataset.dl)}})}
+var PRI={pass:'good',warn:'warn',fail:'bad'},AREA={structure:'Structure',formatting:'Formatting',content:'Content',keywords:'Keywords'};
+
+/* ---------- Review ---------- */
+async function vReview(v){
+  var vers=await getVersions(true);if(needVersions(v,vers,1))return;
+  v.innerHTML='<div class="card"><h2>Review a version</h2><label for="ver">Version</label>'+verSelect('ver',vers,true,state.pick)+postingBox()
+    +'<div class="row" style="margin-top:8px"><button class="b" id="go">Review</button><span class="mut">Add a posting to also check keyword coverage.</span></div></div><div id="out"></div>';
+  state.pick=null;loadOpps();
+  $('go').onclick=async function(){var b=this;b.disabled=true;
+    try{var r=await api('/v1/resume-lab/review',{method:'POST',body:Object.assign({resume_id:$('ver').value},jobBody()||{})});
+      var order=['content','structure','formatting','keywords'];
+      var head='<div class="card"><div class="row sp"><h2>'+esc(r.label)+'</h2><span class="pill '+(r.overall>=75?'good':r.overall>=55?'warn':'bad')+'">'+esc(r.overall)+'/100</span></div><div class="grid">'
+        +Object.keys(r.scores).map(function(k){return '<div><div class="row sp"><b>'+esc(AREA[k])+'</b><span>'+esc(r.scores[k])+'</span></div>'+bar(r.scores[k])+'</div>'}).join('')+'</div>'
+        +'<div class="mut" style="margin-top:6px">'+esc(r.counts.pass)+' passed, '+esc(r.counts.warn)+' to improve, '+esc(r.counts.fail)+' to fix</div></div>';
+      var fixes=r.top_fixes.length?'<div class="card"><h2>Fix these first</h2><ol>'+r.top_fixes.map(function(f){return '<li>'+esc(f.fix)+'</li>'}).join('')+'</ol></div>':'<div class="card">Nothing urgent to fix.</div>';
+      var groups=order.filter(function(a){return r.checks.some(function(c){return c.area===a})}).map(function(a){
+        return '<div class="card"><h2>'+esc(AREA[a])+'</h2>'+r.checks.filter(function(c){return c.area===a}).map(function(c){
+          return '<div class="chk '+esc(c.status)+'"><span class="pill '+PRI[c.status]+'">'+esc(c.status)+'</span> '+esc(c.message)+(c.fix?'<div class="mut">'+esc(c.fix)+'</div>':'')
+            +(c.evidence.length?'<details><summary>Examples</summary><ul>'+c.evidence.map(function(e){return '<li>'+esc(e)+'</li>'}).join('')+'</ul></details>':'')+'</div>'}).join('')+'</div>'}).join('');
+      $('out').innerHTML=head+fixes+groups+'<p class="mut">'+esc(r.basis)+'</p>'}catch(e){toast(e.message)}b.disabled=false}}
+
+/* ---------- Bullet coach ---------- */
+async function vCoach(v){
+  var vers=await getVersions(true);if(needVersions(v,vers,1))return;
+  v.innerHTML='<div class="card"><h2>Bullet coach</h2><p class="mut">Finds your weakest bullets and asks the questions only you can answer. It never makes up numbers or tools.</p>'
+    +'<label for="ver">Version</label>'+verSelect('ver',vers,true,state.pick)+'<label for="one">Or paste a single bullet</label><input id="one" maxlength="600" placeholder="e.g. Worked on the website frontend">'
+    +'<label style="display:flex;gap:8px;align-items:center;font-weight:500;color:var(--ink)"><input id="rw" type="checkbox" style="width:auto"> Also ask AI for rewrites (shown only if they add no new facts)</label>'
+    +'<div class="row" style="margin-top:8px"><button class="b" id="go">Coach</button></div></div><div id="out"></div>';
+  state.pick=null;
+  $('go').onclick=async function(){var b=this;b.disabled=true;
+    try{var body={resume_id:$('ver').value,limit:5,rewrite:$('rw').checked};if($('one').value.trim())body.bullet=$('one').value.trim();
+      var r=await api('/v1/resume-lab/coach',{method:'POST',body:body});
+      var msg={unavailable:'<div class="note">AI rewrites are not available on this server right now. The questions below still apply.</div>',ok:'<div class="note">AI rewrites below were checked: none adds a number, tool or name that is not in your original bullet. Replace any [bracketed] placeholder with a true value.</div>'}[r.rewrite_status]||'';
+      $('out').innerHTML=msg+(r.bullets.length?r.bullets.map(function(x){
+        return '<div class="card"><div class="bul">'+esc(x.bullet)+'<div class="mut">'+esc(x.section||'pasted bullet')+'</div></div>'
+          +(x.issues.length?'<div>'+x.issues.map(function(i){return '<span class="pill warn">'+esc(i.message)+'</span>'}).join('')+'</div>':'<div class="pill good">This bullet reads well.</div>')
+          +(x.questions.length?'<b>Answer these</b><ul>'+x.questions.map(function(q){return '<li>'+esc(q)+'</li>'}).join('')+'</ul>':'')
+          +(x.verb_options.length?'<div class="mut">Verbs that might be true: '+pills(x.verb_options)+'</div>':'')
+          +(x.skeleton?'<div class="mut">Shape: '+esc(x.skeleton)+'</div>':'')
+          +((x.rewrites&&x.rewrites.length)?'<b>Suggested rewrites</b>'+x.rewrites.map(function(w){return '<div class="bul">'+esc(w.text)+(w.has_placeholder?'<div class="mut">Fill in the [placeholder] with a true value first.</div>':'')+'</div>'}).join(''):'')
+          +((x.rewrites_rejected)?'<div class="mut">'+esc(x.rewrites_rejected)+' suggestion(s) hidden because they added facts not in your bullet.</div>':'')+'</div>'}).join(''):'<div class="card">No weak bullets found.</div>')+'<p class="mut">'+esc(r.note)+'</p>'}
+    catch(e){toast(e.message)}b.disabled=false}}
+
+/* ---------- Compare ---------- */
+async function vCompare(v){
+  var vers=await getVersions(true);if(needVersions(v,vers,2))return;
+  var all=vers.own.concat(vers.builds);
+  v.innerHTML='<div class="card"><h2>Compare two versions</h2><div class="two"><div><label for="a">Version A</label>'+verSelect('a',vers,true,all[0].id)+'</div><div><label for="b">Version B</label>'+verSelect('b',vers,true,all[1].id)+'</div></div>'
+    +postingBox()+'<div class="row" style="margin-top:8px"><button class="b" id="go">Compare</button></div></div><div id="out"></div>';
+  loadOpps();
+  $('go').onclick=async function(){var btn=this;btn.disabled=true;
+    try{var r=await api('/v1/resume-lab/compare',{method:'POST',body:Object.assign({resume_a:$('a').value,resume_b:$('b').value},jobBody()||{})});
+      var pc=function(x){return Math.round(100*x)+'%'},A=r.a,B=r.b;
+      var row=function(n,x,y){return '<tr><th>'+esc(n)+'</th><td>'+esc(x)+'</td><td>'+esc(y)+'</td></tr>'};
+      var h='<div class="card"><table class="tbl"><tr><th></th><th>'+esc(A.label)+'</th><th>'+esc(B.label)+'</th></tr>'+row('Words',A.words,B.words)+row('Bullets',A.bullets,B.bullets)+row('Bullets with numbers',pc(A.metric_ratio),pc(B.metric_ratio))+row('Action-verb starts',pc(A.verb_ratio),pc(B.verb_ratio))+'</table>'
+        +(r.notes.length?'<ul>'+r.notes.map(function(n){return '<li>'+esc(n)+'</li>'}).join('')+'</ul>':'<div class="mut">No big differences in the measured traits.</div>')+'</div>';
+      h+='<div class="card"><h2>Skills</h2><div class="two"><div><b>Only in '+esc(A.label)+'</b><div>'+pills(r.skills.only_a)+'</div></div><div><b>Only in '+esc(B.label)+'</b><div>'+pills(r.skills.only_b)+'</div></div></div><b>In both</b><div>'+pills(r.skills.shared)+'</div></div>';
+      if(r.keywords)h+='<div class="card"><h2>This posting</h2><div class="two"><div><b>'+esc(A.label)+' covers '+pc(r.keywords.coverage_a)+'</b><div>'+pills(r.keywords.only_a,'good')+'</div></div><div><b>'+esc(B.label)+' covers '+pc(r.keywords.coverage_b)+'</b><div>'+pills(r.keywords.only_b,'good')+'</div></div></div><b>Missing in both</b><div>'+pills(r.keywords.missing_in_both,'bad')+'</div></div>';
+      var bl=r.bullets;
+      h+='<div class="card"><h2>Bullets</h2>'+(bl.reworded.length?'<b>Reworded between versions</b>'+bl.reworded.map(function(x){return '<div class="two" style="margin:6px 0"><div class="bul">'+esc(x.a)+'</div><div class="bul">'+esc(x.b)+'</div></div>'}).join(''):'')
+        +'<div class="two"><div><b>Only in '+esc(A.label)+' ('+bl.only_a.length+')</b>'+bl.only_a.map(function(x){return '<div class="bul">'+esc(x)+'</div>'}).join('')+'</div><div><b>Only in '+esc(B.label)+' ('+bl.only_b.length+')</b>'+bl.only_b.map(function(x){return '<div class="bul">'+esc(x)+'</div>'}).join('')+'</div></div>'
+        +'<div class="mut">'+bl.identical.length+' bullet(s) are identical in both.</div></div>';
+      $('out').innerHTML=h}catch(e){toast(e.message)}btn.disabled=false}}
+
+/* ---------- Build (tailored resume) ---------- */
+function bItem(it,orig){return {type:it.type,text:it.text,orig:orig===undefined?it.text:orig,user_added:false}}
+function fromDraft(r){var d=r.draft;return {base_id:r.base_resume_id,base_label:r.base_label,build_id:null,label:'',header:(d.header||[]).join('\n'),summary:'',
+  sections:d.sections.map(function(s){return {name:s.name,items:s.items.map(function(i){return bItem(i)})}}),skills:(d.skills||[]).join(', '),added_skills:'',
+  could_add:r.could_add||[],dropped:r.dropped||[],missing:r.terms_missing||[],covered:r.terms_covered||[]}}
+function fromSaved(b){var x=b.build;return {base_id:b.base_resume_id,base_label:'',build_id:b.id,label:b.label,header:(x.header||[]).join('\n'),summary:x.summary||'',
+  sections:x.sections.map(function(s){return {name:s.name,items:s.items.map(function(i){var o=i.origin;return {type:i.type,text:i.text,orig:o==='edited'?'':i.text,user_added:o==='user_added'}})}}),
+  skills:(x.skills||[]).map(function(s){return s.text}).filter(function(s,i){return x.skills[i].origin==='own'}).join(', '),
+  added_skills:(x.skills||[]).filter(function(s){return s.origin==='user_added'}).map(function(s){return s.text}).join(', '),could_add:[],dropped:[],missing:[],covered:[]}}
+function csv(s){return String(s||'').split(/[,\n]/).map(function(x){return x.trim()}).filter(Boolean)}
+function drawEditor(){var B=state.bld,ed=$('editor');if(!B||!ed)return;
+  ed.innerHTML='<div class="card ed"><div class="row sp"><h2>'+(B.build_id?'Editing: '+esc(B.label):'Draft from '+esc(B.base_label||'your resume'))+'</h2><button class="mini" data-a="close">Close</button></div>'
+    +(B.missing.length||B.covered.length?'<div class="mut">Posting terms covered: '+pills(B.covered,'good')+' not in this draft: '+pills(B.missing,'warn')+'</div>':'')
+    +'<div class="note">Every line must come from your own resumes, or you confirm you wrote it. Tick “I wrote this” for anything new.</div>'
+    +'<label for="hdr">Header lines (name, contact)</label><textarea id="hdr" data-f="header" style="min-height:70px">'+esc(B.header)+'</textarea>'
+    +B.sections.map(function(s,si){return '<div class="sec"><div class="row sp"><input data-f="sname" data-s="'+si+'" value="'+esc(s.name)+'" aria-label="Section name" style="max-width:260px;font-weight:700"><button class="mini" data-a="addb" data-s="'+si+'">+ Add a bullet I wrote</button></div>'
+      +s.items.map(function(it,ii){return '<div class="item '+esc(it.type)+'"><div><textarea data-f="text" data-s="'+si+'" data-i="'+ii+'" aria-label="'+(it.type==='bullet'?'Bullet':'Line')+'">'+esc(it.text)+'</textarea>'
+        +'<label class="chkbox"><input type="checkbox" data-f="ua" data-s="'+si+'" data-i="'+ii+'"'+(it.user_added?' checked':'')+'> I wrote this (it is not in my other resumes)</label></div>'
+        +'<div class="tools"><button data-a="up" data-s="'+si+'" data-i="'+ii+'" aria-label="Move up">↑</button><button data-a="down" data-s="'+si+'" data-i="'+ii+'" aria-label="Move down">↓</button><button data-a="del" data-s="'+si+'" data-i="'+ii+'" aria-label="Remove">✕</button></div></div>'}).join('')+'</div>'}).join('')
+    +'<label for="skl">Skills (must appear in your resumes)</label><textarea id="skl" data-f="skills" style="min-height:60px">'+esc(B.skills)+'</textarea>'
+    +'<label for="ask">Skills I am adding myself (true for me)</label><input id="ask" data-f="added_skills" value="'+esc(B.added_skills)+'" placeholder="e.g. Kubernetes">'
+    +(B.could_add.length?'<div class="card"><h2>From your other versions</h2><div class="mut">Not included until you add them.</div>'+B.could_add.map(function(c,ci){return '<div class="bul">'+esc(c.bullet)+'<div class="mut">covers “'+esc(c.term)+'” · from '+esc(c.source_label)+'</div><button class="mini" data-a="addc" data-c="'+ci+'">Add</button></div>'}).join('')+'</div>':'')
+    +(B.dropped.length?'<details><summary class="mut">'+B.dropped.length+' bullet(s) left out of this draft</summary>'+B.dropped.map(function(d){return '<div class="bul">'+esc(d.bullet)+'<div class="mut">'+esc(d.reason)+'</div></div>'}).join('')+'</details>':'')
+    +'<label for="lab">Name this tailored resume</label><input id="lab" data-f="label" maxlength="80" value="'+esc(B.label)+'" placeholder="e.g. ML for Acme">'
+    +'<div id="errs"></div><div class="row" style="margin-top:8px"><button class="b" id="save">'+(B.build_id?'Save changes':'Save tailored resume')+'</button></div><div id="saved"></div></div>'}
+function wireEditor(){var ed=$('editor');
+  ed.addEventListener('input',function(e){var t=e.target,B=state.bld,f=t.dataset.f;if(!B||!f)return;
+    if(f==='text')B.sections[+t.dataset.s].items[+t.dataset.i].text=t.value;else if(f==='sname')B.sections[+t.dataset.s].name=t.value;else B[f]=t.value});
+  ed.addEventListener('change',function(e){var t=e.target;if(t.dataset.f==='ua')state.bld.sections[+t.dataset.s].items[+t.dataset.i].user_added=t.checked});
+  ed.addEventListener('click',function(e){var t=e.target.closest('[data-a]');if(!t||!state.bld)return;var B=state.bld,a=t.dataset.a,s=+t.dataset.s,i=+t.dataset.i;
+    if(a==='close'){state.bld=null;ed.innerHTML='';return}
+    if(a==='addb')B.sections[s].items.push({type:'bullet',text:'',orig:'',user_added:true});
+    else if(a==='del')B.sections[s].items.splice(i,1);
+    else if(a==='up'&&i>0){var it=B.sections[s].items;var x=it[i];it[i]=it[i-1];it[i-1]=x}
+    else if(a==='down'){var it2=B.sections[s].items;if(i<it2.length-1){var y=it2[i];it2[i]=it2[i+1];it2[i+1]=y}}
+    else if(a==='addc'){var c=B.could_add.splice(+t.dataset.c,1)[0];if(c&&B.sections[0])B.sections[0].items.push({type:'bullet',text:c.bullet,orig:c.bullet,user_added:false})}
+    drawEditor()});
+  ed.addEventListener('click',function(e){if(e.target.id==='save')saveBuild(e.target)})}
+function buildPayload(){var B=state.bld;return {label:B.label.trim(),base_resume_id:B.base_id||null,
+  build:{header:B.header.split('\n').map(function(x){return x.trim()}).filter(Boolean),summary:B.summary||null,
+    sections:B.sections.map(function(s){return {name:s.name.trim(),items:s.items.filter(function(i){return i.text.trim()}).map(function(i){return {type:i.type,text:i.text.trim(),user_added:!!i.user_added,edited:!i.user_added&&i.text.trim()!==i.orig.trim()}})}}),
+    skills:csv(B.skills).concat(csv(B.added_skills)),user_added_skills:csv(B.added_skills)}}}
+async function saveBuild(btn){var B=state.bld;$('errs').innerHTML='';if(!B.label.trim())return toast('Give it a name first');btn.disabled=true;
+  try{var p=buildPayload(),r;
+    if(B.build_id)r=await api('/v1/resume-lab/builds/'+B.build_id,{method:'PUT',body:{label:p.label,build:p.build}});else r=await api('/v1/resume-lab/builds',{method:'POST',body:p});
+    B.build_id=r.id;state.vers=null;drawBuilds();var atts=await api('/v1/resume-lab/attachments');
+    var pv=r.provenance||{};
+    $('saved').innerHTML='<div class="card"><h2>Saved: '+esc(r.label)+'</h2><div class="mut">From your resumes: '+esc(pv.own||0)+' · edited: '+esc(pv.edited||0)+' · written by you: '+esc(pv.user_added||0)+'</div>'
+      +'<div class="row" style="margin-top:6px">'+dlButtons(r.id)+'<button class="mini" id="rv">Review it</button></div>'
+      +(atts.applications.length?'<label for="apsel">Use it for an application</label><div class="row"><select id="apsel" style="flex:1">'+atts.applications.map(function(a){return '<option value="'+esc(a.application_id)+'">'+esc(a.company)+' · '+esc(a.role)+'</option>'}).join('')+'</select><button class="mini" id="att">Attach</button></div>':'<div class="mut">Track an application in Opportunities to attach this resume to it.</div>')+'</div>';
+    wireDl($('saved'));$('rv').onclick=function(){state.pick=r.id;tab='review';history.replaceState(null,'','#review');go()};
+    if($('att'))$('att').onclick=async function(){try{await api('/v1/resume-lab/attach',{method:'POST',body:{application_id:$('apsel').value,resume_id:r.id}});toast('Attached. Nothing was submitted.')}catch(e){toast(e.message)}};
+    toast('Saved')}
+  catch(e){var h='<div class="note"><b>'+esc(e.message)+'</b>'+(e.errors?'<ul>'+e.errors.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>':'')+'</div>';$('errs').innerHTML=h;toast(e.message)}
+  btn.disabled=false}
+async function drawBuilds(){
+  var vers=await getVersions(true),box=$('blist');if(!box)return;
+  box.innerHTML='<div class="card"><h2>Your tailored resumes ('+vers.builds.length+')</h2>'+(vers.builds.length?vers.builds.map(function(b){return '<div class="row sp" style="margin:8px 0"><span><b>'+esc(b.label)+'</b> <span class="mut">· '+esc(b.words)+' words'+(b.attached_to?' · used for '+b.attached_to+' application(s)':'')+'</span></span><span class="row"><button class="mini" data-open="'+esc(b.id)+'">Open</button>'+dlButtons(b.id)+'<button class="mini" data-rm="'+esc(b.id)+'">Delete</button></span></div>'}).join(''):'<div class="mut">None yet.</div>')+'</div>';
+  wireDl(box);
+  box.querySelectorAll('[data-open]').forEach(function(b){b.onclick=async function(){try{var r=await api('/v1/resume-lab/builds/'+b.dataset.open);state.bld=fromSaved(r);drawEditor();$('editor').scrollIntoView({behavior:'smooth'})}catch(e){toast(e.message)}}});
+  box.querySelectorAll('[data-rm]').forEach(function(b){b.onclick=async function(){if(!confirm('Delete this tailored resume? Applications using it will be detached.'))return;try{var r=await api('/v1/resume-lab/builds/'+b.dataset.rm,{method:'DELETE'});state.vers=null;toast('Deleted'+(r.detached_applications?' and detached from '+r.detached_applications+' application(s)':''));if(state.bld&&state.bld.build_id===b.dataset.rm){state.bld=null;$('editor').innerHTML=''}drawBuilds()}catch(e){toast(e.message)}}})}
+async function vBuild(v){
+  var vers=await getVersions(true);if(needVersions(v,vers,1))return;
+  v.innerHTML='<div class="card"><h2>Build a tailored resume</h2><p class="mut">OPAI reorders and trims one of your resumes toward a posting. It adds nothing you did not write.</p>'
+    +'<label for="base">Start from</label><select id="base"><option value="">Best match for the posting</option>'+vers.own.map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.label)+'</option>'}).join('')+'</select>'+postingBox()
+    +'<div class="row" style="margin-top:8px"><button class="b" id="go">Draft</button></div></div><div id="editor"></div>'
+    +'<div id="blist"></div>';
+  loadOpps();wireEditor();state.bld=null;drawBuilds();
+  $('go').onclick=async function(){var jb=jobBody();if(!jb)return toast('Paste a posting or choose an opportunity');var btn=this;btn.disabled=true;
+    try{var body=Object.assign({},jb);if($('base').value)body.base_resume_id=$('base').value;var r=await api('/v1/resume-lab/builds/suggest',{method:'POST',body:body});state.bld=fromDraft(r);drawEditor();$('editor').scrollIntoView({behavior:'smooth'})}
+    catch(e){toast(e.message)}btn.disabled=false}}
+
+/* ---------- Applications: which resume goes with which application ---------- */
+async function vApply(v){
+  var vers=await getVersions(true),d=await api('/v1/resume-lab/attachments');
+  if(!d.applications.length){v.innerHTML='<div class="card">No applications yet. Track one in Opportunities, then pick its resume here.</div>';return}
+  v.innerHTML='<div class="card"><h2>Resume for each application</h2><div class="mut">This records which version you plan to submit. OPAI never submits anything.</div></div>'
+    +d.applications.map(function(a,i){return '<div class="card"><div class="row sp"><b>'+esc(a.company)+' · '+esc(a.role)+'</b><span class="pill">'+esc(a.status||'')+'</span></div>'
+      +(a.resume_label?'<div class="mut">Attached: <b>'+esc(a.resume_label)+'</b> ('+esc(a.resume_kind)+')</div>':'<div class="mut">No resume attached yet.</div>')
+      +'<div class="row" style="margin-top:6px"><span style="flex:1;min-width:180px">'+verSelect('ap'+i,vers,true,a.resume_id)+'</span><button class="mini" data-att="'+esc(a.application_id)+'" data-i="'+i+'">Attach</button>'
+      +(a.resume_id?'<button class="mini" data-det="'+esc(a.application_id)+'">Remove</button>':'')+'</div></div>'}).join('');
+  v.querySelectorAll('[data-att]').forEach(function(b){b.onclick=async function(){try{await api('/v1/resume-lab/attach',{method:'POST',body:{application_id:b.dataset.att,resume_id:$('ap'+b.dataset.i).value}});toast('Attached');go()}catch(e){toast(e.message)}}});
+  v.querySelectorAll('[data-det]').forEach(function(b){b.onclick=async function(){try{await api('/v1/resume-lab/attach/'+b.dataset.det,{method:'DELETE'});toast('Removed');go()}catch(e){toast(e.message)}}})}
+
 go();
 })();
 </script>

@@ -25,7 +25,9 @@
     if(uid)return uid;
     var email=localStorage.getItem('opai_sc_email');
     if(email){uid=(await api('/v1/auth/dev-login?email='+encodeURIComponent(email),{method:'POST'})).user_id;return uid}
-    throw new Error('Not signed in');
+    var gid=localStorage.getItem('opa_guest_uid');
+    if(gid){try{await api('/v1/profile?user_id='+encodeURIComponent(gid));uid=gid;return uid}catch(e){if(e.status!==404)throw e}}
+    gid=(await api('/v1/auth/guest',{method:'POST'})).user_id;localStorage.setItem('opa_guest_uid',gid);uid=gid;return uid;
   }
   function explain(e){
     if(e.name==='AbortError')return null;

@@ -1,5 +1,4 @@
 """Streak counts planned days only; rest days never break it; a missed planned day does."""
-import uuid as _uuid
 import os, sys, tempfile
 from datetime import date, timedelta
 import pytest
@@ -34,21 +33,21 @@ def streak(c, uid):
 
 
 def test_rest_days_do_not_break_streak(c):
-    uid = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
+    uid = c.post("/v1/auth/guest").json()["user_id"]
     seed(uid, {1: "done", 2: "done", 5: "done", 6: "done"})   # days 3-4 are rest days (no sessions)
     k = streak(c, uid)
     assert k["current"] == 4 and k["lost_streak"] == 0 and k["today_status"] == "rest_day"
 
 
 def test_lost_streak_reported(c):
-    uid = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
+    uid = c.post("/v1/auth/guest").json()["user_id"]
     seed(uid, {1: "skipped", 2: "done", 3: "done", 4: "done"})
     k = streak(c, uid)
     assert k["current"] == 0 and k["lost_streak"] == 3 and k["missed_days"] == 1 and k["longest"] == 3
 
 
 def test_today_open_keeps_streak_and_flags_risk(c):
-    uid = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
+    uid = c.post("/v1/auth/guest").json()["user_id"]
     seed(uid, {0: "planned", 1: "done", 2: "done"})
     k = streak(c, uid)
     assert k["current"] == 2 and k["at_risk"] is True and k["lost_streak"] == 0

@@ -5,10 +5,10 @@
   if(EMBED){window.OPAI_KARNA_POPUP=1;var st=document.createElement('style');st.textContent='body>header,header.opai-hd,.opai-dock{display:none!important}body{padding-top:0!important}';document.head.appendChild(st);return}
   var path=(location.pathname.split('/').pop()||'today.html').replace(/\/$/,'')||'today.html';
   if(path==='super-chat'||path==='')path='super-chat.html';
-  var NAV=[['Today','today.html'],['KARNA','super-chat.html'],['Plan','plan.html'],['Work','work.html'],['Overview','app.html']];
+  var NAV=[['Today','today.html'],['KARNA','super-chat.html'],['Plan','plan.html'],['Work','work.html'],['Overview','app.html'],['Console','agent-console.html']];
   var isChat=/super-chat/.test(path);
   var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
-  var uid=null,mail=localStorage.getItem('opai_sc_email');
+  var uid=localStorage.getItem('opa_guest_uid'),mail=localStorage.getItem('opai_sc_email');
   function h(s){var d=document.createElement('div');d.innerHTML=s.trim();return d.firstChild}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   var LOGO='<svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="3" y="4" width="10" height="22" rx="5" transform="rotate(-12 8 15)" fill="#E8705A"/><rect x="17" y="4" width="10" height="22" rx="5" fill="#17504A"/></svg>';
@@ -17,7 +17,7 @@
     var hd=h('<header class="opai-hd" role="banner"><div class="in"><a class="opai-logo" href="today.html" aria-label="OPAI home">'+LOGO+'<span><b>OPAI</b><small>v8</small></span></a>'+
       '<nav class="opai-pills" aria-label="Pages">'+NAV.map(function(n){return '<a href="'+n[1]+'"'+((n[1]===path||(n[1]==='work.html'&&/^(opportunities|dsa|projects|academics|applications)\.html$/.test(path)))?' aria-current="page"':'')+'>'+n[0]+'</a>'}).join('')+'</nav>'+
       '<div class="opai-right"><button class="opai-k" type="button" id="opai-k" aria-label="Search sections">⌕ Ctrl K</button><span class="opai-st" id="opai-st"><i></i><span>KARNA · checking</span></span>'+
-      '<a class="opai-user" href="login.html" title="Account"><span class="av" id="opai-av">·</span><span><b id="opai-un">Account</b><small id="opai-us">OPAI</small></span></a></div></div></header>');
+      '<a class="opai-user" href="login.html" title="Account"><span class="av" id="opai-av">·</span><span><b id="opai-un">Guest</b><small id="opai-us">OPAI</small></span></a></div></div></header>');
     if(isChat)return null;
     var pos=old?getComputedStyle(old).position:'';
     if(old&&(pos==='fixed'||pos==='sticky'||old.parentNode===document.body))old.replaceWith(hd);else document.body.insertBefore(hd,document.body.firstChild);
@@ -34,7 +34,7 @@
   var deferred=null;addEventListener('beforeinstallprompt',function(e){if(isChat)return;e.preventDefault();deferred=e});
   function dock(){
     if(isChat)return;var I=icons();
-    var d=h('<div class="opai-dock" role="toolbar" aria-label="Quick actions"><a href="today.html" title="Today" '+(path==='today.html'?'aria-current="page"':'')+'>'+I.today+'</a><a href="super-chat.html" title="Ask KARNA">'+I.chat+'</a><a href="work.html" title="Work" '+(/^(work|opportunities|dsa|projects|academics)\.html$/.test(path)?'aria-current="page"':'')+'>'+I.work+'</a><button type="button" id="dk-guide" title="Guide: which section does what">'+I.guide+'</button><button type="button" id="dk-install" title="Install OPAI as an app">'+I.dl+'</button></div>');
+    var d=h('<div class="opai-dock" role="toolbar" aria-label="Quick actions"><a href="today.html" title="Today" '+(path==='today.html'?'aria-current="page"':'')+'>'+I.today+'</a><a href="super-chat.html" title="Ask KARNA">'+I.chat+'</a><a href="work.html" title="Work" '+(/^(work|opportunities|dsa|projects|academics)\.html$/.test(path)?'aria-current="page"':'')+'>'+I.work+'</a><button type="button" id="dk-guide" title="Guide: which section does what">'+I.guide+'</button><a href="agent-console.html" title="Agent console" '+(path==='agent-console.html'?'aria-current="page"':'')+'>'+I.term+'</a><button type="button" id="dk-install" title="Install OPAI as an app">'+I.dl+'</button></div>');
     document.body.appendChild(d);
     document.getElementById('dk-guide').onclick=function(){window.OPAI_GUIDE&&OPAI_GUIDE.open('')};
     document.getElementById('dk-install').onclick=function(){if(deferred){deferred.prompt();deferred=null}else alert('To install: browser menu → "Add to Home Screen" (or "Install app").')};
@@ -64,8 +64,8 @@
   function who(){
     var st=document.getElementById('opai-st'),av=document.getElementById('opai-av'),un=document.getElementById('opai-un'),us=document.getElementById('opai-us');if(!st)return;
     fetch(API+'/v1/health').then(function(r){if(!r.ok)throw 0;st.className='opai-st';st.querySelector('span').textContent='KARNA · Ready · Guarded'}).catch(function(){st.className='opai-st off';st.querySelector('span').textContent='Backend waking up'});
-    if(!mail)return;fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(mail),{method:'POST'}).then(function(r){return r.ok?r.json():null}).then(function(d){if(!d)return null;uid=d.user_id;return fetch(API+'/v1/profile?user_id='+encodeURIComponent(uid))}).then(function(r){return r&&r.ok?r.json():null}).then(function(p){if(!p)return;
-      var n=p.name?p.name:(mail?mail.split('@')[0]:'Account');un.textContent=n;av.textContent=(n[0]||'A').toUpperCase();us.textContent=[p.branch,p.degree].filter(Boolean).join(' · ')||'Personal workspace'}).catch(function(){});
+    if(!uid)return;fetch(API+'/v1/profile?user_id='+encodeURIComponent(uid)).then(function(r){return r.ok?r.json():null}).then(function(p){if(!p)return;
+      var n=p.name&&!/^guest/i.test(p.name)?p.name:(mail?mail.split('@')[0]:'Guest');un.textContent=n;av.textContent=(n[0]||'G').toUpperCase();us.textContent=[p.branch,p.degree].filter(Boolean).join(' · ')||'Personal workspace'}).catch(function(){});
   }
   function karna(){if(isChat||window.OPAI_KARNA_POPUP||document.querySelector('script[src*="karna-popup.js"]'))return;var k=document.createElement('script');k.src='karna-popup.js';k.defer=true;document.body.appendChild(k)}
   function boot(){var hd=header();dock();timer();karna();if(hd){who();document.getElementById('opai-k').onclick=function(){window.OPAI_GUIDE&&OPAI_GUIDE.open('')};

@@ -83,6 +83,7 @@ app.add_middleware(
     allow_credentials=False,      # the frontend sends no cookies; "*" with credentials is invalid per the CORS spec
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition", "X-Export-Warnings"],   # lets the page read the file name and PDF font warnings on downloads
     max_age=600,
 )
 
@@ -152,7 +153,7 @@ def health(db: Session = Depends(get_db)):
         "tables": {},
     }
     if dialect == "sqlite":
-        out["warning"] = "DATABASE_URL is not set: SQLite on Render is wiped on every deploy/restart. Data and user accounts will disappear."
+        out["warning"] = "DATABASE_URL is not set: SQLite on Render is wiped on every deploy/restart. Data and guest users will disappear."
     try:
         cols = {t: [c["name"] for c in _inspect(_engine).get_columns(t)] for t in ("projects", "academics", "users")}
     except Exception as e:
@@ -271,11 +272,32 @@ def dev_login(email: str = "student@university.edu", name: str = None, db: Sessi
         db.add(user)
         db.commit()
         db.refresh(user)
-    elif name and user.name == "User":
+    elif name and user.name in {"User", "Guest"}:
         user.name = name
         db.commit()
         db.refresh(user)
     return {"user_id": str(user.id), "name": user.name, "email": user.email}
+
+
+@app.post("/v1/auth/guest")
+def guest_login(db: Session = Depends(get_db)):
+    """Every guest gets a brand-new, isolated user record.
+    (Previously all guests logged in as the same hardcoded email, so they
+    shared one account and saw each other's data.)"""
+    import uuid as _uuid
+    token = _uuid.uuid4().hex[:12]
+    user = User(
+        email=f"guest-{token}@opa.local",
+        name="Guest",
+        branch="",
+        degree="",
+        targets={},
+        preferences={},
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return {"user_id": str(user.id), "name": user.name, "email": user.email, "guest": True}
 
 
 # ================= PROFILE =================
@@ -1011,7 +1033,7 @@ def resume_create(payload: ResumeCreate, db: Session = Depends(get_db)):
 def resume_list(user_id: UUID, db: Session = Depends(get_db)):
     return (
         db.query(Resume)
-        .filter(Resume.user_id == str(user_id))
+        .filter(Resume.user_id == str(user_id), Resume.kind.is_distinct_from("reference"))
         .order_by(Resume.created_at.desc())
         .all()
     )

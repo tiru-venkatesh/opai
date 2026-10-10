@@ -21,3 +21,6 @@ backend/opa.db
 Thumbs.db
 .vscode/
 .idea/
+
+# other people's resumes: never commit or deploy
+backend/resumes/

@@ -78,6 +78,8 @@ class Resume(Base):
     summary = Column(Text)
     suggested_bullets = Column(JSON, default=list)
     score = Column(JSON, default=dict)             # {clarity, impact, keyword_match, structure, overall, notes}
+    kind = Column(String, default="own")           # own | reference (someone else's resume, benchmark only) | tailored (built in Resume Lab from own bullets)
+    build = Column(JSON)                           # tailored only: {sections, skills, provenance, base_resume_id, job}; raw_text is its rendered text
     created_at = Column(DateTime, default=_dt.utcnow)
     updated_at = Column(DateTime, default=_dt.utcnow, onupdate=_dt.utcnow)
 

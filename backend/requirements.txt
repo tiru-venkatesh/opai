@@ -6,7 +6,8 @@ sqlalchemy>=2.0.25
 python-dotenv>=1.0.1
 fastembed>=0.2.7
 pypdf>=4.0.0
-python-docx>=1.1.0      # DOCX upload parsing
+python-docx>=1.1.0      # DOCX upload parsing + Resume Lab DOCX export
+reportlab>=4            # Resume Lab PDF export
 python-multipart>=0.0.9  # file uploads (FastAPI Form/UploadFile)
 
 # Optional: only needed if you point DATABASE_URL at Postgres instead of the
@@ -15,4 +16,3 @@ psycopg2-binary>=2.9.9
 
 # Tests only (cd backend && python -m pytest tests -q)
 # pytest>=8
-reportlab>=4      # PDF export in Resume Lab + sample PDF for the page-citation test

@@ -78,7 +78,7 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><script src="opai-ux.js"></script>
+<link rel="stylesheet" href="opai-shared.css">
 </head>
 <body>
 <main>
@@ -112,7 +112,9 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
     if (uid) return uid;
     const email = new URLSearchParams(location.search).get('email') || localStorage.getItem('opai_sc_email');
     if (email) { localStorage.setItem('opai_sc_email', email); uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(email), { method: 'POST' })).user_id; return uid; }
-    location.replace('login.html'); throw new Error('Please sign in');
+    let gid = localStorage.getItem('opa_guest_uid');
+    if (gid) { try { await api('/v1/profile?user_id=' + encodeURIComponent(gid)); uid = gid; return uid; } catch (e) { if (!/404/.test(e.message) && !/not found/i.test(e.message)) throw e; } }
+    gid = (await api('/v1/auth/guest', { method: 'POST' })).user_id; localStorage.setItem('opa_guest_uid', gid); uid = gid; return uid;
   }
 
   let S = null, pendingConf = null; const openPh = new Set(), editing = new Set();
@@ -241,7 +243,11 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
       await ensureUser();
       try { S = await api('/v1/dsa?user_id=' + encodeURIComponent(uid)); }
       catch (e1) {
-        if (/^not found$/i.test(e1.message)) {
+        // Server forgot this user (e.g. its database was reset): drop the stale guest id, make a new one, retry once.
+        if (/user not found/i.test(e1.message) && !new URLSearchParams(location.search).get('email') && !localStorage.getItem('opai_sc_email')) {
+          localStorage.removeItem('opa_guest_uid'); uid = null; await ensureUser();
+          S = await api('/v1/dsa?user_id=' + encodeURIComponent(uid));
+        } else if (/^not found$/i.test(e1.message)) {
           throw new Error('The backend at ' + base() + ' is running an older version without the DSA roadmap (/v1/dsa). Redeploy the latest backend code.');
         } else throw e1;
       }
