@@ -630,6 +630,8 @@ main{padding-top:78px}
 .ob-dot-label{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px}
 .gate-err{color:var(--bad);font-size:12.5px;min-height:18px;margin-top:4px}
 .gate-fine{color:var(--ink-3);font-size:11.5px;margin-top:14px}
+.gate-legal{color:var(--ink-3);font-size:11.5px;line-height:1.5;margin-top:14px}
+.gate-legal a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 .userchip{display:flex;gap:10px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:var(--r-sm);margin-bottom:10px}
 .userchip .av{width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent-d);display:grid;place-items:center;font-weight:700;font-size:13px;flex-shrink:0;overflow:hidden}
 .userchip .av img{width:100%;height:100%;object-fit:cover}
@@ -818,6 +820,7 @@ body.nav-open #page{left:min(300px,84vw);border-radius:20px 0 0 20px;box-shadow:
     <button class="btn ghost" id="gate-google" onclick="gateGoogle()"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.4-4.8 7.1l7.6 5.9c4.4-4.1 7-10.1 7-17.5z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.5-.8-3-.8-4.6s.3-3.1.8-4.6l-7.9-6.1C.9 16.6 0 20.2 0 24s.9 7.4 2.6 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.9l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>Continue with Google</button>
     <div class="gate-err" id="gate-err" role="alert"></div>
     <div class="gate-fine" id="gate-fine"></div>
+    <p class="gate-legal">By continuing you agree to the <a href="/terms">Terms of Service</a> and acknowledge the <a href="/privacy">Privacy Policy</a>. OPAI uses your Google name, email address and profile picture only to run your account. Gmail access (send only) is optional and asked for separately.</p>
   </div>
 </div>
 

@@ -54,6 +54,14 @@ a{color:inherit}
 @keyframes up{to{opacity:1;transform:none}}
 .sub{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:rgba(0,0,0,.55)}
 .sub i{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px rgba(23,80,74,.15)}
+.purpose{max-width:62ch;margin:14px 0 22px;font-size:15px;line-height:1.55;color:var(--ink-2)}
+.purpose code,.gdata code{font-size:.9em;background:rgba(0,0,0,.06);padding:1px 6px;border-radius:6px}
+.purpose a,.gdata a{color:var(--accent);text-underline-offset:3px}
+.gdata{margin-top:28px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:26px 28px}
+.gdata h3{font-size:20px;font-weight:500;line-height:1.25}
+.gdata ul{margin:14px 0 0;padding-left:20px;color:var(--ink-2);font-size:14.5px}
+.gdata li{margin-top:8px}
+.gdata p{color:var(--ink-2);font-size:14.5px;margin-top:14px}
 .hero h1{font-size:clamp(2rem,8vw,4.5rem);font-weight:400;line-height:1.02;letter-spacing:-.03em;margin:14px 0 24px}
 .hero h1 span{display:block}
 .btns{display:flex;gap:10px;flex-wrap:wrap}
@@ -164,6 +172,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <div>
         <div class="sub"><i aria-hidden="true"></i>An operating agent for one person doing a founder's job</div>
         <h1><span>Everything you're juggling,</span><span>running as one operation.</span></h1>
+        <p class="purpose">OPAI is a personal workspace and AI assistant for students. It tracks your applications, outreach, projects and exams, and drafts only with your approval. If you choose to connect Gmail, it can send emails you have approved from your own account (the <code>gmail.send</code> permission only; it cannot read your inbox). <a href="/privacy">Privacy Policy</a> · <a href="/terms">Terms of Service</a></p>
         <div class="btns">
           <a href="app.html" class="btn p">Open OPAI</a>
           <a href="#how" class="btn s">How it works</a>
@@ -184,6 +193,16 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <div class="persona"><div class="tag">Gmail, only if you choose</div><h3>Send your own approved emails</h3><p>If you click Connect Gmail, OPAI asks for the gmail.send permission, which allows sending an email you approved from your own account. OPAI cannot read, search or delete your email.</p></div>
       <div class="persona"><div class="tag">AI use</div><h3>Assistance, not misuse</h3><p>KARNA helps with planning, drafting and answering questions about your workspace. OPAI does not use Google APIs to generate AI-generated non-consensual intimate imagery (NCII) or any other harmful content, and does not allow such use.</p></div>
       <div class="persona"><div class="tag">Your data</div><h3>Private, and deletable</h3><p>Your data is not sold or used for advertising or AI training. Read the <a href="/privacy">Privacy Policy</a> and <a href="/terms">Terms of Service</a>, or ask for deletion at any time.</p></div>
+    </div>
+    <div class="gdata" id="google-data">
+      <h3>Google user data</h3>
+      <ul>
+        <li><strong>What we ask for.</strong> Sign-in gives OPAI your name, email address and profile picture, used only to run your private account. Gmail access is optional and limited to <code>gmail.send</code>: it sends an email you approved, and OPAI cannot read, search, list or delete your mail.</li>
+        <li><strong>What the AI sees.</strong> OPAI never sends your Google email address or profile picture to its AI provider. Your name and the profile details you enter can be included to personalise replies and drafts. The Privacy Policy lists exactly what is sent.</li>
+        <li><strong>Limited Use.</strong> OPAI's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">Google API Services User Data Policy</a>, including the Limited Use requirements. Google user data is not sold, not used for advertising, and not used to train AI models.</li>
+        <li><strong>No misuse.</strong> OPAI does not use Google APIs to generate AI-generated non-consensual intimate imagery (NCII) or any other harmful content.</li>
+      </ul>
+      <p><a href="/privacy#google-data">Read the Privacy Policy</a> · <a href="/terms">Terms of Service</a></p>
     </div>
   </div></section>
 

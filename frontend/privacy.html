@@ -45,7 +45,7 @@ footer a{color:var(--ink-3);margin-right:14px}
 <h2>1. Information we collect</h2>
 <div class="tw"><table>
 <tr><th>Data</th><th>Source</th><th>Why we use it</th></tr>
-<tr><td><strong>Google account basics:</strong> name, email address, profile picture</td><td>"Sign in with Google" (through Firebase Authentication). We do not receive your Google password.</td><td>To create and sign you in to your account, show your name and photo in the app, and identify your private workspace.</td></tr>
+<tr><td><strong>Google account basics:</strong> name, email address, profile picture</td><td>"Sign in with Google" (through Firebase Authentication). We do not receive your Google password.</td><td>To create and sign you in to your account, show your name and photo in the app, and identify your private workspace. The photo is displayed from your browser and is not stored in OPAI's database.</td></tr>
 <tr><td><strong>Email and password</strong> (if you sign up with email instead)</td><td>You, via Firebase Authentication</td><td>Authentication only. Passwords are handled by Firebase; OPAI does not see or store them.</td></tr>
 <tr><td><strong>Profile details you enter:</strong> name, college, course, branch, year, semester, goals, study preferences, time zone, optional date of birth, optional GitHub / LinkedIn / portfolio links</td><td>You, during onboarding or in the app</td><td>To personalise planning, study schedules and answers. Date of birth is optional, is never shown in chat, and is not sent to the AI service.</td></tr>
 <tr><td><strong>Content you add:</strong> applications, projects, tasks, notes, documents and resumes you upload, outreach drafts, saved memory items</td><td>You</td><td>To provide the features you use (trackers, planner, search over your own documents, drafting).</td></tr>
@@ -64,8 +64,8 @@ footer a{color:var(--ink-3);margin-right:14px}
 </ul>
 <p>We do not sell your data, we do not use it for advertising, and we do not use it to train AI models.</p>
 
-<h2>3. Google user data and the Gmail permission</h2>
-<p><strong>Sign-in.</strong> When you choose Sign in with Google, we receive your name, email address and profile picture. We use them only to run your account as described above.</p>
+<h2 id="google-data">3. Google user data and the Gmail permission</h2>
+<p><strong>Sign-in.</strong> When you choose Sign in with Google, we receive your name, email address and profile picture. We use them only to run your account as described above. Your profile picture is displayed from your browser and is not stored in OPAI's database, and your Google email address and profile picture are never sent to our AI provider (see section 4).</p>
 <p><strong>Gmail (optional).</strong> If you click "Connect Gmail", Google asks you to grant the <code>gmail.send</code> permission. It allows OPAI to send an email on your behalf and nothing more:</p>
 <ul>
 <li>It is used <strong>only</strong> when you approve a specific outreach email in your Outbox and choose to send it. OPAI never sends email on its own.</li>
@@ -80,7 +80,14 @@ footer a{color:var(--ink-3);margin-right:14px}
 <p>We share data only with service providers that help us run OPAI, and only as needed:</p>
 <ul>
 <li><strong>Google (Firebase Authentication)</strong> to sign you in.</li>
-<li><strong>Groq</strong>, our AI inference provider. When you chat with KARNA, your message and the excerpts of your own workspace needed to answer it are sent to Groq to generate a reply. We do not send your date of birth, passwords or Gmail tokens.</li>
+<li><strong>Groq</strong>, our AI inference provider. To write a reply or a draft, OPAI sends Groq only what that request needs:
+<ul>
+<li>your message and the recent messages of that conversation;</li>
+<li>excerpts of the documents, notes and resume text you added that match your question, and the text of a file you ask OPAI to read (for example a timetable PDF);</li>
+<li>a short profile summary: your name, course and branch, college, year and semester, skills, goals and time zone, plus the items from your own workspace that the answer needs (for example today's planned tasks, upcoming exams or open applications);</li>
+<li>for an outreach draft: your name, branch, skills and profile highlight, and the notes saved about the contact (for example a professor's research areas).</li>
+</ul>
+We never send Groq your Google email address, your profile picture, your date of birth, your password or Gmail access tokens, and we never send the content of your Gmail (OPAI cannot read it). Text you add yourself, such as a resume that contains your email address, is sent as you wrote it when a request needs it.</li>
 <li><strong>Hosting and database providers</strong> that store and serve the application and your account data.</li>
 </ul>
 <p>We may disclose information if required by law or to protect the rights and safety of users or the service. We do not sell or rent personal information.</p>
