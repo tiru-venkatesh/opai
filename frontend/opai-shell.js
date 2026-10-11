@@ -16,7 +16,7 @@
     var old=document.querySelector('body > header, body > .app > header, header');
     var hd=h('<header class="opai-hd" role="banner"><div class="in"><a class="opai-logo" href="today.html" aria-label="OPAI home">'+LOGO+'<span><b>OPAI</b><small>v8</small></span></a>'+
       '<nav class="opai-pills" aria-label="Pages">'+NAV.map(function(n){return '<a href="'+n[1]+'"'+((n[1]===path||(n[1]==='work.html'&&/^(opportunities|dsa|projects|academics|applications)\.html$/.test(path)))?' aria-current="page"':'')+'>'+n[0]+'</a>'}).join('')+'</nav>'+
-      '<div class="opai-right"><button class="opai-k" type="button" id="opai-k" aria-label="Search sections">⌕ Ctrl K</button><span class="opai-st" id="opai-st"><i></i><span>KARNA · checking</span></span>'+
+      '<div class="opai-right"><button class="opai-k" type="button" id="opai-k" aria-label="Search sections">Search <kbd>Ctrl K</kbd></button><span class="opai-st" id="opai-st"><i></i><span>Connecting…</span></span>'+
       '<a class="opai-user" href="login.html" title="Account"><span class="av" id="opai-av">·</span><span><b id="opai-un">Account</b><small id="opai-us">OPAI</small></span></a></div></div></header>');
     var pos=old?getComputedStyle(old).position:'';
     if(old&&(pos==='fixed'||pos==='sticky'||old.parentNode===document.body))old.replaceWith(hd);else document.body.insertBefore(hd,document.body.firstChild);
@@ -62,7 +62,7 @@
   /* profile + health */
   function who(){
     var st=document.getElementById('opai-st'),av=document.getElementById('opai-av'),un=document.getElementById('opai-un'),us=document.getElementById('opai-us');if(!st)return;
-    fetch(API+'/v1/health').then(function(r){if(!r.ok)throw 0;st.className='opai-st';st.querySelector('span').textContent='KARNA · Ready · Guarded'}).catch(function(){st.className='opai-st off';st.querySelector('span').textContent='Backend waking up'});
+    fetch(API+'/v1/health').then(function(r){if(!r.ok)throw 0;st.className='opai-st';st.querySelector('span').textContent='Online'}).catch(function(){st.className='opai-st off';st.querySelector('span').textContent='Waking up…'});
     if(!mail)return;fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(mail),{method:'POST'}).then(function(r){return r.ok?r.json():null}).then(function(d){if(!d)return null;uid=d.user_id;return fetch(API+'/v1/profile?user_id='+encodeURIComponent(uid))}).then(function(r){return r&&r.ok?r.json():null}).then(function(p){if(!p)return;
       var n=p.name?p.name:(mail?mail.split('@')[0]:'Account');un.textContent=n;av.textContent=(n[0]||'A').toUpperCase();us.textContent=[p.branch,p.degree].filter(Boolean).join(' · ')||'Personal workspace'}).catch(function(){});
   }

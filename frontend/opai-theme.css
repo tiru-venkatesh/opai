@@ -162,7 +162,7 @@ body.opai-pad{transition:padding-top .3s var(--o-ease)}
 .opai-logo svg rect{transition:transform .5s var(--o-spring);transform-box:fill-box;transform-origin:50% 100%}
 .opai-logo:hover svg rect:first-child{transform:rotate(-18deg)}.opai-logo:hover svg rect:last-child{transform:rotate(14deg) translateY(-1px)}
 @keyframes oLive{0%,100%{box-shadow:0 0 0 0 rgba(47,143,130,.55)}70%{box-shadow:0 0 0 7px rgba(47,143,130,0)}}
-.opai-st i,.opai-timer.on i{animation:oLive 2s ease-out infinite}
+.opai-timer.on i{animation:oLive 2s ease-out infinite}
 .opai-st.off i{animation:none}
 .opai-user .av{transition:transform .35s var(--o-spring)}.opai-user:hover .av{transform:rotate(-8deg) scale(1.1)}
 
