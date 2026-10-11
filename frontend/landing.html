@@ -1,285 +1,1273 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>OPAI — an operating agent for one person doing a founder's job</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..700&family=Onest:wght@400..600&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--ease:cubic-bezier(.16,1,.3,1);--bg:#F6F4EE;--surface:#FBFAF6;--ink:#16181A;--ink-2:#4A4F52;--ink-3:#7A7F80;--line:#E3DFD3;--line-2:#D2CCBC;--accent:#17504A;--accent-d:#0F3531;--pill:#EDE9DF;
---display:'Bricolage Grotesque',system-ui,sans-serif;--body:'Onest',system-ui,-apple-system,'Segoe UI',sans-serif}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-h1,h2,h3{font-family:var(--display);letter-spacing:-.02em}
-a{color:inherit}
-.wrap{max-width:1180px;margin:0 auto;padding:0 32px}
-@media(max-width:640px){.wrap{padding:0 20px}}
-
-/* ---------- navbar ---------- */
-.navbar{position:fixed;top:0;left:0;width:100%;z-index:50;pointer-events:none;padding:calc(16px + env(safe-area-inset-top,0px)) 16px 16px;display:flex;align-items:center;justify-content:space-between;opacity:0;transform:translateY(-16px);animation:down .8s var(--ease) forwards}
-@keyframes down{to{opacity:1;transform:none}}
-.nav-left,.nav-right{display:flex;align-items:center;gap:8px;pointer-events:auto;position:relative}
-.logo{display:flex;align-items:center;gap:10px;text-decoration:none;padding:4px 10px 4px 4px;border-radius:99px;background:rgba(255,255,255,.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.logo svg,.logo img{width:28px;height:28px;flex-shrink:0}
-.brand-name{font-family:var(--display);font-size:15px;font-weight:600;display:none}
-.menu-btn{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:#fff;padding:3px 12px 3px 3px;border-radius:99px;border:0;cursor:pointer;font:500 11px var(--body);box-shadow:0 2px 8px rgba(0,0,0,.12);transition:transform .2s var(--ease)}
-.menu-btn:hover{transform:scale(1.03)}
-.menu-btn .ic{width:28px;height:28px;border-radius:50%;background:#fff;color:var(--ink);display:grid;place-items:center;transition:transform .3s var(--ease)}
-.menu-btn[aria-expanded=true] .ic{transform:rotate(45deg)}
-.menu-panel{position:absolute;top:calc(100% + 10px);left:0;min-width:200px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:0 18px 40px -18px rgba(15,23,41,.35);display:none;flex-direction:column}
-.menu-panel.open{display:flex}
-.menu-panel a{padding:9px 12px;border-radius:8px;text-decoration:none;font-size:14px;color:var(--ink-2)}
-.menu-panel a:hover{background:var(--bg);color:var(--ink)}
-.tags-pill{display:none;align-items:center;gap:12px;background:var(--pill);padding:7px 16px;border-radius:99px;font-size:11px;font-weight:500;color:rgba(0,0,0,.75);border:1px solid rgba(0,0,0,.04)}
-.right-pill{display:inline-flex;align-items:center;gap:8px;background:var(--pill);padding:3px;border-radius:99px;border:1px solid rgba(0,0,0,.04);font-size:11px;font-weight:500;text-decoration:none}
-.right-pill .ic{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center}
-.right-pill span{display:none;padding-right:12px}
-@media(min-width:768px){
- .navbar{padding:calc(24px + env(safe-area-inset-top,0px)) 32px 24px}
- .brand-name,.tags-pill{display:inline-flex}.brand-name{display:block}
- .right-pill span{display:block}
- .logo svg,.logo img,.menu-btn .ic,.right-pill .ic{width:32px;height:32px}
-}
-
-/* ---------- hero ---------- */
-.hero{position:relative;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;background:#fff}
-.video-viewport{position:absolute;inset:0;z-index:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.video-wrapper{width:80%;height:80%;border-radius:20px;overflow:hidden;background:var(--ink);box-shadow:0 20px 50px rgba(0,0,0,.08);opacity:0;transform:scale(1.05);animation:vfade 1.8s var(--ease) forwards}
-@keyframes vfade{to{opacity:1;transform:none}}
-.video-wrapper img{width:100%;height:100%;object-fit:cover;object-position:62% 35%;display:block}
-.hero-foot{position:relative;z-index:30;width:100%;background:linear-gradient(to top,#F6F4EE 0%,rgba(246,244,238,.88) 60%,transparent 100%);padding:80px 20px 32px;display:flex;flex-direction:column;gap:24px;opacity:0;transform:translateY(20px);animation:up 1s var(--ease) .5s forwards}
-@keyframes up{to{opacity:1;transform:none}}
-.sub{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:rgba(0,0,0,.55)}
-.sub i{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px rgba(23,80,74,.15)}
-.purpose{max-width:62ch;margin:14px 0 22px;font-size:15px;line-height:1.55;color:var(--ink-2)}
-.purpose code,.gdata code{font-size:.9em;background:rgba(0,0,0,.06);padding:1px 6px;border-radius:6px}
-.purpose a,.gdata a{color:var(--accent);text-underline-offset:3px}
-.gdata{margin-top:28px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:26px 28px}
-.gdata h3{font-size:20px;font-weight:500;line-height:1.25}
-.gdata ul{margin:14px 0 0;padding-left:20px;color:var(--ink-2);font-size:14.5px}
-.gdata li{margin-top:8px}
-.gdata p{color:var(--ink-2);font-size:14.5px;margin-top:14px}
-.hero h1{font-size:clamp(2rem,8vw,4.5rem);font-weight:400;line-height:1.02;letter-spacing:-.03em;margin:14px 0 24px}
-.hero h1 span{display:block}
-.btns{display:flex;gap:10px;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 24px;border-radius:99px;font-size:13px;font-weight:500;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:all .2s var(--ease)}
-.btn.p{background:var(--ink);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.15)}
-.btn.p:hover{background:var(--accent);transform:translateY(-1px)}
-.btn.s{background:rgba(255,255,255,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-color:rgba(0,0,0,.35)}
-.btn.s:hover{background:#fff;border-color:rgba(0,0,0,.7);transform:translateY(-1px)}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{padding:8px 16px;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:99px;font-size:11px;font-weight:500;color:rgba(0,0,0,.75);box-shadow:0 2px 6px rgba(0,0,0,.04)}
-@media(min-width:768px){
- .video-wrapper{width:100%;height:100%;border-radius:0;box-shadow:none}
- .hero-foot{padding:120px 32px 40px;flex-direction:row;align-items:flex-end;justify-content:space-between}
- .hero h1{font-size:clamp(2.5rem,5.5vw,4.5rem)}
- .chips{justify-content:flex-end;margin-bottom:8px}
-}
-
-/* ---------- sections ---------- */
-section{padding:72px 0}
-.eyebrow{font:500 12.5px ui-monospace,Menlo,monospace;color:var(--accent)}
-.head{max-width:640px;margin-bottom:40px}
-.head h2,.why h2{font-size:clamp(28px,3.6vw,40px);font-weight:500;line-height:1.15;margin-top:12px}
-.head p,.why>p{color:var(--ink-2);margin-top:14px;max-width:56ch}
-.personas{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:40px}
-.persona{background:var(--surface);padding:28px}
-.persona .tag{font:500 12px ui-monospace,Menlo,monospace;color:var(--accent)}
-.persona h3{font-size:20px;font-weight:500;margin-top:8px;line-height:1.25}
-.persona p{color:var(--ink-2);font-size:14.5px;margin-top:10px}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.step{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:26px;transition:transform .25s var(--ease),box-shadow .25s var(--ease)}
-.step:hover{transform:translateY(-3px);box-shadow:0 14px 28px -20px rgba(15,23,41,.35)}
-.step .n{font:12px ui-monospace,Menlo,monospace;color:var(--ink-3)}
-.step h3{font-size:19px;font-weight:600;margin-top:10px}
-.step p{color:var(--ink-2);font-size:14.5px;margin-top:8px}
-.bit{margin-top:16px;background:var(--bg);border-radius:8px;padding:12px 14px;font:12.5px/1.55 ui-monospace,Menlo,monospace}
-.bit.you{color:var(--accent-d)}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-.cell{background:var(--surface);padding:24px}
-.cell i{display:block;width:8px;height:8px;border-radius:2.5px;margin-bottom:12px}
-.cell h3{font-size:17px;font-weight:600}
-.cell p{color:var(--ink-2);font-size:14px;margin-top:6px}
-.faq details{border-bottom:1px solid var(--line)}
-.faq details:first-of-type{border-top:1px solid var(--line)}
-.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:16px;padding:22px 0;font:500 19px var(--display)}
-.faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:"+";font:18px ui-monospace,monospace;color:var(--ink-3);transition:transform .3s var(--ease)}
-.faq details[open] summary::after{transform:rotate(45deg);color:var(--accent)}
-.faq details p{color:var(--ink-2);padding:0 0 22px;max-width:60ch}
-.cta{background:var(--accent);color:#F6F4EE;border-radius:20px;padding:52px;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
-.cta h2{font-size:clamp(26px,3.4vw,36px);font-weight:500;line-height:1.15}
-.cta p{color:#AEB8D2;margin-top:14px;max-width:44ch}
-.cta .btns{margin-top:24px}
-.cta .btn.p{background:var(--accent)}
-.cta .btn.s{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
-.notify{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:18px}
-.notify label{font:11.5px ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:#AEB8D2;display:block;margin-bottom:9px}
-.notify div{display:flex;gap:8px}
-.notify input{flex:1;min-width:0;padding:11px 12px;border:1px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font:14px var(--body)}
-.notify input:focus{outline:2px solid var(--accent);outline-offset:1px}
-.notify .btn{height:auto;padding:0 18px;border-radius:8px;background:#fff;color:var(--ink)}
-.notify small{display:block;font-size:12px;color:#8E9AB8;margin-top:10px}
-footer{padding:32px 0;color:var(--ink-3);font-size:13px}
-footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}footer a{color:inherit;text-decoration:underline;text-underline-offset:3px}footer a:hover{color:var(--accent)}
-@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}.steps{grid-template-columns:1fr}.cta{grid-template-columns:1fr;padding:32px}}
-@media(max-width:640px){.personas,.grid{grid-template-columns:1fr}section{padding:52px 0}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}.navbar,.hero-foot,.video-wrapper{opacity:1!important;transform:none!important}}
-</style>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#F6F4EE">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="opai-shared.css">
-<style>.btn.p{background:var(--accent);color:#fff}.btn.p:hover{background:var(--accent-d)}.tags-pill,.chip{font-family:"JetBrains Mono",ui-monospace,monospace}.cta .btn.p{background:#fff;color:var(--accent)}</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPAI — Your Operating Agent | AI Workspace & Assistant</title>
+  <meta name="description" content="Explore OPAI, an AI-powered productivity workspace with KARNA AI assistance, supported project and academic workflows, and transparent connected-service permissions.">
+  <link rel="canonical" href="https://opai.live/">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#050607">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="landing.css">
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 </head>
-<body>
+<body id="top" class="selection:bg-tealAccent/20 selection:text-tealAccent">
 
-<header class="navbar">
-  <div class="nav-left">
-    <a class="logo" href="#top" aria-label="OPAI home">
-      <img src="assets/opai-logo-96.png" width="28" height="28" alt="" style="display:block;flex-shrink:0">
-      <span class="brand-name">OPAI</span>
-    </a>
-    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="menu-panel">
-      <span class="ic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>Menu
-    </button>
-    <nav class="menu-panel" id="menu-panel">
-      <a href="#about">What OPAI is</a><a href="#why">The problem</a><a href="#how">How it works</a><a href="#inside">What's inside</a><a href="#faq">Questions</a><a href="#access">Open OPAI</a>
-    </nav>
-    <div class="tags-pill"><span>Applications</span><span>Outreach</span></div>
-  </div>
-  <div class="nav-right">
-    <a class="right-pill" href="app.html" aria-label="Open OPAI">
-      <span class="ic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><circle cx="4.5" cy="4.5" r="1.75"/><circle cx="11.5" cy="4.5" r="1.75"/><circle cx="4.5" cy="11.5" r="1.75"/><circle cx="11.5" cy="11.5" r="1.75"/></svg></span>
-      <span>Open dashboard</span>
-    </a>
-  </div>
-</header>
+  <!-- ======================================================== -->
+  <!-- 01. NAVIGATION BAR -->
+  <!-- ======================================================== -->
+  <header id="site-header" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-obsidian/75 backdrop-blur-md border-b border-white/[0.06]">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <!-- Brand Logo & Descriptor -->
+      <a href="#top" class="flex items-center gap-3.5 group focus:outline-none focus:ring-1 focus:ring-tealAccent/50 rounded-sm p-1">
+        <img src="assets/opai-logo-96.png" width="32" height="32" alt="" class="w-8 h-8 shrink-0 transition-transform duration-700 group-hover:rotate-90">
+        <div class="flex items-baseline gap-2">
+          <span class="text-xl font-bold tracking-[0.14em] text-warmWhite">OPAI</span>
+          <span class="text-[9px] font-medium tracking-[0.22em] text-mutedGray uppercase hidden sm:inline">Operating Agent</span>
+        </div>
+      </a>
 
-<main id="top">
-  <div class="hero">
-    <div class="video-viewport" aria-hidden="true">
-      <div class="video-wrapper">
-        <img src="assets/bg.png" alt="" fetchpriority="high">
+      <!-- Center Anchor Navigation -->
+      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-mutedGray">
+        <a href="#product" class="hover:text-warmWhite transition-colors">Product</a>
+        <a href="#capabilities" class="hover:text-warmWhite transition-colors">Capabilities</a>
+        <a href="#how-it-works" class="hover:text-warmWhite transition-colors">How It Works</a>
+        <a href="#trust" class="hover:text-warmWhite transition-colors flex items-center gap-1.5">
+          <span>Trust & Privacy</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-tealAccent/80"></span>
+        </a>
+      </nav>
+
+      <!-- Right CTAs -->
+      <div class="flex items-center gap-3 sm:gap-4">
+        <a href="login.html" class="text-xs sm:text-sm font-medium text-mutedGray hover:text-warmWhite transition-colors px-3 py-2">
+          Sign In
+        </a>
+        <a href="login.html" class="relative group inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded text-xs sm:text-sm font-medium bg-elevated border border-white/10 hover:border-tealAccent/50 text-warmWhite hover:text-tealAccent transition-all duration-200">
+          <span>Open OPAI</span>
+          <svg class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+          </svg>
+        </a>
       </div>
     </div>
-    <div class="hero-foot">
-      <div>
-        <div class="sub"><i aria-hidden="true"></i>An operating agent for one person doing a founder's job</div>
-        <h1><span>Everything you're juggling,</span><span>running as one operation.</span></h1>
-        <p class="purpose">OPAI is a personal workspace and AI assistant for students. It tracks your applications, outreach, projects and exams, and drafts only with your approval. If you choose to connect Gmail, it can send emails you have approved from your own account (the <code>gmail.send</code> permission only; it cannot read your inbox). <a href="/privacy">Privacy Policy</a> · <a href="/terms">Terms of Service</a></p>
-        <div class="btns">
-          <a href="app.html" class="btn p">Open OPAI</a>
-          <a href="#how" class="btn s">How it works</a>
+  </header>
+
+  <!-- ======================================================== -->
+  <!-- 02. CINEMATIC HERO SECTION -->
+  <!-- ======================================================== -->
+  <section class="relative min-h-[92vh] lg:min-h-screen flex items-center pt-24 pb-16 overflow-hidden">
+    <!-- Background Video Layer (Reserved path /videos/opai-hero-loop.mp4) with poster & orbital fallback -->
+    <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+      <video autoplay loop muted playsinline preload="auto" poster="assets/opai-intro-poster.jpg" aria-hidden="true" tabindex="-1" class="w-full h-full object-cover opacity-35 filter contrast-125 brightness-90">
+        <source src="assets/opai-intro.mp4" type="video/mp4">
+        <source src="assets/opai-intro.webm" type="video/webm">
+      </video>
+      <!-- Atmospheric dark vignette & orbital motif simulation -->
+      <div class="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/85 to-obsidian/60"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-obsidian/80"></div>
+      
+      <!-- Right-side luminous orbital constellation (visible & complementing without obstructing) -->
+      <div class="absolute -right-24 top-1/2 -translate-y-1/2 w-[720px] h-[720px] hidden lg:block opacity-25">
+        <div class="w-full h-full orbital-ring relative flex items-center justify-center">
+          <div class="w-3/4 h-3/4 orbital-ring border-tealAccent/20 flex items-center justify-center">
+            <div class="w-1/2 h-1/2 rounded-full border border-dashed border-tealAccent/30 flex items-center justify-center">
+              <div class="w-12 h-12 rounded-full bg-tealAccent/20 blur-md"></div>
+              <div class="w-4 h-4 rounded-full bg-tealAccent shadow-[0_0_20px_#56D8C3]"></div>
+            </div>
+            <div class="absolute top-12 right-24 w-2 h-2 rounded-full bg-goldAccent"></div>
+          </div>
         </div>
       </div>
-      <div class="chips" aria-label="Trackers">
-        <div class="chip">Applications</div><div class="chip">Outreach</div><div class="chip">Projects</div><div class="chip">Academics</div>
+    </div>
+
+    <!-- Hero Content Container -->
+    <div class="relative z-10 max-w-7xl mx-auto px-6 w-full py-12">
+      <div class="max-w-3xl">
+        <!-- Eyebrow Badge -->
+        <div class="inline-flex items-center gap-2.5 px-3 py-1 rounded border border-white/10 bg-elevated/70 backdrop-blur-sm mb-6 text-[11px] font-semibold tracking-[0.2em] uppercase text-mutedGray">
+          <span class="w-1.5 h-1.5 rounded-full bg-tealAccent"></span>
+          <span>YOUR OPERATING AGENT</span>
+        </div>
+
+        <!-- Main Headline -->
+        <h1 class="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight text-warmWhite leading-[1.08] mb-7">
+          Your work. <br class="hidden sm:inline">
+          <span class="text-warmWhite">One </span>
+          <span class="text-tealAccent relative inline-block">intelligent workspace.</span>
+        </h1>
+
+        <!-- Supporting Editorial Paragraph -->
+        <p class="text-lg sm:text-xl text-mutedGray font-normal leading-relaxed mb-10 max-w-2xl font-sans">
+          Meet OPAI — an AI-powered workspace that brings intelligent assistance, projects, academic workflows, and supported productivity tasks together in one focused place.
+        </p>
+          <p class="mt-4 max-w-xl text-[13px] leading-relaxed text-mutedGray/90" id="hero-purpose">
+            OPAI is a personal workspace and AI assistant for students. It tracks your applications, outreach, projects and exams, and drafts only with your approval.
+            If you choose to connect Gmail, it can send emails you have approved from your own account (the <code class="font-mono text-warmWhite/80">gmail.send</code> permission only; it cannot read your inbox).
+            <a href="/privacy" class="text-tealAccent hover:underline">Privacy Policy</a> · <a href="/terms" class="text-tealAccent hover:underline">Terms of Service</a>
+          </p>
+
+        <!-- CTAs -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-10">
+          <a href="login.html" class="inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded bg-tealAccent text-obsidian font-semibold text-sm hover:bg-tealAccent/90 transition-colors shadow-[0_0_24px_-4px_rgba(86,216,195,0.4)]">
+            <span>Open OPAI</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+            </svg>
+          </a>
+          <a href="#product" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded bg-elevated border border-white/10 hover:border-white/20 text-warmWhite font-medium text-sm transition-colors">
+            <span>Explore the platform</span>
+          </a>
+        </div>
+
+        <!-- Supporting Microcopy -->
+        <div class="flex items-center gap-6 text-xs text-mutedGray/90 font-medium tracking-wide border-t border-white/[0.08] pt-6 max-w-xl">
+          <div class="flex items-center gap-2">
+            <span class="w-1 h-1 rounded-full bg-tealAccent"></span>
+            <span>AI assistance</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-1 h-1 rounded-full bg-goldAccent"></span>
+            <span>Organized workflows</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-1 h-1 rounded-full bg-warmWhite"></span>
+            <span>User-controlled actions</span>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <section id="about"><div class="wrap why">
-    <span class="eyebrow">What OPAI is</span>
-    <h2>A personal workspace and AI assistant for students and independent builders.</h2>
-    <p>OPAI brings your applications, outreach emails, projects, exams and client work into one workspace. Its assistant, KARNA, answers questions from your own data and helps you draft, plan and track. You stay in control: nothing is sent or remembered without your approval.</p>
-    <div class="personas">
-      <div class="persona"><div class="tag">Why Google sign-in</div><h3>Sign in without another password</h3><p>You can sign in with Google. OPAI receives only your name, email address and profile picture, and uses them to create your private account. Email and password sign-up is also available.</p></div>
-      <div class="persona"><div class="tag">Gmail, only if you choose</div><h3>Send your own approved emails</h3><p>If you click Connect Gmail, OPAI asks for the gmail.send permission, which allows sending an email you approved from your own account. OPAI cannot read, search or delete your email.</p></div>
-      <div class="persona"><div class="tag">AI use</div><h3>Assistance, not misuse</h3><p>KARNA helps with planning, drafting and answering questions about your workspace. OPAI does not use Google APIs to generate AI-generated non-consensual intimate imagery (NCII) or any other harmful content, and does not allow such use.</p></div>
-      <div class="persona"><div class="tag">Your data</div><h3>Private, and deletable</h3><p>Your data is not sold or used for advertising or AI training. Read the <a href="/privacy">Privacy Policy</a> and <a href="/terms">Terms of Service</a>, or ask for deletion at any time.</p></div>
+  <!-- ======================================================== -->
+  <!-- 03. PRODUCT INTRODUCTION (SPLIT EDITORIAL) -->
+  <!-- ======================================================== -->
+  <section id="product" class="py-24 border-t border-white/[0.06] bg-elevated/40 relative">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+        <!-- Editorial Left Column -->
+        <div class="lg:col-span-5">
+          <p class="text-[11px] font-semibold tracking-[0.22em] text-tealAccent uppercase mb-3">ONE WORKSPACE. CONNECTED WORKFLOWS.</p>
+          <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-warmWhite leading-tight mb-6">
+            Less context switching.<br>More meaningful work.
+          </h2>
+          <p class="text-base text-mutedGray leading-relaxed mb-6 font-normal">
+            OPAI brings supported AI assistance and productivity workflows into a unified workspace, helping users organize tasks, work with information, and move toward their next step.
+          </p>
+          <div class="space-y-4 pt-2">
+            <div class="flex items-start gap-3.5">
+              <div class="w-5 h-5 rounded border border-tealAccent/30 flex items-center justify-center text-tealAccent mt-0.5 text-xs">✓</div>
+              <p class="text-sm text-warmWhite/90"><strong class="text-warmWhite font-semibold">Unified Context:</strong> Keep questions, project notes, study schedules, and drafts within sight.</p>
+            </div>
+            <div class="flex items-start gap-3.5">
+              <div class="w-5 h-5 rounded border border-tealAccent/30 flex items-center justify-center text-tealAccent mt-0.5 text-xs">✓</div>
+              <p class="text-sm text-warmWhite/90"><strong class="text-warmWhite font-semibold">Grounded Execution:</strong> Clear distinction between automated drafts and deliberate user-approved actions.</p>
+            </div>
+            <div class="flex items-start gap-3.5">
+              <div class="w-5 h-5 rounded border border-tealAccent/30 flex items-center justify-center text-tealAccent mt-0.5 text-xs">✓</div>
+              <p class="text-sm text-warmWhite/90"><strong class="text-warmWhite font-semibold">Calm Minimal Interface:</strong> Zero notification clutter, purposeful layout, and responsive performance.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Polished Workspace Concept Preview Right Column -->
+        <div class="lg:col-span-7">
+          <div class="rounded-lg fine-border bg-obsidian overflow-hidden shadow-2xl relative">
+            <!-- Window Bar -->
+            <div class="h-10 px-4 bg-surface2/80 border-b border-white/[0.06] flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-2.5 h-2.5 rounded-full bg-white/10"></div>
+                <div class="w-2.5 h-2.5 rounded-full bg-white/10"></div>
+                <div class="w-2.5 h-2.5 rounded-full bg-white/10"></div>
+                <span class="ml-3 text-[11px] font-mono text-mutedGray/80 tracking-wide">opai.live/workspace</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono text-tealAccent border border-tealAccent/30 rounded px-1.5 py-0.5">KARNA ACTIVE</span>
+              </div>
+            </div>
+
+            <!-- Workspace Layout Mockup -->
+            <div class="p-6 grid grid-cols-1 md:grid-cols-12 gap-6 bg-obsidian">
+              <!-- Sidebar Preview -->
+              <div class="md:col-span-4 space-y-4 border-r border-white/[0.05] md:pr-4">
+                <div class="text-[10px] font-mono text-mutedGray tracking-widest uppercase">WORKSPACES</div>
+                <div class="space-y-1.5 text-xs">
+                  <div class="p-2 rounded bg-surface2 text-tealAccent font-medium flex items-center justify-between">
+                    <span>Active Session</span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-tealAccent"></span>
+                  </div>
+                  <div class="p-2 rounded text-mutedGray hover:text-warmWhite transition-colors flex items-center justify-between">
+                    <span>Academics & Study</span>
+                    <span class="text-[10px] text-mutedGray/60">4 tasks</span>
+                  </div>
+                  <div class="p-2 rounded text-mutedGray hover:text-warmWhite transition-colors flex items-center justify-between">
+                    <span>Resume & Outreach</span>
+                    <span class="text-[10px] text-mutedGray/60">Review</span>
+                  </div>
+                  <div class="p-2 rounded text-mutedGray hover:text-warmWhite transition-colors flex items-center justify-between">
+                    <span>Email Outbox</span>
+                    <span class="text-[10px] text-goldAccent">Pending approval</span>
+                  </div>
+                </div>
+
+                <div class="pt-4 border-t border-white/[0.05]">
+                  <div class="text-[10px] font-mono text-mutedGray tracking-widest uppercase mb-2">INTEGRATIONS</div>
+                  <div class="flex items-center justify-between text-xs p-2 rounded bg-elevated border border-white/[0.05]">
+                    <span class="text-warmWhite">Gmail Integration</span>
+                    <span class="text-[10px] text-tealAccent font-mono">SEND ONLY</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Main Canvas Preview -->
+              <div class="md:col-span-8 space-y-4">
+                <!-- Top Status Card -->
+                <div class="p-4 rounded bg-surface2/60 border border-white/[0.06]">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold text-warmWhite">KARNA • Suggested Next Step</span>
+                    <span class="text-[10px] text-mutedGray">10:42 AM</span>
+                  </div>
+                  <p class="text-xs text-mutedGray leading-relaxed">
+                    "I organized your priority list for today's engineering review and drafted the update message. Would you like to inspect the recipient details before proceeding?"
+                  </p>
+                </div>
+
+                <!-- Interactive Preview Mini Blocks -->
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="p-3 rounded bg-elevated border border-white/[0.06]">
+                    <span class="text-[10px] font-mono text-mutedGray block mb-1">PROJECT TARGET</span>
+                    <span class="text-xs font-medium text-warmWhite">Q3 Architecture Map</span>
+                    <div class="mt-2 text-[10px] text-tealAccent">Ready for review</div>
+                  </div>
+                  <div class="p-3 rounded bg-elevated border border-white/[0.06]">
+                    <span class="text-[10px] font-mono text-mutedGray block mb-1">STUDY PLAN</span>
+                    <span class="text-xs font-medium text-warmWhite">Distributed Systems</span>
+                    <div class="mt-2 text-[10px] text-goldAccent">Day 3 of 7</div>
+                  </div>
+                </div>
+
+                <!-- Micro Prompt Input Bar -->
+                <div class="p-2.5 rounded bg-surface2 border border-white/[0.08] flex items-center justify-between text-xs text-mutedGray">
+                  <span class="text-mutedGray/70">Ask KARNA to plan, summarize, or draft...</span>
+                  <div class="px-2 py-1 rounded bg-tealAccent/10 text-tealAccent text-[10px] font-mono">⌘K</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="py-2 px-4 bg-surface2/40 border-t border-white/[0.04] text-[10px] text-center text-mutedGray/70">
+              Illustrative preview of the OPAI unified workspace interface.
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="gdata" id="google-data">
-      <h3>Google user data</h3>
-      <ul>
-        <li><strong>What we ask for.</strong> Sign-in gives OPAI your name, email address and profile picture, used only to run your private account. Gmail access is optional and limited to <code>gmail.send</code>: it sends an email you approved, and OPAI cannot read, search, list or delete your mail.</li>
-        <li><strong>What the AI sees.</strong> OPAI never sends your Google email address or profile picture to its AI provider. Your name and the profile details you enter can be included to personalise replies and drafts. The Privacy Policy lists exactly what is sent.</li>
-        <li><strong>Limited Use.</strong> OPAI's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">Google API Services User Data Policy</a>, including the Limited Use requirements. Google user data is not sold, not used for advertising, and not used to train AI models.</li>
-        <li><strong>No misuse.</strong> OPAI does not use Google APIs to generate AI-generated non-consensual intimate imagery (NCII) or any other harmful content.</li>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- 04. THE OPAI ECOSYSTEM OVERVIEW -->
+  <!-- ======================================================== -->
+  <section id="capabilities" class="py-24 border-t border-white/[0.06] bg-obsidian relative">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="max-w-2xl mb-16">
+        <p class="text-[11px] font-semibold tracking-[0.22em] text-tealAccent uppercase mb-3">SYSTEM ARCHITECTURE</p>
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-warmWhite">
+          Built around the way you work.
+        </h2>
+        <p class="text-mutedGray text-base mt-4 leading-relaxed font-normal">
+          Rather than disconnected widgets, OPAI organizes your daily cognitive workload into four grounded pillars designed for practical clarity.
+        </p>
+      </div>
+
+      <!-- Asymmetrical Ecosystem Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
+        <!-- 01: KARNA -->
+        <div class="lg:col-span-6 p-8 rounded-lg fine-border bg-elevated/70 hover:border-tealAccent/40 transition-all flex flex-col justify-between group">
+          <div>
+            <div class="w-10 h-10 rounded border border-tealAccent/30 flex items-center justify-center text-tealAccent mb-6 bg-surface2 group-hover:scale-105 transition-transform">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </div>
+            <span class="text-[10px] font-mono tracking-widest text-tealAccent uppercase">AI ASSISTANT</span>
+            <h3 class="text-2xl font-bold text-warmWhite mt-1 mb-3">KARNA</h3>
+            <p class="text-mutedGray text-sm leading-relaxed mb-6">
+              The AI assistant for supported conversational and productivity workflows. Think through decisions, break down complex requirements, and structure next actions without hype.
+            </p>
+          </div>
+          <div class="p-3 rounded bg-surface2/60 border border-white/[0.05] text-xs font-mono text-mutedGray">
+            <span class="text-tealAccent">Active capabilities:</span> Reasoning guidance • Task decomposition • Outbox draft synthesis
+          </div>
+        </div>
+
+        <!-- 02: Workspace -->
+        <div class="lg:col-span-6 p-8 rounded-lg fine-border bg-elevated/70 hover:border-white/20 transition-all flex flex-col justify-between group">
+          <div>
+            <div class="w-10 h-10 rounded border border-white/20 flex items-center justify-center text-warmWhite mb-6 bg-surface2 group-hover:scale-105 transition-transform">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+              </svg>
+            </div>
+            <span class="text-[10px] font-mono tracking-widest text-mutedGray uppercase">CORE HUB</span>
+            <h3 class="text-2xl font-bold text-warmWhite mt-1 mb-3">Workspace & Projects</h3>
+            <p class="text-mutedGray text-sm leading-relaxed mb-6">
+              A central place to access supported projects, tasks, and work-related features. Consolidate your notes, milestone trackers, and active initiatives in structured context.
+            </p>
+          </div>
+          <div class="p-3 rounded bg-surface2/60 border border-white/[0.05] text-xs font-mono text-mutedGray">
+            <span class="text-warmWhite">Active capabilities:</span> Contextual project boards • Milestones • Asset staging
+          </div>
+        </div>
+
+        <!-- 03: Academics -->
+        <div class="lg:col-span-6 p-8 rounded-lg fine-border bg-elevated/70 hover:border-goldAccent/40 transition-all flex flex-col justify-between group">
+          <div>
+            <div class="w-10 h-10 rounded border border-goldAccent/30 flex items-center justify-center text-goldAccent mb-6 bg-surface2 group-hover:scale-105 transition-transform">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+              </svg>
+            </div>
+            <span class="text-[10px] font-mono tracking-widest text-goldAccent uppercase">LEARNING DISCIPLINE</span>
+            <h3 class="text-2xl font-bold text-warmWhite mt-1 mb-3">Academics</h3>
+            <p class="text-mutedGray text-sm leading-relaxed mb-6">
+              Tools for organizing supported study and academic workflows. Build daily syllabus roadmaps, track exam readiness checkpoints, and review technical concepts systematically.
+            </p>
+          </div>
+          <div class="p-3 rounded bg-surface2/60 border border-white/[0.05] text-xs font-mono text-mutedGray">
+            <span class="text-goldAccent">Active capabilities:</span> Day-by-day plan generator • Topic breakdown • Progress flags
+          </div>
+        </div>
+
+        <!-- 04: Productivity & Gmail -->
+        <div class="lg:col-span-6 p-8 rounded-lg fine-border bg-elevated/70 hover:border-tealAccent/40 transition-all flex flex-col justify-between group">
+          <div>
+            <div class="w-10 h-10 rounded border border-tealAccent/30 flex items-center justify-center text-tealAccent mb-6 bg-surface2 group-hover:scale-105 transition-transform">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <span class="text-[10px] font-mono tracking-widest text-tealAccent uppercase">VERIFIED EMAIL DISPATCH</span>
+            <h3 class="text-2xl font-bold text-warmWhite mt-1 mb-3">Productivity & Outbox</h3>
+            <p class="text-mutedGray text-sm leading-relaxed mb-6">
+              Available tools for email-related workflows and other implemented tasks. Supports approved dispatch through authorized Gmail API integration with mandatory user review.
+            </p>
+          </div>
+          <div class="p-3 rounded bg-surface2/60 border border-white/[0.05] text-xs font-mono text-mutedGray">
+            <span class="text-warmWhite">Active capabilities:</span> Gmail Send scope • Explicit approval modal • Resume lab formatting
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- 05. KARNA — THE AI ASSISTANT SHOWCASE -->
+  <!-- ======================================================== -->
+  <section id="karna" class="py-24 border-t border-white/[0.06] bg-elevated/30 relative">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <!-- Assistant Intro Left -->
+        <div class="lg:col-span-5">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded border border-tealAccent/30 bg-tealAccent/5 text-tealAccent text-[11px] font-semibold tracking-[0.2em] uppercase mb-4">
+            <span class="w-1.5 h-1.5 rounded-full bg-tealAccent"></span>
+            <span>MEET KARNA</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-warmWhite leading-tight mb-6">
+            Think through the next step.
+          </h2>
+          <p class="text-mutedGray text-base leading-relaxed mb-8">
+            KARNA helps users interact with AI assistance, explore questions, organize information, and work through supported productivity tasks within OPAI.
+          </p>
+          
+          <div class="space-y-3 mb-8">
+            <p class="text-xs font-mono text-mutedGray uppercase tracking-wider">Example conversation starters:</p>
+            <div class="p-3 rounded bg-obsidian fine-border text-xs text-warmWhite/90 flex items-center justify-between">
+              <span>"Help me organize today's priorities."</span>
+              <span class="text-[10px] text-tealAccent">Workflow</span>
+            </div>
+            <div class="p-3 rounded bg-obsidian fine-border text-xs text-warmWhite/90 flex items-center justify-between">
+              <span>"Break this project into actionable steps."</span>
+              <span class="text-[10px] text-tealAccent">Planning</span>
+            </div>
+            <div class="p-3 rounded bg-obsidian fine-border text-xs text-warmWhite/90 flex items-center justify-between">
+              <span>"Help me understand this topic."</span>
+              <span class="text-[10px] text-tealAccent">Conceptual</span>
+            </div>
+          </div>
+
+          <a href="login.html?next=super-chat.html" class="inline-flex items-center gap-2 text-sm font-semibold text-tealAccent hover:text-tealAccent/80 group">
+            <span>Explore KARNA</span>
+            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Conversational Interface Visual Preview Right -->
+        <div class="lg:col-span-7">
+          <div class="rounded-lg fine-border bg-obsidian p-6 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-white/[0.06] pb-4 mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-7 h-7 rounded-full bg-tealAccent/15 border border-tealAccent/40 flex items-center justify-center">
+                  <div class="w-2 h-2 rounded-full bg-tealAccent"></div>
+                </div>
+                <div>
+                  <div class="text-xs font-semibold text-warmWhite">KARNA Assistant</div>
+                  <div class="text-[10px] text-mutedGray">Powered by configured model backend</div>
+                </div>
+              </div>
+              <span class="text-[10px] font-mono text-mutedGray/80 px-2 py-0.5 rounded bg-surface2">ILLUSTRATIVE PREVIEW</span>
+            </div>
+
+            <!-- Chat History -->
+            <div class="space-y-4 mb-6 text-xs">
+              <!-- User Message -->
+              <div class="flex justify-end">
+                <div class="max-w-[80%] p-3.5 rounded-lg bg-surface3 border border-white/[0.08] text-warmWhite">
+                  Help me break down my distributed caching study plan into 3 realistic milestones for this week.
+                </div>
+              </div>
+
+              <!-- Assistant Response -->
+              <div class="flex justify-start">
+                <div class="max-w-[85%] p-4 rounded-lg bg-surface2 border border-tealAccent/20 text-warmWhite/90 space-y-2.5">
+                  <div class="flex items-center gap-2 text-[11px] text-tealAccent font-medium">
+                    <span class="w-1.5 h-1.5 rounded-full bg-tealAccent"></span>
+                    <span>Structured Breakdown Prepared</span>
+                  </div>
+                  <p class="leading-relaxed text-xs text-mutedGray">
+                    Here is a disciplined schedule aligned with your current academic workspace:
+                  </p>
+                  <div class="space-y-1.5 pl-2 border-l border-tealAccent/30 text-[11px]">
+                    <p><strong class="text-warmWhite">Milestone 1 (Days 1–2):</strong> Cache invalidation mechanics & TTL tradeoffs.</p>
+                    <p><strong class="text-warmWhite">Milestone 2 (Days 3–4):</strong> Distributed hashing algorithms and failover topologies.</p>
+                    <p><strong class="text-warmWhite">Milestone 3 (Day 5):</strong> Synthesis review quiz & architecture summary.</p>
+                  </div>
+                  <div class="pt-2 flex gap-2">
+                    <span class="px-2 py-1 rounded bg-obsidian border border-white/10 text-[10px] text-tealAccent hover:border-tealAccent cursor-pointer">Add to Study Planner</span>
+                    <span class="px-2 py-1 rounded bg-obsidian border border-white/10 text-[10px] text-mutedGray hover:text-warmWhite cursor-pointer">Expand Milestone 1</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Realistic Prompt Input Area -->
+            <div class="relative rounded border border-white/[0.1] bg-surface2/80 p-2.5 flex items-center justify-between">
+              <div class="flex items-center gap-2 text-xs text-mutedGray w-full">
+                <span class="text-tealAccent">›</span>
+                <span class="text-mutedGray/70">Break this project into actionable steps...</span>
+              </div>
+              <button class="px-3 py-1.5 rounded bg-tealAccent/20 hover:bg-tealAccent/30 text-tealAccent text-xs font-medium transition-colors">
+                Send
+              </button>
+            </div>
+            <div class="mt-2 text-[10px] text-mutedGray/60 text-right">
+              Preview interface • Production instance connects to verified OPAI session
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- 06. WORKSPACE AND PROJECTS SHOWCASE -->
+  <!-- ======================================================== -->
+  <section class="py-24 border-t border-white/[0.06] bg-obsidian">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
+        <div class="max-w-xl">
+          <p class="text-[11px] font-semibold tracking-[0.22em] text-tealAccent uppercase mb-3">STRUCTURED FOCUS</p>
+          <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-warmWhite">
+            Keep your work in context.
+          </h2>
+          <p class="text-mutedGray text-base mt-3 leading-relaxed">
+            Bring supported workspaces and projects into a more organized workflow with OPAI.
+          </p>
+        </div>
+        <div class="mt-4 md:mt-0 text-xs font-mono text-mutedGray">
+          HORIZONTAL PIPELINE OVERVIEW
+        </div>
+      </div>
+
+      <!-- Project Showcase Container -->
+      <div class="rounded-lg fine-border bg-elevated/70 p-6 md:p-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Project 01 -->
+          <div class="p-5 rounded bg-surface2/60 border border-white/[0.06] hover:border-tealAccent/30 transition-colors">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[10px] font-mono text-tealAccent border border-tealAccent/30 px-2 py-0.5 rounded">IN PROGRESS</span>
+              <span class="text-xs text-mutedGray font-mono">ID: PRJ-84</span>
+            </div>
+            <h3 class="text-base font-semibold text-warmWhite mb-2">Platform Security Architecture</h3>
+            <p class="text-xs text-mutedGray mb-4 leading-relaxed">
+              Evaluating OAuth token handling and minimal scope boundaries for client integrations.
+            </p>
+            <div class="w-full bg-obsidian rounded-full h-1.5 mb-2 overflow-hidden">
+              <div class="bg-tealAccent h-full rounded-full" style="width: 75%"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-mutedGray font-mono">
+              <span>Phase 3 of 4</span>
+              <span>75% complete</span>
+            </div>
+          </div>
+
+          <!-- Project 02 -->
+          <div class="p-5 rounded bg-surface2/60 border border-white/[0.06] hover:border-goldAccent/30 transition-colors">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[10px] font-mono text-goldAccent border border-goldAccent/30 px-2 py-0.5 rounded">STUDY SPRINT</span>
+              <span class="text-xs text-mutedGray font-mono">ID: PRJ-91</span>
+            </div>
+            <h3 class="text-base font-semibold text-warmWhite mb-2">Systems Engineering Prep</h3>
+            <p class="text-xs text-mutedGray mb-4 leading-relaxed">
+              Seven-day revision module covering memory hierarchy, concurrency models, and indexing.
+            </p>
+            <div class="w-full bg-obsidian rounded-full h-1.5 mb-2 overflow-hidden">
+              <div class="bg-goldAccent h-full rounded-full" style="width: 42%"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-mutedGray font-mono">
+              <span>Day 3 of 7</span>
+              <span>42% complete</span>
+            </div>
+          </div>
+
+          <!-- Project 03 -->
+          <div class="p-5 rounded bg-surface2/60 border border-white/[0.06] hover:border-white/20 transition-colors">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[10px] font-mono text-mutedGray border border-white/10 px-2 py-0.5 rounded">OUTBOX STAGED</span>
+              <span class="text-xs text-mutedGray font-mono">ID: PRJ-108</span>
+            </div>
+            <h3 class="text-base font-semibold text-warmWhite mb-2">Research Collaboration Notes</h3>
+            <p class="text-xs text-mutedGray mb-4 leading-relaxed">
+              Summary draft prepared for university lab partners, awaiting deliberate dispatch approval.
+            </p>
+            <div class="w-full bg-obsidian rounded-full h-1.5 mb-2 overflow-hidden">
+              <div class="bg-warmWhite h-full rounded-full" style="width: 90%"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-mutedGray font-mono">
+              <span>Ready for Review</span>
+              <span>90% complete</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- 07. ACADEMICS AND STUDY WORKFLOWS -->
+  <!-- ======================================================== -->
+  <section class="py-24 border-t border-white/[0.06] bg-elevated/40">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <!-- Study Plan Interface Left -->
+        <div class="lg:col-span-7 order-2 lg:order-1">
+          <div class="rounded-lg fine-border bg-obsidian p-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-white/[0.06] pb-4 mb-4">
+              <div class="flex items-center gap-3">
+                <span class="w-2.5 h-2.5 rounded-full bg-goldAccent"></span>
+                <span class="text-xs font-semibold text-warmWhite">Operating Systems & Kernels Study Plan</span>
+              </div>
+              <span class="text-[10px] font-mono text-goldAccent bg-goldAccent/10 px-2 py-0.5 rounded">MIDTERM SPRINT</span>
+            </div>
+
+            <!-- Day-wise Syllabus Pipeline -->
+            <div class="space-y-3">
+              <!-- Day 01 Completed -->
+              <div class="p-3 rounded bg-surface2/80 border border-white/[0.05] flex items-center justify-between text-xs">
+                <div class="flex items-center gap-3">
+                  <span class="w-4 h-4 rounded-full bg-tealAccent/20 text-tealAccent flex items-center justify-center text-[10px]">✓</span>
+                  <span class="text-mutedGray line-through">Day 1: Process Scheduling & Context Switching</span>
+                </div>
+                <span class="text-[10px] font-mono text-tealAccent">COMPLETED</span>
+              </div>
+
+              <!-- Day 02 In progress -->
+              <div class="p-3.5 rounded bg-surface2 border border-goldAccent/30 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-3">
+                  <span class="w-4 h-4 rounded-full border border-goldAccent flex items-center justify-center text-[10px] text-goldAccent">•</span>
+                  <span class="text-warmWhite font-medium">Day 2: Virtual Memory & Page Replacement</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-mono text-goldAccent">PRIORITY HIGH</span>
+                  <span class="text-[10px] text-mutedGray">Today</span>
+                </div>
+              </div>
+
+              <!-- Day 03 Pending -->
+              <div class="p-3 rounded bg-surface2/40 border border-white/[0.04] flex items-center justify-between text-xs">
+                <div class="flex items-center gap-3">
+                  <span class="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center text-[10px] text-mutedGray">○</span>
+                  <span class="text-mutedGray">Day 3: IPC Mechanisms, Mutexes & Semaphores</span>
+                </div>
+                <span class="text-[10px] font-mono text-mutedGray/60">TOMORROW</span>
+              </div>
+
+              <!-- Day 04 Pending -->
+              <div class="p-3 rounded bg-surface2/40 border border-white/[0.04] flex items-center justify-between text-xs">
+                <div class="flex items-center gap-3">
+                  <span class="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center text-[10px] text-mutedGray">○</span>
+                  <span class="text-mutedGray">Day 4: File System Inodes & Journaling</span>
+                </div>
+                <span class="text-[10px] font-mono text-mutedGray/60">SCHEDULED</span>
+              </div>
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-white/[0.06] flex items-center justify-between text-xs">
+              <span class="text-mutedGray font-mono text-[11px]">Daily target: 2 focused modules</span>
+              <span class="text-goldAccent font-medium text-xs">Exam readiness score: 72%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Academic Copy Right -->
+        <div class="lg:col-span-5 order-1 lg:order-2">
+          <p class="text-[11px] font-semibold tracking-[0.22em] text-goldAccent uppercase mb-3">STRUCTURED PREPARATION</p>
+          <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-warmWhite leading-tight mb-6">
+            Give your learning a clearer direction.
+          </h2>
+          <p class="text-mutedGray text-base leading-relaxed mb-6 font-normal">
+            Organize academic work and study-related workflows through the supported tools available in OPAI.
+          </p>
+          <p class="text-xs text-mutedGray/90 leading-relaxed mb-8">
+            Structure complex course materials, generate day-wise study agendas, track active review states, and stay organized without gamified distractions or unrealistic shortcuts.
+          </p>
+          <a href="login.html?next=academics.html" class="inline-flex items-center gap-2 text-sm font-semibold text-goldAccent hover:text-goldAccent/80">
+            <span>Explore study workflows</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- 08. GMAIL AND USER-APPROVED EMAIL ACTIONS -->
+  <!-- ======================================================== -->
+  <section class="py-24 border-t border-white/[0.06] bg-obsidian">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="max-w-3xl mb-16">
+        <p class="text-[11px] font-semibold tracking-[0.22em] text-tealAccent uppercase mb-3">EMAIL WORKFLOWS & INTEGRITY</p>
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-warmWhite">
+          From draft to deliberate action.
+        </h2>
+        <p class="text-mutedGray text-base mt-4 leading-relaxed font-normal">
+          Prepare emails, review their contents, and use OPAI's supported Gmail integration for the email actions it is authorized to perform.
+        </p>
+        <div class="mt-5 p-4 rounded bg-elevated fine-border-teal text-xs text-warmWhite/90 leading-relaxed">
+          <strong class="text-tealAccent font-semibold">Important Scope Clarification:</strong> OPAI requests strictly the authorized <code class="text-tealAccent bg-obsidian px-1.5 py-0.5 rounded font-mono">gmail.send</code> scope. This permission supports sending user-approved emails and does <em>not</em>, by itself, authorize reading, searching, or indexing your personal inbox contents.
+        </div>
+      </div>
+
+      <!-- 4-Stage Visual Approval Pipeline -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Stage 01 -->
+        <div class="p-6 rounded-lg fine-border bg-elevated/70 flex flex-col justify-between">
+          <div>
+            <span class="text-xs font-mono text-tealAccent mb-4 block">STAGE 01</span>
+            <h3 class="text-lg font-bold text-warmWhite mb-2">Prepare</h3>
+            <p class="text-xs text-mutedGray leading-relaxed mb-6">
+              Create an email draft with the required recipient and message based on your project requirements.
+            </p>
+          </div>
+          <div class="p-3 rounded bg-surface2/60 border border-white/[0.05] text-[11px] text-mutedGray font-mono">
+            Draft created in OPAI staging queue
+          </div>
+        </div>
+
+        <!-- Stage 02 -->
+        <div class="p-6 rounded-lg fine-border bg-elevated/70 flex flex-col justify-between">
+          <div>
+            <span class="text-xs font-mono text-tealAccent mb-4 block">STAGE 02</span>
+            <h3 class="text-lg font-bold text-warmWhite mb-2">Review</h3>
+            <p class="text-xs text-mutedGray leading-relaxed mb-6">
+              Inspect the recipient address, subject line, and full email body before any action is triggered.
+            </p>
+          </div>
+          <div class="p-3 rounded bg-surface2/60 border border-white/[0.05] text-[11px] text-mutedGray font-mono">
+            Zero auto-dispatch without verification
+          </div>
+        </div>
+
+        <!-- Stage 03 -->
+        <div class="p-6 rounded-lg fine-border bg-elevated/70 border-tealAccent/30 flex flex-col justify-between">
+          <div>
+            <span class="text-xs font-mono text-tealAccent mb-4 block">STAGE 03</span>
+            <h3 class="text-lg font-bold text-warmWhite mb-2">Approve</h3>
+            <p class="text-xs text-mutedGray leading-relaxed mb-6">
+              Confirm the action through the explicit approval flow implemented in the application.
+            </p>
+          </div>
+          <div class="p-3 rounded bg-tealAccent/10 border border-tealAccent/20 text-[11px] text-tealAccent font-mono">
+            User click triggers OAuth dispatch
+          </div>
+        </div>
+
+        <!-- Stage 04 -->
+        <div class="p-6 rounded-lg fine-border bg-elevated/70 flex flex-col justify-between">
+          <div>
+            <span class="text-xs font-mono text-tealAccent mb-4 block">STAGE 04</span>
+            <h3 class="text-lg font-bold text-warmWhite mb-2">Send</h3>
+            <p class="text-xs text-mutedGray leading-relaxed mb-6">
+              Display the actual result and status code returned by the verified Google Gmail API integration.
+            </p>
+          </div>
+          <div class="p-3 rounded bg-surface2/60 border border-white/[0.05] text-[11px] text-mutedGray font-mono">
+            Delivery receipt logged in Outbox
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-12 text-center">
+        <a href="login.html" class="inline-flex items-center gap-2 px-6 py-3 rounded bg-elevated border border-white/10 hover:border-tealAccent/40 text-warmWhite hover:text-tealAccent text-sm font-medium transition-colors">
+          <span>Explore OPAI email actions</span>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- 09. TOOLS AND PRODUCTIVITY FEATURES (ASYMMETRIC GRID) -->
+  <!-- ======================================================== -->
+  <section class="py-24 border-t border-white/[0.06] bg-elevated/30">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="max-w-2xl mb-16">
+        <p class="text-[11px] font-semibold tracking-[0.22em] text-tealAccent uppercase mb-3">EXTENDED TOOLSET</p>
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-warmWhite">
+          A workspace that supports real work.
+        </h2>
+        <p class="text-mutedGray text-base mt-4 leading-relaxed font-normal">
+          Designed with dedicated modules for focused execution, eliminating context friction across distinct project phases.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Feature 1 -->
+        <div class="p-6 rounded-lg fine-border bg-obsidian">
+          <div class="text-xs font-mono text-mutedGray mb-2">MODULE 01</div>
+          <h3 class="text-lg font-bold text-warmWhite mb-2">Projects & Workspace</h3>
+          <p class="text-xs text-mutedGray leading-relaxed">
+            Organize core assets, milestone criteria, and contextual research inside distinct digital workrooms.
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="p-6 rounded-lg fine-border bg-obsidian">
+          <div class="text-xs font-mono text-tealAccent mb-2">MODULE 02</div>
+          <h3 class="text-lg font-bold text-warmWhite mb-2">Requests Pipeline</h3>
+          <p class="text-xs text-mutedGray leading-relaxed">
+            Queue and evaluate incoming deliverables or assistant prompts without cluttering active editing flows.
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="p-6 rounded-lg fine-border bg-obsidian">
+          <div class="text-xs font-mono text-goldAccent mb-2">MODULE 03</div>
+          <h3 class="text-lg font-bold text-warmWhite mb-2">Outbox & Action Status</h3>
+          <p class="text-xs text-mutedGray leading-relaxed">
+            Audit trailing state records for all prepared communications, dispatch confirmations, and error diagnostics.
+          </p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="p-6 rounded-lg fine-border bg-obsidian">
+          <div class="text-xs font-mono text-tealAccent mb-2">MODULE 04</div>
+          <h3 class="text-lg font-bold text-warmWhite mb-2">Resume Lab</h3>
+          <p class="text-xs text-mutedGray leading-relaxed">
+            Format, align, and refine academic and professional summaries with structured section templates.
+          </p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="p-6 rounded-lg fine-border bg-obsidian">
+          <div class="text-xs font-mono text-mutedGray mb-2">MODULE 05</div>
+          <h3 class="text-lg font-bold text-warmWhite mb-2">Study Roadmap Generator</h3>
+          <p class="text-xs text-mutedGray leading-relaxed">
+            Translate multi-week academic syllabi into digestible daily tasks with realistic pacing.
+          </p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="p-6 rounded-lg fine-border bg-obsidian">
+          <div class="text-xs font-mono text-warmWhite mb-2">MODULE 06</div>
+          <h3 class="text-lg font-bold text-warmWhite mb-2">Connected Service Control</h3>
+          <p class="text-xs text-mutedGray leading-relaxed">
+            Instant revocation and transparency controls for linked Google authorization credentials.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- 10. HOW OPAI WORKS (HORIZONTAL SEQUENCE) -->
+  <!-- ======================================================== -->
+  <section id="how-it-works" class="py-24 border-t border-white/[0.06] bg-obsidian">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="max-w-2xl mb-16">
+        <p class="text-[11px] font-semibold tracking-[0.22em] text-tealAccent uppercase mb-3">EXECUTION MODEL</p>
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-warmWhite">
+          From intention to the next step.
+        </h2>
+        <p class="text-mutedGray text-base mt-4 leading-relaxed font-normal">
+          Three calm, predictable stages designed to keep you in control of every automated outcome.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+        <!-- Step 1 -->
+        <div class="p-8 rounded-lg fine-border bg-elevated/60 relative">
+          <div class="w-10 h-10 rounded-full border border-tealAccent/30 bg-surface2 flex items-center justify-center text-tealAccent font-mono text-sm mb-6">
+            01
+          </div>
+          <h3 class="text-xl font-bold text-warmWhite mb-3">Describe</h3>
+          <p class="text-sm text-mutedGray leading-relaxed">
+            Start with the task, question, or workflow you need help with. Provide reference materials or specify your target outcome.
+          </p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="p-8 rounded-lg fine-border bg-elevated/60 relative">
+          <div class="w-10 h-10 rounded-full border border-tealAccent/30 bg-surface2 flex items-center justify-center text-tealAccent font-mono text-sm mb-6">
+            02
+          </div>
+          <h3 class="text-xl font-bold text-warmWhite mb-3">Work with AI</h3>
+          <p class="text-sm text-mutedGray leading-relaxed">
+            Use the supported assistant and workspace features to organize information, synthesize plans, or prepare an output draft.
+          </p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="p-8 rounded-lg fine-border bg-elevated/60 relative">
+          <div class="w-10 h-10 rounded-full border border-goldAccent/40 bg-surface2 flex items-center justify-center text-goldAccent font-mono text-sm mb-6">
+            03
+          </div>
+          <h3 class="text-xl font-bold text-warmWhite mb-3">Review and act</h3>
+          <p class="text-sm text-mutedGray leading-relaxed">
+            Check the result and approve actions that require your confirmation. Nothing leaves your workstation without your direct consent.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- 11. INTERACTIVE PRODUCT PREVIEW -->
+  <!-- ======================================================== -->
+  <section class="py-24 border-t border-white/[0.06] bg-elevated/30">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center max-w-2xl mx-auto mb-14">
+        <p class="text-[11px] font-semibold tracking-[0.22em] text-tealAccent uppercase mb-3">IMMERSIVE PREVIEW</p>
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-warmWhite">
+          Connecting public insight to real application.
+        </h2>
+        <p class="text-mutedGray text-base mt-3 leading-relaxed">
+          Explore how KARNA, structured workspaces, and approved productivity flows interact within the live platform.
+        </p>
+      </div>
+
+      <!-- Conceptual App Shell Preview -->
+      <div class="rounded-xl fine-border bg-obsidian overflow-hidden shadow-2xl">
+        <div class="bg-surface2 px-6 py-4 border-b border-white/[0.06] flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-3 h-3 rounded-full bg-tealAccent"></div>
+            <span class="text-sm font-semibold text-warmWhite">OPAI Workspace Environment</span>
+            <span class="text-xs text-mutedGray font-mono">v1.0.4-prod</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <a href="login.html" class="px-4 py-2 rounded bg-tealAccent text-obsidian text-xs font-semibold hover:bg-tealAccent/90 transition-colors">
+              Enter your workspace
+            </a>
+          </div>
+        </div>
+
+        <div class="p-6 md:p-8 grid grid-cols-1 md:grid-cols-12 gap-8">
+          <div class="md:col-span-4 space-y-4">
+            <div class="p-4 rounded bg-surface2 border border-white/[0.06]">
+              <span class="text-[10px] font-mono text-tealAccent block mb-1">MODULE 1 • KARNA</span>
+              <h4 class="text-sm font-bold text-warmWhite mb-1">Active Reasoning Thread</h4>
+              <p class="text-xs text-mutedGray">Synthesizing study checklist for computer systems midterm.</p>
+            </div>
+            <div class="p-4 rounded bg-surface2 border border-white/[0.06]">
+              <span class="text-[10px] font-mono text-goldAccent block mb-1">MODULE 2 • ACADEMICS</span>
+              <h4 class="text-sm font-bold text-warmWhite mb-1">Study Sprint</h4>
+              <p class="text-xs text-mutedGray">Day 2: Virtual Memory & Page Replacement (In progress).</p>
+            </div>
+            <div class="p-4 rounded bg-surface2 border border-white/[0.06]">
+              <span class="text-[10px] font-mono text-warmWhite block mb-1">MODULE 3 • GMAIL DISPATCH</span>
+              <h4 class="text-sm font-bold text-warmWhite mb-1">Outbox Staging</h4>
+              <p class="text-xs text-mutedGray">Draft #402 prepared for recipient review. Awaiting user click.</p>
+            </div>
+          </div>
+
+          <div class="md:col-span-8 p-6 rounded bg-elevated fine-border flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between border-b border-white/[0.06] pb-3 mb-4">
+                <span class="text-xs font-mono text-mutedGray">ACTIVE BUFFER: WORKFLOW_INSPECT</span>
+                <span class="text-xs font-mono text-tealAccent">VERIFIED SCOPE: GMAIL.SEND</span>
+              </div>
+              <p class="text-sm text-warmWhite mb-4 font-mono leading-relaxed">
+                Recipient: research-team@academic-lab.edu<br>
+                Subject: Distributed Systems Weekly Milestone Summary<br>
+                Status: Staged in Local Queue — Requires Explicit User Approval
+              </p>
+              <div class="p-4 rounded bg-obsidian border border-white/[0.06] text-xs text-mutedGray leading-relaxed mb-4">
+                "Hello Team, here are the completed architecture milestones for this sprint, including virtual memory review checkpoints and cache invalidation models."
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+              <span class="text-[11px] text-mutedGray">User confirmation required to invoke Google API dispatch</span>
+              <button class="px-4 py-2 rounded bg-tealAccent/15 border border-tealAccent/30 text-tealAccent text-xs font-semibold">
+                Approve & Dispatch
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="py-2.5 px-6 bg-surface2/60 border-t border-white/[0.05] text-[11px] text-center text-mutedGray">
+          Marketing concept illustration showcasing verified application features. Live actions require authenticated session.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- 12. TRUST, PRIVACY, AND GOOGLE API TRANSPARENCY -->
+  <!-- (Crucial for Google OAuth Branding & User Trust) -->
+  <!-- ======================================================== -->
+    <section id="google-data" class="py-16 border-t border-white/[0.06] bg-elevated/30">
+    <div class="max-w-4xl mx-auto px-6">
+      <h2 class="font-serif text-2xl text-warmWhite mb-6">Google user data</h2>
+      <ul class="space-y-4 text-sm leading-relaxed text-mutedGray">
+        <li><strong class="text-warmWhite">What we ask for.</strong> Sign-in gives OPAI your name, email address and profile picture, used only to run your private account. Gmail access is optional and limited to <code class="font-mono text-warmWhite/80">gmail.send</code>: it sends an email you approved, and OPAI cannot read, search, list or delete your mail.</li>
+        <li><strong class="text-warmWhite">What the AI sees.</strong> OPAI never sends your Google email address or profile picture to its AI provider. Your name and the profile details you enter can be included to personalise replies and drafts. The Privacy Policy lists exactly what is sent.</li>
+        <li><strong class="text-warmWhite">Limited Use.</strong> OPAI's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener" class="text-tealAccent hover:underline">Google API Services User Data Policy</a>, including the Limited Use requirements. Google user data is not sold, not used for advertising, and not used to train AI models.</li>
+        <li><strong class="text-warmWhite">No misuse.</strong> OPAI does not use Google APIs to generate AI-generated non-consensual intimate imagery (NCII) or any other harmful content.</li>
       </ul>
-      <p><a href="/privacy#google-data">Read the Privacy Policy</a> · <a href="/terms">Terms of Service</a></p>
+      <p class="mt-6 text-sm"><a href="/privacy#google-data" class="text-tealAccent hover:underline">Read the Privacy Policy</a> · <a href="/terms" class="text-tealAccent hover:underline">Terms of Service</a></p>
     </div>
-  </div></section>
+  </section>
 
-  <section id="why"><div class="wrap why">
-    <span class="eyebrow">The problem</span>
-    <h2>You're not short on ambition. You're short on a second self.</h2>
-    <p>Internships, cold emails, a client build, exams — each wants full attention and none of them talk to each other. OPAI keeps score across all of it.</p>
-    <div class="personas">
-      <div class="persona"><div class="tag">The applicant</div><h3>A dozen open applications, tracked in your head</h3><p>Every application, interview and offer in one pipeline, with the soonest deadline on top.</p></div>
-      <div class="persona"><div class="tag">The researcher</div><h3>Cold outreach stuck at "I should email them"</h3><p>OPAI drafts it, matches it to your skills and the professor's work, and holds it for your approval.</p></div>
-      <div class="persona"><div class="tag">The freelancer</div><h3>Client asks becoming scope creep before there's a scope</h3><p>Log the ask, turn it into a scoped proposal, send it — without losing the other clients.</p></div>
-      <div class="persona"><div class="tag">The student</div><h3>Exams that only feel urgent the week before</h3><p>Study tasks sit beside everything else, sized in minutes, so a far-off exam gets a slice of today.</p></div>
-    </div>
-  </div></section>
-
-  <section id="how"><div class="wrap">
-    <div class="head"><span class="eyebrow">How it works</span><h2>Talk to it like an assistant. It edits the actual records.</h2><p>KARNA isn't a chat window bolted on the side — asking it to do something changes what's in Applications, Projects or Outreach immediately.</p></div>
-    <div class="steps">
-      <div class="step"><div class="n">01</div><h3>Say what happened</h3><p>Tell KARNA about a lead, a deadline or a task the way you'd tell a person.</p><div class="bit you">"Add an application to Northwind Labs, ML intern, due next Friday"</div></div>
-      <div class="step"><div class="n">02</div><h3>It writes the record</h3><p>The application lands in your pipeline, dated and typed — no form to fill in.</p><div class="bit">Added Northwind Labs — ML Engineer Intern to Applications, due in 6 days.</div></div>
-      <div class="step"><div class="n">03</div><h3>It shows up in your plan</h3><p>Today's priority list re-sorts around what you just added.</p><div class="bit">Now first in today's plan — due in 6 days and unstarted.</div></div>
-    </div>
-  </div></section>
-
-  <section id="inside"><div class="wrap">
-    <div class="head"><span class="eyebrow">What's inside</span><h2>One dashboard, eight working parts</h2><p>Each is a real tracker — a kanban, a scored list, an outbox — not a widget for show.</p></div>
-    <div class="grid">
-      <div class="cell"><i style="background:#17504A"></i><h3>Applications</h3><p>Kanban from Not started to Offer; due dates turn amber when close.</p></div>
-      <div class="cell"><i style="background:#7A7F80"></i><h3>Opportunities</h3><p>Roles scored against your own skills before you commit.</p></div>
-      <div class="cell"><i style="background:#17504A"></i><h3>Outreach</h3><p>Contacts matched to your skills, drafts held for approval.</p></div>
-      <div class="cell"><i style="background:#12805C"></i><h3>Projects</h3><p>Tasks small enough to slot into a free hour.</p></div>
-      <div class="cell"><i style="background:#8B5CF6"></i><h3>Academics</h3><p>Exam prep sized in minutes, weighed against everything else.</p></div>
-      <div class="cell"><i style="background:#D9455F"></i><h3>Requests</h3><p>Client asks turned into scoped proposals you can send.</p></div>
-      <div class="cell"><i style="background:#16181A"></i><h3>Outbox</h3><p>Every drafted email waits here. Nothing leaves without your say.</p></div>
-      <div class="cell"><i style="background:#E0871F"></i><h3>KARNA</h3><p>Ask what today looks like; it reads your open work before it answers.</p></div>
-    </div>
-  </div></section>
-
-  <section id="faq"><div class="wrap faq">
-    <div class="head"><span class="eyebrow">Questions</span><h2>Before you open it</h2></div>
-    <details open><summary>Where does my data live?</summary><p>Your account and workspace are stored in OPAI's database, separate for each user, and some settings and recent chats stay in your browser. Chat messages and the workspace excerpts needed to answer them go to our AI provider, Groq, to generate replies. We do not sell your data. See the <a href="/privacy">Privacy Policy</a>.</p></details>
-    <details><summary>Will it send emails on its own?</summary><p>No. Every draft sits in the Outbox until you approve it, and sending only happens through your own Gmail sign-in.</p></details>
-    <details><summary>Do I need an account?</summary><p>Yes. Sign up with your email or Google to get your own private workspace. Sending real email also needs Gmail access, which you approve separately.</p></details>
-    <details><summary>Is this only for job hunting?</summary><p>No — it's for anyone running more than one thread at once: applications, outreach, freelance clients and coursework, side by side.</p></details>
-  </div></section>
-
-  <section id="access"><div class="wrap">
-    <div class="cta">
-      <div>
-        <h2>Stop running six jobs from six tabs.</h2>
-        <p>OPAI is free to open. Your data stays in your own private workspace, and you can ask for it to be deleted at any time.</p>
-        <div class="btns"><a class="btn p" href="app.html">Open OPAI</a><a class="btn s" href="login.html">Sign in</a></div>
+<section id="trust" class="py-24 border-t border-white/[0.06] bg-obsidian">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="max-w-3xl mb-16">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded border border-tealAccent/30 bg-tealAccent/5 text-tealAccent text-[11px] font-semibold tracking-[0.2em] uppercase mb-4">
+          <span class="w-1.5 h-1.5 rounded-full bg-tealAccent"></span>
+          <span>TRUST BY DESIGN</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-warmWhite">
+          Your permissions should make sense.
+        </h2>
+        <p class="text-mutedGray text-base mt-4 leading-relaxed font-normal">
+          OPAI explains why it requests access to connected services and how information is used. Users can review our privacy policy to understand the handling of their information and connected-account data.
+        </p>
       </div>
-      <div class="notify">
-        <label for="notify-email">Want to know when it's ready for you?</label>
-        <div><input id="notify-email" type="email" placeholder="you@example.com" size="1"><a class="btn" id="notify-btn" href="mailto:tiruvenkatesh123@gmail.com?subject=OPAI%20access">Notify me</a></div>
-        <small>Opens your mail app, addressed to OPAI support.</small>
+
+      <!-- 4 Transparent Disclosures Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+        <!-- 01. Google Sign-In -->
+        <div class="p-8 rounded-lg fine-border bg-elevated/70">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-8 h-8 rounded bg-surface2 border border-white/10 flex items-center justify-center text-warmWhite font-bold text-xs">G</div>
+            <h3 class="text-lg font-bold text-warmWhite">Google Sign-In</h3>
+          </div>
+          <p class="text-xs text-mutedGray leading-relaxed mb-4">
+            We use Google Sign-In strictly to authenticate your identity and secure your individual workspace session. OAuth requests are limited to fundamental profile attributes (such as your name, email address, and profile photo when configured) necessary to establish your account.
+          </p>
+          <div class="text-[11px] text-warmWhite/80 font-mono bg-surface2/60 p-2.5 rounded border border-white/[0.05]">
+            Signing in with Google does NOT automatically authorize reading or accessing your Gmail inbox.
+          </div>
+        </div>
+
+        <!-- 02. Gmail Permissions -->
+        <div class="p-8 rounded-lg fine-border bg-elevated/70">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-8 h-8 rounded bg-tealAccent/10 border border-tealAccent/30 flex items-center justify-center text-tealAccent font-bold text-xs">✉</div>
+            <h3 class="text-lg font-bold text-warmWhite">Gmail Permissions</h3>
+          </div>
+          <p class="text-xs text-mutedGray leading-relaxed mb-4">
+            The application requests exclusively the <code class="text-tealAccent font-mono">gmail.send</code> scope. This permission enables sending user-approved emails prepared in your Outbox workflow. It does <strong>not</strong> grant OPAI permission to read, search, index, or download inbox messages.
+          </p>
+          <div class="text-[11px] text-warmWhite/80 font-mono bg-surface2/60 p-2.5 rounded border border-white/[0.05]">
+            Scope requested: https://www.googleapis.com/auth/gmail.send (Send only)
+          </div>
+        </div>
+
+        <!-- 03. AI Processing -->
+        <div class="p-8 rounded-lg fine-border bg-elevated/70">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-8 h-8 rounded bg-surface2 border border-white/10 flex items-center justify-center text-tealAccent font-bold text-xs">AI</div>
+            <h3 class="text-lg font-bold text-warmWhite">AI Processing & Data Handling</h3>
+          </div>
+          <p class="text-xs text-mutedGray leading-relaxed mb-4">
+            User-provided prompts, inquiries, and relevant workspace notes are processed by the configured AI provider (e.g. Groq) to generate assistant responses. Certain outreach workflows may include user-provided professional details (such as name, branch, skills, or CGPA) when explicitly included in prompts.
+          </p>
+          <div class="text-[11px] text-mutedGray font-mono bg-surface2/60 p-2.5 rounded border border-white/[0.05]">
+            Data transmission is encrypted in transit and never utilized for unauthorized AI model training.
+          </div>
+        </div>
+
+        <!-- 04. User Control & Verification -->
+        <div class="p-8 rounded-lg fine-border bg-elevated/70">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-8 h-8 rounded bg-surface2 border border-white/10 flex items-center justify-center text-goldAccent font-bold text-xs">🔒</div>
+            <h3 class="text-lg font-bold text-warmWhite">User Control & Disconnection</h3>
+          </div>
+          <p class="text-xs text-mutedGray leading-relaxed mb-4">
+            Every connected integration requires manual user initiation. You retain unilateral control to review, modify, or immediately revoke connected-service permissions at any time via your workspace settings or directly through your Google Security dashboard.
+          </p>
+          <div class="text-[11px] text-mutedGray font-mono bg-surface2/60 p-2.5 rounded border border-white/[0.05]">
+            Revoke access anytime via Google Account Permissions Management.
+          </div>
+        </div>
+      </div>
+
+      <!-- Mandatory Compliance Banner -->
+      <div class="p-6 rounded-lg fine-border bg-elevated text-center max-w-4xl mx-auto space-y-4">
+        <div class="text-sm font-semibold text-warmWhite tracking-wide">
+          "OPAI does not use Google APIs to create AI-generated non-consensual intimate imagery (NCII)."
+        </div>
+        <p class="text-xs text-mutedGray">
+          We strictly uphold responsible AI safety principles, developer compliance charters, and rigorous transparency standards across all public and authenticated systems.
+        </p>
+        <div class="pt-2 flex flex-wrap items-center justify-center gap-6 text-xs font-medium">
+          <a href="/privacy" class="text-tealAccent hover:underline">Privacy Policy</a>
+          <span class="text-white/20">•</span>
+          <a href="/terms" class="text-tealAccent hover:underline">Terms of Service</a>
+          <span class="text-white/20">•</span>
+          <a href="mailto:tiruvenkatesh123@gmail.com" class="text-mutedGray hover:text-warmWhite">Contact Security Support</a>
+        </div>
       </div>
     </div>
-  </div></section>
-</main>
+  </section>
 
-<footer><div class="wrap"><span>OPAI — Operating Agent · Built by Tiru</span><span><a href="/privacy">Privacy Policy</a> · <a href="/terms">Terms of Service</a> · <a href="mailto:tiruvenkatesh123@gmail.com">Contact</a></span></div></footer>
+  <!-- ======================================================== -->
+  <!-- 13. FREQUENTLY ASKED QUESTIONS -->
+  <!-- ======================================================== -->
+  <section class="py-24 border-t border-white/[0.06] bg-elevated/30">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <p class="text-[11px] font-semibold tracking-[0.22em] text-tealAccent uppercase mb-3">COMMON INQUIRIES</p>
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-warmWhite">
+          Frequently asked questions.
+        </h2>
+        <p class="text-mutedGray text-base mt-3">
+          Clear, verifiable answers regarding OPAI capabilities, privacy, and architecture.
+        </p>
+      </div>
 
-<script>
-const mb=document.getElementById('menu-btn'),mp=document.getElementById('menu-panel');
-const setMenu=o=>{mp.classList.toggle('open',o);mb.setAttribute('aria-expanded',o)};
-mb.addEventListener('click',e=>{e.stopPropagation();setMenu(!mp.classList.contains('open'))});
-mp.addEventListener('click',()=>setMenu(false));
-document.addEventListener('click',()=>setMenu(false));
-document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false)});
-document.getElementById('notify-btn').addEventListener('click',e=>{
-  const v=document.getElementById('notify-email').value.trim();
-  if(v)e.currentTarget.href='mailto:hello@opa-demo.app?subject='+encodeURIComponent('Notify me when OPAI is ready')+'&body='+encodeURIComponent('My email: '+v);
-});
-</script>
-<script src="guide.js" defer></script>
-<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
+      <!-- Accordion Items -->
+      <div class="space-y-4">
+        <!-- FAQ 1 -->
+        <details class="group p-5 rounded-lg fine-border bg-obsidian open:border-tealAccent/30 transition-colors">
+          <summary class="flex items-center justify-between cursor-pointer list-none text-base font-semibold text-warmWhite">
+            <span>What is OPAI?</span>
+            <span class="text-tealAccent text-lg transition-transform group-open:rotate-45">+</span>
+          </summary>
+          <p class="text-xs sm:text-sm text-mutedGray leading-relaxed mt-4 pt-3 border-t border-white/[0.05]">
+            OPAI is an AI-powered workspace and operating agent designed to bring intelligent assistance, project management, academic study roadmaps, and supported productivity tasks together in one focused environment.
+          </p>
+        </details>
+
+        <!-- FAQ 2 -->
+        <details class="group p-5 rounded-lg fine-border bg-obsidian open:border-tealAccent/30 transition-colors">
+          <summary class="flex items-center justify-between cursor-pointer list-none text-base font-semibold text-warmWhite">
+            <span>What is KARNA?</span>
+            <span class="text-tealAccent text-lg transition-transform group-open:rotate-45">+</span>
+          </summary>
+          <p class="text-xs sm:text-sm text-mutedGray leading-relaxed mt-4 pt-3 border-t border-white/[0.05]">
+            KARNA is the AI assistant built inside OPAI. KARNA assists with question exploration, task decomposition, drafting structured email outbox messages, and organizing project roadmaps.
+          </p>
+        </details>
+
+        <!-- FAQ 3 -->
+        <details class="group p-5 rounded-lg fine-border bg-obsidian open:border-tealAccent/30 transition-colors">
+          <summary class="flex items-center justify-between cursor-pointer list-none text-base font-semibold text-warmWhite">
+            <span>How does Google Sign-In work?</span>
+            <span class="text-tealAccent text-lg transition-transform group-open:rotate-45">+</span>
+          </summary>
+          <p class="text-xs sm:text-sm text-mutedGray leading-relaxed mt-4 pt-3 border-t border-white/[0.05]">
+            Google Sign-In provides secure identity authentication. OPAI requests standard user profile information (such as email, name, and profile photo) solely to establish and secure your personal account session.
+          </p>
+        </details>
+
+        <!-- FAQ 4 -->
+        <details class="group p-5 rounded-lg fine-border bg-obsidian open:border-tealAccent/30 transition-colors">
+          <summary class="flex items-center justify-between cursor-pointer list-none text-base font-semibold text-warmWhite">
+            <span>Does OPAI read my Gmail inbox?</span>
+            <span class="text-tealAccent text-lg transition-transform group-open:rotate-45">+</span>
+          </summary>
+          <p class="text-xs sm:text-sm text-mutedGray leading-relaxed mt-4 pt-3 border-t border-white/[0.05]">
+            No. OPAI requests only the <code class="text-tealAccent font-mono">gmail.send</code> OAuth scope. This permission does not grant authorization to view, search, index, or download the contents of your inbox.
+          </p>
+        </details>
+
+        <!-- FAQ 5 -->
+        <details class="group p-5 rounded-lg fine-border bg-obsidian open:border-tealAccent/30 transition-colors">
+          <summary class="flex items-center justify-between cursor-pointer list-none text-base font-semibold text-warmWhite">
+            <span>Can OPAI send emails without my permission?</span>
+            <span class="text-tealAccent text-lg transition-transform group-open:rotate-45">+</span>
+          </summary>
+          <p class="text-xs sm:text-sm text-mutedGray leading-relaxed mt-4 pt-3 border-t border-white/[0.05]">
+            Never. Email actions strictly require deliberate user initiation. You review the recipient, subject, and body in the Outbox interface, and dispatch occurs only when you confirm through the approval button.
+          </p>
+        </details>
+
+        <!-- FAQ 6 -->
+        <details class="group p-5 rounded-lg fine-border bg-obsidian open:border-tealAccent/30 transition-colors">
+          <summary class="flex items-center justify-between cursor-pointer list-none text-base font-semibold text-warmWhite">
+            <span>How is information processed by AI?</span>
+            <span class="text-tealAccent text-lg transition-transform group-open:rotate-45">+</span>
+          </summary>
+          <p class="text-xs sm:text-sm text-mutedGray leading-relaxed mt-4 pt-3 border-t border-white/[0.05]">
+            User prompts are dispatched to verified inference infrastructure (such as Groq) to synthesize responses. Data is processed securely over TLS and governed by our privacy agreement and provider terms.
+          </p>
+        </details>
+
+        <!-- FAQ 7 -->
+        <details class="group p-5 rounded-lg fine-border bg-obsidian open:border-tealAccent/30 transition-colors">
+          <summary class="flex items-center justify-between cursor-pointer list-none text-base font-semibold text-warmWhite">
+            <span>Can I access OPAI on mobile?</span>
+            <span class="text-tealAccent text-lg transition-transform group-open:rotate-45">+</span>
+          </summary>
+          <p class="text-xs sm:text-sm text-mutedGray leading-relaxed mt-4 pt-3 border-t border-white/[0.05]">
+            Yes, the public website and workspace are fully responsive, formatted for seamless viewing on handheld mobile displays (390px/360px), tablets, and widescreen desktop monitors.
+          </p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- 14. FINAL CALL TO ACTION (CINEMATIC) -->
+  <!-- ======================================================== -->
+  <section class="py-28 border-t border-white/[0.06] bg-obsidian relative overflow-hidden text-center">
+    <!-- Atmospheric subtle glow -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div class="w-[500px] h-[300px] rounded-full bg-tealAccent/10 blur-[120px]"></div>
+    </div>
+
+    <div class="relative z-10 max-w-4xl mx-auto px-6">
+      <div class="w-12 h-12 rounded-full border border-tealAccent/40 mx-auto flex items-center justify-center mb-6 bg-elevated">
+        <div class="w-3 h-3 rounded-full bg-tealAccent shadow-[0_0_12px_#56D8C3]"></div>
+      </div>
+
+      <h2 class="text-4xl sm:text-5xl font-bold tracking-tight text-warmWhite mb-6">
+        Make room for focused work.
+      </h2>
+      <p class="text-mutedGray text-base sm:text-lg max-w-2xl mx-auto leading-relaxed mb-10 font-normal">
+        Meet OPAI and explore an AI-powered workspace designed to bring supported assistance and productivity workflows into one place.
+      </p>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="login.html" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded bg-tealAccent text-obsidian font-semibold text-sm hover:bg-tealAccent/90 transition-colors shadow-[0_0_30px_-5px_rgba(86,216,195,0.35)]">
+          <span>Open OPAI</span>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+          </svg>
+        </a>
+        <a href="#trust" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded bg-elevated border border-white/10 hover:border-white/20 text-warmWhite text-sm font-medium transition-colors">
+          <span>Explore Privacy & Trust</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- 15. COMPLETE MULTI-COLUMN FOOTER -->
+  <!-- ======================================================== -->
+  <footer class="py-16 border-t border-white/[0.08] bg-obsidian text-mutedGray">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
+        <!-- Brand Block -->
+        <div class="lg:col-span-2 space-y-4">
+          <div class="flex items-center gap-3">
+            <img src="assets/opai-logo-96.png" width="28" height="28" alt="" class="w-7 h-7 shrink-0">
+            <span class="text-base font-bold tracking-wider text-warmWhite">OPAI</span>
+          </div>
+          <p class="text-xs text-mutedGray leading-relaxed max-w-sm">
+            OPAI — Your Operating Agent. An AI-powered workspace unifying KARNA assistance, project context, and deliberate productivity workflows.
+          </p>
+          <div class="text-[11px] text-mutedGray/70 font-mono">
+            Platform URL: <a href="https://opai.live/" class="text-tealAccent/80 hover:underline">https://opai.live/</a>
+          </div>
+        </div>
+
+        <!-- Product Links -->
+        <div class="space-y-3">
+          <div class="text-xs font-semibold text-warmWhite uppercase tracking-wider font-mono">Product</div>
+          <ul class="space-y-2 text-xs">
+            <li><a href="#product" class="hover:text-warmWhite transition-colors">Workspace</a></li>
+            <li><a href="#karna" class="hover:text-warmWhite transition-colors">KARNA Assistant</a></li>
+            <li><a href="#capabilities" class="hover:text-warmWhite transition-colors">Capabilities</a></li>
+            <li><a href="login.html" class="hover:text-warmWhite transition-colors">Sign In</a></li>
+          </ul>
+        </div>
+
+        <!-- Trust Links -->
+        <div class="space-y-3">
+          <div class="text-xs font-semibold text-warmWhite uppercase tracking-wider font-mono">Trust & Legal</div>
+          <ul class="space-y-2 text-xs">
+            <li><a href="/privacy" class="hover:text-warmWhite transition-colors">Privacy Policy</a></li>
+            <li><a href="/terms" class="hover:text-warmWhite transition-colors">Terms of Service</a></li>
+            <li><a href="#trust" class="hover:text-warmWhite transition-colors">Google API Transparency</a></li>
+            <li><span class="text-[11px] text-tealAccent/80">NCII Safety Compliant</span></li>
+          </ul>
+        </div>
+
+        <!-- Support -->
+        <div class="space-y-3">
+          <div class="text-xs font-semibold text-warmWhite uppercase tracking-wider font-mono">Support</div>
+          <p class="text-xs text-mutedGray">Questions, security reports, or technical queries:</p>
+          <a href="mailto:tiruvenkatesh123@gmail.com" class="text-xs text-tealAccent hover:underline block break-all font-mono">
+            tiruvenkatesh123@gmail.com
+          </a>
+          <div class="text-[10px] text-mutedGray/60 pt-2 font-mono">
+            OAuth App Status: Production
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between text-xs text-mutedGray/80 gap-4">
+        <div>
+          © <span id="current-year">2025</span> OPAI. All rights reserved.
+        </div>
+        <div class="flex items-center gap-6">
+          <span>Your Operating Agent</span>
+          <span>•</span>
+          <span class="text-tealAccent">Zero Unapproved Actions</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Dynamic Year & Scroll Script -->
+  <script>
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+
+    // Scroll header background transition
+    const header = document.getElementById('site-header');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 40) {
+        header.classList.add('bg-obsidian/95', 'border-white/[0.1]');
+        header.classList.remove('bg-obsidian/75');
+      } else {
+        header.classList.add('bg-obsidian/75');
+        header.classList.remove('bg-obsidian/95', 'border-white/[0.1]');
+      }
+    });
+  </script>
+  <script src="guide.js" defer></script>
+  <script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
 </body>
 </html>

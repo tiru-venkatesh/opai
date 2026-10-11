@@ -180,9 +180,23 @@ def _user(db: Session, user_id: UUID) -> User:
     return u
 
 
+_UNSET_NAMES = {"", "user", "guest"}
+
+
+def has_minimum(u: User) -> bool:
+    """The least OPAI needs to personalise anything: a real name and what the person studies."""
+    name_ok = (u.name or "").strip().lower() not in _UNSET_NAMES
+    course_ok = bool((u.course_type or u.degree or u.branch or "").strip())
+    return name_ok and course_ok
+
+
 def is_completed(u: User) -> bool:
-    """NULL (account predates onboarding) counts as completed so existing users are never blocked."""
-    return u.profile_setup_completed is None or bool(u.profile_setup_completed)
+    """True = finished onboarding. False = must do it.
+    NULL means the account predates onboarding: it is treated as done ONLY if it already has the minimum details
+    (real name + course), so people who set themselves up are never asked again while half-empty accounts are."""
+    if u.profile_setup_completed is None:
+        return has_minimum(u)
+    return bool(u.profile_setup_completed)
 
 
 def _profile(u: User) -> dict:

@@ -43,7 +43,7 @@ def test_new_user_requires_onboarding(c):
 
 def test_existing_user_is_never_blocked(c):
     uid, _ = new_user(c)
-    s = D.SessionLocal(); u = s.get(D.User, uid); email = u.email; u.profile_setup_completed = None; s.commit(); s.close()   # simulates a pre-onboarding account
+    s = D.SessionLocal(); u = s.get(D.User, uid); email = u.email; u.profile_setup_completed = None; u.name = "Tiru V"; u.branch = "CSE"; s.commit(); s.close()   # a pre-onboarding account that already has name + course
     assert c.post("/v1/auth/dev-login", params={"email": email}).json()["onboarding_required"] is False
     assert c.get("/v1/onboarding/status", params={"user_id": uid}).json()["required"] is False
 
@@ -139,3 +139,24 @@ def test_links_are_optional_and_skippable(c):
 
 def test_unknown_user_404(c):
     assert c.get("/v1/onboarding/status", params={"user_id": str(_uuid.uuid4())}).status_code == 404
+
+
+def _status(c, uid):
+    return c.get("/v1/onboarding/status", params={"user_id": uid}).json()
+
+
+def test_legacy_account_missing_the_minimum_is_asked_once(c):
+    uid, login = new_user(c); email = login["email"]
+    s = D.SessionLocal(); u = s.get(D.User, uid); u.profile_setup_completed = None; s.commit(); s.close()
+    assert _status(c, uid)["required"] is True                  # no real name, no course
+    s = D.SessionLocal(); u = s.get(D.User, uid); u.name = "Asha Rao"; s.commit(); s.close()
+    assert _status(c, uid)["required"] is True                  # name only is still not enough
+    s = D.SessionLocal(); u = s.get(D.User, uid); u.degree = "Btech 2nd year"; s.commit(); s.close()
+    assert _status(c, uid)["required"] is False                 # name + course: never asked
+    assert c.post("/v1/auth/dev-login", params={"email": email}).json()["onboarding_required"] is False
+
+
+def test_explicitly_unfinished_account_stays_required_even_with_details(c):
+    uid, _ = new_user(c)
+    s = D.SessionLocal(); u = s.get(D.User, uid); u.name = "Asha Rao"; u.branch = "CSE"; u.profile_setup_completed = False; s.commit(); s.close()
+    assert _status(c, uid)["required"] is True

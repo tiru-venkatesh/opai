@@ -598,6 +598,10 @@ main{padding-top:78px}
 /* ---- Login gate + account ---- */
 .gate{position:fixed;inset:0;z-index:1000;background:var(--bg);display:none;align-items:center;justify-content:center;padding:20px}
 .gate.on{display:flex}
+.gate-wait{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--ink-3,#7a7f80);font:500 14px var(--sans,system-ui)}
+.gate-wait img{animation:gwspin 1.6s linear infinite}@keyframes gwspin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.gate-wait img{animation:none}}
+.gate-wait.off{display:none}
 .gate-card{position:relative;width:100%;max-width:400px;background:var(--surface);border:1px solid var(--line-2);border-radius:6px;padding:32px 28px;text-align:center}
 .gate-card:before,.gate-card:after{content:"";position:absolute;width:12px;height:12px;border:1.5px solid var(--accent);opacity:.55}
 .gate-card:before{top:-1px;left:-1px;border-right:0;border-bottom:0}
@@ -798,10 +802,12 @@ body.nav-open #page{left:min(300px,84vw);border-radius:20px 0 0 20px;box-shadow:
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="opai-shared.css">
 <script>try{document.documentElement.setAttribute("data-theme","light")}catch(e){}</script>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 </head>
 <body>
 
-<div class="gate on" id="gate" role="dialog" aria-modal="true" aria-label="Sign in">
+<div class="gate-wait" id="gate-wait" role="status"><img src="assets/opai-logo-96.png" width="44" height="44" alt=""><span>Signing you in…</span></div>
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-label="Sign in">
   <div class="gate-card">
     <div class="brand-mark"><img src="assets/opai-logo-96.png" width="36" height="36" alt="OPAI" style="display:block"></div>
     <h1>Welcome to OPAI</h1>
@@ -889,8 +895,10 @@ function gateSwitchTab(mode) {
   $('gate-submit').textContent = mode === 'signup' ? 'Create account' : 'Log in';
   $('gate-err').textContent = '';
 }
-function goApp() { try { const u = FB && FB.currentUser; if (u && u.email) localStorage.setItem('opai_sc_email', u.email); if (u) localStorage.setItem('opai_sc_photo', u.photoURL || ''); } catch (e) {} location.replace('onboarding.html'); }
+function nextQS() { try { const n = new URLSearchParams(location.search).get('next') || ''; return /^[a-z0-9-]+\.html$/i.test(n) && !/^(login|onboarding|landing)\.html$/i.test(n) ? '?next=' + encodeURIComponent(n) : ''; } catch (e) { return ''; } }
+function goApp() { try { const u = FB && FB.currentUser; if (u && u.email) localStorage.setItem('opai_sc_email', u.email); if (u) localStorage.setItem('opai_sc_photo', u.photoURL || ''); } catch (e) {} location.replace('onboarding.html' + nextQS()); }
 function showGate(err) {
+  try { $('gate-wait').classList.add('off'); $('gate').classList.add('on'); } catch (e) {}
   $('gate-err').textContent = err || '';
   $('gate-fine').textContent = fbConfigured() ? '' : 'Sign-in is not set up yet: add the Firebase config in the FB_CONFIG block.';
   $('gate-google').disabled = false;
@@ -931,10 +939,11 @@ async function gateGoogle() {
 (function boot() {
   const a = fbInit();
   if (!a) { showGate(); return; }
-  let first = true;
+  let first = true, decided = false;
+  const wait = setTimeout(() => { if (!decided) { decided = true; showGate(); } }, 6000);   /* Firebase never answered: show the form instead of an endless splash */
   a.onAuthStateChanged((u) => {
-    if (u) { goApp(); }
-    else if (first) { showGate(); }
+    if (u) { if (!decided) { decided = true; clearTimeout(wait); } goApp(); }
+    else if (first) { decided = true; clearTimeout(wait); showGate(); }
     first = false;
   });
 })();

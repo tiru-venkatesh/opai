@@ -25,7 +25,7 @@ def visible_text(html):
 # ---------------------------------------------------------------- landing
 def test_landing_states_purpose_scope_and_links_before_the_fold():
     html = read(FRONTEND, "landing.html")
-    hero = html[html.index('<div class="hero">'):html.index('<section id="about">')]
+    hero = html[html.index('<section class="relative min-h-[92vh]'):html.index('<section id="product"')]
     text = visible_text(hero)
     assert "personal workspace and AI assistant for students" in text
     assert "gmail.send" in text and "cannot read your inbox" in text
@@ -34,7 +34,7 @@ def test_landing_states_purpose_scope_and_links_before_the_fold():
 
 def test_landing_has_a_google_user_data_block():
     html = read(FRONTEND, "landing.html")
-    block = html[html.index('id="google-data"'):html.index('<section id="why">')]
+    block = html[html.index('id="google-data"'):html.index('<section id="trust"')]
     text = visible_text(block)
     for needle in ("gmail.send", "Limited Use", "Google API Services User Data Policy", "NCII",
                    "never sends your Google email address or profile picture", "not used to train AI models"):

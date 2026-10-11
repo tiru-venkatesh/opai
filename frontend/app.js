@@ -2874,7 +2874,7 @@ function signOutNow() {
   BACKEND.userId = null; rlReset(); semsReset();
   const a = FB;
   AUTH.user = null; GMAIL.token = null; GMAIL.exp = 0;
-  try { localStorage.removeItem(LS_SESSION); localStorage.removeItem('opai_sc_email'); } catch (e) {}
+  try { localStorage.removeItem(LS_SESSION); localStorage.removeItem('opai_sc_email'); localStorage.removeItem('opai_sc_photo'); } catch (e) {}
   $('userchip').style.display = 'none';
   const done = () => location.replace('login.html');
   if (a) a.signOut().then(done, done); else done();
