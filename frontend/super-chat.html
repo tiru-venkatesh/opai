@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -24,13 +24,34 @@ button,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 button:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .mono{font-family:var(--mono)}
-header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:0 max(20px,calc((100vw - 1540px)/2 + 24px));height:64px;background:#F6F4EEd9;backdrop-filter:blur(20px);border-bottom:1px solid #17504a0f}
-.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:18px;letter-spacing:-.015em;color:var(--primary);text-decoration:none}
-.brand svg{width:26px;height:26px}
-nav{display:flex;gap:2px;margin-left:6px;overflow-x:auto;scrollbar-width:none;flex:0 1 auto;min-width:0}
-nav a{padding:6px 12px;border-radius:8px;color:var(--muted);text-decoration:none;font-size:13px;white-space:nowrap}
-nav a:hover{background:var(--surface-3);color:var(--text)}
-nav a[aria-current=page]{background:var(--primary);color:var(--on-primary);font-weight:500}
+/* ---- KARNA dark theme: maps KARNA's own variables onto the shared dark palette ---- */
+html[data-theme=dark]{--surface:#171b1a;--surface-2:#1c2120;--surface-3:#2a3130;--surface-4:#38413f;--text:#ECEAE3;--muted:#A3AAA6;--dim:#868D89;--primary:#2F8F82;--on-primary:#fff;--good:#4FBF8A;--warn:#E3A844;--bad:#F0786A}
+html[data-theme=dark] .msg,html[data-theme=dark] .msg.user,html[data-theme=dark] .msg.agent{background:transparent;border-color:transparent;box-shadow:none}
+html[data-theme=dark] .chip,html[data-theme=dark] .hbtn,html[data-theme=dark] .src,html[data-theme=dark] .doc,html[data-theme=dark] .seg,html[data-theme=dark] .input,html[data-theme=dark] #know textarea,html[data-theme=dark] #know input[type=text]{border-color:var(--line)}
+html[data-theme=dark] #ctxbar .tag,html[data-theme=dark] .sugg button,html[data-theme=dark] .scope{border-color:var(--line);background:var(--surface-2);color:var(--text)}
+html[data-theme=dark] .bubble{background:#1c2120cc;border-color:var(--line)}
+html[data-theme=dark] .msg.user .bubble{background:#26302e}
+html[data-theme=dark] .msg.agent .bubble{background:#171b1af2;border-color:var(--line-2)}
+html[data-theme=dark] .msg.sys .bubble{border-color:var(--line-2)}
+html[data-theme=dark] .msg.err .bubble{border-color:#c0443a}
+html[data-theme=dark] .bubble code,html[data-theme=dark] .bubble pre{background:#0f1211;border-color:var(--line)}
+html[data-theme=dark] .bubble hr,html[data-theme=dark] .bubble th,html[data-theme=dark] .bubble td{border-color:var(--line)}
+html[data-theme=dark] details.trace,html[data-theme=dark] details.data,html[data-theme=dark] .card,html[data-theme=dark] .snip{background:#171b1acc;border-color:var(--line)}
+html[data-theme=dark] .step{background:#1c2120b3}
+html[data-theme=dark] .gate{background:#171b1acc;border-color:var(--line-2)}
+html[data-theme=dark] .composer{background:#171b1af2;border-color:var(--line-2);box-shadow:0 20px 50px #000a}
+html[data-theme=dark] .composer.drag{box-shadow:0 0 0 3px #2f8f8233,0 20px 50px #000a}
+html[data-theme=dark] .input:focus-within{border-color:#2f8f82aa}
+html[data-theme=dark] #hist,html[data-theme=dark] #know{background:#171b1af5;border-left-color:var(--line)}
+html[data-theme=dark] #know textarea,html[data-theme=dark] #know input[type=text]{color:var(--text)}
+html[data-theme=dark] .drop.over{background:#2f8f8218}
+html[data-theme=dark] .seg button.on,html[data-theme=dark] .seg button[aria-pressed=true]{color:#fff}
+html[data-theme=dark] .hbtn:hover,html[data-theme=dark] .chip:hover{background:var(--surface-3);color:var(--text)}
+html[data-theme=dark] .hint,html[data-theme=dark] #ctxbar{color:var(--dim)}
+/* chat tools bar: sits under the shared OPAI header */
+#ktools{position:sticky;top:64px;z-index:19;display:flex;align-items:center;gap:8px;height:46px;padding:0 max(16px,calc((100vw - 1540px)/2 + 24px));background:var(--bg);background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+#ktools .sp{flex:1}
+.opai-st{display:none}
 .ver{font:11px/14px var(--mono);padding:2px 8px;border-radius:999px;background:var(--surface-2);border:1px solid #D2CCBC55;color:var(--dim)}
 .sp{flex:1}
 .chip{display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border:1px solid #E3DFD399;background:var(--surface);border-radius:999px;font:11px/14px var(--mono);color:var(--muted);letter-spacing:.04em}
@@ -131,7 +152,7 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
 .typing{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
 .typing i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted)}
 .typing em{font:11px var(--mono);color:var(--dim);font-style:normal;margin-left:6px;font-variant-numeric:tabular-nums}
-#hist,#know{position:fixed;top:64px;right:0;bottom:0;width:min(340px,92vw);z-index:30;background:#FBFAF6f5;backdrop-filter:blur(14px);border-left:1px solid #E3DFD3;padding:14px;display:flex;flex-direction:column;gap:8px;overflow:auto;transform:translateX(100%);transition:transform .3s var(--ease)}
+#hist,#know{position:fixed;top:110px;right:0;bottom:0;width:min(340px,92vw);z-index:30;background:#FBFAF6f5;backdrop-filter:blur(14px);border-left:1px solid #E3DFD3;padding:14px;display:flex;flex-direction:column;gap:8px;overflow:auto;transform:translateX(100%);transition:transform .3s var(--ease)}
 #hist.open,#know.open{transform:none}
 #know{width:min(400px,94vw);gap:12px}
 #hist h3,#know h3{margin:4px 0 6px;font:11px var(--mono);letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
@@ -176,14 +197,14 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
 }
 @media (max-width:1380px){#agent-chip{display:none}}
 @media (max-width:720px){
-  header{height:52px;gap:6px;overflow:hidden}.sp,#b-exp,#conn span:last-child{display:none}nav{flex:1 1 0}.chip{padding:4px 7px}.brand{font-size:16px}.ver{display:none}nav{margin-left:0}nav a{padding:5px 9px;font-size:12.5px}
+  #ktools{top:56px;height:44px;gap:6px;overflow-x:auto;scrollbar-width:none}.sp,#b-exp,#conn span:last-child{display:none}.chip{padding:4px 7px}
   #ctxbar{padding:12px 12px 0}main{padding:12px 12px 230px;gap:18px}.empty h1{font-size:26px;line-height:32px;margin-top:12px}
   .msg{gap:8px}.av{width:28px;height:28px;font-size:11px}.body{max-width:calc(100% - 36px)}
   .bubble{padding:10px 12px;border-radius:16px;line-height:22px}
   .dock{padding:16px 8px calc(8px + env(safe-area-inset-bottom,0px))}.composer{max-width:none;width:100%;border-radius:16px;padding:6px}
-  #hist,#know{top:52px}.hbtn{padding:5px 8px}
+  #hist,#know{top:100px}.hbtn{padding:5px 8px}
 }
-@media (max-width:720px){header{padding:0 12px}.chip.hide-sm,.hbtn span{display:none}main{padding-left:14px;padding-right:14px}.acts{opacity:1}.hint{display:none}}
+@media (max-width:720px){#ktools{padding:0 12px}.chip.hide-sm,.hbtn span{display:none}main{padding-left:14px;padding-right:14px}.acts{opacity:1}.hint{display:none}}
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#F6F4EE">
@@ -191,15 +212,11 @@ pre.json{margin:6px 0;max-height:320px;overflow:auto;font:12px/18px var(--mono);
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="opai-shared.css">
+<link rel="stylesheet" href="opai-theme.css">
+<script src="opai-ux.js"></script>
 <style id="opai-chat-light">
-header{background:rgba(246,244,238,.9)!important;border-bottom:1px solid var(--hair)!important}
-nav{background:var(--well);border:1px solid var(--hair);border-radius:999px;padding:4px;gap:2px}
-nav a{border-radius:999px!important;padding:6px 14px!important}
-nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;box-shadow:0 1px 3px rgba(22,24,26,.12);font-weight:500}
-.brand{color:var(--ink)!important}
 .msg.you .bubble{background:var(--teal)!important;color:#fff!important}
 .btn.primary{color:#fff}
-@media(max-width:1500px){header>.chip,header .chip{display:none}}
 /* ---- KARNA reply entrance (cinematic): Slide In -> Iris In -> Wipe In, Iris Out on the thinking bubble ---- */
 .fx-on .msg.user{animation:fxUser .5s cubic-bezier(.16,1,.3,1) both}
 .fx-on .msg.agent.fx-fresh{animation:none}
@@ -225,9 +242,7 @@ nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;bo
 </style>
 </head>
 <body>
-<header>
-  <a class="brand" href="app.html" aria-label="OPAI home"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="16" cy="16" r="12"/><circle cx="16" cy="16" r="6"/><path d="M16 4v6M16 22v6M4 16h6M22 16h6" stroke-linecap="round"/></svg>OPAI</a><span class="ver">v4.2</span>
-  <nav id="nav" aria-label="Pages"></nav>
+<div id="ktools" role="toolbar" aria-label="Chat tools">
   <span class="sp"></span>
   <span class="chip hide-sm" id="agent-chip" title="Tool calls allowed per message"><span class="dot wait"></span><span>agent</span></span>
   <span class="chip" id="conn"><span class="dot wait"></span><span>connecting</span></span>
@@ -236,7 +251,7 @@ nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;bo
   <button class="hbtn" id="b-hist" type="button" aria-expanded="false" aria-controls="hist"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 8v4l3 2"/></svg><span>History</span></button>
   <button class="hbtn" id="b-exp" type="button" title="Download this chat as Markdown"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Export</span></button>
   <button class="hbtn" id="b-guide" type="button" title="Which section does what (or type /guide)" onclick="window.OPAI_GUIDE&&OPAI_GUIDE.open('')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/></svg><span>Guide</span></button>
-</header>
+</div>
 
 <aside id="hist" aria-label="Chat history"></aside>
 
@@ -326,12 +341,6 @@ nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;bo
     location.replace('login.html'); throw new Error('Please sign in');
   }
 
-  /* ---------- nav ---------- */
-  const NAV = [['Today','today.html'],['Plan','plan.html'],['Applications','applications.html'],['Projects','projects.html'],['Academics','academics.html'],['DSA','dsa.html'],['Overview','app.html']];
-  const TIP = {}; ((window.OPAI_GUIDE && OPAI_GUIDE.sections) || []).forEach((g) => { TIP[g.h] = g.d; });
-  $('nav').innerHTML = NAV.map(([l, h], i) => (i === 1 ? '<a aria-current="page" href="#" title="Chat agent: add things by typing, ask about your data">KARNA</a>' : '') + '<a href="' + h + '" title="' + esc(TIP[h] || l) + '">' + l + '</a>').join('');
-
-  try { const cur = $('nav').querySelector('[aria-current]'); if (cur) $('nav').scrollLeft = Math.max(0, cur.offsetLeft - 60); } catch (e) {}
   /* ---------- tiny safe markdown (escape first, then format) ---------- */
   function md(src) {
     const blocks = [];
