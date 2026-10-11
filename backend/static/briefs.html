@@ -42,8 +42,7 @@ async function api(p,o){o=o||{};var r=await fetch(API+p,Object.assign({headers:o
   if(!r.ok){var d=j&&j.detail;throw new Error(typeof d==='string'?d:Array.isArray(d)?d.map(function(x){return x.msg}).join('; '):r.status+'')}return j}
 async function user(){if(uid)return uid;var e=localStorage.getItem('opai_sc_email');
   if(e){uid=(await api('/v1/auth/dev-login?email='+encodeURIComponent(e),{method:'POST'})).user_id;return uid}
-  var g=localStorage.getItem('opa_guest_uid');if(g){uid=g;return uid}
-  uid=(await api('/v1/auth/guest',{method:'POST'})).user_id;localStorage.setItem('opa_guest_uid',uid);return uid}
+  location.replace('login.html');throw new Error('Please sign in')}
 
 function nav(type){var n=document.getElementById('nav');n.textContent='';TABS.forEach(function(t){var b=el('button',t[0]===type?'on':'',t[1]);b.onclick=function(){load(t[0])};n.appendChild(b)})}
 function tools(type){var t=document.getElementById('tools');t.textContent='';

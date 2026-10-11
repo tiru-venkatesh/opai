@@ -227,7 +227,7 @@ def _te_fields(tool: str, s: str) -> Dict[str, Any]:
     elif tool == "create_opportunity":
         b = _drop(body, r"\b(?:add|oka|naa|na|my|new|ani|ane|undi|vundi|unnayi|please)\b")
         kinds = r"(internship|hackathon|opportunity|job|research\s+(?:opening|position))"
-        m = re.match(rf"^(.+?)\s+(?:lo|nunchi|nundi|tho|at)\s+{kinds}\b", b, re.I) or re.match(rf"^(.+?)\s+{kinds}$", b, re.I)
+        m = re.match(rf"^(.+?)\s+(?:lo|nunchi|nundi|tho|at)\s+(?:[\w-]+\s+){{0,2}}?{kinds}\b", b, re.I) or re.match(rf"^(.+?)\s+{kinds}$", b, re.I)
         if m:
             f["company_or_lab"] = _tidy(m.group(1)) or None
         kind = re.search(kinds, b[len(m.group(1)):] if m else b, re.I)

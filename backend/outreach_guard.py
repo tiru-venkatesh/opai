@@ -44,11 +44,19 @@ def is_suppressed(db: Session, uid: str, email: str) -> Optional[SuppressedConta
     return db.query(SuppressedContact).filter(SuppressedContact.user_id == uid, SuppressedContact.email == e).first()
 
 
-def sent_last_24h(db: Session, uid: str) -> int:
+def sent_last_24h(db: Session, uid: str, exclude_outbox_id: Optional[str] = None) -> int:
+    """Emails that count against the daily cap: logged sends AND approved-but-not-yet-logged messages, so the
+    cap cannot be dodged by approving many drafts and logging none. max() avoids counting one email twice
+    (approved, then logged as sent). `exclude_outbox_id` keeps an item from counting against itself at send time."""
     since = datetime.utcnow() - timedelta(hours=24)
-    return (db.query(OutreachHistory)
-            .filter(OutreachHistory.user_id == uid, OutreachHistory.status == "Sent", OutreachHistory.sent_at >= since)
-            .count())
+    logged = (db.query(OutreachHistory)
+              .filter(OutreachHistory.user_id == uid, OutreachHistory.status == "Sent", OutreachHistory.sent_at >= since)
+              .count())
+    q = db.query(OutboxItem).filter(OutboxItem.user_id == uid, OutboxItem.channel == "email", OutboxItem.status == "approved",
+                                    func.coalesce(OutboxItem.approved_at, OutboxItem.created_at) >= since)
+    if exclude_outbox_id:
+        q = q.filter(OutboxItem.id != str(exclude_outbox_id))
+    return max(logged, q.count())
 
 
 def remaining_today(db: Session, uid: str) -> int:
@@ -85,10 +93,10 @@ def check_can_draft(db: Session, uid: str, contact: Contact) -> None:
             raise Blocked(409, "duplicate_pending", "A draft for this contact is already waiting in your Outbox.")
 
 
-def check_can_send(db: Session, uid: str, contact: Contact) -> None:
+def check_can_send(db: Session, uid: str, contact: Contact, exclude_outbox_id: Optional[str] = None) -> None:
     """Raises Blocked when an approved email must not be released. Called from Outbox approval."""
     sup = is_suppressed(db, uid, contact.email)
     if sup:
         raise Blocked(409, "suppressed", f"{contact.email} is on your do-not-contact list ({sup.reason}).")
-    if sent_last_24h(db, uid) >= daily_cap():
+    if sent_last_24h(db, uid, exclude_outbox_id) >= daily_cap():
         raise Blocked(429, "daily_cap", f"Outreach limit reached: {daily_cap()} approved emails per 24 hours. Try again later.")

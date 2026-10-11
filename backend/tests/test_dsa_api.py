@@ -1,4 +1,5 @@
 """DSA Roadmap API + Today integration. Run: cd backend && python -m pytest tests/test_dsa_api.py -q"""
+import uuid as _uuid
 import os, sys, tempfile
 os.environ["RAG_EMBEDDER"] = "hash"
 os.environ["GROQ_API_KEY"] = ""
@@ -20,7 +21,7 @@ def c():
 
 @pytest.fixture()
 def uid(c):
-    return c.post("/v1/auth/guest").json()["user_id"]
+    return c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
 
 
 def make(c, uid, **kw):
@@ -52,7 +53,7 @@ def test_validation(c, uid):
 def test_complete_adapts_and_is_isolated_per_user(c, uid):
     s = make(c, uid)
     sid = s["today"]["session_id"]
-    other = c.post("/v1/auth/guest").json()["user_id"]
+    other = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     assert c.post(f"/v1/dsa/sessions/{sid}/complete", json={"user_id": other}).status_code == 404
     done = c.post(f"/v1/dsa/sessions/{sid}/complete", json={"user_id": uid, "confidence": 4}).json()
     assert done["today"]["status"] == "done" and done["progress"]["advanced"] == 1

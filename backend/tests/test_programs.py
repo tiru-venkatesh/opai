@@ -1,4 +1,5 @@
 """Run: cd backend && python -m pytest tests/test_programs.py -q"""
+import uuid as _uuid
 import os, sys, tempfile
 from datetime import date, timedelta
 import pytest
@@ -21,7 +22,7 @@ def c():
 
 @pytest.fixture()
 def uid(c):
-    u = c.post("/v1/auth/guest").json()["user_id"]
+    u = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     c.patch("/v1/profile", params={"user_id": u}, json={"skills": "python, git, open source"})
     return u
 
@@ -133,7 +134,7 @@ def test_custom_program_needs_official_https_url_and_owner_isolation(c, uid):
     assert c.post(B, json={"user_id": uid, "name": "Campus Hack", "program_type": "hackathon", "official_url": "http://x.com"}).status_code == 422
     ok = c.post(B, json={"user_id": uid, "name": "Campus Hack", "program_type": "hackathon", "official_url": "https://campushack.edu/"})
     assert ok.status_code == 200 and ok.json()["type_label"] == "Hackathon"
-    other = c.post("/v1/auth/guest").json()["user_id"]
+    other = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     assert c.put(f"{B}/cycles/{ok.json()['cycle']['id']}", json={"user_id": other, "eligibility": "x"}).status_code == 404
     assert c.get(B, params={"user_id": other}).json()["items"] == []
 

@@ -1,4 +1,5 @@
 """Phase 1: Today engine + typed actions. Run: cd backend && python -m pytest tests -q"""
+import uuid as _uuid
 import os, sys, tempfile
 os.environ["RAG_EMBEDDER"] = "hash"
 os.environ["GROQ_API_KEY"] = ""
@@ -25,7 +26,7 @@ def c():
 
 @pytest.fixture()
 def uid(c):
-    return c.post("/v1/auth/guest").json()["user_id"]
+    return c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
 
 
 def db():
@@ -149,7 +150,7 @@ def test_validation_and_unknown_intent(c, uid):
 
 
 def test_cannot_touch_another_users_records(c):
-    a = c.post("/v1/auth/guest").json()["user_id"]; b = c.post("/v1/auth/guest").json()["user_id"]
+    a = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]; b = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     tid = add_task(a, "mine", D1(0))
     r = c.post("/v1/today/act", json={"user_id": b, "kind": "task", "ref_id": tid, "op": "complete"})
     assert r.status_code == 404

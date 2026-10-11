@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from database import (
     init_db, get_db, User, Task, Academic, Contact, DocumentChunk, Resume,
@@ -71,6 +71,8 @@ from extras_api import router as extras_router
 app.include_router(extras_router)
 from opportunities_api import router as opportunities_router
 app.include_router(opportunities_router)
+from faculty_api import router as faculty_router
+app.include_router(faculty_router)
 from programs_api import router as programs_router
 app.include_router(programs_router)
 from resume_lab_api import router as resume_lab_router
@@ -152,7 +154,7 @@ def health(db: Session = Depends(get_db)):
         "tables": {},
     }
     if dialect == "sqlite":
-        out["warning"] = "DATABASE_URL is not set: SQLite on Render is wiped on every deploy/restart. Data and guest users will disappear."
+        out["warning"] = "DATABASE_URL is not set: SQLite on Render is wiped on every deploy/restart. Data and user accounts will disappear."
     try:
         cols = {t: [c["name"] for c in _inspect(_engine).get_columns(t)] for t in ("projects", "academics", "users")}
     except Exception as e:
@@ -271,32 +273,11 @@ def dev_login(email: str = "student@university.edu", name: str = None, db: Sessi
         db.add(user)
         db.commit()
         db.refresh(user)
-    elif name and user.name in {"User", "Guest"}:
+    elif name and user.name == "User":
         user.name = name
         db.commit()
         db.refresh(user)
     return {"user_id": str(user.id), "name": user.name, "email": user.email}
-
-
-@app.post("/v1/auth/guest")
-def guest_login(db: Session = Depends(get_db)):
-    """Every guest gets a brand-new, isolated user record.
-    (Previously all guests logged in as the same hardcoded email, so they
-    shared one account and saw each other's data.)"""
-    import uuid as _uuid
-    token = _uuid.uuid4().hex[:12]
-    user = User(
-        email=f"guest-{token}@opa.local",
-        name="Guest",
-        branch="",
-        degree="",
-        targets={},
-        preferences={},
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return {"user_id": str(user.id), "name": user.name, "email": user.email, "guest": True}
 
 
 # ================= PROFILE =================
@@ -488,8 +469,25 @@ def match_applications(user_id: UUID, opportunities: List[dict], db: Session = D
 
 # ================= OPPORTUNITIES CRUD + LIFECYCLE =================
 @app.get("/v1/opportunities", response_model=List[OpportunityOut])
-def list_opportunities(db: Session = Depends(get_db)):
-    return db.query(Opportunity).filter(Opportunity.status == "New").all()
+def list_opportunities(user_id: Optional[UUID] = None, db: Session = Depends(get_db)):
+    """Shared (seed) rows plus the caller's own saved postings. Someone else's saved posting is never listed,
+    and without a user_id only shared rows are returned."""
+    return _visible_opps(db, user_id).filter(Opportunity.status == "New").all()
+
+
+def _visible_opps(db: Session, user_id):
+    q = db.query(Opportunity)
+    if user_id is None:
+        return q.filter(Opportunity.user_id.is_(None))
+    return q.filter(or_(Opportunity.user_id.is_(None), Opportunity.user_id == str(user_id)))
+
+
+def _owned_or_404(db: Session, opportunity_id, user_id) -> "Opportunity":
+    opp = db.query(Opportunity).filter(Opportunity.id == str(opportunity_id)).first()
+    # a posting that belongs to another user looks exactly like a missing one
+    if not opp or (opp.user_id is not None and (user_id is None or opp.user_id != str(user_id))):
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    return opp
 
 
 @app.get("/v1/opportunities/intel", response_model=List[OpportunityIntelOut])
@@ -499,7 +497,7 @@ def list_opportunities_intel(user_id: UUID, db: Session = Depends(get_db)):
     cheap enough to compute on every page load."""
     user = db.query(User).filter(User.id == str(user_id)).first()
     user_skills = {s.strip().lower() for s in (user.skills or "").split(",") if s.strip()} if user else set()
-    rows = db.query(Opportunity).filter(Opportunity.status == "New").all()
+    rows = _visible_opps(db, user_id).filter(Opportunity.status == "New").all()
     out = []
     today = date.today()
     for o in rows:
@@ -569,9 +567,7 @@ def create_opportunity(payload: OpportunityCreate, db: Session = Depends(get_db)
 
 @app.post("/v1/opportunities/{opportunity_id}/convert", response_model=ApplicationOut)
 def convert_opportunity(opportunity_id: UUID, user_id: UUID, db: Session = Depends(get_db)):
-    opp = db.query(Opportunity).filter(Opportunity.id == str(opportunity_id)).first()
-    if not opp:
-        raise HTTPException(status_code=404, detail="Opportunity not found")
+    opp = _owned_or_404(db, opportunity_id, user_id)
     application = Application(
         user_id=str(user_id),
         company=opp.company_or_lab,
@@ -589,10 +585,8 @@ def convert_opportunity(opportunity_id: UUID, user_id: UUID, db: Session = Depen
 
 
 @app.post("/v1/opportunities/{opportunity_id}/dismiss")
-def dismiss_opportunity(opportunity_id: UUID, db: Session = Depends(get_db)):
-    opp = db.query(Opportunity).filter(Opportunity.id == str(opportunity_id)).first()
-    if not opp:
-        raise HTTPException(status_code=404, detail="Opportunity not found")
+def dismiss_opportunity(opportunity_id: UUID, user_id: Optional[UUID] = None, db: Session = Depends(get_db)):
+    opp = _owned_or_404(db, opportunity_id, user_id)
     opp.status = "Dismissed"
     db.commit()
     return {"status": "dismissed"}
@@ -699,8 +693,25 @@ def delete_academic(academic_id: UUID, db: Session = Depends(get_db)):
 
 # ================= CONTACTS (PROFESSORS) =================
 @app.get("/v1/contacts", response_model=List[ContactOut])
-def list_professors(db: Session = Depends(get_db)):
-    return db.query(Contact).all()
+def list_professors(user_id: Optional[UUID] = None, db: Session = Depends(get_db)):
+    """Contact status is per user: derived from THIS user's outreach history, so one user sending to a professor
+    never marks that professor 'Sent' for everyone else."""
+    rows = db.query(Contact).all()
+    hist = {}
+    if user_id is not None:
+        for h in db.query(OutreachHistory).filter(OutreachHistory.user_id == str(user_id)).all():
+            prev = hist.get(h.contact_id)
+            rank = {"Draft": 1}.get(h.status, 2)          # a sent/replied record outranks a draft
+            if prev is None or rank >= prev[0]:
+                hist[h.contact_id] = (rank, h)
+    out = []
+    for r in rows:
+        v = ContactOut.model_validate(r)
+        h = hist.get(r.id, (0, None))[1]
+        v.status = "Not started" if h is None else ("Drafted" if h.status == "Draft" else "Sent")
+        v.sent_on = (h.sent_at.date() if h is not None and h.status != "Draft" and h.sent_at else None)
+        out.append(v)
+    return out
 
 
 @app.post("/v1/contacts", response_model=ContactOut)
@@ -922,6 +933,12 @@ def list_outbox(user_id: UUID, db: Session = Depends(get_db)):
         if row.status == "pending" and row.expires_at and row.expires_at < now:
             row.status = "expired"
             changed = True
+    from opportunities_api import payload_hash as _ph
+    for row in rows:
+        h = _ph(row)
+        if row.payload_hash != h:
+            row.payload_hash = h
+            changed = True
     if changed:
         db.commit()
     return rows
@@ -943,25 +960,22 @@ def create_outbox(payload: OutboxCreate, db: Session = Depends(get_db)):
 
 
 @app.post("/v1/outbox/{outbox_id}/approve", response_model=OutboxOut)
-def approve_outbox(outbox_id: UUID, payload_hash: str = None, db: Session = Depends(get_db)):
+def approve_outbox(outbox_id: UUID, reviewed_hash: Optional[str] = None, db: Session = Depends(get_db)):
     row = db.query(OutboxItem).filter(OutboxItem.id == str(outbox_id)).first()
     if not row:
         raise HTTPException(status_code=404, detail="Outbox item not found")
-    from database import outbox_content_hash as _och
-    _cur = _och(row.channel, row.payload)
-    _pipeline = (row.ref or {}).get("pipeline") == "opportunities"
-    # Approval is bound to the exact content the user reviewed. Pipeline items MUST
-    # present the hash they saw; legacy callers may omit it but a wrong one is rejected.
-    if payload_hash is None and _pipeline:
-        raise HTTPException(status_code=422, detail="payload_hash is required: approve the exact content you reviewed")
-    if payload_hash is not None and payload_hash != _cur:
-        raise HTTPException(status_code=409, detail="Content changed since you reviewed it - review the new version")
     if row.status != "pending":
         raise HTTPException(status_code=409, detail=f"Item is already '{row.status}', not pending")
     if row.expires_at and row.expires_at < datetime.utcnow():
         row.status = "expired"
         db.commit()
         raise HTTPException(status_code=410, detail="This approval has expired - ask the agent to re-draft it")
+    if row.channel == "email":
+        from opportunities_api import payload_hash as _ph
+        _cur = _ph(row)
+        if reviewed_hash != _cur:
+            raise HTTPException(status_code=409, detail="Review required: approve email with the hash of the exact message you reviewed (reviewed_hash). If the message was edited, review it again.")
+        row.approved_hash = _cur
     if (row.ref or {}).get("kind") == "contact":
         import outreach_guard as _og
         _c = db.query(Contact).filter(Contact.id == (row.ref or {}).get("id")).first()
@@ -979,22 +993,10 @@ def approve_outbox(outbox_id: UUID, payload_hash: str = None, db: Session = Depe
     if approved_today >= MAX_OUTBOX_APPROVALS_PER_DAY:
         raise HTTPException(status_code=429, detail="Daily outbox approval limit reached - try again tomorrow")
     row.status = "approved"
-    row.approved_hash = _cur
+    row.approved_at = datetime.utcnow()
     ref = row.ref or {}
-    if ref.get("pipeline") == "opportunities":
-        pass  # approved != sent: contact/history/follow-up are recorded by POST /v1/opp/outbox/{id}/send
-    elif ref.get("kind") == "contact":
-        contact = db.query(Contact).filter(Contact.id == ref.get("id")).first()
-        if contact:
-            contact.status = "Sent"
-            contact.sent_on = date.today()
-            oh = OutreachHistory(
-                user_id=row.user_id, contact_id=contact.id,
-                subject=row.payload.get("subject", ""), email_text=row.payload.get("body", ""),
-                status="Sent", sent_at=datetime.utcnow(), follow_up_date=date.today() + timedelta(days=7),
-            )
-            db.add(oh)
-            rag.safe(rag.index_outreach, db, oh, contact)
+    if ref.get("kind") == "contact":
+        pass  # approved != sent: the contact, history and follow-up are recorded by POST /v1/opp/outbox/{id}/sent (or /send)
     elif ref.get("kind") == "request":
         req = db.query(ClientRequest).filter(ClientRequest.id == ref.get("id")).first()
         if req and req.status in ("New", "Scoped"):

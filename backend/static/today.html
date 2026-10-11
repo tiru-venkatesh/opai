@@ -110,9 +110,7 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
     if (uid) return uid;
     const em = new URLSearchParams(location.search).get('email') || localStorage.getItem('opai_sc_email');
     if (em) { localStorage.setItem('opai_sc_email', em); uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(em), { method: 'POST' })).user_id; return uid; }
-    let g = localStorage.getItem('opa_guest_uid');
-    if (g) { try { await api('/v1/profile?user_id=' + encodeURIComponent(g)); uid = g; return uid; } catch (e) { if (e.status !== 404) throw e; } }
-    g = (await api('/v1/auth/guest', { method: 'POST' })).user_id; localStorage.setItem('opa_guest_uid', g); uid = g; return uid;
+    location.replace('login.html'); throw new Error('Please sign in');
   }
   const d = new Date(), h = d.getHours();
   const greet = () => $('hi').textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + (name ? ', ' + name : '') + '.';
@@ -148,7 +146,7 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
   }
   async function load(refresh) {
     await ensureUser();
-    try { const pr = await api('/v1/profile?user_id=' + encodeURIComponent(uid)); if (pr && pr.name && !/^guest/i.test(pr.name)) { name = pr.name.split(' ')[0]; greet(); } } catch (e) {}
+    try { const pr = await api('/v1/profile?user_id=' + encodeURIComponent(uid)); if (pr && pr.name) { name = pr.name.split(' ')[0]; greet(); } } catch (e) {}
     const q = new URLSearchParams({ user_id: uid, energy }); if (minutes) q.set('minutes', minutes);
     let p = await api('/v1/today?' + q + '&narrative=true');
     if (p.needs_plan || refresh) p = await api('/v1/today/refresh', { method: 'POST', body: JSON.stringify({ user_id: uid, minutes: minutes ? +minutes : null, energy }) });

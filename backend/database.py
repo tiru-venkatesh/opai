@@ -116,6 +116,11 @@ class Application(Base):
     checklist = Column(JSON, default=list)         # [{text, done}]
     referral_contact = Column(String)
     follow_up_state = Column(String)               # pending | replied | not_yet | closed
+    # (pipeline API v-current)
+    source_type = Column(String)
+    answers = Column(JSON, default=list)           # tailored answers: [{question, answer}]
+    submitted_at = Column(DateTime)                # set only when the USER marks Applied
+    contact_ref = Column(String)                   # referral / recruiter the user supplied
 
 
 class Contact(Base):
@@ -139,6 +144,8 @@ class Contact(Base):
     email_verification = Column(String, default="unverified")  # unverified | public_page | user_confirmed
     recent_work = Column(Text)                     # paper/project the user confirmed
     owner_user_id = Column(String(36))             # NULL = seed dataset
+    source_checked_on = Column(Date)
+    relevant_work = Column(Text)                   # paper / project the user confirmed as the connection
 
 
 class OutreachHistory(Base):
@@ -206,6 +213,8 @@ class Opportunity(Base):
     work_mode = Column(String)                      # remote | hybrid | onsite
     description_text = Column(Text)
     facts = Column(JSON, default=dict)              # fields stated in the posting (verified facts)
+    requirements = Column(JSON, default=list)       # requirement strings stated in the posting
+    field_sources = Column(JSON, default=dict)      # {field: "posting" | "user" | "inferred"}
 
 
 class Academic(Base):
@@ -275,9 +284,11 @@ class OutboxItem(Base):
     created_at = Column(DateTime, default=_dt.utcnow)
     payload_hash = Column(String(64))      # sha256 of the exact content (set centrally, see _outbox_hash_events)
     approved_hash = Column(String(64))     # hash the user approved; send requires payload_hash == approved_hash
+    approved_at = Column(DateTime)
     sent_at = Column(DateTime)
     provider_message_id = Column(String)   # Gmail message id after a real send
     send_state = Column(String, default="not_sent")  # not_sent | sent | failed
+    sent_via = Column(String)                      # gmail_api | gmail_compose | manual
 
 
 class UserMemory(Base):
@@ -621,11 +632,12 @@ from sqlalchemy import event as _event
 
 
 def outbox_content_hash(channel, payload) -> str:
-    """sha256 over the exact reviewable content: channel + recipient/subject/body/attachments."""
+    """sha256 over the exact reviewable content: channel + recipient/subject/body/attachments + sending account."""
     p = payload or {}
     canon = {"channel": channel or "email", "to": (p.get("to") or "").strip().lower(),
              "subject": p.get("subject") or "", "body": p.get("body") or "",
-             "attachments": p.get("attachments") or []}
+             "attachments": sorted(str(x) for x in (p.get("attachments") or [])),
+             "from": (p.get("from_account") or "").strip().lower()}
     return _hl.sha256(_json.dumps(canon, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
 
@@ -642,6 +654,22 @@ def _outbox_hash_update(mapper, conn, t):
     if t.status == "approved" and t.approved_hash and t.approved_hash != new and t.send_state != "sent":
         t.status = "pending"
         t.approved_hash = None
+
+
+class ApplicationEvent(Base):
+    """Status history and interview events for one application."""
+    __tablename__ = "application_events"
+    __table_args__ = (Index("ix_appevents_app", "application_id", "created_at"),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
+    application_id = Column(String(36), ForeignKey("applications.id", ondelete="CASCADE"))
+    kind = Column(String, default="status")      # status | note | interview | followup
+    from_status = Column(String)
+    to_status = Column(String)
+    note = Column(Text)
+    event_at = Column(DateTime)                  # interview time etc.
+    created_at = Column(DateTime, default=_dt.utcnow)
+
 
 
 def _auto_migrate():

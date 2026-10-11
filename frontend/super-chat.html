@@ -323,17 +323,11 @@ nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;bo
       uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(email), { method: 'POST' })).user_id;
       return uid;
     }
-    let gid = localStorage.getItem('opa_guest_uid');
-    if (gid) {
-      try { await api('/v1/profile?user_id=' + encodeURIComponent(gid)); uid = gid; return uid; }
-      catch (e) { if (e.status !== 404) throw e; }
-    }
-    gid = (await api('/v1/auth/guest', { method: 'POST' })).user_id;
-    localStorage.setItem('opa_guest_uid', gid); uid = gid; return uid;
+    location.replace('login.html'); throw new Error('Please sign in');
   }
 
   /* ---------- nav ---------- */
-  const NAV = [['Today','today.html'],['Plan','plan.html'],['Applications','applications.html'],['Projects','projects.html'],['Academics','academics.html'],['DSA','dsa.html'],['Overview','app.html'],['Console','agent-console.html']];
+  const NAV = [['Today','today.html'],['Plan','plan.html'],['Applications','applications.html'],['Projects','projects.html'],['Academics','academics.html'],['DSA','dsa.html'],['Overview','app.html']];
   const TIP = {}; ((window.OPAI_GUIDE && OPAI_GUIDE.sections) || []).forEach((g) => { TIP[g.h] = g.d; });
   $('nav').innerHTML = NAV.map(([l, h], i) => (i === 1 ? '<a aria-current="page" href="#" title="Chat agent: add things by typing, ask about your data">KARNA</a>' : '') + '<a href="' + h + '" title="' + esc(TIP[h] || l) + '">' + l + '</a>').join('');
 
@@ -494,7 +488,7 @@ nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;bo
   }
 
   /* ---------- conversation store (per device/user, localStorage) ---------- */
-  const keyFor = () => 'opai_karna_v2:' + (localStorage.getItem('opa_guest_uid') || localStorage.getItem('opai_sc_email') || 'local');
+  const keyFor = () => 'opai_karna_v2:' + (localStorage.getItem('opai_sc_email') || 'local');
   let curKey = keyFor();
   const load = () => { try { const s = JSON.parse(localStorage.getItem(curKey)); if (s && s.convs) return s; } catch (e) {} return { cur: null, mode: 'ws', convs: {} }; };
   let store = load();

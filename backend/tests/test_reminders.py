@@ -1,4 +1,5 @@
 """Karna reminders + daily plan notification. Run: cd backend && python -m pytest tests/test_reminders.py -q"""
+import uuid as _uuid
 import os, sys, tempfile
 os.environ["RAG_EMBEDDER"] = "hash"; os.environ["GROQ_API_KEY"] = ""; os.environ["OPAI_SCHEDULER"] = "0"
 os.environ["DATABASE_URL"] = "sqlite:///" + tempfile.NamedTemporaryFile(suffix=".db", delete=False).name
@@ -32,7 +33,7 @@ def c():
 
 @pytest.fixture()
 def uid(c):
-    u = c.post("/v1/auth/guest").json()["user_id"]
+    u = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     c.put("/v1/notifications/settings", json={"user_id": u, "tz_offset_min": IST})
     return u
 
@@ -168,7 +169,7 @@ def test_notifications_inbox_done_and_snooze(c, uid):
     sn = c.post(f"/v1/reminders/{rid}/snooze", json={"user_id": uid, "minutes": 10}).json()
     assert sn["status"] == "pending" and sn["snooze_count"] == 1
     assert c.post(f"/v1/reminders/{rid}/done", json={"user_id": uid}).json()["status"] == "done"
-    other = c.post("/v1/auth/guest").json()["user_id"]
+    other = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     assert c.post(f"/v1/reminders/{rid}/done", json={"user_id": other}).status_code == 404
     assert c.get("/v1/notifications", params={"user_id": other}).json() == []
 

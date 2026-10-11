@@ -15,4 +15,4 @@ psycopg2-binary>=2.9.9
 
 # Tests only (cd backend && python -m pytest tests -q)
 # pytest>=8
-# reportlab>=4   # builds a sample PDF for the page-citation test (test is skipped without it)
+reportlab>=4      # PDF export in Resume Lab + sample PDF for the page-citation test

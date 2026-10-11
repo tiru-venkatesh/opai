@@ -1,4 +1,5 @@
 """Run: cd backend && python -m pytest tests -q   (uses a temp SQLite DB, hash embedder, mocked LLM)"""
+import uuid as _uuid
 import io, os, sys, tempfile
 os.environ["RAG_EMBEDDER"] = "hash"
 os.environ["GROQ_API_KEY"] = ""
@@ -16,8 +17,8 @@ client = TestClient(main.app)
 @pytest.fixture(scope="module")
 def users():
     with TestClient(main.app) as c:
-        a = c.post("/v1/auth/guest").json()["user_id"]
-        b = c.post("/v1/auth/guest").json()["user_id"]
+        a = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
+        b = c.post("/v1/auth/dev-login", params={"email": "u-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
     return a, b
 
 
