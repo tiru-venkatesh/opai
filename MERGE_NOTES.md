@@ -45,3 +45,16 @@ Opportunity(requirements, field_sources), OutboxItem(approved_at, sent_via), mod
 * `dev-login` now refuses the old `guest-<12 hex>@opa.local` addresses (403) until `python purge_guests.py --apply` deletes them.
 * Reminder: `dev-login` still trusts any email it is given. It is the identity bridge for every page. Replace it with a
   server-verified session (verify the Firebase ID token on the backend) before putting real user data behind it.
+
+## KARNA prompt + context packet + reply guard
+* `agent/karna_prompt.py`: one stable KARNA system prompt (rules never change per user) and an `OPAI_CONTEXT` packet
+  (today's planner picks, exams, open applications, Outbox counts; capped at ~4,500 characters) sent in the USER turn and
+  labelled as data. `render_context` is pure; `collect_context` reads the DB section by section and drops a failing section.
+* `agent/reply_guard.py`: KARNA cannot claim "I sent / submitted / created / updated ..." unless a tool result in the same
+  turn succeeded. Unsupported sentences are removed and a plain note is added. Offers, negations and questions are untouched.
+  Applied to the tool-agent reply and to RAG-grounded replies.
+* `agent_service.py`: tool loop now uses `karna_prompt.build_for(...)`; grounded replies get `GROUNDED_STYLE` + the guard.
+* Tests: `cd backend && python -m pytest tests/test_karna_prompt.py -q` (pure, 6 tests, run and passing here).
+  Not run: the endpoint path in `agent_service.py` (needs FastAPI/SQLAlchemy/Groq).
+* Not done on purpose: a JSON-schema reply format. The agent already uses native tool calling, which is the structured
+  action channel; a second schema would duplicate it.
