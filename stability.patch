@@ -1,0 +1,960 @@
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/STABILITY_NOTES.md nzw/STABILITY_NOTES.md
+--- pristine/STABILITY_NOTES.md	1970-01-01 00:00:00.000000000 +0000
++++ nzw/STABILITY_NOTES.md	2026-10-11 20:35:12.385021291 +0000
+@@ -0,0 +1,33 @@
++# Stability patch: connection layer, route contract, deploy check, version, Gmail claim fix
++
++Applies on top of `opa-main-updated__2_.zip` (sw `opai-v30`, onboarding/privacy/terms). Every change is additive or a few lines;
++`stability.patch` is a unified diff (`cd opa-main && patch -p1 < stability.patch`), the new files are also included in tree layout.
++
++## What it adds
++| | File | What it does |
++|---|---|---|
++| Connection layer | `frontend/opai-conn.js` (+ one `<script>` in `<head>` of every page that calls the API; not KARNA chat, login, landing, privacy, terms) | Wraps `fetch` for OPAI calls. **GET** retries with 1-2-4-8-15 s backoff on network error / 502-504 and shows "OPAI is waking up". **POST/PUT/DELETE are never replayed**; before one is sent the layer waits for `/v1/health`, so it goes out once to a backend that is up. A 404 counts as "feature unavailable / version mismatch" only when FastAPI says exactly `{"detail":"Not Found"}`. Gmail 401/403/429 on `/outbox/{id}/send` is reported as `OPAI_CONN.gmail` and never flips OPAI to offline. Banner has Retry / Reload. `window.OPAI_CONN = {state, gmail, on, retry, awake, version}` |
++| Version / mismatch | `backend/version_api.py` (`GET /v1/version`), `backend/scripts/stamp_build.py` -> `frontend/build.json` | Bump `API_CONTRACT` by hand when the frontend starts needing a new route/shape; `opai-conn.js` compares it with `build.json` and shows "OPAI is updating" when the backend is older (or has no `/v1/version`). Run `stamp_build.py` as part of the frontend deploy. |
++| Route contract | `backend/scripts/route_contract.py`, `backend/tests/test_route_contract_static.py` | Standard library only (no FastAPI). Reads the route table from the Python source, **counting only routers `main.py` registers**, and checks every `/v1/...` path in every frontend page/script. Checks paths, not methods or response shapes. |
++| Deploy check | `backend/scripts/check_deploy.py <url> --origin <frontend>` | After a deploy: wake time, `/v1/system/health`, scheduler status, contract vs `build.json`, deployed `/openapi.json` vs frontend paths, CORS preflight, identity-less call refused, Gmail send returns a clean 4xx, tick (skipped when the route does not exist). Exit 1 on any FAIL. |
++| Opportunities page | `frontend/opportunities.html` | `p = v.profile \|\| {}` (the reported `Cannot read properties of undefined (reading 'degree')`, reproduced and fixed); a route 404 shows "Feature temporarily unavailable"; failed loads show an error card with **Try again**. |
++| Gmail send | `backend/opportunities_api.py`, test in `tests/test_opportunities.py` | The "sending" claim now carries a time and is taken with a compare-and-set. Before: a server restart between claim and Gmail call (Render restarts) left the item on "sending" forever. Now an unfinished claim older than 3 min gives a clear 409, **never auto-resends** (could duplicate), and `POST /v1/opp/outbox/{id}/send/release` frees it after the user checks Gmail's Sent folder. |
++| Service worker | `frontend/sw.js` | `opai-v31`, caches `opai-conn.js`. Hard refresh once after deploy. |
++
++## IMPORTANT: what the route contract found in this tree
++`python backend/scripts/route_contract.py` exits 1: **14 frontend paths have no backend route**: `briefs.html` (`/v1/briefs/...`, `/v1/actions/{id}/execute`) and `notify.js` (`/v1/notifications...`, `/v1/push/...`, `/v1/reminders/...`).
++Cause: `brief_api.py`, `reminders_api.py` and `chat_api.py` exist but `main.py` never registers them, and `database.py` has no `Reminder`, `Notification`, `NotificationDelivery`, `PushSubscription` (and the Brief models) that they import. This is the missing v9 layer in your notes. I did **not** rebuild it: another session is doing exactly that on this same tree, and two versions of `database.py` would collide. The route contract is the acceptance test for that restore: when it exits 0, the layer is wired.
++
++## How it was tested
++* Browser (headless Chromium) against a controllable stub backend, on this tree: backend asleep (GET retried, banner, recovers, banner hides), POST while asleep (sent exactly once after wake), POST dying mid-flight (not replayed), 503 retried, route-missing vs handler-404, Gmail 401 isolated from OPAI state, external URLs untouched, version contract 4 cases, profile form with an old-backend `{}` response (original code reproduced the crash), error card + Try again. All 21 pages load; only errors are `tailwind is not defined` where the sandbox blocks the Tailwind CDN.
++* `check_deploy.py` against a fake deployment: passes when healthy; fails on a stale one with the missing routes, older contract and broken CORS.
++* Static: `route_contract.py` proven to fail on a deliberately wrong path; no undefined names in changed Python.
++* **Not run:** the FastAPI app and pytest (not installable in the sandbox). The new Gmail-claim test and the Python side of `/v1/version` are written but unexecuted. Run `cd backend && python -m pytest tests -q` before deploying.
++
++## Things to know
++* No token auth exists (`/v1/auth/dev-login?email=`, `user_id` params), so there is no "401 -> refresh token" step; a 401 can only come from Gmail.
++* There is no `/v1/system/tick` route in this tree (reminders fire inside `reminders.py`); the deploy check skips that item.
++* Gmail uses a short-lived browser token per send (not stored), so "connected until 4:20 PM" and silent refresh are not possible server-side; the UI can only report "needs reconnect" after a send fails. The failed send leaves the draft approved and retryable.
++* `backend/static/` is a stale partial copy of `frontend/`; not touched.
++* Leftover from an earlier session: `backend/resume_lab_tools.py`, `tests/test_resume_lab_tools.py`, `RESUME_LAB_V3_NOTES.md` are not used by `resume_lab_api.py` (which uses `resume_lab_core.py`) and the notes describe endpoints this tree does not have. Safe to delete: `git rm backend/resume_lab_tools.py backend/tests/test_resume_lab_tools.py RESUME_LAB_V3_NOTES.md`.
++* Resume Lab `attach` (in `resume_lab_core`'s API) saves each tailored resume as a normal library version, so after ~10 applications attach fails with "library is full", and tailored copies join matching and the bullet bank. Worth a decision (separate "tailored" kind) but not changed here.
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/backend/main.py nzw/backend/main.py
+--- pristine/backend/main.py	2026-10-11 20:35:12.369453889 +0000
++++ nzw/backend/main.py	2026-10-11 20:33:01.497183201 +0000
+@@ -77,6 +77,8 @@
+ app.include_router(programs_router)
+ from resume_lab_api import router as resume_lab_router
+ app.include_router(resume_lab_router)
++from version_api import router as version_router
++app.include_router(version_router)
+ from onboarding_api import router as onboarding_router
+ app.include_router(onboarding_router)
+ 
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/backend/opportunities_api.py nzw/backend/opportunities_api.py
+--- pristine/backend/opportunities_api.py	2026-10-11 20:35:12.370891478 +0000
++++ nzw/backend/opportunities_api.py	2026-10-11 20:33:07.896001990 +0000
+@@ -14,12 +14,14 @@
+ import hashlib
+ import json
+ import re
++import time
+ from datetime import date, datetime, timedelta
+ from typing import Any, Dict, List, Optional
+ from urllib.parse import quote
+ 
+ from fastapi import APIRouter, Depends, Header, HTTPException
+ from pydantic import BaseModel, Field
++from sqlalchemy import or_
+ from sqlalchemy.orm import Session
+ 
+ import opp_parse as P
+@@ -917,6 +919,39 @@
+     user_id: str
+ 
+ 
++SEND_CLAIM = "gmail_api:sending:"
++SEND_CLAIM_TTL = 180      # seconds. A Gmail call takes a few seconds; a claim older than this was left by a crashed/restarted server
++
++
++def _claim_time(it: OutboxItem) -> Optional[int]:
++    v = it.sent_via or ""
++    if not v.startswith("gmail_api:sending"):
++        return None
++    try:
++        return int(v.rsplit(":", 1)[1])
++    except (ValueError, IndexError):
++        return 0              # legacy marker without a time: treat as stale
++
++
++@router.post("/outbox/{outbox_id}/send/release")
++def outbox_release_claim(outbox_id: str, p: OutboxSend, db: Session = Depends(get_db)):
++    """Frees a send claim that was left behind (server restarted mid-send). Refuses while a send could still be running,
++    and never touches an item that was already sent. The user decides, after checking Gmail's Sent folder."""
++    u = _user(db, p.user_id)
++    it = _own_outbox(db, u.id, outbox_id)
++    if it.sent_at:
++        raise HTTPException(409, "Already sent. Nothing to release.")
++    t = _claim_time(it)
++    if t is None:
++        raise HTTPException(409, "There is no unfinished send to release.")
++    if time.time() - t < SEND_CLAIM_TTL:
++        raise HTTPException(409, "A send is still in progress. Wait a minute before releasing it.")
++    it.sent_via = None
++    db.commit()
++    audit(db, u.id, "opp.outbox_send_released", {"outbox_id": it.id}, {"ok": True}, "high")
++    return {"id": it.id, "released": True, "status": it.status}
++
++
+ @router.post("/outbox/{outbox_id}/send")
+ def outbox_send(outbox_id: str, p: OutboxSend, x_gmail_token: Optional[str] = Header(default=None), db: Session = Depends(get_db)):
+     """Sends EXACTLY the approved version through Gmail. Refuses if the content changed since approval,
+@@ -926,8 +961,12 @@
+     it = _own_outbox(db, u.id, outbox_id)
+     if it.sent_at:
+         raise HTTPException(409, "Already sent. Nothing was sent again.")
+-    if (it.sent_via or "") == "gmail_api:sending":
+-        raise HTTPException(409, "A send is already in progress for this message.")
++    claimed_at = _claim_time(it)
++    if claimed_at is not None:
++        if time.time() - claimed_at < SEND_CLAIM_TTL:
++            raise HTTPException(409, "A send is already in progress for this message.")
++        raise HTTPException(409, "An earlier send did not finish (the server may have restarted). Check your Gmail Sent folder. "
++                                 "If it is not there, release it and send again; if it is, log it as sent.")
+     if it.status != "approved" or not it.approved_hash:
+         raise HTTPException(409, "Approve the exact message first.")
+     if it.approved_hash != payload_hash(it):
+@@ -945,8 +984,14 @@
+                 raise HTTPException(e.status, e.detail)
+     elif G.is_suppressed(db, u.id, ri["to"]):
+         raise HTTPException(409, "This address is on your do-not-contact list.")
+-    it.sent_via = "gmail_api:sending"          # claim the send BEFORE the network call so a double click cannot duplicate it
++    # Claim the send BEFORE the network call, with a compare-and-set so two simultaneous requests cannot both pass.
++    n = (db.query(OutboxItem).filter(OutboxItem.id == it.id, OutboxItem.sent_at.is_(None),
++                                     or_(OutboxItem.sent_via.is_(None), ~OutboxItem.sent_via.like(SEND_CLAIM + "%")))
++         .update({"sent_via": f"{SEND_CLAIM}{int(time.time())}"}, synchronize_session=False))
+     db.commit()
++    if n != 1:
++        raise HTTPException(409, "A send is already in progress for this message.")
++    db.refresh(it)
+     pl = it.payload or {}
+     try:
+         mid = gmail_send.send(x_gmail_token or "", ri["to"], pl.get("subject") or "", pl.get("body") or "", pl.get("from_account"))
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/backend/scripts/check_deploy.py nzw/backend/scripts/check_deploy.py
+--- pristine/backend/scripts/check_deploy.py	1970-01-01 00:00:00.000000000 +0000
++++ nzw/backend/scripts/check_deploy.py	2026-10-11 20:33:01.384951238 +0000
+@@ -0,0 +1,139 @@
++"""Post-deploy contract check. Standard library only.
++
++    python scripts/check_deploy.py https://opa-52ug.onrender.com --origin https://www.opai.live
++
++Exit code 1 if anything FAILs (WARN and SKIP do not fail). Run it right after a deploy, from your laptop or CI.
++It only sends harmless requests: GETs, one CORS preflight, and one POST to a Gmail-send URL for an outbox id that cannot exist.
++
++What it checks, and what it deliberately does not:
++  wake      /v1/health answers (waits up to --wait seconds for a sleeping free-tier backend, and reports how long it took)
++  health    /v1/system/health and /v1/system/scheduler-status answer with JSON
++  version   /v1/version exists and its api_contract >= the one in frontend/build.json (run scripts/stamp_build.py first)
++  routes    every /v1 path the frontend calls is in the deployed /openapi.json  (this is the stale-deploy detector)
++  cors      a preflight from --origin is allowed
++  identity  an identity-less call is refused (this app identifies users by user_id, not tokens: there is no 401 to expect)
++  gmail     the send endpoint answers an unknown outbox id with a clean 4xx JSON error, not a 5xx crash
++  tick      only if /v1/system/tick exists: it must reject a request without the secret (SKIP when the route does not exist)
++"""
++import argparse, json, os, re, sys, time, urllib.error, urllib.request
++
++HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
++import route_contract as RC  # noqa: E402
++
++RESULTS = []
++
++
++def rec(status, name, detail=""):
++    RESULTS.append(status)
++    print(f"{status:5} {name}" + (f"  - {detail}" if detail else ""))
++
++
++def call(method, url, body=None, headers=None, timeout=20):
++    req = urllib.request.Request(url, method=method, data=(json.dumps(body).encode() if body is not None else None),
++                                 headers={"Content-Type": "application/json", **(headers or {})})
++    try:
++        with urllib.request.urlopen(req, timeout=timeout) as r:
++            raw = r.read().decode("utf-8", "replace")
++            return r.status, raw, dict(r.headers)
++    except urllib.error.HTTPError as e:
++        return e.code, e.read().decode("utf-8", "replace"), dict(e.headers)
++    except Exception as e:  # noqa: BLE001
++        return 0, str(e), {}
++
++
++def js(raw):
++    try:
++        return json.loads(raw)
++    except Exception:  # noqa: BLE001
++        return None
++
++
++def main():
++    ap = argparse.ArgumentParser()
++    ap.add_argument("base"); ap.add_argument("--origin", default=None); ap.add_argument("--wait", type=int, default=90)
++    a = ap.parse_args(); base = a.base.rstrip("/")
++
++    t0 = time.time(); code = 0
++    while time.time() - t0 < a.wait:
++        code, _, _ = call("GET", base + "/v1/health", timeout=15)
++        if code == 200:
++            break
++        time.sleep(3)
++    secs = round(time.time() - t0, 1)
++    if code != 200:
++        rec("FAIL", "wake", f"/v1/health gave {code or 'no answer'} after {secs}s"); return 1
++    rec("PASS", "wake", f"backend answered after {secs}s" + (" (it was asleep)" if secs > 5 else ""))
++
++    c, raw, _ = call("GET", base + "/v1/system/health"); d = js(raw)
++    rec("PASS" if c == 200 and isinstance(d, dict) else "FAIL", "health /v1/system/health", f"{c}" + (f" keys={sorted(d)[:8]}" if isinstance(d, dict) else ""))
++    c, raw, _ = call("GET", base + "/v1/system/scheduler-status"); d = js(raw)
++    rec("PASS" if c == 200 and isinstance(d, dict) else "FAIL", "scheduler /v1/system/scheduler-status", f"{c}")
++
++    build = None
++    try:
++        build = json.load(open(os.path.join(RC.FRONT, "build.json")))
++    except Exception:  # noqa: BLE001
++        pass
++    c, raw, _ = call("GET", base + "/v1/version"); d = js(raw)
++    if c != 200 or not isinstance(d, dict):
++        rec("FAIL", "version /v1/version", f"{c}: the deployed backend predates the version endpoint (stale deploy)")
++    elif build is None:
++        rec("WARN", "version", f"backend contract {d.get('api_contract')}; no frontend/build.json to compare (run scripts/stamp_build.py)")
++    elif d.get("api_contract", 0) < build["api_contract"]:
++        rec("FAIL", "version", f"backend contract {d.get('api_contract')} < frontend {build['api_contract']}: deploy the backend")
++    else:
++        rec("PASS", "version", f"backend contract {d.get('api_contract')} >= frontend {build['api_contract']}, sha {d.get('git_sha')}")
++
++    c, raw, _ = call("GET", base + "/openapi.json"); spec = js(raw)
++    deployed = None
++    if c == 200 and isinstance(spec, dict) and "paths" in spec:
++        deployed = list(spec["paths"].keys())
++        norm = [re.sub(r"\{[^}]+\}", "{x}", p) for p in deployed]
++        pats = [re.compile("^" + re.escape(n).replace(re.escape("{x}"), "[^/]+") + "/?$") for n in norm]
++        missing = []
++        for page, paths in RC.frontend_paths().items():
++            for p in sorted(paths):
++                ok = any(n.startswith(p) for n in norm) if (p.endswith("/") or p.endswith("{x}")) else any(rx.match(p) for rx in pats)
++                if not ok:
++                    missing.append(f"{page}: {p}")
++        if missing:
++            rec("FAIL", "routes", f"{len(missing)} frontend path(s) not served by the deployed backend (version mismatch):")
++            for m in missing[:25]:
++                print("        " + m)
++        else:
++            rec("PASS", "routes", f"all frontend /v1 paths are served ({len(deployed)} deployed paths)")
++    else:
++        rec("WARN", "routes", f"/openapi.json not available ({c}); cannot compare routes")
++
++    if a.origin:
++        c, _, h = call("OPTIONS", base + "/v1/health", headers={"Origin": a.origin, "Access-Control-Request-Method": "POST", "Access-Control-Request-Headers": "content-type"})
++        allow = {k.lower(): v for k, v in h.items()}.get("access-control-allow-origin")
++        if c in (200, 204) and allow in (a.origin, "*"):
++            rec("PASS" if allow == a.origin else "WARN", "cors", f"allows {a.origin}" + (" via '*' (set CORS_ORIGINS to lock it down)" if allow == "*" else ""))
++        else:
++            rec("FAIL", "cors", f"preflight from {a.origin} -> {c}, Access-Control-Allow-Origin={allow}")
++    else:
++        rec("SKIP", "cors", "pass --origin https://your-frontend to check it")
++
++    c, _, _ = call("GET", base + "/v1/opp/profile")
++    rec("PASS" if c in (401, 403, 422) else "FAIL", "identity", f"/v1/opp/profile without user_id -> {c} (expected 401/403/422)")
++    c, _, _ = call("POST", base + "/v1/auth/guest")
++    rec("PASS" if c in (404, 405) else "FAIL", "no guest login", f"/v1/auth/guest -> {c}")
++
++    c, raw, h = call("POST", base + "/v1/opp/outbox/does-not-exist/send", body={"user_id": "check-deploy"}, headers={"X-Gmail-Token": ""})
++    d = js(raw)
++    rec("PASS" if 400 <= c < 500 and isinstance(d, dict) and "detail" in d else "FAIL", "gmail send error handling", f"unknown outbox id -> {c}" + ("" if isinstance(d, dict) else " (not a JSON error)"))
++
++    if deployed and "/v1/system/tick" in deployed:
++        c, _, _ = call("POST", base + "/v1/system/tick")
++        rec("PASS" if c in (401, 403, 422) else "FAIL", "tick requires secret", f"POST /v1/system/tick without secret -> {c}")
++    else:
++        rec("SKIP", "tick", "no /v1/system/tick route in this backend")
++
++    fails = RESULTS.count("FAIL")
++    print(f"\n{RESULTS.count('PASS')} passed, {RESULTS.count('WARN')} warning(s), {fails} failed, {RESULTS.count('SKIP')} skipped")
++    return 1 if fails else 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/backend/scripts/route_contract.py nzw/backend/scripts/route_contract.py
+--- pristine/backend/scripts/route_contract.py	1970-01-01 00:00:00.000000000 +0000
++++ nzw/backend/scripts/route_contract.py	2026-10-11 20:33:25.395243547 +0000
+@@ -0,0 +1,152 @@
++"""Static route contract: every /v1/... path the frontend calls must be served by the backend.
++
++Needs only the standard library (no FastAPI, no database), so it runs in CI before anything is installed and
++against a checkout that cannot be imported. It reads routes from the Python source (APIRouter prefixes,
++@router.get/post/..., include_router prefixes) and compares them with the paths in frontend/*.html and *.js.
++
++    python scripts/route_contract.py            # exit 1 if any page calls a route the backend lacks
++    python scripts/route_contract.py --list     # print the backend route table (only routers main.py registers)
++
++Limits (stated so nobody trusts it too much): it checks PATHS, not HTTP methods or response shapes, and a path built
++from several runtime pieces is only checked as far as its literal parts. tests/test_frontend_contract.py (OpenAPI,
++needs FastAPI) remains the authoritative check where it can run.
++"""
++from __future__ import annotations
++
++import ast
++import os
++import re
++import sys
++from typing import Dict, List, Set, Tuple
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++BACK = os.path.dirname(HERE)
++FRONT = os.path.join(os.path.dirname(BACK), "frontend")
++VERBS = {"get", "post", "put", "patch", "delete"}
++
++
++def _const(node) -> str | None:
++    return node.value if isinstance(node, ast.Constant) and isinstance(node.value, str) else None
++
++
++def backend_routes() -> List[Tuple[str, str, str]]:
++    """[(METHOD, path, source_file)] including router prefixes and include_router prefixes."""
++    mods: Dict[str, Dict] = {}
++    for fn in sorted(os.listdir(BACK)):
++        if not fn.endswith(".py"):
++            continue
++        tree = ast.parse(open(os.path.join(BACK, fn), encoding="utf-8").read())
++        prefixes: Dict[str, str] = {}
++        routes: List[Tuple[str, str, str]] = []
++        for n in ast.walk(tree):
++            if isinstance(n, ast.Assign) and isinstance(n.value, ast.Call) and getattr(n.value.func, "id", "") in ("APIRouter", "FastAPI"):
++                pre = next((_const(k.value) for k in n.value.keywords if k.arg == "prefix"), "") or ""
++                for t in n.targets:
++                    if isinstance(t, ast.Name):
++                        prefixes[t.id] = pre
++        for n in ast.walk(tree):
++            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
++                for d in n.decorator_list:
++                    if isinstance(d, ast.Call) and isinstance(d.func, ast.Attribute) and d.func.attr in VERBS and isinstance(d.func.value, ast.Name) and d.args:
++                        p = _const(d.args[0])
++                        if p is not None:
++                            routes.append((d.func.attr.upper(), prefixes.get(d.func.value.id, "") + p, fn))
++        mods[fn[:-3]] = {"routes": routes}
++        mods[fn[:-3]]["tree"] = tree
++    # include_router(alias, prefix=...) in any module; alias resolved through "from mod import router as alias"
++    extra: Dict[str, List[str]] = {}
++    for name, m in mods.items():
++        alias_to_mod: Dict[str, str] = {}
++        for n in ast.walk(m["tree"]):
++            if isinstance(n, ast.ImportFrom) and n.module:
++                for a in n.names:
++                    alias_to_mod[a.asname or a.name] = n.module.split(".")[-1]
++        for n in ast.walk(m["tree"]):
++            if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr == "include_router" and n.args and isinstance(n.args[0], ast.Name):
++                pre = next((_const(k.value) for k in n.keywords if k.arg == "prefix"), "") or ""
++                target = alias_to_mod.get(n.args[0].id)
++                if target in mods:
++                    extra.setdefault(target, []).append(pre)
++    out = []
++    for name, m in mods.items():
++        # A router that no module registers with include_router serves NOTHING, however many routes its file defines.
++        # (main.py's own @app routes are always served.)
++        if name != "main" and name not in extra:
++            continue
++        for meth, p, fn in m["routes"]:
++            for pre in (extra.get(name) or [""]):
++                out.append((meth, pre + p, fn))
++    return out
++
++
++def unregistered_routers() -> List[Tuple[str, int]]:
++    """Modules that define routes but are never included by main.py: [(module_file, route_count)]."""
++    counted = {fn for _, _, fn in backend_routes()}
++    res = []
++    for fn in sorted(os.listdir(BACK)):
++        if not fn.endswith(".py") or fn in counted:
++            continue
++        tree = ast.parse(open(os.path.join(BACK, fn), encoding="utf-8").read())
++        n = sum(1 for x in ast.walk(tree) if isinstance(x, (ast.FunctionDef, ast.AsyncFunctionDef)) for d in x.decorator_list
++                if isinstance(d, ast.Call) and isinstance(d.func, ast.Attribute) and d.func.attr in VERBS and d.args and _const(d.args[0]) is not None)
++        if n:
++            res.append((fn, n))
++    return res
++
++
++_LIT = re.compile(r"""(['"`])(/v1/[^'"`\s]*)\1""")
++_CONCAT = re.compile(r"""(['"])(/v1/[^'"\s]*)\1\s*\+\s*[^+'"]+?\s*\+\s*(['"])(/[^'"\s]*)\3""")
++_TPL = re.compile(r"`(/v1/[^`\s]*)`")
++
++
++def frontend_paths() -> Dict[str, Set[str]]:
++    found: Dict[str, Set[str]] = {}
++    for fn in sorted(os.listdir(FRONT)):
++        if not fn.endswith((".html", ".js")) or fn == "sw.js":
++            continue
++        src = open(os.path.join(FRONT, fn), encoding="utf-8", errors="ignore").read()
++        paths: Set[str] = set()
++        for m in _CONCAT.finditer(src):
++            paths.add((m.group(2) + "{x}" + m.group(4)).split("?")[0])
++        for m in _TPL.finditer(src):
++            paths.add(re.sub(r"\$\{[^}]*\}", "{x}", m.group(1)).split("?")[0])
++        for m in _LIT.finditer(src):
++            p = m.group(2).split("?")[0]
++            if "${" in p:
++                p = re.sub(r"\$\{[^}]*\}", "{x}", p)
++            paths.add(p)
++        if paths:
++            found[fn] = paths
++    return found
++
++
++def check() -> List[str]:
++    routes = backend_routes()
++    norm = [re.sub(r"\{[^}]+\}", "{x}", p) for _, p, _ in routes]          # /v1/actions/{action_id}/approve -> /v1/actions/{x}/approve
++    pats = [re.compile("^" + re.escape(n).replace(re.escape("{x}"), "[^/]+") + "/?$") for n in norm]
++    missing = []
++    for page, paths in frontend_paths().items():
++        for p in sorted(paths):
++            if p.endswith("/") or p.endswith("{x}"):   # the rest of the path is built at runtime (e.g. '/v1/actions/'+id+'/'+verb)
++                ok = any(n.startswith(p) or n.startswith(p[:-3] if p.endswith("{x}") else p) for n in norm)
++            else:
++                ok = any(rx.match(p) for rx in pats)
++            if not ok:
++                missing.append(f"{page}: {p}")
++    return missing
++
++
++if __name__ == "__main__":
++    if "--list" in sys.argv:
++        for meth, p, fn in sorted(backend_routes(), key=lambda r: (r[1], r[0])):
++            print(f"{meth:6} {p}   ({fn})")
++        sys.exit(0)
++    miss = check()
++    n_routes = len(backend_routes())
++    for fn, n in unregistered_routers():
++        print(f"NOTE: {fn} defines {n} route(s) but main.py never registers it, so they are NOT served.")
++    if miss:
++        print(f"{len(miss)} frontend path(s) have no backend route ({n_routes} routes read):")
++        print("\n".join("  " + m for m in miss))
++        sys.exit(1)
++    print(f"OK: every /v1 path in the frontend is served ({n_routes} backend routes read).")
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/backend/scripts/stamp_build.py nzw/backend/scripts/stamp_build.py
+--- pristine/backend/scripts/stamp_build.py	1970-01-01 00:00:00.000000000 +0000
++++ nzw/backend/scripts/stamp_build.py	2026-10-11 20:33:01.385254536 +0000
+@@ -0,0 +1,16 @@
++"""Writes frontend/build.json: the API contract number this frontend was built against.
++Run it as part of the frontend deploy:   python backend/scripts/stamp_build.py
++opai-conn.js reads build.json and GET /v1/version; if the backend's number is lower, users see "OPAI is updating"."""
++import json, os, re, subprocess
++from datetime import datetime, timezone
++HERE = os.path.dirname(os.path.abspath(__file__)); BACK = os.path.dirname(HERE); FRONT = os.path.join(os.path.dirname(BACK), "frontend")
++src = open(os.path.join(BACK, "version_api.py"), encoding="utf-8").read()
++contract = int(re.search(r"^API_CONTRACT\s*=\s*(\d+)", src, re.M).group(1))
++try:
++    sha = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"], cwd=BACK, capture_output=True, text=True, timeout=5).stdout.strip() or None
++except Exception:
++    sha = None
++out = {"api_contract": contract, "git_sha": sha, "built_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
++with open(os.path.join(FRONT, "build.json"), "w", encoding="utf-8") as f:
++    json.dump(out, f, indent=1)
++print("wrote frontend/build.json", out)
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/backend/tests/test_opportunities.py nzw/backend/tests/test_opportunities.py
+--- pristine/backend/tests/test_opportunities.py	2026-10-11 20:35:12.373662940 +0000
++++ nzw/backend/tests/test_opportunities.py	2026-10-11 20:33:07.897653535 +0000
+@@ -282,3 +282,28 @@
+     monkeypatch.setenv("GOOGLE_CLIENT_ID", "abc.apps.googleusercontent.com")
+     j = c.get("/v1/opp/config").json()
+     assert j["gmail_send_enabled"] and j["gmail_scope"].endswith("gmail.send")
++
++
++def test_stale_send_claim_can_be_released_but_a_live_one_cannot(c, uid, monkeypatch):
++    """A restart between 'claim' and 'Gmail call' used to leave the item on 'sending' forever."""
++    import time as _t
++    import gmail_send
++    from database import OutboxItem, SessionLocal
++    calls = []
++    monkeypatch.setattr(gmail_send, "send", lambda tok, to, sub, body, frm=None: calls.append(to) or "gm-9")
++    prof, oid = _approved(c, uid, "stale@iitx.ac.in")
++    body = {"user_id": uid}
++    with SessionLocal() as db:                       # a claim made just now: still running
++        db.query(OutboxItem).filter(OutboxItem.id == oid).update({"sent_via": f"gmail_api:sending:{int(_t.time())}"})
++        db.commit()
++    assert c.post(f"/v1/opp/outbox/{oid}/send", json=body, headers={"X-Gmail-Token": "t"}).status_code == 409
++    assert c.post(f"/v1/opp/outbox/{oid}/send/release", json=body).status_code == 409        # too fresh to release
++    with SessionLocal() as db:                       # the same claim, 10 minutes old: left by a dead server
++        db.query(OutboxItem).filter(OutboxItem.id == oid).update({"sent_via": f"gmail_api:sending:{int(_t.time()) - 600}"})
++        db.commit()
++    r = c.post(f"/v1/opp/outbox/{oid}/send", json=body, headers={"X-Gmail-Token": "t"})
++    assert r.status_code == 409 and "did not finish" in r.json()["detail"] and calls == []     # never auto-resends (could duplicate)
++    assert c.post(f"/v1/opp/outbox/{oid}/send/release", json=body).json()["released"] is True
++    assert c.post(f"/v1/opp/outbox/{oid}/send", json=body, headers={"X-Gmail-Token": "t"}).status_code == 200
++    assert calls == ["stale@iitx.ac.in"]
++    assert c.post(f"/v1/opp/outbox/{oid}/send/release", json=body).status_code == 409        # already sent: nothing to release
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/backend/tests/test_route_contract_static.py nzw/backend/tests/test_route_contract_static.py
+--- pristine/backend/tests/test_route_contract_static.py	1970-01-01 00:00:00.000000000 +0000
++++ nzw/backend/tests/test_route_contract_static.py	2026-10-11 20:33:01.496014333 +0000
+@@ -0,0 +1,34 @@
++"""Standard-library route contract: needs neither FastAPI nor a database, so it runs anywhere.
++    cd backend && python -m pytest tests/test_route_contract_static.py -q      (or: python scripts/route_contract.py)
++The OpenAPI-based tests/test_frontend_contract.py is the stricter check where FastAPI is installed."""
++import os, sys
++sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "scripts"))
++import route_contract as RC  # noqa: E402
++
++
++def test_every_frontend_path_is_served_by_the_backend():
++    missing = RC.check()
++    assert not missing, "Frontend calls routes the backend does not have:\n  " + "\n  ".join(missing)
++
++
++def test_every_page_that_calls_the_api_is_covered():
++    pages = set(RC.frontend_paths())
++    assert {"opportunities.html", "resume-lab.html", "today.html", "briefs.html"} <= pages, pages
++
++
++def test_checker_really_detects_a_missing_route():
++    real = RC.frontend_paths
++    RC.frontend_paths = lambda: {"x.html": {"/v1/opp/this-route-does-not-exist"}}
++    try:
++        assert RC.check() == ["x.html: /v1/opp/this-route-does-not-exist"]
++    finally:
++        RC.frontend_paths = real
++
++
++def test_version_and_health_routes_exist():
++    paths = {p for _, p, _ in RC.backend_routes()}
++    assert {"/v1/health", "/v1/version", "/v1/system/health", "/v1/system/scheduler-status", "/v1/opp/profile"} <= paths
++
++
++def test_outbox_send_release_route_exists():
++    assert any(p == "/v1/opp/outbox/{outbox_id}/send/release" for _, p, _ in RC.backend_routes())
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/backend/version_api.py nzw/backend/version_api.py
+--- pristine/backend/version_api.py	1970-01-01 00:00:00.000000000 +0000
++++ nzw/backend/version_api.py	2026-10-11 20:33:01.273559169 +0000
+@@ -0,0 +1,32 @@
++"""GET /v1/version: what is deployed, and which API contract it serves.
++
++API_CONTRACT is a whole number you bump BY HAND whenever the frontend starts depending on a route or response shape that an
++older backend does not have (a new /v1/opp/... route the pages call, a changed field they read). scripts/stamp_build.py writes
++the number the frontend was built against into frontend/build.json; opai-conn.js compares the two in the browser and shows
++"OPAI is updating" when the backend is older. That turns a half-finished deploy into one clear notice instead of random 404s.
++"""
++from __future__ import annotations
++
++import os
++from datetime import datetime, timezone
++
++from fastapi import APIRouter
++
++router = APIRouter()
++
++API_CONTRACT = 1
++STARTED_AT = datetime.now(timezone.utc)
++
++
++@router.get("/v1/version")
++def version():
++    import gmail_send
++    return {
++        "service": "opai-backend",
++        "version": os.getenv("OPAI_VERSION", "dev"),
++        "git_sha": (os.getenv("RENDER_GIT_COMMIT") or os.getenv("GIT_SHA") or "")[:12] or None,
++        "api_contract": API_CONTRACT,
++        "started_at": STARTED_AT.isoformat(),
++        "uptime_seconds": int((datetime.now(timezone.utc) - STARTED_AT).total_seconds()),
++        "features": {"gmail_send": bool(gmail_send.client_id())},
++    }
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/academics-full.html nzw/frontend/academics-full.html
+--- pristine/frontend/academics-full.html	2026-10-11 20:35:12.375105369 +0000
++++ nzw/frontend/academics-full.html	2026-10-11 20:33:01.499928417 +0000
+@@ -1,4 +1,5 @@
+-<!DOCTYPE html><html class="" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
++<!DOCTYPE html><html class="" lang="en"><head>
++<script src="opai-conn.js"></script><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+ <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+ <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=JetBrains+Mono:wght@100..900&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"tertiary-fixed":"rgb(var(--c-tertiary-fixed) / <alpha-value>)","primary-fixed":"rgb(var(--c-primary-fixed) / <alpha-value>)","surface-container-low":"rgb(var(--c-surface-container-low) / <alpha-value>)","on-tertiary-container":"rgb(var(--c-on-tertiary-container) / <alpha-value>)","on-tertiary-fixed":"rgb(var(--c-on-tertiary-fixed) / <alpha-value>)","on-primary-container":"rgb(var(--c-on-primary-container) / <alpha-value>)","on-tertiary-fixed-variant":"rgb(var(--c-on-tertiary-fixed-variant) / <alpha-value>)","tertiary":"rgb(var(--c-tertiary) / <alpha-value>)","surface-container-high":"rgb(var(--c-surface-container-high) / <alpha-value>)","primary-fixed-dim":"rgb(var(--c-primary-fixed-dim) / <alpha-value>)","on-primary-fixed-variant":"rgb(var(--c-on-primary-fixed-variant) / <alpha-value>)","on-secondary":"rgb(var(--c-on-secondary) / <alpha-value>)","inverse-primary":"rgb(var(--c-inverse-primary) / <alpha-value>)","outline":"rgb(var(--c-outline) / <alpha-value>)","error-container":"rgb(var(--c-error-container) / <alpha-value>)","on-surface-variant":"rgb(var(--c-on-surface-variant) / <alpha-value>)","primary-container":"rgb(var(--c-primary-container) / <alpha-value>)","surface-bright":"rgb(var(--c-surface-bright) / <alpha-value>)","inverse-on-surface":"rgb(var(--c-inverse-on-surface) / <alpha-value>)","secondary-container":"rgb(var(--c-secondary-container) / <alpha-value>)","on-surface":"rgb(var(--c-on-surface) / <alpha-value>)","on-secondary-fixed":"rgb(var(--c-on-secondary-fixed) / <alpha-value>)","outline-variant":"rgb(var(--c-outline-variant) / <alpha-value>)","on-tertiary":"rgb(var(--c-on-tertiary) / <alpha-value>)","background":"rgb(var(--c-background) / <alpha-value>)","tertiary-fixed-dim":"rgb(var(--c-tertiary-fixed-dim) / <alpha-value>)","on-primary":"rgb(var(--c-on-primary) / <alpha-value>)","surface-tint":"rgb(var(--c-surface-tint) / <alpha-value>)","on-primary-fixed":"rgb(var(--c-on-primary-fixed) / <alpha-value>)","secondary":"rgb(var(--c-secondary) / <alpha-value>)","surface-variant":"rgb(var(--c-surface-variant) / <alpha-value>)","surface-container":"rgb(var(--c-surface-container) / <alpha-value>)","surface-container-highest":"rgb(var(--c-surface-container-highest) / <alpha-value>)","surface":"rgb(var(--c-surface) / <alpha-value>)","on-error":"rgb(var(--c-on-error) / <alpha-value>)","on-background":"rgb(var(--c-on-background) / <alpha-value>)","inverse-surface":"rgb(var(--c-inverse-surface) / <alpha-value>)","surface-dim":"rgb(var(--c-surface-dim) / <alpha-value>)","secondary-fixed":"rgb(var(--c-secondary-fixed) / <alpha-value>)","surface-container-lowest":"rgb(var(--c-surface-container-lowest) / <alpha-value>)","on-secondary-fixed-variant":"rgb(var(--c-on-secondary-fixed-variant) / <alpha-value>)","primary":"rgb(var(--c-primary) / <alpha-value>)","secondary-fixed-dim":"rgb(var(--c-secondary-fixed-dim) / <alpha-value>)","on-error-container":"rgb(var(--c-on-error-container) / <alpha-value>)","tertiary-container":"rgb(var(--c-tertiary-container) / <alpha-value>)","on-secondary-container":"rgb(var(--c-on-secondary-container) / <alpha-value>)","error":"rgb(var(--c-error) / <alpha-value>)"},borderRadius:{DEFAULT:"0.5rem",lg:"0.75rem",xl:"1rem",full:"9999px"},spacing:{"margin-desktop":"2.5rem","space-sm":"0.5rem","space-lg":"1.25rem",gutter:"1rem","margin-tablet":"1.5rem","space-xl":"2rem","space-2xl":"3.5rem","gutter-desktop":"1.5rem","space-md":"0.75rem",margin:"1rem","space-xs":"0.25rem"},fontFamily:{"display-mobile":["Geist"],"body-md":["Geist"],"body-sm":["Geist"],display:["Geist"],"body-lg":["Geist"],"headline-lg":["Geist"],"headline-sm":["Geist"],"headline-md":["Geist"],"label-md":["JetBrains Mono"],"code-body":["JetBrains Mono"],"headline-lg-mobile":["Geist"],"label-sm":["JetBrains Mono"]},fontSize:{"display-mobile":["36px",{lineHeight:"40px",letterSpacing:"-0.03em",fontWeight:"600"}],"body-md":["14px",{lineHeight:"22px",letterSpacing:"-0.005em",fontWeight:"400"}],"body-sm":["13px",{lineHeight:"18px",letterSpacing:"0em",fontWeight:"400"}],display:["48px",{lineHeight:"52px",letterSpacing:"-0.04em",fontWeight:"600"}],"body-lg":["16px",{lineHeight:"26px",letterSpacing:"-0.01em",fontWeight:"400"}],"headline-lg":["32px",{lineHeight:"38px",letterSpacing:"-0.03em",fontWeight:"500"}],"headline-sm":["18px",{lineHeight:"24px",letterSpacing:"-0.015em",fontWeight:"500"}],"headline-md":["22px",{lineHeight:"28px",letterSpacing:"-0.02em",fontWeight:"500"}],"label-md":["12px",{lineHeight:"16px",letterSpacing:"0.04em",fontWeight:"500"}],"code-body":["13px",{lineHeight:"20px",letterSpacing:"-0.01em",fontWeight:"400"}],"headline-lg-mobile":["26px",{lineHeight:"32px",letterSpacing:"-0.02em",fontWeight:"500"}],"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.06em",fontWeight:"400"}]}}}};</script><script>window.escHtml=function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]})};</script><link rel="manifest" href="manifest.json">
+ <meta name="theme-color" content="#0e0e10">
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/academics.html nzw/frontend/academics.html
+--- pristine/frontend/academics.html	2026-10-11 20:35:12.375131761 +0000
++++ nzw/frontend/academics.html	2026-10-11 20:33:01.500331007 +0000
+@@ -1,6 +1,7 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
++<script src="opai-conn.js"></script>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+ <title>Academics · OPAI</title>
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/agent-console.html nzw/frontend/agent-console.html
+--- pristine/frontend/agent-console.html	2026-10-11 20:35:12.375151282 +0000
++++ nzw/frontend/agent-console.html	2026-10-11 20:33:01.500690986 +0000
+@@ -1,4 +1,5 @@
+-<!DOCTYPE html><html class="" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
++<!DOCTYPE html><html class="" lang="en"><head>
++<script src="opai-conn.js"></script><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+ <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+ <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=JetBrains+Mono:wght@100..900&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"tertiary-fixed":"rgb(var(--c-tertiary-fixed) / <alpha-value>)","primary-fixed":"rgb(var(--c-primary-fixed) / <alpha-value>)","surface-container-low":"rgb(var(--c-surface-container-low) / <alpha-value>)","on-tertiary-container":"rgb(var(--c-on-tertiary-container) / <alpha-value>)","on-tertiary-fixed":"rgb(var(--c-on-tertiary-fixed) / <alpha-value>)","on-primary-container":"rgb(var(--c-on-primary-container) / <alpha-value>)","on-tertiary-fixed-variant":"rgb(var(--c-on-tertiary-fixed-variant) / <alpha-value>)","tertiary":"rgb(var(--c-tertiary) / <alpha-value>)","surface-container-high":"rgb(var(--c-surface-container-high) / <alpha-value>)","primary-fixed-dim":"rgb(var(--c-primary-fixed-dim) / <alpha-value>)","on-primary-fixed-variant":"rgb(var(--c-on-primary-fixed-variant) / <alpha-value>)","on-secondary":"rgb(var(--c-on-secondary) / <alpha-value>)","inverse-primary":"rgb(var(--c-inverse-primary) / <alpha-value>)","outline":"rgb(var(--c-outline) / <alpha-value>)","error-container":"rgb(var(--c-error-container) / <alpha-value>)","on-surface-variant":"rgb(var(--c-on-surface-variant) / <alpha-value>)","primary-container":"rgb(var(--c-primary-container) / <alpha-value>)","surface-bright":"rgb(var(--c-surface-bright) / <alpha-value>)","inverse-on-surface":"rgb(var(--c-inverse-on-surface) / <alpha-value>)","secondary-container":"rgb(var(--c-secondary-container) / <alpha-value>)","on-surface":"rgb(var(--c-on-surface) / <alpha-value>)","on-secondary-fixed":"rgb(var(--c-on-secondary-fixed) / <alpha-value>)","outline-variant":"rgb(var(--c-outline-variant) / <alpha-value>)","on-tertiary":"rgb(var(--c-on-tertiary) / <alpha-value>)","background":"rgb(var(--c-background) / <alpha-value>)","tertiary-fixed-dim":"rgb(var(--c-tertiary-fixed-dim) / <alpha-value>)","on-primary":"rgb(var(--c-on-primary) / <alpha-value>)","surface-tint":"rgb(var(--c-surface-tint) / <alpha-value>)","on-primary-fixed":"rgb(var(--c-on-primary-fixed) / <alpha-value>)","secondary":"rgb(var(--c-secondary) / <alpha-value>)","surface-variant":"rgb(var(--c-surface-variant) / <alpha-value>)","surface-container":"rgb(var(--c-surface-container) / <alpha-value>)","surface-container-highest":"rgb(var(--c-surface-container-highest) / <alpha-value>)","surface":"rgb(var(--c-surface) / <alpha-value>)","on-error":"rgb(var(--c-on-error) / <alpha-value>)","on-background":"rgb(var(--c-on-background) / <alpha-value>)","inverse-surface":"rgb(var(--c-inverse-surface) / <alpha-value>)","surface-dim":"rgb(var(--c-surface-dim) / <alpha-value>)","secondary-fixed":"rgb(var(--c-secondary-fixed) / <alpha-value>)","surface-container-lowest":"rgb(var(--c-surface-container-lowest) / <alpha-value>)","on-secondary-fixed-variant":"rgb(var(--c-on-secondary-fixed-variant) / <alpha-value>)","primary":"rgb(var(--c-primary) / <alpha-value>)","secondary-fixed-dim":"rgb(var(--c-secondary-fixed-dim) / <alpha-value>)","on-error-container":"rgb(var(--c-on-error-container) / <alpha-value>)","tertiary-container":"rgb(var(--c-tertiary-container) / <alpha-value>)","on-secondary-container":"rgb(var(--c-on-secondary-container) / <alpha-value>)","error":"rgb(var(--c-error) / <alpha-value>)"},borderRadius:{DEFAULT:"0.5rem",lg:"0.75rem",xl:"1rem",full:"9999px"},spacing:{"margin-desktop":"2.5rem","space-sm":"0.5rem","space-lg":"1.25rem",gutter:"1rem","margin-tablet":"1.5rem","space-xl":"2rem","space-2xl":"3.5rem","gutter-desktop":"1.5rem","space-md":"0.75rem",margin:"1rem","space-xs":"0.25rem"},fontFamily:{"display-mobile":["Geist"],"body-md":["Geist"],"body-sm":["Geist"],display:["Geist"],"body-lg":["Geist"],"headline-lg":["Geist"],"headline-sm":["Geist"],"headline-md":["Geist"],"label-md":["JetBrains Mono"],"code-body":["JetBrains Mono"],"headline-lg-mobile":["Geist"],"label-sm":["JetBrains Mono"]},fontSize:{"display-mobile":["36px",{lineHeight:"40px",letterSpacing:"-0.03em",fontWeight:"600"}],"body-md":["14px",{lineHeight:"22px",letterSpacing:"-0.005em",fontWeight:"400"}],"body-sm":["13px",{lineHeight:"18px",letterSpacing:"0em",fontWeight:"400"}],display:["48px",{lineHeight:"52px",letterSpacing:"-0.04em",fontWeight:"600"}],"body-lg":["16px",{lineHeight:"26px",letterSpacing:"-0.01em",fontWeight:"400"}],"headline-lg":["32px",{lineHeight:"38px",letterSpacing:"-0.03em",fontWeight:"500"}],"headline-sm":["18px",{lineHeight:"24px",letterSpacing:"-0.015em",fontWeight:"500"}],"headline-md":["22px",{lineHeight:"28px",letterSpacing:"-0.02em",fontWeight:"500"}],"label-md":["12px",{lineHeight:"16px",letterSpacing:"0.04em",fontWeight:"500"}],"code-body":["13px",{lineHeight:"20px",letterSpacing:"-0.01em",fontWeight:"400"}],"headline-lg-mobile":["26px",{lineHeight:"32px",letterSpacing:"-0.02em",fontWeight:"500"}],"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.06em",fontWeight:"400"}]}}}};</script><script>window.escHtml=function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]})};</script><link rel="manifest" href="manifest.json">
+ <meta name="theme-color" content="#0e0e10">
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/app.html nzw/frontend/app.html
+--- pristine/frontend/app.html	2026-10-11 20:35:12.375249392 +0000
++++ nzw/frontend/app.html	2026-10-11 20:33:01.501069030 +0000
+@@ -1,6 +1,7 @@
+ <!DOCTYPE html>
+ 
+-<html class="" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
++<html class="" lang="en"><head>
++<script src="opai-conn.js"></script><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+ <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+ <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"tertiary-fixed":"rgb(var(--c-tertiary-fixed) / <alpha-value>)","primary-fixed":"rgb(var(--c-primary-fixed) / <alpha-value>)","surface-container-low":"rgb(var(--c-surface-container-low) / <alpha-value>)","on-tertiary-container":"rgb(var(--c-on-tertiary-container) / <alpha-value>)","on-tertiary-fixed":"rgb(var(--c-on-tertiary-fixed) / <alpha-value>)","on-primary-container":"rgb(var(--c-on-primary-container) / <alpha-value>)","on-tertiary-fixed-variant":"rgb(var(--c-on-tertiary-fixed-variant) / <alpha-value>)","tertiary":"rgb(var(--c-tertiary) / <alpha-value>)","surface-container-high":"rgb(var(--c-surface-container-high) / <alpha-value>)","primary-fixed-dim":"rgb(var(--c-primary-fixed-dim) / <alpha-value>)","on-primary-fixed-variant":"rgb(var(--c-on-primary-fixed-variant) / <alpha-value>)","on-secondary":"rgb(var(--c-on-secondary) / <alpha-value>)","inverse-primary":"rgb(var(--c-inverse-primary) / <alpha-value>)","outline":"rgb(var(--c-outline) / <alpha-value>)","error-container":"rgb(var(--c-error-container) / <alpha-value>)","on-surface-variant":"rgb(var(--c-on-surface-variant) / <alpha-value>)","primary-container":"rgb(var(--c-primary-container) / <alpha-value>)","surface-bright":"rgb(var(--c-surface-bright) / <alpha-value>)","inverse-on-surface":"rgb(var(--c-inverse-on-surface) / <alpha-value>)","secondary-container":"rgb(var(--c-secondary-container) / <alpha-value>)","on-surface":"rgb(var(--c-on-surface) / <alpha-value>)","on-secondary-fixed":"rgb(var(--c-on-secondary-fixed) / <alpha-value>)","outline-variant":"rgb(var(--c-outline-variant) / <alpha-value>)","on-tertiary":"rgb(var(--c-on-tertiary) / <alpha-value>)","background":"rgb(var(--c-background) / <alpha-value>)","tertiary-fixed-dim":"rgb(var(--c-tertiary-fixed-dim) / <alpha-value>)","on-primary":"rgb(var(--c-on-primary) / <alpha-value>)","surface-tint":"rgb(var(--c-surface-tint) / <alpha-value>)","on-primary-fixed":"rgb(var(--c-on-primary-fixed) / <alpha-value>)","secondary":"rgb(var(--c-secondary) / <alpha-value>)","surface-variant":"rgb(var(--c-surface-variant) / <alpha-value>)","surface-container":"rgb(var(--c-surface-container) / <alpha-value>)","surface-container-highest":"rgb(var(--c-surface-container-highest) / <alpha-value>)","surface":"rgb(var(--c-surface) / <alpha-value>)","on-error":"rgb(var(--c-on-error) / <alpha-value>)","on-background":"rgb(var(--c-on-background) / <alpha-value>)","inverse-surface":"rgb(var(--c-inverse-surface) / <alpha-value>)","surface-dim":"rgb(var(--c-surface-dim) / <alpha-value>)","secondary-fixed":"rgb(var(--c-secondary-fixed) / <alpha-value>)","surface-container-lowest":"rgb(var(--c-surface-container-lowest) / <alpha-value>)","on-secondary-fixed-variant":"rgb(var(--c-on-secondary-fixed-variant) / <alpha-value>)","primary":"rgb(var(--c-primary) / <alpha-value>)","secondary-fixed-dim":"rgb(var(--c-secondary-fixed-dim) / <alpha-value>)","on-error-container":"rgb(var(--c-on-error-container) / <alpha-value>)","tertiary-container":"rgb(var(--c-tertiary-container) / <alpha-value>)","on-secondary-container":"rgb(var(--c-on-secondary-container) / <alpha-value>)","error":"rgb(var(--c-error) / <alpha-value>)"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"gutter-desktop":"1.5rem","space-md":"0.75rem","margin-tablet":"1.5rem","margin-desktop":"2.5rem","gutter":"1rem","space-sm":"0.5rem","space-xl":"2rem","space-lg":"1.25rem","space-xs":"0.25rem","margin":"1rem","space-2xl":"3.5rem"},fontFamily:{"label-sm":["JetBrains Mono"],"code-body":["JetBrains Mono"],"display-mobile":["Geist"],"headline-md":["Geist"],"body-lg":["Geist"],"headline-sm":["Geist"],"label-md":["JetBrains Mono"],"body-md":["Geist"],"body-sm":["Geist"],"headline-lg":["Geist"],"headline-lg-mobile":["Geist"],"display":["Geist"]},fontSize:{"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.06em","fontWeight":"400"}],"code-body":["13px",{"lineHeight":"20px","letterSpacing":"-0.01em","fontWeight":"400"}],"display-mobile":["36px",{"lineHeight":"40px","letterSpacing":"-0.03em","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.02em","fontWeight":"500"}],"body-lg":["16px",{"lineHeight":"26px","letterSpacing":"-0.01em","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","letterSpacing":"-0.015em","fontWeight":"500"}],"label-md":["12px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"500"}],"body-md":["14px",{"lineHeight":"22px","letterSpacing":"-0.005em","fontWeight":"400"}],"body-sm":["13px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}],"headline-lg":["32px",{"lineHeight":"38px","letterSpacing":"-0.03em","fontWeight":"500"}],"headline-lg-mobile":["26px",{"lineHeight":"32px","letterSpacing":"-0.02em","fontWeight":"500"}],"display":["48px",{"lineHeight":"52px","letterSpacing":"-0.04em","fontWeight":"600"}]}}}}</script><link rel="manifest" href="manifest.json">
+ <meta name="theme-color" content="#0e0e10">
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/applications-full.html nzw/frontend/applications-full.html
+--- pristine/frontend/applications-full.html	2026-10-11 20:35:12.375401500 +0000
++++ nzw/frontend/applications-full.html	2026-10-11 20:33:01.501361359 +0000
+@@ -1,6 +1,7 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
++<script src="opai-conn.js"></script>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <title>Applications · OPAI</title>
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/briefs.html nzw/frontend/briefs.html
+--- pristine/frontend/briefs.html	2026-10-11 20:35:12.376765446 +0000
++++ nzw/frontend/briefs.html	2026-10-11 20:33:01.501600574 +0000
+@@ -1,5 +1,6 @@
+ <!doctype html>
+ <html lang="en"><head>
++<script src="opai-conn.js"></script>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <title>OPAI · Briefs</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0b0f17">
+ <style>
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/build.json nzw/frontend/build.json
+--- pristine/frontend/build.json	1970-01-01 00:00:00.000000000 +0000
++++ nzw/frontend/build.json	2026-10-11 20:33:01.559211696 +0000
+@@ -0,0 +1,5 @@
++{
++ "api_contract": 1,
++ "git_sha": "3d87be587be2",
++ "built_at": "2026-10-11T20:33:01+00:00"
++}
+\ No newline at end of file
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/dsa.html nzw/frontend/dsa.html
+--- pristine/frontend/dsa.html	2026-10-11 20:35:12.376784035 +0000
++++ nzw/frontend/dsa.html	2026-10-11 20:33:01.501919997 +0000
+@@ -1,6 +1,7 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
++<script src="opai-conn.js"></script>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+ <title>DSA Roadmap · OPAI</title>
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/onboarding.html nzw/frontend/onboarding.html
+--- pristine/frontend/onboarding.html	2026-10-11 20:35:12.377437624 +0000
++++ nzw/frontend/onboarding.html	2026-10-11 20:33:01.502155511 +0000
+@@ -1,6 +1,7 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
++<script src="opai-conn.js"></script>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+ <title>Set up your workspace · OPAI</title>
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/opai-conn.js nzw/frontend/opai-conn.js
+--- pristine/frontend/opai-conn.js	1970-01-01 00:00:00.000000000 +0000
++++ nzw/frontend/opai-conn.js	2026-10-11 20:33:01.273155398 +0000
+@@ -0,0 +1,184 @@
++/* opai-conn.js : one place that knows whether the OPAI backend is reachable.
++ *
++ * Load it as a plain (non-deferred) <script> in <head>, before any page script makes a request.
++ * It wraps window.fetch for calls to the OPAI API only; Google fonts, Google sign-in etc. are untouched.
++ *
++ *   waking   first failure on a sleeping free-tier backend: "OPAI is waking up", retrying with backoff
++ *   offline  retries used up (or no network): "Can't reach OPAI", with Retry / Reload buttons
++ *   mismatch the backend answered 404 "Not Found" for a /v1 route: a stale or partial deploy, NOT a reconnect problem
++ *   online   everything fine (banner hides)
++ *
++ * Safety rules, on purpose:
++ *   - Only GET/HEAD are retried automatically. POST/PUT/PATCH/DELETE are never replayed (a replayed approve or send
++ *     could act twice). Before such a request the layer first waits for the backend to wake, so the request is sent once,
++ *     to a backend that is up.
++ *   - A 404 is "feature unavailable" only when FastAPI says exactly {"detail":"Not Found"} (no such route). A 404 from a
++ *     handler ("Resume not found") is a normal answer and is left alone.
++ *   - Gmail is a separate service. A 401/403/429 from /outbox/{id}/send is a GMAIL problem (token expired, scope, rate
++ *     limit), reported as OPAI_CONN.gmail, and never flips OPAI to offline or triggers a reconnect loop.
++ *   - Nothing here changes data, reads tokens or stores anything except a dismissed-banner flag in sessionStorage.
++ *
++ * API: window.OPAI_CONN = { state, gmail, on(fn), retry(), awake(), version() }
++ */
++(function () {
++  'use strict';
++  if (window.OPAI_CONN) return;
++  var API = (localStorage.getItem('opa_api_base') || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8000' : 'https://opa-52ug.onrender.com')).replace(/\/+$/, '');
++  var DELAYS = [1000, 2000, 4000, 8000, 15000];
++  var realFetch = window.fetch.bind(window);
++  var listeners = [];
++  var C = { state: 'online', gmail: { state: 'unknown', message: '' }, since: Date.now(), mismatch: [] };
++  var banner = null, retrying = null;
++
++  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
++  function emit() { listeners.slice().forEach(function (f) { try { f(C); } catch (e) { /* a listener must not break requests */ } }); }
++  function isOpai(url) { return typeof url === 'string' && url.indexOf(API + '/v1/') === 0; }
++  function urlOf(input) { return typeof input === 'string' ? input : (input && input.url) || ''; }
++
++  /* ---------------- banner ---------------- */
++  var CSS = '#opai-conn{position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:99999;max-width:min(560px,calc(100vw - 20px));' +
++    'display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-radius:12px;font:500 13px/1.35 system-ui,sans-serif;' +
++    'background:var(--card,#fff);color:var(--ink,#1c1b19);border:1px solid var(--line,#d8d4c8);box-shadow:0 6px 24px rgba(0,0,0,.18)}' +
++    '#opai-conn[hidden]{display:none}#opai-conn[data-s=waking]{border-color:#c98a1b}#opai-conn[data-s=offline],#opai-conn[data-s=mismatch]{border-color:#b3402f}' +
++    '#opai-conn .sp{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:opaiconn 0.9s linear infinite}' +
++    '#opai-conn button{font:600 12px system-ui,sans-serif;padding:4px 10px;border-radius:8px;border:1px solid var(--line,#d8d4c8);background:transparent;color:inherit;cursor:pointer}' +
++    '#opai-conn button:focus-visible{outline:2px solid currentColor;outline-offset:2px}' +
++    '@keyframes opaiconn{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){#opai-conn .sp{animation:none}}';
++
++  function ensureBanner() {
++    if (banner) return banner;
++    var st = document.createElement('style'); st.textContent = CSS; (document.head || document.documentElement).appendChild(st);
++    banner = document.createElement('div'); banner.id = 'opai-conn'; banner.setAttribute('role', 'status'); banner.setAttribute('aria-live', 'polite'); banner.hidden = true;
++    var attach = function () { if (!banner.parentNode) document.body.appendChild(banner); };
++    if (document.body) attach(); else document.addEventListener('DOMContentLoaded', attach);
++    banner.addEventListener('click', function (e) {
++      var b = e.target.closest('button'); if (!b) return;
++      if (b.dataset.a === 'retry') C.retry();
++      else if (b.dataset.a === 'reload') location.reload();
++      else if (b.dataset.a === 'dismiss') { try { sessionStorage.setItem('opai_conn_dismissed', '1'); } catch (x) { /* ignore */ } banner.hidden = true; }
++    });
++    return banner;
++  }
++
++  function paint() {
++    var b = ensureBanner(), s = C.state;
++    if (s === 'online') { b.hidden = true; return; }
++    if (s === 'mismatch' && sessionStorage.getItem('opai_conn_dismissed')) { b.hidden = true; return; }
++    b.dataset.s = s; b.hidden = false;
++    if (s === 'waking') b.innerHTML = '<span class="sp" aria-hidden="true"></span><span><b>OPAI is waking up.</b> This usually takes less than a minute.</span><button data-a="retry">Retry now</button>';
++    else if (s === 'offline') b.innerHTML = '<span><b>Can\u2019t reach OPAI.</b> Check your connection. Nothing you approved or drafted is lost.</span><button data-a="retry">Retry connection</button><button data-a="reload">Reload app</button>';
++    else if (s === 'mismatch') b.innerHTML = '<span><b>OPAI is updating.</b> Some features may be unavailable for a moment.</span><button data-a="reload">Reload app</button><button data-a="dismiss" aria-label="Dismiss">\u2715</button>';
++  }
++
++  function setState(s) {
++    if (C.state === s) return;
++    C.state = s; C.since = Date.now(); paint(); emit();
++  }
++
++  /* ---------------- wake-up ---------------- */
++  /* Pings /v1/health (never has side effects) until it answers or the attempts run out. Shared by concurrent callers. */
++  function awake(maxMs) {
++    if (retrying) return retrying;
++    var deadline = Date.now() + (maxMs || 75000);
++    retrying = (async function () {
++      var i = 0;
++      while (Date.now() < deadline) {
++        try {
++          var r = await realFetch(API + '/v1/health', { cache: 'no-store' });
++          if (r.ok) { if (C.state !== 'mismatch') setState('online'); checkVersion(); return true; }
++        } catch (e) { /* still asleep */ }
++        if (C.state === 'online') setState('waking');
++        await sleep(DELAYS[Math.min(i++, DELAYS.length - 1)]);
++      }
++      setState('offline');
++      return false;
++    })().then(function (ok) { retrying = null; return ok; }, function (e) { retrying = null; throw e; });
++    return retrying;
++  }
++
++  /* ---------------- deployment mismatch: frontend build vs backend contract ---------------- */
++  var versionChecked = false;
++  function markMismatch(what) { if (C.mismatch.indexOf(what) < 0) C.mismatch.push(what); setState('mismatch'); emit(); }
++  function checkVersion() {
++    if (versionChecked) return; versionChecked = true;
++    realFetch(new URL('build.json', location.href).href, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (b) {
++      if (!b || typeof b.api_contract !== 'number') return null;              /* no stamp (e.g. local dev): nothing to compare */
++      C.frontend = b;
++      return realFetch(API + '/v1/version', { cache: 'no-store' }).then(function (r) {
++        if (r.status === 404) { markMismatch('/v1/version'); return null; }   /* backend older than the contract system itself */
++        return r.ok ? r.json().then(function (v) {
++          C.backend = v;
++          if (typeof v.api_contract === 'number' && v.api_contract < b.api_contract) markMismatch('api_contract ' + v.api_contract + ' < ' + b.api_contract);
++        }) : null;
++      });
++    }).catch(function () { /* a failed version check must never affect the app */ });
++  }
++
++  /* ---------------- fetch wrapper ---------------- */
++  function noteResponse(url, r) {
++    if (r.status < 500 && (C.state === 'waking' || C.state === 'offline')) setState('online');   /* any real answer proves the backend is up */
++    if (r.status < 500) checkVersion();
++    if (r.status === 404 && /\/v1\//.test(url)) {
++      /* FastAPI answers an unknown route with exactly {"detail":"Not Found"}; handlers use their own wording. */
++      r.clone().json().then(function (d) {
++        if (d && d.detail === 'Not Found') {
++          var p = url.replace(API, '').split('?')[0];
++          if (C.mismatch.indexOf(p) < 0) C.mismatch.push(p);
++          setState('mismatch'); emit();
++        }
++      }).catch(function () { /* not JSON: ignore */ });
++      return;
++    }
++    if (/\/outbox\/[^/]+\/send(\?|$)/.test(url)) {
++      if (r.status === 401 || r.status === 403) C.gmail = { state: 'needs_reconnect', message: r.status === 401 ? 'Gmail access expired. Reconnect Gmail to send.' : 'Gmail permission is missing. Reconnect Gmail and allow sending.' };
++      else if (r.status === 429) C.gmail = { state: 'rate_limited', message: 'Gmail rate limit reached. Try again later.' };
++      else if (r.ok) C.gmail = { state: 'connected', message: '' };
++      emit();
++    }
++  }
++
++  async function wrapped(input, init) {
++    var url = urlOf(input);
++    if (!isOpai(url)) return realFetch(input, init);
++    var method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
++    var safe = method === 'GET' || method === 'HEAD';
++    var signal = init && init.signal;
++    if (/\/v1\/health(\?|$)/.test(url)) {           /* pings: pass through, just learn from them */
++      try { var h = await realFetch(input, init); if (h.ok && C.state !== 'mismatch') setState('online'); return h; } catch (e) { throw e; }
++    }
++    if (!safe && (C.state === 'waking' || C.state === 'offline')) {
++      /* never fire a side-effecting request at a sleeping backend, and never replay it afterwards */
++      var up = await awake();
++      if (!up) { var er = new Error('OPAI is not reachable right now. Nothing was sent. Try again in a moment.'); er.code = 'OFFLINE'; throw er; }
++    }
++    for (var i = 0; ; i++) {
++      try {
++        var r = await realFetch(input, init);
++        if (safe && r.status >= 502 && r.status <= 504 && i < DELAYS.length) {
++          setState('waking'); await sleep(DELAYS[i]); if (signal && signal.aborted) throw new DOMException('Aborted', 'AbortError'); continue;
++        }
++        if (r.status >= 502 && r.status <= 504) { setState(safe ? 'offline' : 'waking'); return r; }
++        noteResponse(url, r);
++        return r;
++      } catch (e) {
++        if (e && e.name === 'AbortError') throw e;
++        if (!safe) {                                  /* may or may not have reached the server: do not replay */
++          setState('offline'); var e2 = new Error('Could not reach OPAI. Check whether it went through before trying again.'); e2.code = 'OFFLINE'; throw e2;
++        }
++        if (i >= DELAYS.length) { setState('offline'); var e3 = new Error('Could not reach OPAI. Check your connection and retry.'); e3.code = 'OFFLINE'; throw e3; }
++        setState('waking'); await sleep(DELAYS[i]);
++      }
++    }
++  }
++  window.fetch = function (input, init) { return wrapped(input, init); };
++
++  /* ---------------- public API ---------------- */
++  C.on = function (fn) { listeners.push(fn); return function () { listeners = listeners.filter(function (f) { return f !== fn; }); }; };
++  C.retry = function () { try { sessionStorage.removeItem('opai_conn_dismissed'); } catch (e) { /* ignore */ } setState('waking'); return awake(); };
++  C.awake = awake;
++  C.version = function () { return realFetch(API + '/v1/version', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); };
++  window.OPAI_CONN = C;
++
++  addEventListener('online', function () { if (C.state === 'offline') C.retry(); });
++  addEventListener('offline', function () { setState('offline'); });
++})();
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/opportunities.html nzw/frontend/opportunities.html
+--- pristine/frontend/opportunities.html	2026-10-11 20:35:12.377585395 +0000
++++ nzw/frontend/opportunities.html	2026-10-11 20:33:01.505966172 +0000
+@@ -1,6 +1,7 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
++<script src="opai-conn.js"></script>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+ <title>Opportunities · OPAI</title>
+@@ -98,7 +99,7 @@
+ async function api(path,opt){opt=opt||{};var q=path+(path.indexOf('?')<0?'?':'&')+'user_id='+encodeURIComponent(uid);
+   var r=await fetch(API+q,{method:opt.method||'GET',headers:Object.assign({'Content-Type':'application/json'},opt.headers||{}),body:opt.body?JSON.stringify(Object.assign({user_id:uid},opt.body)):undefined});
+   var d=null;try{d=await r.json()}catch(e){}
+-  if(!r.ok){var m=d&&d.detail;if(Array.isArray(m))m=m.map(function(x){return x.msg}).join('; ');throw new Error(m||('Request failed ('+r.status+')'))}return d}
++  if(!r.ok){var m=d&&d.detail;if(Array.isArray(m))m=m.map(function(x){return x.msg}).join('; ');if(r.status===404&&m==='Not Found')m='This feature is not available on the deployed backend yet.';var er=new Error(m||('Request failed ('+r.status+')'));er.status=r.status;throw er}return d}
+ function post(p,b){return api(p,{method:'POST',body:b||{}})}
+ async function ensureUser(){if(uid)return;var e=null;try{e=localStorage.getItem('opai_sc_email')}catch(x){}if(!e){location.replace('login.html');throw new Error('Please sign in')}var r=await fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(e),{method:'POST'});var d=await r.json();uid=d.user_id}
+ 
+@@ -125,7 +126,7 @@
+ 
+ /* ---------- profile ---------- */
+ async function profileModal(){
+-  var v=await api('/v1/opp/profile'),p=v.profile;
++  var v=(await api('/v1/opp/profile'))||{},p=v.profile||{};   /* an older/partial backend may answer without .profile */
+   function f(k,l,ph){return '<label>'+l+'</label><input id="pf_'+k+'" value="'+esc(Array.isArray(p[k])?p[k].join(', '):(p[k]==null?'':p[k]))+'" placeholder="'+(ph||'')+'">'}
+   modal('<h2>Opportunity profile</h2><p class="mut">Matching only uses what you confirm here. OPAI does not guess eligibility details like work authorization.</p>'+
+     (v.is_confirmed?'<div class="pill good">Confirmed</div>':'<div class="note">Not confirmed yet. Matches are provisional until you confirm.</div>')+
+@@ -265,7 +266,7 @@
+ async function render(){
+   $('tabs').innerHTML=TABS.map(function(t){return '<button role="tab" aria-selected="'+(t[0]===tab)+'" data-t="'+t[0]+'">'+t[1]+'</button>'}).join('');
+   $('view').innerHTML='<div class="skel"></div><div class="skel" style="animation-delay:.1s"></div><div class="skel" style="animation-delay:.2s"></div>';
+-  try{await ensureUser();hero();$('view').innerHTML=await V[tab]();stagger($('view'));if(tab==='prof')facSearch()}catch(e){$('view').innerHTML='<div class="card">Could not load: '+esc(e.message)+'</div>'}}
++  try{await ensureUser();hero();$('view').innerHTML=await V[tab]();stagger($('view'));if(tab==='prof')facSearch()}catch(e){$('view').innerHTML='<div class="card" role="alert"><b>'+(e.code==='OFFLINE'?'Backend unavailable':e.status===404?'Feature temporarily unavailable':'Could not load')+'</b><div class="mut" style="margin:4px 0 8px">'+esc(e.message)+'</div><button class="b alt" id="retryload">Try again</button></div>';var rb=$('retryload');if(rb)rb.onclick=render}}
+ document.addEventListener('change',function(e){if(e.target.id==='pg_type'){pgFilter=e.target.value;render()}});
+ $('tabs').addEventListener('click',function(e){var b=e.target.closest('[data-t]');if(b){tab=b.dataset.t;location.hash='#'+tab;render()}});
+ addEventListener('hashchange',function(){var h=(location.hash||'#today').slice(1);if(h!==tab&&V[h]){tab=h;render()}});
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/plan.html nzw/frontend/plan.html
+--- pristine/frontend/plan.html	2026-10-11 20:35:12.377636901 +0000
++++ nzw/frontend/plan.html	2026-10-11 20:33:01.503375054 +0000
+@@ -1,6 +1,7 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
++<script src="opai-conn.js"></script>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+ <title>Plan · OPAI</title>
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/projects.html nzw/frontend/projects.html
+--- pristine/frontend/projects.html	2026-10-11 20:35:12.377662761 +0000
++++ nzw/frontend/projects.html	2026-10-11 20:33:01.503639466 +0000
+@@ -1,6 +1,7 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
++<script src="opai-conn.js"></script>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <title>Projects · OPAI</title>
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/resume-lab.html nzw/frontend/resume-lab.html
+--- pristine/frontend/resume-lab.html	2026-10-11 20:35:12.377881119 +0000
++++ nzw/frontend/resume-lab.html	2026-10-11 20:33:01.503978359 +0000
+@@ -1,6 +1,7 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
++<script src="opai-conn.js"></script>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+ <title>Resume Lab · OPAI</title>
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/sw.js nzw/frontend/sw.js
+--- pristine/frontend/sw.js	2026-10-11 20:35:12.378291115 +0000
++++ nzw/frontend/sw.js	2026-10-11 20:33:01.498462638 +0000
+@@ -1,5 +1,5 @@
+ /* OPAI service worker: cache static shell, never cache API calls. */
+-const V='opai-v30',SHELL=['/login.html','/onboarding.html','/super-chat.html','/app.html','/today.html','/plan.html','/work.html','/resume-lab.html','/opportunities.html','/projects.html','/academics.html','/dsa.html','/agent-console.html','/opai-shared.css','/opai-theme.css','/opai-ux.js','/opai-motion2.css','/opai-clarity.js','/guide.js','/karna-popup.js','/assets/opai-logo-96.png','/icons/favicon-32.png','/manifest.json'];
++const V='opai-v31',SHELL=['/login.html','/onboarding.html','/super-chat.html','/app.html','/today.html','/plan.html','/work.html','/resume-lab.html','/opportunities.html','/projects.html','/academics.html','/dsa.html','/agent-console.html','/opai-shared.css','/opai-conn.js','/opai-theme.css','/opai-ux.js','/opai-motion2.css','/opai-clarity.js','/guide.js','/karna-popup.js','/assets/opai-logo-96.png','/icons/favicon-32.png','/manifest.json'];
+ self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>Promise.allSettled(SHELL.map(u=>c.add(u)))).then(()=>self.skipWaiting()))});
+ self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
+ self.addEventListener('fetch',e=>{const r=e.request,u=new URL(r.url);
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/today-legacy.html nzw/frontend/today-legacy.html
+--- pristine/frontend/today-legacy.html	2026-10-11 20:35:12.378333644 +0000
++++ nzw/frontend/today-legacy.html	2026-10-11 20:33:01.504384700 +0000
+@@ -1,4 +1,5 @@
+-<!DOCTYPE html><html class="" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
++<!DOCTYPE html><html class="" lang="en"><head>
++<script src="opai-conn.js"></script><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+ <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+ <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=JetBrains+Mono:wght@100..900&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"on-surface-variant":"#4A4F52","primary":"#17504A","inverse-surface":"#16181A","on-primary-fixed":"#0F3531","surface-dim":"#EDE9DF","tertiary-fixed-dim":"#BFD8D2","tertiary-container":"#E1EEEA","on-error":"#FFFFFF","on-primary-fixed-variant":"#17504A","secondary-container":"#FCE4DC","surface-container-low":"#FBFAF6","on-surface":"#16181A","error":"#B3382C","outline-variant":"#D9D4C7","surface-variant":"#E3DFD3","primary-fixed-dim":"#BFD8D2","secondary-fixed":"#FCE4DC","on-primary":"#FFFFFF","on-background":"#16181A","on-secondary-fixed":"#5C1B0F","on-secondary-fixed-variant":"#8F2F1D","on-error-container":"#7A1D12","on-tertiary":"#FFFFFF","surface":"#F6F4EE","tertiary-fixed":"#E1EEEA","inverse-primary":"#7FB5AB","on-tertiary-fixed":"#0F3531","on-secondary":"#FFFFFF","on-tertiary-container":"#17504A","on-secondary-container":"#8F2F1D","surface-bright":"#FBFAF6","inverse-on-surface":"#F6F4EE","secondary-fixed-dim":"#F5B9AB","error-container":"#FBE3DE","surface-container":"#F8F6F0","surface-container-lowest":"#F6F4EE","surface-container-high":"#EFEBE2","primary-container":"#E1EEEA","primary-fixed":"#E1EEEA","outline":"#7A7F80","surface-container-highest":"#E6E2D8","tertiary":"#3B6E66","on-tertiary-fixed-variant":"#2C5A52","surface-tint":"#17504A","background":"#F6F4EE","on-primary-container":"#17504A","secondary":"#E8705A"},borderRadius:{DEFAULT:"0.5rem",lg:"0.75rem",xl:"1rem",full:"9999px"},spacing:{"margin-desktop":"2.5rem","space-sm":"0.5rem","space-lg":"1.25rem",gutter:"1rem","margin-tablet":"1.5rem","space-xl":"2rem","space-2xl":"3.5rem","gutter-desktop":"1.5rem","space-md":"0.75rem",margin:"1rem","space-xs":"0.25rem"},fontFamily:{"display-mobile":["Geist"],"body-md":["Geist"],"body-sm":["Geist"],display:["Geist"],"body-lg":["Geist"],"headline-lg":["Geist"],"headline-sm":["Geist"],"headline-md":["Geist"],"label-md":["JetBrains Mono"],"code-body":["JetBrains Mono"],"headline-lg-mobile":["Geist"],"label-sm":["JetBrains Mono"]},fontSize:{"display-mobile":["36px",{lineHeight:"40px",letterSpacing:"-0.03em",fontWeight:"600"}],"body-md":["14px",{lineHeight:"22px",letterSpacing:"-0.005em",fontWeight:"400"}],"body-sm":["13px",{lineHeight:"18px",letterSpacing:"0em",fontWeight:"400"}],display:["48px",{lineHeight:"52px",letterSpacing:"-0.04em",fontWeight:"600"}],"body-lg":["16px",{lineHeight:"26px",letterSpacing:"-0.01em",fontWeight:"400"}],"headline-lg":["32px",{lineHeight:"38px",letterSpacing:"-0.03em",fontWeight:"500"}],"headline-sm":["18px",{lineHeight:"24px",letterSpacing:"-0.015em",fontWeight:"500"}],"headline-md":["22px",{lineHeight:"28px",letterSpacing:"-0.02em",fontWeight:"500"}],"label-md":["12px",{lineHeight:"16px",letterSpacing:"0.04em",fontWeight:"500"}],"code-body":["13px",{lineHeight:"20px",letterSpacing:"-0.01em",fontWeight:"400"}],"headline-lg-mobile":["26px",{lineHeight:"32px",letterSpacing:"-0.02em",fontWeight:"500"}],"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.06em",fontWeight:"400"}]}}}};</script><script>window.escHtml=function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]})};</script><link rel="manifest" href="manifest.json">
+ <meta name="theme-color" content="#0e0e10">
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/today.html nzw/frontend/today.html
+--- pristine/frontend/today.html	2026-10-11 20:35:12.378387424 +0000
++++ nzw/frontend/today.html	2026-10-11 20:33:01.504662939 +0000
+@@ -1,6 +1,7 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
++<script src="opai-conn.js"></script>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+ <title>Today · OPAI</title>
+diff -ruN -x __pycache__ -x .git -x .pytest_cache -x '*.pyc' pristine/frontend/work.html nzw/frontend/work.html
+--- pristine/frontend/work.html	2026-10-11 20:35:12.378417154 +0000
++++ nzw/frontend/work.html	2026-10-11 20:33:01.504890432 +0000
+@@ -1,6 +1,7 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
++<script src="opai-conn.js"></script>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+ <title>Work · OPAI</title>
