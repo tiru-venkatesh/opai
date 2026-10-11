@@ -50,11 +50,11 @@
   }
 
   var css='#kp-fab{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:65;display:flex;align-items:center;gap:8px;height:48px;padding:0 18px 0 14px;border:0;border-radius:999px;background:var(--teal,#17504A);color:#fff;font:600 14px var(--sans,system-ui);cursor:pointer;box-shadow:0 12px 30px -10px rgba(23,80,74,.6)}'+
-  '#kp-fab:hover{background:var(--teal-2,#1F6A62)}#kp-fab i{width:9px;height:9px;border-radius:50%;background:var(--coral,#E8705A);flex:none}'+
+  '#kp-fab:hover{background:var(--teal-2,#1F6A62)}#kp-fab i{width:9px;height:9px;border-radius:50%;background:var(--coral,#E8705A);flex:none}#kp .av img{width:100%;height:100%;object-fit:contain;display:block}'+
   '#kp{position:fixed;right:14px;bottom:calc(74px + env(safe-area-inset-bottom,0px));z-index:80;width:min(390px,calc(100vw - 24px));height:min(580px,calc(100vh - 150px));display:none;flex-direction:column;background:var(--card,#FBFAF6);color:var(--ink,#16181A);border:1px solid var(--hair,#E3DFD3);border-radius:18px;box-shadow:0 24px 60px -20px rgba(22,24,26,.45);overflow:hidden;font:14px/21px var(--sans,system-ui)}'+
   '#kp.open{display:flex}#kp *{box-sizing:border-box}'+
   '#kp .hd{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--hair,#E3DFD3);background:var(--paper,#F6F4EE)}'+
-  '#kp .av{width:30px;height:30px;border-radius:50%;background:var(--teal,#17504A);color:#fff;display:grid;place-items:center;font:700 13px var(--sans,system-ui);flex:none}'+
+  '#kp .av{width:30px;height:30px;border-radius:50%;background:var(--surface,#fff);border:1px solid var(--line,#d2ccbc);padding:3px;box-sizing:border-box;overflow:hidden;color:#fff;display:grid;place-items:center;font:700 13px var(--sans,system-ui);flex:none}'+
   '#kp .hd b{display:block;font-size:14px;line-height:16px}#kp .hd small{display:block;font:11px/14px var(--mono,monospace);color:var(--ink-3,#7A7F80)}#kp .hd .sp{flex:1;min-width:0}'+
   '#kp .hd a,#kp .hd button{border:0;background:none;color:var(--ink-2,#4A4F52);cursor:pointer;font:12px var(--mono,monospace);text-decoration:none;padding:6px 8px;border-radius:8px}'+
   '#kp .hd a:hover,#kp .hd button:hover{background:var(--well,#EDE9DF)}#kp .hd .x{font-size:20px;line-height:1;padding:2px 8px}'+
@@ -79,7 +79,7 @@
     var st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
     fab=document.createElement('button');fab.id='kp-fab';fab.type='button';fab.setAttribute('aria-label','Open KARNA chat');fab.innerHTML='<i></i>Ask KARNA';
     box=document.createElement('div');box.id='kp';box.setAttribute('role','dialog');box.setAttribute('aria-label','KARNA chat');
-    box.innerHTML='<div class="hd"><div class="av">K</div><div class="sp"><b>KARNA</b><small>'+esc(CTX.label)+' · workspace</small></div><button type="button" class="nw" title="Start a new chat">new</button><a href="super-chat.html" title="Open full KARNA">full ↗</a><button type="button" class="x" aria-label="Close">×</button></div><div class="th" aria-live="polite"></div><div class="ch"></div><div class="ft"><textarea rows="1" placeholder="Ask or add something…" aria-label="Message KARNA"></textarea><button type="button" class="go" aria-label="Send">➤</button></div>';
+    box.innerHTML='<div class="hd"><div class="av"><img src="assets/opai-logo-96.png" alt=""></div><div class="sp"><b>KARNA</b><small>'+esc(CTX.label)+' · workspace</small></div><button type="button" class="nw" title="Start a new chat">new</button><a href="super-chat.html" title="Open full KARNA">full ↗</a><button type="button" class="x" aria-label="Close">×</button></div><div class="th" aria-live="polite"></div><div class="ch"></div><div class="ft"><textarea rows="1" placeholder="Ask or add something…" aria-label="Message KARNA"></textarea><button type="button" class="go" aria-label="Send">➤</button></div>';
     document.body.appendChild(fab);document.body.appendChild(box);
     th=box.querySelector('.th');ta=box.querySelector('textarea');go=box.querySelector('.go');
     fab.onclick=function(){toggle()};

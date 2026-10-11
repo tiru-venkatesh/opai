@@ -175,14 +175,11 @@ def _outbox(db: Session, uid: str, msg: str):
 
 
 def _profile(db: Session, uid: str, msg: str):
-    u = db.query(User).filter(User.id == uid).first()
-    if not u:
+    from .identity import facts, summary_lines
+    f = facts(db, uid)
+    if not f:
         return 0, "I couldn't find your profile.", "", []
-    fields = [("Name", u.name), ("Degree", u.degree), ("Branch", u.branch),
-              ("CGPA", u.cgpa if u.cgpa is not None else None), ("GitHub", u.github),
-              ("Skills", u.skills), ("Highlight", u.highlight)]
-    lines = [f"- {k}: {v if v not in (None, '') else 'not set yet'}" for k, v in fields]
-    return 1, "Here is your profile.", "Your profile:", lines
+    return 1, "Here is your profile.", "Your profile:", summary_lines(f)
 
 
 def _deadlines(db: Session, uid: str, msg: str):

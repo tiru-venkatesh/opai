@@ -11,7 +11,7 @@
   var uid=null,mail=localStorage.getItem('opai_sc_email');
   function h(s){var d=document.createElement('div');d.innerHTML=s.trim();return d.firstChild}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
-  var LOGO='<svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="3" y="4" width="10" height="22" rx="5" transform="rotate(-12 8 15)" fill="#E8705A"/><rect x="17" y="4" width="10" height="22" rx="5" fill="#17504A"/></svg>';
+  var LOGO='<img class="opai-mark" src="assets/opai-logo-96.png" width="30" height="30" alt="" decoding="async">';
   function header(){
     var old=document.querySelector('body > header, body > .app > header, header');
     var hd=h('<header class="opai-hd" role="banner"><div class="in"><a class="opai-logo" href="today.html" aria-label="OPAI home">'+LOGO+'<span><b>OPAI</b><small>v8</small></span></a>'+
@@ -60,11 +60,15 @@
   }
   window.OPAI_FOCUS={start:function(title,min){save({title:title,end:Date.now()+min*60000,paused:false,left:min*60,total:min*60});paint()},stop:function(){save(null);paint()},current:load};
   /* profile + health */
+  function photoUrl(){try{var u=localStorage.getItem('opai_sc_photo')||'';return /^https:\/\//.test(u)?u:''}catch(e){return ''}}
+  function paintAv(el,name){var ph=photoUrl(),ini=((name||mail||'A')[0]||'A').toUpperCase();el.textContent=ini;
+    if(ph){var im=new Image();im.alt='';im.referrerPolicy='no-referrer';im.style.cssText='width:100%;height:100%;border-radius:50%;object-fit:cover;display:block';
+      im.onload=function(){el.textContent='';el.style.padding='0';el.style.overflow='hidden';el.appendChild(im)};im.src=ph}}
   function who(){
     var st=document.getElementById('opai-st'),av=document.getElementById('opai-av'),un=document.getElementById('opai-un'),us=document.getElementById('opai-us');if(!st)return;
     fetch(API+'/v1/health').then(function(r){if(!r.ok)throw 0;st.className='opai-st';st.querySelector('span').textContent='Online'}).catch(function(){st.className='opai-st off';st.querySelector('span').textContent='Waking up…'});
-    if(!mail)return;fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(mail),{method:'POST'}).then(function(r){return r.ok?r.json():null}).then(function(d){if(!d)return null;uid=d.user_id;return fetch(API+'/v1/profile?user_id='+encodeURIComponent(uid))}).then(function(r){return r&&r.ok?r.json():null}).then(function(p){if(!p)return;
-      var n=p.name?p.name:(mail?mail.split('@')[0]:'Account');un.textContent=n;av.textContent=(n[0]||'A').toUpperCase();us.textContent=[p.branch,p.degree].filter(Boolean).join(' · ')||'Personal workspace'}).catch(function(){});
+    if(!mail)return;fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(mail),{method:'POST'}).then(function(r){return r.ok?r.json():null}).then(function(d){if(!d)return null;uid=d.user_id;if(d.onboarding_required&&!/onboarding\.html/.test(location.pathname)){location.replace('onboarding.html');return null}return fetch(API+'/v1/profile?user_id='+encodeURIComponent(uid))}).then(function(r){return r&&r.ok?r.json():null}).then(function(p){if(!p)return;
+      var n=p.name?p.name:(mail?mail.split('@')[0]:'Account');un.textContent=n;paintAv(av,n);us.textContent=[p.branch,p.degree].filter(Boolean).join(' · ')||'Personal workspace'}).catch(function(){});
   }
   function karna(){if(isChat||window.OPAI_KARNA_POPUP||document.querySelector('script[src*="karna-popup.js"]'))return;var k=document.createElement('script');k.src='karna-popup.js';k.defer=true;document.body.appendChild(k)}
   /* keep the free-tier backend awake while a tab is open (Render sleeps after ~15 min idle); wake it early when the tab returns */

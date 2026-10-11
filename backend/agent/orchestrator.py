@@ -111,6 +111,16 @@ def handle_message(user_id: UUID, message: str, db: Session, history=None, doc_i
     from agent_service import run_jarvis_agent, summarize_recent_activity, _tool_search_opportunities, _tool_draft_outreach
     from .tool_registry import execute as execute_tool
 
+    # Questions about the user's OWN profile (name, college, year, skills, ...): answered from their rows, no LLM.
+    if not doc_ids:
+        try:
+            from .identity import answer as identity_answer
+            ident = identity_answer(db, str(user_id), message)
+        except Exception:
+            ident = None
+        if ident:
+            return JarvisChatResponse(action="chat", reply=ident["reply"], payload=ident["payload"])
+
     # Read-only lookups (lists / counts / deadlines / profile) are answered straight from the
     # user's own DB rows: exact, no LLM, no router. Anything that looks like an action falls through.
     try:

@@ -58,3 +58,17 @@ Opportunity(requirements, field_sources), OutboxItem(approved_at, sent_via), mod
   Not run: the endpoint path in `agent_service.py` (needs FastAPI/SQLAlchemy/Groq).
 * Not done on purpose: a JSON-schema reply format. The agent already uses native tool calling, which is the structured
   action channel; a second schema would duplicate it.
+
+## Mobile comfort pass (phones)
+Measured first with headless Chromium at 360, 390 and 768 px (every main page, stubbed API). No page scrolled sideways;
+the real problems were: wide floating KARNA button covering page buttons, floating bottom bar hiding the last content,
+sideways tab rows with no edge cue, fields under 16px (iPhones zoom on focus) and 30-34px tap targets.
+Fixed in one block at the end of `frontend/opai-shared.css` (`@media (max-width:760px)`):
+* fields get 16px text; buttons/selects/summaries/tabs get a 40px minimum height
+* the floating KARNA button becomes a compact round icon; pages get bottom padding so the bar never hides content
+* `.tabs` rows fade at the edge and snap
+* `landing.html`: email field `size="1"` (16px text otherwise widened the page by 23px)
+* `sw.js` cache bumped so phones pick up the new CSS (hard refresh once)
+Checked in KARNA chat on this base: New and History at the far left, History opens from the left, large centered heading,
+dark theme works, phone layout uses the drawer + round compose button, popup chat is a bottom sheet. No change needed.
+Not covered: real devices, landscape phones, and Telugu/Hindi text lengths. The audit scripts are not shipped.

@@ -23,7 +23,7 @@ a{color:inherit}
 @keyframes down{to{opacity:1;transform:none}}
 .nav-left,.nav-right{display:flex;align-items:center;gap:8px;pointer-events:auto;position:relative}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none;padding:4px 10px 4px 4px;border-radius:99px;background:rgba(255,255,255,.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.logo svg{width:28px;height:28px;flex-shrink:0}
+.logo svg,.logo img{width:28px;height:28px;flex-shrink:0}
 .brand-name{font-family:var(--display);font-size:15px;font-weight:600;display:none}
 .menu-btn{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:#fff;padding:3px 12px 3px 3px;border-radius:99px;border:0;cursor:pointer;font:500 11px var(--body);box-shadow:0 2px 8px rgba(0,0,0,.12);transition:transform .2s var(--ease)}
 .menu-btn:hover{transform:scale(1.03)}
@@ -41,7 +41,7 @@ a{color:inherit}
  .navbar{padding:calc(24px + env(safe-area-inset-top,0px)) 32px 24px}
  .brand-name,.tags-pill{display:inline-flex}.brand-name{display:block}
  .right-pill span{display:block}
- .logo svg,.menu-btn .ic,.right-pill .ic{width:32px;height:32px}
+ .logo svg,.logo img,.menu-btn .ic,.right-pill .ic{width:32px;height:32px}
 }
 
 /* ---------- hero ---------- */
@@ -116,7 +116,7 @@ section{padding:72px 0}
 .notify .btn{height:auto;padding:0 18px;border-radius:8px;background:#fff;color:var(--ink)}
 .notify small{display:block;font-size:12px;color:#8E9AB8;margin-top:10px}
 footer{padding:32px 0;color:var(--ink-3);font-size:13px}
-footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}footer a{color:inherit;text-decoration:underline;text-underline-offset:3px}footer a:hover{color:var(--accent)}
 @media(max-width:900px){.grid{grid-template-columns:1fr 1fr}.steps{grid-template-columns:1fr}.cta{grid-template-columns:1fr;padding:32px}}
 @media(max-width:640px){.personas,.grid{grid-template-columns:1fr}section{padding:52px 0}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}.navbar,.hero-foot,.video-wrapper{opacity:1!important;transform:none!important}}
@@ -124,6 +124,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#F6F4EE">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="opai-shared.css">
 <style>.btn.p{background:var(--accent);color:#fff}.btn.p:hover{background:var(--accent-d)}.tags-pill,.chip{font-family:"JetBrains Mono",ui-monospace,monospace}.cta .btn.p{background:#fff;color:var(--accent)}</style>
@@ -133,14 +134,14 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 <header class="navbar">
   <div class="nav-left">
     <a class="logo" href="#top" aria-label="OPAI home">
-      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><g transform="rotate(-35 16 16)"><rect x="7" y="5" width="7" height="22" rx="3.5" fill="#16181A"/><rect x="18" y="5" width="7" height="22" rx="3.5" fill="#17504A"/></g></svg>
+      <img src="assets/opai-logo-96.png" width="28" height="28" alt="" style="display:block;flex-shrink:0">
       <span class="brand-name">OPAI</span>
     </a>
     <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="menu-panel">
       <span class="ic" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>Menu
     </button>
     <nav class="menu-panel" id="menu-panel">
-      <a href="#why">The problem</a><a href="#how">How it works</a><a href="#inside">What's inside</a><a href="#faq">Questions</a><a href="#access">Open OPAI</a>
+      <a href="#about">What OPAI is</a><a href="#why">The problem</a><a href="#how">How it works</a><a href="#inside">What's inside</a><a href="#faq">Questions</a><a href="#access">Open OPAI</a>
     </nav>
     <div class="tags-pill"><span>Applications</span><span>Outreach</span></div>
   </div>
@@ -173,6 +174,18 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       </div>
     </div>
   </div>
+
+  <section id="about"><div class="wrap why">
+    <span class="eyebrow">What OPAI is</span>
+    <h2>A personal workspace and AI assistant for students and independent builders.</h2>
+    <p>OPAI brings your applications, outreach emails, projects, exams and client work into one workspace. Its assistant, KARNA, answers questions from your own data and helps you draft, plan and track. You stay in control: nothing is sent or remembered without your approval.</p>
+    <div class="personas">
+      <div class="persona"><div class="tag">Why Google sign-in</div><h3>Sign in without another password</h3><p>You can sign in with Google. OPAI receives only your name, email address and profile picture, and uses them to create your private account. Email and password sign-up is also available.</p></div>
+      <div class="persona"><div class="tag">Gmail, only if you choose</div><h3>Send your own approved emails</h3><p>If you click Connect Gmail, OPAI asks for the gmail.send permission, which allows sending an email you approved from your own account. OPAI cannot read, search or delete your email.</p></div>
+      <div class="persona"><div class="tag">AI use</div><h3>Assistance, not misuse</h3><p>KARNA helps with planning, drafting and answering questions about your workspace. OPAI does not use Google APIs to generate AI-generated non-consensual intimate imagery (NCII) or any other harmful content, and does not allow such use.</p></div>
+      <div class="persona"><div class="tag">Your data</div><h3>Private, and deletable</h3><p>Your data is not sold or used for advertising or AI training. Read the <a href="/privacy">Privacy Policy</a> and <a href="/terms">Terms of Service</a>, or ask for deletion at any time.</p></div>
+    </div>
+  </div></section>
 
   <section id="why"><div class="wrap why">
     <span class="eyebrow">The problem</span>
@@ -211,7 +224,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
   <section id="faq"><div class="wrap faq">
     <div class="head"><span class="eyebrow">Questions</span><h2>Before you open it</h2></div>
-    <details open><summary>Where does my data live?</summary><p>On your device, in the browser, until you connect your own backend. Nothing is sent anywhere by default.</p></details>
+    <details open><summary>Where does my data live?</summary><p>Your account and workspace are stored in OPAI's database, separate for each user, and some settings and recent chats stay in your browser. Chat messages and the workspace excerpts needed to answer them go to our AI provider, Groq, to generate replies. We do not sell your data. See the <a href="/privacy">Privacy Policy</a>.</p></details>
     <details><summary>Will it send emails on its own?</summary><p>No. Every draft sits in the Outbox until you approve it, and sending only happens through your own Gmail sign-in.</p></details>
     <details><summary>Do I need an account?</summary><p>Yes. Sign up with your email or Google to get your own private workspace. Sending real email also needs Gmail access, which you approve separately.</p></details>
     <details><summary>Is this only for job hunting?</summary><p>No — it's for anyone running more than one thread at once: applications, outreach, freelance clients and coursework, side by side.</p></details>
@@ -221,19 +234,19 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div class="cta">
       <div>
         <h2>Stop running six jobs from six tabs.</h2>
-        <p>OPAI is free to open and keeps your data on your own device until you connect a backend.</p>
+        <p>OPAI is free to open. Your data stays in your own private workspace, and you can ask for it to be deleted at any time.</p>
         <div class="btns"><a class="btn p" href="app.html">Open OPAI</a><a class="btn s" href="login.html">Sign in</a></div>
       </div>
       <div class="notify">
         <label for="notify-email">Want to know when it's ready for you?</label>
-        <div><input id="notify-email" type="email" placeholder="you@example.com"><a class="btn" id="notify-btn" href="mailto:hello@opa-demo.app">Notify me</a></div>
-        <small>Opens your mail app, addressed to a placeholder inbox for this demo.</small>
+        <div><input id="notify-email" type="email" placeholder="you@example.com" size="1"><a class="btn" id="notify-btn" href="mailto:tiruvenkatesh123@gmail.com?subject=OPAI%20access">Notify me</a></div>
+        <small>Opens your mail app, addressed to OPAI support.</small>
       </div>
     </div>
   </div></section>
 </main>
 
-<footer><div class="wrap"><span>OPAI — Operating Agent</span><span>Built by Tiru</span></div></footer>
+<footer><div class="wrap"><span>OPAI — Operating Agent · Built by Tiru</span><span><a href="/privacy">Privacy Policy</a> · <a href="/terms">Terms of Service</a> · <a href="mailto:tiruvenkatesh123@gmail.com">Contact</a></span></div></footer>
 
 <script>
 const mb=document.getElementById('menu-btn'),mp=document.getElementById('menu-panel');

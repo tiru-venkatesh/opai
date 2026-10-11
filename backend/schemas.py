@@ -330,6 +330,10 @@ class MemoryItemOut(BaseModel):
     last_verified_at: Optional[Any] = None
 
 
+class MemoryItemEdit(BaseModel):
+    content: str
+
+
 class MemoryItemConfirm(BaseModel):
     status: str = Field(description="'active' to confirm, 'forgotten' to reject/forget")
 

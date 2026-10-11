@@ -62,6 +62,21 @@ class User(Base):
     github = Column(String)
     skills = Column(Text)      # comma-separated, matched against opportunity/contact tags
     highlight = Column(Text)   # one-line resume highlight used in outreach drafts
+    # ---- onboarding (see onboarding_api.py). profile_setup_completed is NULL for accounts that existed
+    # before onboarding shipped: those users are treated as done and are never forced through it. ----
+    date_of_birth = Column(Date)          # optional; never returned by /v1/profile
+    timezone = Column(String)
+    course_type = Column(String)          # btech | degree | diploma | mtech | mba_mca | other
+    current_year = Column(Integer)
+    current_semester = Column(Integer)
+    college_name = Column(String)
+    linkedin_url = Column(String)
+    portfolio_url = Column(String)
+    primary_goals = Column(JSON, default=list)
+    daily_focus_minutes = Column(Integer)
+    preferred_study_time = Column(String)  # morning | afternoon | evening | night
+    profile_setup_completed = Column(Boolean)
+    onboarding_step = Column(Integer, default=0)   # 0 = not started .. 4 = all steps saved
 
 
 class Resume(Base):

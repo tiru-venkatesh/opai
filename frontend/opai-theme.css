@@ -20,7 +20,6 @@ html[data-theme=dark] .opai-dock{background:rgba(23,27,26,.86)}
 html[data-theme=dark] .opai-user .av{background:var(--teal)}
 html[data-theme=dark] #opai-guide{background:rgba(0,0,0,.55)}
 html[data-theme=dark] #opai-guide a.gi,html[data-theme=dark] #opai-guide input{background:var(--card-2)}
-html[data-theme=dark] .opai-logo svg rect:last-child{fill:#3AA394}
 
 /* hard-coded light surfaces inside pages */
 html[data-theme=dark] .conf button,html[data-theme=dark] .en button,html[data-theme=dark] dialog textarea,
@@ -159,8 +158,8 @@ html[data-theme=dark] .o-spot{background-image:radial-gradient(420px circle at v
 .opai-hd{transition:height .3s var(--o-ease),box-shadow .3s,background-color .3s}
 .opai-hd.o-sc{height:56px;box-shadow:0 10px 30px -18px rgba(0,0,0,.35)}
 body.opai-pad{transition:padding-top .3s var(--o-ease)}
-.opai-logo svg rect{transition:transform .5s var(--o-spring);transform-box:fill-box;transform-origin:50% 100%}
-.opai-logo:hover svg rect:first-child{transform:rotate(-18deg)}.opai-logo:hover svg rect:last-child{transform:rotate(14deg) translateY(-1px)}
+.opai-mark{display:block;transition:transform .7s var(--o-spring),filter .3s}
+.opai-logo:hover .opai-mark{transform:rotate(90deg) scale(1.06);filter:drop-shadow(0 0 8px #2fd4c080)}
 @keyframes oLive{0%,100%{box-shadow:0 0 0 0 rgba(47,143,130,.55)}70%{box-shadow:0 0 0 7px rgba(47,143,130,0)}}
 .opai-timer.on i{animation:oLive 2s ease-out infinite}
 .opai-st.off i{animation:none}

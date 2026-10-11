@@ -53,6 +53,16 @@ def render_context(d: Dict[str, Any]) -> str:
     u = [f"Name: {d['name']}"] if d.get("name") else []
     if d.get("track"):
         u.append(f"Track: {d['track']}")
+    if d.get("college"):
+        u.append(f"College: {d['college']}")
+    if d.get("year"):
+        u.append(f"Year of study: {d['year']}")
+    if d.get("semester"):
+        u.append(f"Semester: {d['semester']}")
+    if d.get("skills"):
+        u.append("Skills: " + ", ".join(d["skills"][:15]))
+    if d.get("goals"):
+        u.append("Goals: " + "; ".join(d["goals"][:5]))
     if d.get("timezone"):
         u.append(f"Timezone: {d['timezone']}")
     if d.get("available_min") is not None:
@@ -108,6 +118,11 @@ def collect_context(db: Any, uid: str, today: Optional[date] = None) -> Dict[str
             d["name"] = u.name if u.name and u.name != "User" else None
             d["track"] = " ".join(x for x in (u.degree, u.branch) if x) or None
             d["timezone"] = (u.preferences or {}).get("timezone")
+            from .identity import facts as _facts          # college / year / semester / skills / goals (no DOB, no email)
+            _f = _facts(db, uid)
+            for k in ("college", "year", "semester", "skills", "goals"):
+                if _f.get(k):
+                    d[k] = _f[k]
 
     def plan():
         import today_engine

@@ -20,7 +20,7 @@
       if(sc)best.push([sc,S[i]])}
     best.sort(function(a,b){return b[0]-a[0]});return best.slice(0,3).map(function(x){return x[1]});
   }
-  function isGuideQuery(q){q=String(q||'').trim();if(/^\/guide\b/i.test(q))return true;return RE.test(q)&&q.length<90&&find(q).length>0}
+  function isGuideQuery(q){q=String(q||'').trim();if(/^\/guide\b/i.test(q))return true;if(/\b(where|which|what)\b.{0,12}\b(do i|am i|i)\b.{0,8}\b(study|studying|go to college)\b|\bmy (college|university|name|email|year|semester|skills)\b(?!.*\b(add|where|how|ela|kahan)\b)/i.test(q)&&!/\b(add|ela|kaise|how)\b/i.test(q))return false;return RE.test(q)&&q.length<90&&find(q).length>0}
   function mapMd(list){return (list||S).map(function(s){return '- **'+s.t+'** — '+s.d+' ['+'open'+']('+s.h+')'}).join('\n')}
   /* answer text uses plain markdown; relative links are rendered by the host page */
   function answer(q,lang){
