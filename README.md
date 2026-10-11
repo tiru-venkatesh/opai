@@ -326,17 +326,31 @@ python scripts/check_deploy.py --help
 
 For deeper system context, see [`ARCHITECTURE.md`](ARCHITECTURE.md), `STABILITY_NOTES.md`, `MERGE_NOTES.md`, and the versioned changelog files.
 
-## Security and data handling
+## Security, privacy, and launch readiness
 
-OPAI can process resumes, academic information, personal notes, and contact details. Treat the database, uploaded files, environment variables, logs, and browser storage as sensitive.
+OPAI can process resumes, academic records, personal notes, contact details, and application history. Treat the database, uploaded documents, environment variables, logs, browser storage, and repository history as sensitive.
 
-- Keep API keys and database credentials in environment variables, not frontend source or commits.
-- Set restrictive `CORS_ORIGINS` values in production.
-- Review access control, authorization, and deployment settings before exposing a backend publicly; a development login endpoint exists and should not be treated as production authentication by itself.
-- Review uploaded or sample documents before making a repository public. **This archive currently includes PDF files under `backend/resumes/`; remove or sanitize any real people's resumes before public distribution and add that runtime-data path to `.gitignore` if it should not be versioned.**
-- Avoid storing real user data in test fixtures or checked-in SQLite databases.
+**Production-readiness status: blocked pending an authentication and authorization fix.** In this source snapshot, `POST /v1/auth/dev-login` accepts a caller-supplied email and returns an internal user ID without verifying the caller's identity. Several frontend pages invoke this endpoint using browser-stored email. Many API routes also accept a client-supplied `user_id`, which is not proof of identity. Do not onboard real users or process real personal documents until server-verified authentication is enforced across every protected API route and account ownership is tested end to end.
 
-This README is not a security audit. Perform a deployment-specific review before handling real users' data.
+Before any public deployment:
+
+- Verify provider-signed identity tokens on the backend; derive the acting account from the verified identity, not a caller-controlled email or `user_id`.
+- Configure exact HTTPS `CORS_ORIGINS` for the deployed frontend. CORS is not authorization and cannot replace backend access controls.
+- Configure PostgreSQL or a verified persistent volume, then test backup, restore, and persistence across a redeploy/restart.
+- Never commit API secrets, private database credentials, real resumes, academic records, uploads, or generated databases.
+- Inspect both the current source tree and Git history before publishing. Removing a private file from the latest tree does not erase historical copies.
+- Keep consequential actions behind server-enforced approval and verify that the exact approved payload is what executes.
+- Make privacy, retention/deletion, and guest/demo claims consistent with the actual deployed data flow.
+
+See [`SECURITY_MVP_AUDIT.md`](SECURITY_MVP_AUDIT.md) for the source-level findings, limitations, and launch checklist. The review is not a penetration test or a production security certification.
+
+## MVP validation rule
+
+- If users cannot complete the core task, fix or simplify the workflow first.
+- If users complete it but do not return, rethink the value proposition or end-to-end workflow before adding features.
+- If repeat usage is evident, prioritize the most-requested refinement.
+
+An MVP is the smallest reliable experience that delivers the core user value—not the longest feature list.
 
 ## Contributing
 
@@ -356,8 +370,16 @@ Open a pull request with the motivation, behavior change, configuration requirem
 
 No `LICENSE` file is present in this repository at the time this README was written. Until a license is added, do not assume the code is available for unrestricted reuse.
 
-## Creator
+## Creators
 
-**Tiru Venkatesh** — building OPAI as an exploration of personal AI, retrieval-augmented generation, agentic workflows, full-stack engineering, and human-approved automation.
+OPAI is being built with a focus on useful personal AI, thoughtful product design, and reliable agentic workflows.
+
+- **Tiru Venkatesh — Engineering & AI**  
+  JNTUK UCEN. Focused on building OPAI's AI systems, retrieval-augmented generation (RAG), agent workflows, and full-stack implementation.
+
+- **Himesh — Product Management**  
+  IIT (ISM). Focused on product direction, user needs, feature prioritization, and shaping OPAI into a cohesive personal operating agent.
+
+Together, the goal is to turn scattered tasks, context, and workflows into one useful operating layer—with people staying in control of important actions.
 
 <p align="center"><strong>Less time managing tools. More time moving forward.</strong></p>
