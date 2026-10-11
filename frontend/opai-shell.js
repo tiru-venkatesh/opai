@@ -75,3 +75,6 @@
       addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();window.OPAI_GUIDE&&OPAI_GUIDE.open('')}})}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
+
+/* mobile: scroll the top nav so the current page's tab is visible */
+(function(){var n=0,t=setInterval(function(){var p=document.querySelector('.opai-pills'),c=p&&p.querySelector('[aria-current]');if(c){p.scrollLeft=Math.max(0,c.offsetLeft-(p.clientWidth-c.offsetWidth)/2);clearInterval(t)}else if(++n>20)clearInterval(t)},100)})();

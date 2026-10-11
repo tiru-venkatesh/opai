@@ -211,3 +211,23 @@ input:focus,textarea:focus,select:focus{box-shadow:0 0 0 4px rgba(47,143,130,.15
   ::view-transition-old(root),::view-transition-new(root){animation:none!important}
   .tabs [aria-selected=true],.chip[aria-pressed=true],.seg button.on,.opai-pills a[aria-current=page]{animation:none!important}
 }
+
+/* ===== MOBILE + TOUCH (shared by every page) ===== */
+html{-webkit-text-size-adjust:100%}
+a,button,input,select,textarea,summary,[role=button]{touch-action:manipulation}
+@media (max-width:760px){
+  /* let the last content scroll clear of the floating dock + Ask KARNA button (pages with their own composer excluded) */
+  body:not(:has(#ktools)){padding-bottom:calc(148px + env(safe-area-inset-bottom,0px))}
+  body #kp-fab{height:44px;padding:0 14px 0 12px;font-size:13px;bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  /* top nav scrolls sideways: fade the edge so it reads as scrollable */
+  .opai-pills{padding-right:22px;scroll-snap-type:x proximity;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent)}
+  .opai-pills a{scroll-snap-align:center}
+}
+@media (pointer:coarse){
+  .opai-logo,.opai-pills a{min-height:40px;display:inline-flex;align-items:center}
+  button,.btn,button.chip,select,summary,[role=button]{min-height:40px}
+  .hbtn{min-width:40px;min-height:40px;justify-content:center}
+  input[type=checkbox],input[type=radio]{width:20px;height:20px}
+  /* 16px stops iOS from zooming the page when a field is focused */
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),select,textarea{font-size:16px}
+}
