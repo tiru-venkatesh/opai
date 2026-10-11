@@ -38,3 +38,10 @@ Opportunity(requirements, field_sources), OutboxItem(approved_at, sent_via), mod
   /v1/opp/saved. Service-worker cache bumped (opai-v18) so browsers pick up the new shell.
 * Backend additions taken from the theme zip: POST /v1/resume-lab/import-files, import_resumes_dir.py, the
   Tenglish capture regex fix in agent/capture.py, and its updated tests.
+
+## No guest accounts (verified)
+* `/v1/auth/guest` does not exist (asserted by `test_frontend_contract.py::test_guest_endpoint_is_gone`).
+* No page offers "Continue as guest" and no page creates a guest user.
+* `dev-login` now refuses the old `guest-<12 hex>@opa.local` addresses (403) until `python purge_guests.py --apply` deletes them.
+* Reminder: `dev-login` still trusts any email it is given. It is the identity bridge for every page. Replace it with a
+  server-verified session (verify the Firebase ID token on the backend) before putting real user data behind it.

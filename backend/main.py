@@ -257,6 +257,10 @@ def serve_ui():
 # ================= AUTH (DEV) =================
 @app.post("/v1/auth/dev-login")
 def dev_login(email: str = "student@university.edu", name: str = None, db: Session = Depends(get_db)):
+    # Guest accounts no longer exist. Refuse the old guest address pattern so a leftover guest row
+    # cannot be opened by anyone until `python purge_guests.py --apply` removes it.
+    if re.fullmatch(r"guest-[0-9a-f]{12}@opa\.local", (email or "").strip().lower()):
+        raise HTTPException(status_code=403, detail="Guest accounts no longer exist. Sign in with your own account.")
     user = db.query(User).filter(User.email == email).first()
     if not user:
         # Dev-login must create an empty, owned workspace. Never inject a
