@@ -265,7 +265,10 @@ def dev_login(email: str = "student@university.edu", name: str = None, db: Sessi
     # cannot be opened by anyone until `python purge_guests.py --apply` removes it.
     if re.fullmatch(r"guest-[0-9a-f]{12}@opa\.local", (email or "").strip().lower()):
         raise HTTPException(status_code=403, detail="Guest accounts no longer exist. Sign in with your own account.")
-    user = db.query(User).filter(User.email == email).first()
+    # Emails are case-insensitive: "Foo@Gmail.com" and "foo@gmail.com" must be one account,
+    # otherwise the same person gets two workspaces and their data seems to go missing.
+    email = (email or "").strip().lower()
+    user = db.query(User).filter(func.lower(User.email) == email).first()
     if not user:
         # Dev-login must create an empty, owned workspace. Never inject a
         # fictional profile, CGPA, targets, tasks, or academic data.

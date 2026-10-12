@@ -8,7 +8,7 @@
   var NAV=[['Today','today.html'],['KARNA','super-chat.html'],['Plan','plan.html'],['Work','work.html'],['Overview','app.html']];
   var isChat=/super-chat/.test(path);
   var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
-  var uid=null,mail=localStorage.getItem('opai_sc_email');
+  var uid=null,mail=((localStorage.getItem('opai_sc_email')||'').trim().toLowerCase())||null;
   function h(s){var d=document.createElement('div');d.innerHTML=s.trim();return d.firstChild}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   var LOGO='<img class="opai-mark" src="assets/opai-logo-96.png" width="30" height="30" alt="" decoding="async">';
@@ -64,10 +64,12 @@
   function paintAv(el,name){var ph=photoUrl(),ini=((name||mail||'A')[0]||'A').toUpperCase();el.textContent=ini;
     if(ph){var im=new Image();im.alt='';im.referrerPolicy='no-referrer';im.style.cssText='width:100%;height:100%;border-radius:50%;object-fit:cover;display:block';
       im.onload=function(){el.textContent='';el.style.padding='0';el.style.overflow='hidden';el.appendChild(im)};im.src=ph}}
+  /* Render free tier sleeps: the first calls fail with a network error or 502/503/504. Retry with backoff so the avatar, name and onboarding check still work after the wake-up. */
+  function devLogin(n){return fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(mail),{method:'POST'}).then(function(r){if(r.status>=502&&r.status<=504&&n<5)throw 0;return r},function(){throw 0}).catch(function(){if(n>=5)return null;return new Promise(function(ok){setTimeout(ok,2000*(n+1))}).then(function(){return devLogin(n+1)})})}
   function who(){
     var st=document.getElementById('opai-st'),av=document.getElementById('opai-av'),un=document.getElementById('opai-un'),us=document.getElementById('opai-us');if(!st)return;
     fetch(API+'/v1/health').then(function(r){if(!r.ok)throw 0;st.className='opai-st';st.querySelector('span').textContent='Online'}).catch(function(){st.className='opai-st off';st.querySelector('span').textContent='Waking up…'});
-    if(!mail)return;fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(mail),{method:'POST'}).then(function(r){return r.ok?r.json():null}).then(function(d){if(!d)return null;uid=d.user_id;if(d.onboarding_required&&!/onboarding\.html/.test(location.pathname)){location.replace('onboarding.html');return null}return fetch(API+'/v1/profile?user_id='+encodeURIComponent(uid))}).then(function(r){return r&&r.ok?r.json():null}).then(function(p){if(!p)return;
+    if(!mail)return;devLogin(0).then(function(r){return r&&r.ok?r.json():null}).then(function(d){if(!d)return null;uid=d.user_id;if(d.onboarding_required&&!/onboarding\.html/.test(location.pathname)){location.replace('onboarding.html');return null}return fetch(API+'/v1/profile?user_id='+encodeURIComponent(uid))}).then(function(r){return r&&r.ok?r.json():null}).then(function(p){if(!p)return;
       var n=p.name?p.name:(mail?mail.split('@')[0]:'Account');un.textContent=n;paintAv(av,n);us.textContent=[p.branch,p.degree].filter(Boolean).join(' · ')||'Personal workspace'}).catch(function(){});
   }
   function karna(){if(isChat||window.OPAI_KARNA_POPUP||document.querySelector('script[src*="karna-popup.js"]'))return;var k=document.createElement('script');k.src='karna-popup.js';k.defer=true;document.body.appendChild(k)}
