@@ -79,6 +79,8 @@ from resume_lab_api import router as resume_lab_router
 app.include_router(resume_lab_router)
 from onboarding_api import router as onboarding_router
 app.include_router(onboarding_router)
+from feedback_api import router as feedback_router
+app.include_router(feedback_router)
 
 _CORS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()] or ["*"]
 app.add_middleware(

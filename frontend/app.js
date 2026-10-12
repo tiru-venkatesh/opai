@@ -3403,7 +3403,7 @@ function viewReview() {
     revShape() +
     '<section class="panel rv-form"><h3>Rate OPAI' + (avg ? ' <span class="pill good">' + avg + ' / 5 avg</span>' : '') + '</h3><div class="rv-stars" id="rv-stars">' + stars(REV_STARS, true) + '</div>' +
     '<div class="field"><label for="rv-text">What works, what should change?</label><textarea id="rv-text" rows="3" placeholder="Your feedback on OPAI"></textarea></div>' +
-    '<button class="btn" onclick="revSubmit()">Save review</button></section>' +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn" onclick="revSubmit()">Save review</button><a class="btn ghost" href="feedback.html?area=Overview&from=app.html">Open Feedback &amp; Ideas</a></div></section>' +
     (S.reviews.length ? '<section class="panel"><h3>Your reviews</h3>' + S.reviews.slice().reverse().map(r => '<div class="rv-item"><div class="rv-stars sm">' + stars(r.stars, false) + '<time>' + new Date(r.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</time></div>' + (r.text ? '<p>' + esc(r.text) + '</p>' : '') + '</div>').join('') + '</section>' : '');
 }
 function revStar(k) {
@@ -3414,7 +3414,16 @@ function revSubmit() {
   const t = ($('rv-text') || {}).value || '';
   if (!REV_STARS) { toast('Pick a star rating first', true); return; }
   S.reviews = S.reviews || []; S.reviews.push({ stars: REV_STARS, text: t.trim(), at: new Date().toISOString() });
+  const stars = REV_STARS;
   REV_STARS = 0; save(); render(true); toast('Review saved');
+  revSend('general', 'Rating: ' + stars + ' / 5', t.trim() || 'Rated OPAI ' + stars + ' out of 5.', 'Overview');
+}
+/* Also send ratings and suggestions to the backend feedback inbox, so they are not only stored in this browser. */
+async function revSend(type, title, description, area) {
+  try {
+    const uid = await ensureUser();
+    await api('/v1/feedback', { method: 'POST', body: JSON.stringify({ user_id: uid, type, title: title.slice(0, 140), description: description.slice(0, 4000), product_area: area || 'Overview', importance: 'medium', app_version: 'v8', page_path: 'app.html' }) });
+  } catch (e) { /* local copy is already saved; the full Feedback page shows server errors */ }
 }
 
 /* ===== Review: Shape OPAI (suggest + roadmap + what's new in one section) ===== */
@@ -3460,6 +3469,8 @@ function revIdeaAdd() {
   S.ideas = S.ideas || [];
   S.ideas.push({ id: 'i' + Date.now(), cat: ($('rv-cat') || {}).value || 'Other', page: ($('rv-pg') || {}).value || 'Any page', text: t, votes: 1, mine: true, status: 'New', at: new Date().toISOString() });
   save(); render(true); toast('Suggestion saved');
+  const last = S.ideas[S.ideas.length - 1];
+  revSend(last.cat === 'Bug' ? 'bug' : 'idea', last.text.slice(0, 80), last.text, last.page === 'Any page' ? 'Other' : (last.page === 'KARNA' || last.page === 'Today' ? last.page : 'Other'));
 }
 function revIdeaVote(id) { const i = (S.ideas || []).find(x => x.id === id); if (!i) return; i.mine = !i.mine; i.votes = Math.max(0, i.votes + (i.mine ? 1 : -1)); save(); render(true); }
 function revIdeaStatus(id) { const i = (S.ideas || []).find(x => x.id === id); if (!i) return; i.status = i.status === 'New' ? 'Planned' : i.status === 'Planned' ? 'Done' : 'New'; save(); render(true); }
