@@ -12,10 +12,12 @@
 :root{--bg:#F6F4EE;--ink:#16181A;--mut:#5a6064;--pri:#17504A;--line:#e4e0d6;--font:'Geist',system-ui,sans-serif}
 *{box-sizing:border-box}html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--ink);font:15px/22px var(--font);display:flex;flex-direction:column}
-.wk-bar{position:sticky;top:64px;z-index:20;background:rgba(246,244,238,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:0 12px}
+.wk-bar{position:sticky;top:64px;z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 92%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:0 12px}
 .wk-tabs{max-width:1100px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
 .wk-tabs button{border:0;background:none;padding:12px 14px;font:500 14px var(--font);color:var(--mut);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}
+.wk-tabs button:hover{color:var(--ink)}
 .wk-tabs button[aria-selected=true]{color:var(--pri);border-color:var(--pri);font-weight:600}
+html[data-theme=dark] .wk-tabs button[aria-selected=true]{color:var(--teal-2);border-color:var(--teal-2)}
 .wk-tabs button:focus-visible{outline:2px solid var(--pri);outline-offset:-2px}
 .wk-frames{flex:1;position:relative;min-height:0}
 iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);display:none}
