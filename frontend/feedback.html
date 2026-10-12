@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Feedback & Ideas · OPAI</title>
+<style>
+:root{--bg:#F6F4EE;--surface:#FBFAF6;--surface-2:#F2EFE7;--surface-3:#E3DFD3;--text:#16181A;--muted:#4A4F52;--dim:#7A7F80;--line:#D2CCBC;--primary:#17504A;--on-primary:#fff;--good:#2E8B5E;--warn:#B7791F;--bad:#B3433B}
+html[data-theme=dark]{--bg:#0f1312;--surface:#171b1a;--surface-2:#1c2120;--surface-3:#2a3130;--text:#ECEAE3;--muted:#A3AAA6;--dim:#868D89;--line:#38413f;--primary:#2F8F82;--good:#4FBF8A;--warn:#E3A844;--bad:#E0746B}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--primary)}button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:6px}.top a.back{text-decoration:none;color:var(--muted);font-size:13px;border:1px solid var(--line);padding:5px 10px;border-radius:8px;background:var(--surface)}
+h1{font-size:22px;margin:14px 0 2px}.sub{color:var(--muted);margin:0 0 16px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.tab{background:none;border:0;padding:9px 14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab[aria-selected=true]{color:var(--primary);border-color:var(--primary);font-weight:600}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.types{display:grid;gap:10px}
+.type{display:flex;gap:12px;align-items:center;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer}
+.type:hover{border-color:var(--primary);background:var(--surface-2)}.type b{display:block}.type span{color:var(--muted);font-size:13px}.type i{font-style:normal;font-size:22px}
+label.f{display:block;font-weight:600;margin:14px 0 5px;font-size:14px}
+input[type=text],textarea,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+textarea{min-height:110px;resize:vertical}input:focus,textarea:focus,select:focus{outline:2px solid color-mix(in srgb,var(--primary) 40%,transparent);border-color:var(--primary)}
+.seg{display:flex;gap:8px}.seg label{flex:1}.seg input{position:absolute;opacity:0}
+.seg span{display:block;text-align:center;padding:9px;border:1px solid var(--line);border-radius:10px;cursor:pointer;background:var(--bg)}
+.seg input:checked+span{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}.seg input:focus-visible+span{outline:2px solid var(--primary)}
+.chk{display:flex;gap:9px;align-items:flex-start;margin:16px 0;color:var(--muted);font-size:14px}.chk input{margin-top:4px}
+.ctx{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}.chip{font-size:12px;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+.note{font-size:12.5px;color:var(--dim);margin-top:8px}
+.btn{background:var(--primary);color:var(--on-primary);border:0;border-radius:10px;padding:10px 18px;cursor:pointer;font-weight:600}.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:none;color:var(--muted);border:1px solid var(--line);font-weight:500}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.err{color:var(--bad);font-size:13px;margin-top:8px}
+.item{margin-bottom:12px}.item h3{margin:0 0 2px;font-size:15px}.item p{margin:6px 0;color:var(--muted);font-size:14px;white-space:pre-wrap}
+.meta{font-size:12px;color:var(--dim);display:flex;gap:10px;flex-wrap:wrap}
+.pill{font-size:11px;border-radius:999px;padding:1px 8px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted)}
+.steps{display:flex;gap:0;margin:10px 0 2px;align-items:center}
+.steps .s{flex:1;text-align:center;font-size:10.5px;color:var(--dim);position:relative;padding-top:14px}
+.steps .s:before{content:"";position:absolute;top:3px;left:50%;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:var(--surface-3)}
+.steps .s:after{content:"";position:absolute;top:7px;left:-50%;width:100%;height:2px;background:var(--surface-3);z-index:0}.steps .s:first-child:after{display:none}
+.steps .s.on{color:var(--text)}.steps .s.on:before,.steps .s.on:after{background:var(--primary)}.steps .s:before{z-index:1}
+.np{color:var(--warn);font-size:12.5px;margin-top:6px}
+.empty{text-align:center;color:var(--muted);padding:34px 10px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.filters select,.filters input{width:auto;flex:1;min-width:120px}
+.adm{display:grid;gap:8px;margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}.adm .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+[hidden]{display:none!important}
+.done{text-align:center;padding:26px 10px}.done b{font-size:18px;display:block;margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="back" id="back" href="javascript:history.back()">← Back</a></div>
+  <h1>Feedback &amp; Ideas</h1>
+  <p class="sub">Tell us what to improve or fix. Optional, short, and it never interrupts your work.</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-share" aria-selected="true">Share</button>
+    <button class="tab" role="tab" id="t-mine" aria-selected="false">My feedback</button>
+    <button class="tab" role="tab" id="t-admin" aria-selected="false" hidden>Admin inbox</button>
+  </div>
+
+  <!-- SHARE -->
+  <section id="p-share">
+    <div id="s-pick">
+      <h2 style="font-size:16px;margin:0 0 10px">What would you like to share?</h2>
+      <div class="types">
+        <button class="type" data-type="idea"><i>💡</i><div><b>Suggest an improvement</b><span>An idea or a refinement you'd like to see</span></div></button>
+        <button class="type" data-type="bug"><i>🐞</i><div><b>Report a problem</b><span>Something broke or behaved unexpectedly</span></div></button>
+        <button class="type" data-type="general"><i>💬</i><div><b>Share general feedback</b><span>Opinions, confusion, anything else</span></div></button>
+      </div>
+    </div>
+
+    <div id="s-form" class="card" hidden>
+      <div class="row" style="justify-content:space-between"><b id="f-type"></b><button class="btn ghost" id="f-change" type="button">Change</button></div>
+      <label class="f" for="f-title">Title</label>
+      <input type="text" id="f-title" maxlength="140" placeholder="Short summary" autocomplete="off">
+      <label class="f" for="f-desc">Tell us more</label>
+      <textarea id="f-desc" maxlength="4000" placeholder="What were you trying to do? What would make it better?"></textarea>
+      <label class="f" for="f-area">Where in OPAI?</label>
+      <select id="f-area"></select>
+      <label class="f">How important is this to you?</label>
+      <div class="seg" role="radiogroup">
+        <label><input type="radio" name="imp" value="low"><span>Low</span></label>
+        <label><input type="radio" name="imp" value="medium" checked><span>Medium</span></label>
+        <label><input type="radio" name="imp" value="high"><span>High</span></label>
+      </div>
+      <label class="chk"><input type="checkbox" id="f-follow"> Allow OPAI to contact me about this</label>
+      <div class="ctx" id="f-ctx" aria-label="Attached automatically"></div>
+      <p class="note">Attached automatically: page, app version, time<span id="f-reqnote"></span>. Your chats, files and personal data are never attached.</p>
+      <div class="row" style="margin-top:14px"><button class="btn" id="f-submit" type="button">Submit feedback</button><button class="btn ghost" id="f-cancel" type="button">Cancel</button></div>
+      <div class="err" id="f-err" role="alert" hidden></div>
+    </div>
+
+    <div id="s-done" class="card done" hidden>
+      <b>Thanks, feedback received.</b>
+      <div style="color:var(--muted)">You can follow its status under My feedback.</div>
+      <div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="d-mine" type="button">View my feedback</button><button class="btn ghost" id="d-more" type="button">Share another</button></div>
+    </div>
+  </section>
+
+  <!-- MINE -->
+  <section id="p-mine" hidden><div id="mine-list"></div></section>
+
+  <!-- ADMIN -->
+  <section id="p-admin" hidden>
+    <div class="card" id="a-gate">
+      <label class="f" for="a-key" style="margin-top:0">Admin key</label>
+      <div class="row"><input type="text" id="a-key" autocomplete="off" style="flex:1" placeholder="FEEDBACK_ADMIN_KEY"><button class="btn" id="a-go" type="button">Open inbox</button></div>
+      <div class="err" id="a-err" hidden></div>
+    </div>
+    <div id="a-body" hidden>
+      <div class="filters">
+        <select id="a-type"><option value="">All types</option><option value="bug">Bug</option><option value="idea">Idea</option><option value="general">General</option></select>
+        <select id="a-area"><option value="">All areas</option></select>
+        <select id="a-status"><option value="">All statuses</option></select>
+        <button class="btn ghost" id="a-out" type="button">Lock</button>
+      </div>
+      <div id="a-list"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const LS_BASE = 'opa_api_base';
+  const DEFAULT_API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8000' : 'https://opa-52ug.onrender.com';
+  const base = () => (localStorage.getItem(LS_BASE) || DEFAULT_API).replace(/\/+$/, '');
+  const AREAS = ['Today','KARNA','Plan','Work','Opportunities','Reminders','Overview','Login & account','Other'];
+  const STEPS = ['Submitted','Reviewing','Planned','In progress','Released'];
+  const TYPE_LABEL = { idea: 'Suggestion', bug: 'Problem report', general: 'General feedback' };
+  const q = new URLSearchParams(location.search);
+  const ctx = {
+    area: q.get('area') || 'Other',
+    page: q.get('from') || document.referrer.replace(location.origin + '/', '').split('?')[0] || '',
+    version: q.get('v') || localStorage.getItem('opai_version') || 'v8',
+    request: (q.get('req') || '').slice(0, 80)
+  };
+  try { const t = localStorage.getItem('opai_theme') || localStorage.getItem('theme'); if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t; } catch (e) {}
+  if (ctx.page) $('back').href = ctx.page; else $('back').href = 'javascript:history.back()';
+
+  async function api(path, opts = {}) {
+    const res = await fetch(base() + path, { headers: opts.body ? { 'Content-Type': 'application/json', ...(opts.headers || {}) } : (opts.headers || {}), ...opts });
+    if (!res.ok) { let d = ''; try { d = (await res.json()).detail || ''; } catch (e) {} if (Array.isArray(d)) d = d.map((x) => x.msg).join('; '); const err = new Error(d || res.status + ' ' + res.statusText); err.status = res.status; throw err; }
+    const t = await res.text(); return t ? JSON.parse(t) : null;
+  }
+  let uid = null;
+  async function ensureUser() {
+    if (uid) return uid;
+    const email = q.get('email') || localStorage.getItem('opai_sc_email');
+    if (!email) { location.replace('login.html'); throw new Error('Please sign in'); }
+    localStorage.setItem('opai_sc_email', email);
+    uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(email), { method: 'POST' })).user_id;
+    return uid;
+  }
+
+  /* tabs */
+  function tab(name) {
+    ['share', 'mine', 'admin'].forEach((n) => { $('p-' + n).hidden = n !== name; $('t-' + n).setAttribute('aria-selected', n === name); });
+    if (name === 'mine') loadMine();
+  }
+  ['share', 'mine', 'admin'].forEach((n) => $('t-' + n).onclick = () => tab(n));
+  if (location.hash === '#admin') $('t-admin').hidden = false;
+
+  /* share flow */
+  $('f-area').innerHTML = AREAS.map((a) => '<option>' + esc(a) + '</option>').join('');
+  if (!AREAS.includes(ctx.area)) $('f-area').insertAdjacentHTML('afterbegin', '<option>' + esc(ctx.area) + '</option>');
+  $('f-area').value = ctx.area;
+  $('f-reqnote').textContent = ctx.request ? ', request ID' : '';
+  let type = '';
+  const stamp = () => new Date().toISOString();
+  function chips() {
+    $('f-ctx').innerHTML = ['Area: ' + $('f-area').value, ctx.page ? 'Page: ' + ctx.page : '', 'Version ' + ctx.version, ctx.request ? 'Request ' + ctx.request : '']
+      .filter(Boolean).map((c) => '<span class="chip">' + esc(c) + '</span>').join('');
+  }
+  $('f-area').onchange = chips;
+  document.querySelectorAll('.type').forEach((b) => b.onclick = () => {
+    type = b.dataset.type; $('f-type').textContent = TYPE_LABEL[type];
+    $('f-title').placeholder = type === 'bug' ? 'What went wrong?' : type === 'idea' ? 'What should change?' : 'Short summary';
+    $('s-pick').hidden = true; $('s-form').hidden = false; chips(); $('f-title').focus();
+  });
+  function reset() { $('f-title').value = ''; $('f-desc').value = ''; $('f-follow').checked = false; $('f-err').hidden = true; document.querySelector('input[name=imp][value=medium]').checked = true; $('f-area').value = ctx.area; }
+  $('f-change').onclick = $('f-cancel').onclick = () => { $('s-form').hidden = true; $('s-pick').hidden = false; };
+  $('d-more').onclick = () => { reset(); $('s-done').hidden = true; $('s-pick').hidden = false; };
+  $('d-mine').onclick = () => tab('mine');
+  $('f-submit').onclick = async () => {
+    const title = $('f-title').value.trim(), err = $('f-err'); err.hidden = true;
+    if (!title) { err.textContent = 'Please add a short title.'; err.hidden = false; $('f-title').focus(); return; }
+    $('f-submit').disabled = true;
+    try {
+      const user_id = await ensureUser();
+      await api('/v1/feedback', { method: 'POST', body: JSON.stringify({
+        user_id, type, title, description: $('f-desc').value.trim(), product_area: $('f-area').value,
+        importance: document.querySelector('input[name=imp]:checked').value, app_version: ctx.version,
+        page_path: ctx.page, request_id: ctx.request, allow_follow_up: $('f-follow').checked }) });
+      $('s-form').hidden = true; $('s-done').hidden = false;
+    } catch (e) {
+      err.textContent = e.name === 'TypeError' ? 'Could not reach the server (it may be waking up). Your text is still here, try again in a minute.' : e.message;
+      err.hidden = false;
+    } finally { $('f-submit').disabled = false; }
+  };
+
+  /* my feedback */
+  const dateFmt = (s) => { const d = new Date(s); return isNaN(d) ? '' : d.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' }); };
+  async function loadMine() {
+    const box = $('mine-list'); box.innerHTML = '<div class="empty">Loading…</div>';
+    try {
+      const r = await api('/v1/feedback/mine?user_id=' + encodeURIComponent(await ensureUser()));
+      if (!r.items.length) { box.innerHTML = '<div class="empty">Nothing here yet. Your submissions and their status will show up here.</div>'; return; }
+      box.innerHTML = r.items.map((i) => {
+        const idx = STEPS.indexOf(i.status), np = i.status === 'Not planned';
+        return '<div class="card item"><div class="row" style="justify-content:space-between"><h3>' + esc(i.title) + '</h3><span class="pill">' + esc(TYPE_LABEL[i.type] || i.type) + '</span></div>' +
+          '<div class="meta"><span>' + esc(i.product_area) + '</span><span>' + dateFmt(i.created_at) + '</span>' + (i.type === 'idea' && i.votes > 0 ? '<span>' + i.votes + ' want this too</span>' : '') + '</div>' +
+          (i.description ? '<p>' + esc(i.description) + '</p>' : '') +
+          '<div class="steps" aria-label="Status: ' + esc(i.status) + '">' + STEPS.map((s, n) => '<div class="s' + (!np && n <= idx ? ' on' : '') + '">' + s + '</div>').join('') + '</div>' +
+          (np ? '<div class="np">Not planned for now. Thanks for the thought, it is still on record.</div>' : '') + '</div>';
+      }).join('');
+    } catch (e) { box.innerHTML = '<div class="empty">' + esc(e.name === 'TypeError' ? 'Could not reach the server. Try again in a minute.' : e.message) + '</div>'; }
+  }
+
+  /* admin inbox (private; needs FEEDBACK_ADMIN_KEY) */
+  let key = sessionStorage.getItem('opai_fb_admin') || '';
+  const H = () => ({ 'X-Admin-Key': key });
+  async function loadAdmin() {
+    const qs = new URLSearchParams({ type: $('a-type').value, product_area: $('a-area').value, status: $('a-status').value });
+    const r = await api('/v1/admin/feedback?' + qs, { headers: H() });
+    if ($('a-status').options.length === 1) $('a-status').insertAdjacentHTML('beforeend', r.statuses.map((s) => '<option>' + esc(s) + '</option>').join(''));
+    if ($('a-area').options.length === 1) $('a-area').insertAdjacentHTML('beforeend', AREAS.map((s) => '<option>' + esc(s) + '</option>').join(''));
+    $('a-gate').hidden = true; $('a-body').hidden = false;
+    $('a-list').innerHTML = r.items.length ? r.items.map((i) => (
+      '<div class="card item" data-id="' + esc(i.id) + '"><div class="row" style="justify-content:space-between"><h3>' + esc(i.title) + '</h3><span class="pill">' + esc(i.type) + '</span></div>' +
+      '<div class="meta"><span>' + esc(i.product_area) + '</span><span>' + esc(i.importance) + ' importance</span><span>' + dateFmt(i.created_at) + '</span><span>' + esc(i.app_version) + '</span>' +
+      (i.page_path ? '<span>' + esc(i.page_path) + '</span>' : '') + (i.request_id ? '<span>req ' + esc(i.request_id) + '</span>' : '') +
+      '<span>' + i.votes + ' votes</span><span>' + (i.allow_follow_up ? 'follow-up OK' : 'no follow-up') + '</span><span>user ' + esc(String(i.user_id).slice(0, 8)) + '</span><span>id ' + esc(i.id) + '</span></div>' +
+      (i.description ? '<p>' + esc(i.description) + '</p>' : '') +
+      '<div class="adm"><div class="two"><select class="a-st">' + r.statuses.map((s) => '<option' + (s === i.status ? ' selected' : '') + '>' + esc(s) + '</option>').join('') + '</select>' +
+      '<select class="a-pr"><option value="">Priority</option>' + ['P0', 'P1', 'P2', 'P3'].map((p) => '<option' + (p === i.priority ? ' selected' : '') + '>' + p + '</option>').join('') + '</select></div>' +
+      '<input type="text" class="a-dup" placeholder="Duplicate of (feedback id)" value="' + esc(i.duplicate_of) + '">' +
+      '<textarea class="a-nt" placeholder="Internal notes (never shown to users)" style="min-height:60px">' + esc(i.admin_notes) + '</textarea>' +
+      '<div class="row"><button class="btn a-save" type="button">Save</button><span class="meta a-msg"></span></div></div></div>'
+    )).join('') : '<div class="empty">No feedback matches.</div>';
+  }
+  async function openAdmin() {
+    $('a-err').hidden = true;
+    try { await loadAdmin(); } catch (e) { sessionStorage.removeItem('opai_fb_admin'); $('a-gate').hidden = false; $('a-body').hidden = true; $('a-err').textContent = e.status === 403 ? 'Wrong admin key.' : e.message; $('a-err').hidden = false; }
+  }
+  $('a-go').onclick = () => { key = $('a-key').value.trim(); if (!key) return; sessionStorage.setItem('opai_fb_admin', key); openAdmin(); };
+  $('a-out').onclick = () => { sessionStorage.removeItem('opai_fb_admin'); key = ''; $('a-key').value = ''; $('a-gate').hidden = false; $('a-body').hidden = true; };
+  ['a-type', 'a-area', 'a-status'].forEach((id) => $(id).onchange = openAdmin);
+  $('a-list').onclick = async (e) => {
+    const btn = e.target.closest('.a-save'); if (!btn) return;
+    const card = btn.closest('.item'), msg = card.querySelector('.a-msg'); btn.disabled = true; msg.textContent = '';
+    try {
+      await api('/v1/admin/feedback/' + encodeURIComponent(card.dataset.id), { method: 'PATCH', headers: H(), body: JSON.stringify({
+        status: card.querySelector('.a-st').value, priority: card.querySelector('.a-pr').value,
+        duplicate_of: card.querySelector('.a-dup').value, admin_notes: card.querySelector('.a-nt').value }) });
+      msg.textContent = 'Saved ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    } catch (er) { msg.textContent = er.message; } finally { btn.disabled = false; }
+  };
+  if (location.hash === '#admin' && key) { tab('admin'); openAdmin(); }
+  else if (location.hash === '#admin') tab('admin');
+  else if (location.hash === '#mine') tab('mine');
+})();
+</script>
+</body>
+</html>

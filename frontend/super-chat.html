@@ -423,6 +423,18 @@ html[data-theme=dark] #hist{border-right-color:var(--line)}
 .msg.agent .av.av-k img{border-radius:0;object-fit:contain}
 html[data-theme=dark] .msg.agent .av.av-k{background:#10151a;border-color:var(--line)}
 @media(max-width:720px){.msg.agent .av.av-k{box-shadow:0 2px 10px #0000001f}}
+/* thinking: KARNA logo spins fast in a circle */
+@keyframes klogoSpin{to{transform:rotate(360deg)}}
+#typing .av-k img{animation:klogoSpin .7s linear infinite;transform-origin:50% 50%;will-change:transform}
+@media(prefers-reduced-motion:reduce){#typing .av-k img{animation-duration:2s}}
+.ctools #b-fb span{display:none}.ctools #b-fb{padding:5px 9px;text-decoration:none}.ms-slot .ctools #b-fb span{display:inline}
+.fbcard{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 14px;max-width:460px}
+.fbcard h4{margin:0 0 8px;font-size:13px;color:var(--muted);font-weight:600}
+.fbcard dl{margin:0;display:grid;grid-template-columns:62px 1fr;gap:6px 10px;font-size:13.5px;align-items:start}.fbcard dt{color:var(--dim)}.fbcard dd{margin:0;overflow-wrap:anywhere}
+.fbcard select,.fbcard textarea{width:100%;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px}.fbcard textarea{min-height:64px;resize:vertical}
+.fbcard .fbact{display:flex;gap:8px;margin-top:12px}.fbcard button{font:inherit;font-size:13px;border-radius:8px;padding:6px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--muted)}
+.fbcard button.pri{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}.fbcard button:disabled{opacity:.5}
+.fbcard .fbnote{font-size:12px;color:var(--dim);margin-top:8px}
 </style>
 <style id="karna-bar-clear">
 /* Desktop: the New / History strip has no bar of its own, only the buttons float */
@@ -519,6 +531,7 @@ html[data-theme=dark] .msg.agent .av.av-k{background:#10151a;border-color:var(--
       <button class="hbtn" id="b-know" type="button" aria-expanded="false" aria-controls="know" title="Upload documents and notes KARNA can cite"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2zM4 19a2 2 0 0 1 2-2h12"/></svg><span>Knowledge <b class="mono" id="kcount">0</b></span></button>
       <button class="hbtn" id="b-exp" type="button" aria-label="Export chat as Markdown" title="Download this chat as Markdown"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Export</span></button>
       <button class="hbtn" id="b-guide" type="button" aria-label="Guide: which section does what" title="Which section does what (or type /guide)" onclick="window.OPAI_GUIDE&&OPAI_GUIDE.open('')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/></svg><span>Guide</span></button>
+      <a class="hbtn" id="b-fb" href="feedback.html?area=KARNA&from=super-chat.html" title="Feedback &amp; Ideas" aria-label="Feedback and ideas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span>Feedback</span></a>
       </div>
       <div class="sugg" id="sugg"></div>
     </div>
@@ -968,6 +981,45 @@ html[data-theme=dark] .msg.agent .av.av-k{background:#10151a;border-color:var(--
   const SYSTEM_GEN_BASE = 'You are KARNA, a helpful, concise assistant for a student and independent builder. Use short paragraphs and lists where useful. If you are not sure, say so.';
   const SYSTEM_GEN = () => SYSTEM_GEN_BASE + LANG_HINT[getLang()];
   function setBusy(b) { busy = b; $('send').hidden = b; $('stop').hidden = !b; $('q').disabled = false; }
+  /* ---------- feedback draft: KARNA only drafts, you confirm; no chat context is attached ---------- */
+  const FB_RE = /^\s*(suggest(\s+that)?\b|report a (bug|problem)\b|bug\s*:|problem\s*:|feedback\s*:|i (don'?t|do not) understand\b)/i;
+  const FB_AREAS = ['Today','KARNA','Plan','Work','Opportunities','Reminders','Overview','Login & account','Other'];
+  const FB_TYPE = { idea: 'Suggestion', bug: 'Problem report', general: 'General feedback' };
+  function feedbackDraft(text) {
+    const type = /^\s*(report a (bug|problem)|bug\s*:|problem\s*:)/i.test(text) ? 'bug' : /^\s*suggest/i.test(text) ? 'idea' : 'general';
+    let msg = text.replace(/^\s*(report a (bug|problem)|bug|problem|feedback)\s*:\s*/i, '').trim();
+    const low = text.toLowerCase();
+    const area = /remind/.test(low) ? 'Reminders' : /opportunit|match score/.test(low) ? 'Opportunities' : /\bplan\b|study/.test(low) ? 'Plan' : /\btoday\b/.test(low) ? 'Today' : /\bwork\b|internship|dsa|resume/.test(low) ? 'Work' : /overview/.test(low) ? 'Overview' : 'KARNA';
+    const d = { type, area, msg };
+    const t = document.createElement('div'); t.className = 'msg agent';
+    t.innerHTML = '<div class="av av-k" aria-hidden="true">' + KLOGO + '</div><div class="body"><div class="bubble"><div class="fbcard"></div></div></div>';
+    const card = t.querySelector('.fbcard');
+    const view = () => {
+      card.innerHTML = '<h4>Feedback draft</h4><dl><dt>Type</dt><dd>' + FB_TYPE[d.type] + '</dd><dt>Area</dt><dd>' + esc(d.area) + '</dd><dt>Message</dt><dd>“' + esc(d.msg) + '”</dd></dl>' +
+        '<div class="fbact"><button class="pri" data-a="submit" type="button">Submit</button><button data-a="edit" type="button">Edit</button><button data-a="cancel" type="button">Cancel</button></div>' +
+        '<div class="fbnote">Nothing is sent until you press Submit. Your chat is not attached.</div>';
+    };
+    const edit = () => {
+      card.innerHTML = '<h4>Edit draft</h4><dl><dt>Area</dt><dd><select>' + FB_AREAS.map((a) => '<option' + (a === d.area ? ' selected' : '') + '>' + esc(a) + '</option>').join('') + '</select></dd><dt>Message</dt><dd><textarea maxlength="4000">' + esc(d.msg) + '</textarea></dd></dl>' +
+        '<div class="fbact"><button class="pri" data-a="save" type="button">Done</button></div>';
+      card.querySelector('textarea').focus();
+    };
+    card.onclick = async (e) => {
+      const b = e.target.closest('button'); if (!b) return; const a = b.dataset.a;
+      if (a === 'edit') edit();
+      else if (a === 'save') { d.area = card.querySelector('select').value; d.msg = card.querySelector('textarea').value.trim() || d.msg; view(); }
+      else if (a === 'cancel') { card.innerHTML = '<h4>Feedback draft</h4><div class="fbnote">Cancelled. Nothing was sent.</div>'; }
+      else if (a === 'submit') {
+        b.disabled = true;
+        try {
+          const user_id = await ensureUser();
+          await api('/v1/feedback', { method: 'POST', body: JSON.stringify({ user_id, type: d.type, title: d.msg.slice(0, 80), description: d.msg, product_area: d.area, importance: 'medium', app_version: localStorage.getItem('opai_version') || 'v8', page_path: 'super-chat.html', allow_follow_up: false }) });
+          card.innerHTML = '<h4>Feedback submitted</h4><div class="fbnote">Thanks. Track it in <a href="feedback.html#mine">Feedback &amp; Ideas</a>.</div>';
+        } catch (er) { b.disabled = false; const n = card.querySelector('.fbnote'); if (n) n.textContent = 'Could not submit: ' + (explain(er) || 'try again.'); }
+      }
+    };
+    view(); thread.insertBefore(t, gate); scrollEnd();
+  }
   function typingEl() {
     const t = document.createElement('div'); t.className = 'msg agent'; t.id = 'typing';
     t.innerHTML = '<div class="av av-k" aria-hidden="true">' + KLOGO + '</div><div class="body"><div class="bubble"><span class="typing"><i></i><i></i><i></i><em>thinking 0.0s</em></span></div></div>';
@@ -997,6 +1049,7 @@ html[data-theme=dark] .msg.agent .av.av-k{background:#10151a;border-color:var(--
       const gm = { role: 'agent', action: 'general', mode: 'smalltalk', text: OPAI_GUIDE.answer(text, getLang()), ts: Date.now() };
       c.msgs.push(gm); addMsg(gm, true); c.ts = Date.now(); save(); return;
     }
+    if (!opts.regen && !opts.retry && !files.length && FB_RE.test(text)) { feedbackDraft(text); c.ts = Date.now(); save(); return; }
     c.ts = Date.now(); save(); setBusy(true);
     const t = typingEl(), t0 = performance.now(); ctrl = new AbortController();
     try {
