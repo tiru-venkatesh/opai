@@ -8,12 +8,11 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Header, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 
-_url = os.getenv("DATABASE_URL", "sqlite:///./opa_feedback.db")
-if _url.startswith("postgres://"):
-    _url = _url.replace("postgres://", "postgresql://", 1)
-engine = create_engine(_url, future=True, pool_pre_ping=True)
+# Reuse the app-wide engine: database.py pins the psycopg2 driver for Postgres and handles
+# SQLite args, so feedback shares the same DB (and survives redeploys when DATABASE_URL is Postgres).
+from database import engine
 
 TYPES = {"idea", "bug", "general"}
 STATUSES = ["Submitted", "Reviewing", "Planned", "In progress", "Released", "Not planned"]
