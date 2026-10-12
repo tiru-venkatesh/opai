@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Review · OPAI</title>
+<meta name="theme-color" content="#F6F4EE">
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-ux.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans)}
+.pf{max-width:880px;margin:0 auto;padding:28px 16px 90px}
+.pf h1{font:700 26px/32px var(--sans);letter-spacing:-.02em;margin:0 0 4px}
+.pf .sub{color:var(--ink-2);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--hair);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card h2{font:600 16px/22px var(--sans);margin:0 0 4px}
+.card .hint{color:var(--ink-3);font-size:13px;margin:0 0 14px}
+.mods{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mods div{padding:12px 14px;border:1px solid var(--hair);border-radius:12px;background:var(--paper)}
+.mods b{display:block;font-weight:600}.mods span{font-size:13px;color:var(--ink-2)}
+.stars{display:flex;gap:4px;margin:6px 0 14px}
+.star{background:none;border:0;font-size:32px;line-height:1;cursor:pointer;color:var(--line-2);padding:2px}
+.star.on{color:#E0A82E}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field label{font-weight:600;font-size:13px;color:var(--ink-2)}
+.field input,.field textarea,.field select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--paper);color:var(--ink);font:inherit}
+.field textarea{min-height:84px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{background:var(--teal);color:#fff;border:0;border-radius:10px;padding:10px 18px;font:600 14px var(--sans);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink-2);border:1px solid var(--line-2);font-weight:500}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.msg{font-size:13px;color:var(--ink-2)}.msg.err{color:var(--bad)}.msg.ok{color:var(--ok)}
+.item{padding:12px 0;border-top:1px solid var(--hair)}.item:first-child{border-top:0}
+.item b{font-weight:600}.item .meta{font-size:12px;color:var(--ink-3)}.item p{margin:4px 0 0;color:var(--ink-2);font-size:14px;overflow-wrap:anywhere}
+.pill{font-size:12px;padding:2px 10px;border-radius:999px;background:var(--teal-soft);color:var(--teal);border:1px solid var(--hair)}
+.empty{color:var(--ink-3);font-size:14px}
+@media(max-width:640px){.mods,.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="pf" id="main">
+  <h1>Review</h1>
+  <p class="sub">What OPAI is, how it is working for you, and a direct line to tell us what to change.</p>
+
+  <section class="card" aria-label="About OPAI">
+    <h2>OPAI, your operating agent</h2>
+    <p class="hint">OPAI keeps your applications, projects, exams and outreach in one place, and KARNA helps you run them. It acts, you approve: nothing is sent without your say.</p>
+    <div class="mods">
+      <div><b>KARNA</b><span>Chat copilot that knows your workspace and drafts actions for you to approve.</span></div>
+      <div><b>Today &amp; Plan</b><span>One queue of what to do now, built from deadlines, exams and tasks.</span></div>
+      <div><b>Work</b><span>Applications, opportunities, projects and requests in one place.</span></div>
+      <div><b>Academics &amp; DSA</b><span>Exams, courses and study workflow with revision tracking.</span></div>
+      <div><b>Internships &amp; Outbox</b><span>Draft emails to professors and clients. Nothing sends without approval.</span></div>
+      <div><b>Resume Lab</b><span>Keep your resume and tailor it per application.</span></div>
+    </div>
+  </section>
+
+  <section class="card" aria-label="Rate OPAI">
+    <h2>Rate OPAI</h2>
+    <p class="hint">How is it working for you so far?</p>
+    <div class="stars" id="stars" role="radiogroup" aria-label="Rating"></div>
+    <div class="field"><label for="r-text">What works, what should change? (optional)</label><textarea id="r-text" maxlength="3000" placeholder="Your feedback on OPAI"></textarea></div>
+    <div class="row"><button class="btn" id="r-send" type="button">Send rating</button><span class="msg" id="r-msg" role="status"></span></div>
+  </section>
+
+  <section class="card" aria-label="Suggest or report">
+    <h2>Suggest a feature or report a problem</h2>
+    <p class="hint">Goes straight to the OPAI feedback inbox.</p>
+    <div class="two">
+      <div class="field"><label for="s-type">Type</label><select id="s-type"><option value="idea">Suggestion</option><option value="bug">Problem report</option></select></div>
+      <div class="field"><label for="s-area">Which page?</label><select id="s-area"></select></div>
+    </div>
+    <div class="field"><label for="s-title">Short title</label><input id="s-title" maxlength="140" placeholder="e.g. Add dark mode to Plan"></div>
+    <div class="field"><label for="s-desc">Details</label><textarea id="s-desc" maxlength="3900" placeholder="What should OPAI do, fix or change?"></textarea></div>
+    <div class="row"><button class="btn" id="s-send" type="button">Submit</button><a class="btn ghost" href="feedback.html?from=review.html">Open Feedback &amp; Ideas</a><span class="msg" id="s-msg" role="status"></span></div>
+  </section>
+
+  <section class="card" aria-label="Your recent feedback">
+    <h2>Your recent feedback</h2>
+    <div id="mine" class="empty">Loading…</div>
+  </section>
+</main>
+<script>
+(function(){
+  var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
+  var AREAS=['Any page','Today','KARNA','Plan','Work','Opportunities','Resume Lab','Academics','Overview','Login & account','Other'];
+  function $(i){return document.getElementById(i)}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  var mail=((localStorage.getItem('opai_sc_email')||'').trim().toLowerCase())||null, uid=null, stars=0;
+  $('s-area').innerHTML=AREAS.map(function(a){return '<option>'+esc(a)+'</option>'}).join('');
+  function paintStars(){$('stars').innerHTML=[1,2,3,4,5].map(function(n){return '<button type="button" class="star'+(n<=stars?' on':'')+'" role="radio" aria-checked="'+(n===stars)+'" aria-label="'+n+' of 5" data-n="'+n+'">★</button>'}).join('')}
+  $('stars').onclick=function(e){var b=e.target.closest('.star');if(!b)return;stars=+b.dataset.n;paintStars()};
+  paintStars();
+  function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
+  /* Render's free tier may be asleep: retry sign-in a few times before giving up */
+  async function ensureUser(){
+    if(uid)return uid;
+    if(!mail){location.replace('login.html?next=review.html');throw new Error('Please sign in')}
+    var last;
+    for(var i=0;i<5;i++){
+      try{var r=await fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(mail),{method:'POST'});
+        if(r.ok){var d=await r.json();uid=d.user_id;return uid}
+        last=new Error('Sign-in failed ('+r.status+')'); if(r.status<500)break}
+      catch(e){last=new Error('Could not reach the server. It may be waking up, try again in a minute.')}
+      await wait(2000*(i+1));
+    }
+    throw last;
+  }
+  async function post(type,title,desc,area,msgEl,btn,done){
+    msgEl.className='msg';msgEl.textContent='Sending…';btn.disabled=true;
+    try{
+      var id=await ensureUser();
+      var r=await fetch(API+'/v1/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:id,type:type,title:title.slice(0,140),description:desc.slice(0,4000),product_area:area||'Other',importance:'medium',app_version:'v8',page_path:'review.html'})});
+      if(!r.ok){var m='';try{var j=await r.json();m=Array.isArray(j.detail)?j.detail.map(function(x){return x.msg}).join('; '):(j.detail||'')}catch(e){}
+        throw new Error(m||(r.status===404?'Feedback service is not available on the server yet.':'Could not send ('+r.status+')'))}
+      msgEl.className='msg ok';msgEl.textContent='Thanks, sent.';done&&done();loadMine();
+    }catch(e){msgEl.className='msg err';msgEl.textContent=e.message||'Could not send.'}
+    finally{btn.disabled=false}
+  }
+  $('r-send').onclick=function(){
+    if(!stars){$('r-msg').className='msg err';$('r-msg').textContent='Pick a star rating first.';return}
+    var t=$('r-text').value.trim();
+    post('general','Rating: '+stars+' / 5',t||('Rated OPAI '+stars+' out of 5.'),'Overview',$('r-msg'),$('r-send'),function(){stars=0;paintStars();$('r-text').value=''});
+  };
+  $('s-send').onclick=function(){
+    var ti=$('s-title').value.trim(),de=$('s-desc').value.trim();
+    if(!ti){$('s-msg').className='msg err';$('s-msg').textContent='Add a short title.';return}
+    post($('s-type').value,ti,de,$('s-area').value,$('s-msg'),$('s-send'),function(){$('s-title').value='';$('s-desc').value=''});
+  };
+  async function loadMine(){
+    var box=$('mine');
+    try{
+      var id=await ensureUser();
+      var r=await fetch(API+'/v1/feedback/mine?user_id='+encodeURIComponent(id));
+      if(!r.ok)throw new Error(r.status===404?'Feedback service is not available on the server yet.':'Could not load ('+r.status+')');
+      var d=await r.json(), items=(d&&d.items)||[];
+      if(!items.length){box.className='empty';box.textContent='Nothing yet. Your ratings and suggestions will show up here.';return}
+      box.className='';
+      box.innerHTML=items.slice(0,5).map(function(i){
+        var dt=new Date(i.created_at);
+        return '<div class="item"><div class="row" style="justify-content:space-between"><b>'+esc(i.title)+'</b><span class="pill">'+esc(i.status||'Submitted')+'</span></div><div class="meta">'+esc(i.product_area||'')+(isNaN(dt)?'':' · '+dt.toLocaleDateString())+'</div>'+(i.description?'<p>'+esc(i.description)+'</p>':'')+'</div>'
+      }).join('')+'<div class="item"><a href="feedback.html?from=review.html#mine">See all and track status →</a></div>';
+    }catch(e){box.className='empty';box.textContent=e.message}
+  }
+  loadMine();
+})();
+</script>
+<script src="opai-shell.js" defer></script>
+<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
+</body>
+</html>
