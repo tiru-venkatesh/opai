@@ -20,7 +20,8 @@
       '<a class="opai-user" href="profile.html" title="Profile" aria-label="Open your profile"'+(path==='profile.html'?' aria-current="page"':'')+'><span class="av" id="opai-av">·</span><span><b id="opai-un">Account</b><small id="opai-us">OPAI</small></span></a></div></div></header>');
     var pos=old?getComputedStyle(old).position:'';
     if(old&&(pos==='fixed'||pos==='sticky'||old.parentNode===document.body))old.replaceWith(hd);else document.body.insertBefore(hd,document.body.firstChild);
-    document.body.classList.add('opai-has-shell');if(pos!=='fixed')document.body.classList.add('opai-pad');return hd;
+    document.body.classList.add('opai-has-shell');if(pos!=='fixed')document.body.classList.add('opai-pad');
+    requestAnimationFrame(function(){try{var nv=hd.querySelector('.opai-pills'),ac=nv&&nv.querySelector('[aria-current=page]');if(ac&&nv.scrollWidth>nv.clientWidth)nv.scrollLeft=Math.max(0,ac.offsetLeft-6)}catch(e){}});return hd;
   }
   function icons(){var s='fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';return {
     today:'<svg width="20" height="20" viewBox="0 0 24 24" '+s+'><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
@@ -33,7 +34,7 @@
   var deferred=null;addEventListener('beforeinstallprompt',function(e){if(isChat)return;e.preventDefault();deferred=e});
   function dock(){
     if(isChat)return;var I=icons();
-    var d=h('<div class="opai-dock" role="toolbar" aria-label="Quick actions"><a href="today.html" title="Today" '+(path==='today.html'?'aria-current="page"':'')+'>'+I.today+'</a><a href="super-chat.html" title="Ask KARNA">'+I.chat+'</a><a href="work.html" title="Work" '+(/^(work|opportunities|dsa|projects|academics)\.html$/.test(path)?'aria-current="page"':'')+'>'+I.work+'</a><button type="button" id="dk-guide" title="Guide: which section does what">'+I.guide+'</button><button type="button" id="dk-install" title="Install OPAI as an app">'+I.dl+'</button></div>');
+    var d=h('<div class="opai-dock" role="toolbar" aria-label="Quick actions"><a href="today.html" title="Today" '+(path==='today.html'?'aria-current="page"':'')+'>'+I.today+'<small>Today</small></a><a href="super-chat.html" title="Ask KARNA">'+I.chat+'<small>KARNA</small></a><a href="work.html" title="Work" '+(/^(work|opportunities|dsa|projects|academics)\.html$/.test(path)?'aria-current="page"':'')+'>'+I.work+'<small>Work</small></a><button type="button" id="dk-guide" title="Guide: which section does what">'+I.guide+'<small>Guide</small></button><button type="button" id="dk-install" title="Install OPAI as an app">'+I.dl+'<small>Install</small></button></div>');
     document.body.appendChild(d);
     document.getElementById('dk-guide').onclick=function(){window.OPAI_GUIDE&&OPAI_GUIDE.open('')};
     document.getElementById('dk-install').onclick=function(){if(deferred){deferred.prompt();deferred=null}else alert('To install: browser menu → "Add to Home Screen" (or "Install app").')};

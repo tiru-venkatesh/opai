@@ -1,0 +1,109 @@
+/* =====================================================================
+   OPAI mobile layer. Loaded LAST on every page so it can calm down the
+   rules above it. Everything phone-specific lives here (<= 760px),
+   plus a few "never overflow the screen" safety nets for all sizes.
+   ===================================================================== */
+
+/* ---------- safety nets (all sizes) ---------- */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{overflow-x:clip}
+img,video,canvas,iframe{max-width:100%}
+img,video{height:auto}
+.opai-dock small{display:none}              /* labels only exist on the phone tab bar */
+pre{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+:where(h1,h2,h3,h4,p,li,td,th,a,span,label,button){overflow-wrap:break-word}
+/* hidden file inputs (".sr") must not widen the page */
+input.sr,.sr{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden;clip:rect(0 0 0 0);left:0!important;top:0}
+
+@media (max-width:760px){
+
+  /* ---------- header: logo + scrollable page pills + avatar ---------- */
+  .opai-hd{height:56px;padding:0 6px;gap:6px}
+  .opai-hd .in{gap:6px;padding:0 2px;min-width:0}
+  .opai-logo{flex:none;gap:0}
+  .opai-logo>span{display:none}               /* mark only; the wordmark ate the room the pills need */
+  .opai-pills{flex:1 1 0;min-width:0;margin:0;padding:3px 18px 3px 3px;justify-content:flex-start;
+    overflow-x:auto;overscroll-behavior-x:contain;scroll-padding-left:6px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
+    -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent);
+            mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent)}
+  .opai-pills a{flex:none;scroll-snap-align:start;padding:6px 12px;font-size:13px;min-height:0}
+  .opai-right{flex:none;display:flex;align-items:center;gap:6px;margin-left:0}
+  .opai-right>*{flex:none}
+  .opai-user{padding:2px}
+  body.opai-pad{padding-top:56px}
+
+  /* ---------- bottom dock becomes a proper tab bar ---------- */
+  .opai-dock{left:0;right:0;bottom:0;transform:none;width:100%;gap:0;justify-content:space-around;
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));
+    border-radius:18px 18px 0 0;border:0;border-top:1px solid var(--hair,#E3DFD3);
+    background:var(--card,#FBFAF6);backdrop-filter:none;box-shadow:0 -10px 24px -18px rgba(22,24,26,.45)}
+  .opai-dock a,.opai-dock button{flex:1 1 0;min-width:0;width:auto;height:50px;min-height:0;border-radius:12px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0}
+  .opai-dock small{display:block;font:500 10.5px/1 var(--sans,system-ui);letter-spacing:.01em}
+  .opai-dock svg{flex:none}
+
+  /* content must clear the tab bar (chat page manages its own layout) */
+  body.opai-has-shell:not(:has(#ktools)){padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+
+  /* floating KARNA button and focus timer sit just above the tab bar */
+  html body #kp-fab{width:48px;height:48px;right:12px;bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+  .opai-timer{bottom:calc(72px + env(safe-area-inset-bottom,0px));left:10px;max-width:calc(100vw - 84px);padding:6px 8px 6px 12px;gap:8px}
+  .opai-timer span{max-width:90px}
+  #kp{right:8px;left:8px;width:auto;bottom:calc(128px + env(safe-area-inset-bottom,0px));height:min(560px,calc(100dvh - 190px))}
+
+  /* ---------- "on this page" jump bar ---------- */
+  .o2-jump{margin:0 -12px 12px;padding:6px 12px;border-radius:0}
+  .o2-jump>b{display:none}
+
+  /* ---------- general content ---------- */
+  main,.wrap,.page,.container{max-width:100%}
+  h1{overflow-wrap:break-word;hyphens:auto}
+  /* any wide table scrolls inside its own box instead of stretching the page */
+  .tbl-wrap,.table-wrap,.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{max-width:100%}
+  /* dialogs and sheets use the whole width and respect the notch / home bar */
+  dialog,.modal,[role=dialog]{max-width:calc(100vw - 16px)}
+  .modal-box,.sheet,.dlg{max-width:100%}
+  /* chips / tab rows wrap or scroll rather than clip */
+  .chips,.tags,.pills,.row-wrap{flex-wrap:wrap}
+  .tabs{display:flex;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs>*{flex:none}
+
+  /* guide sheet */
+  #opai-guide .gp{max-height:88dvh;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+}
+
+/* very small phones */
+@media (max-width:380px){
+  .opai-pills a{padding:6px 10px;font-size:12.5px}
+  .opai-dock small{font-size:10px}
+}
+
+/* landscape phones: don't let the fixed bars eat the screen */
+@media (max-width:900px) and (max-height:480px) and (orientation:landscape){
+  .opai-dock a,.opai-dock button{height:40px}
+  .opai-dock small{display:none}
+  body.opai-has-shell:not(:has(#ktools)){padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+}
+
+/* landing header on narrow phones: logo + Sign In + Open OPAI must fit side by side */
+@media (max-width:420px){
+  #site-header>div{padding-left:16px;padding-right:16px;height:64px}
+  #site-header>div>a:first-child{gap:8px}
+  #site-header>div>a:first-child span{font-size:18px;letter-spacing:.1em}
+  #site-header>div>div{gap:2px}
+  #site-header a[href="login.html"]{padding-left:8px;padding-right:8px}
+}
+@media (max-width:360px){
+  #site-header>div{padding-left:12px;padding-right:12px}
+  #site-header a[href="login.html"] svg{display:none}
+  #site-header a[href="login.html"]:last-child{padding-left:10px;padding-right:10px}
+  #site-header>div>a:first-child img{width:28px;height:28px}
+}
+
+/* long unbroken strings in monospace boxes (hashes, URLs, code) wrap instead of widening the page */
+@media (max-width:760px){
+  .font-mono,code,kbd,samp{overflow-wrap:anywhere;word-break:break-word}
+  pre code{overflow-wrap:normal;word-break:normal}
+}

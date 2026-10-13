@@ -243,6 +243,7 @@ _ROOT_ASSETS = {
     "fx.js": "application/javascript",
     "opai-shared.css": "text/css",
     "opai-glass.css": "text/css",
+    "opai-mobile.css": "text/css",
     "attach.css": "text/css",
     "fx.css": "text/css",
 }
