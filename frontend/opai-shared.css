@@ -91,3 +91,6 @@ body.opai-has-shell main,body.opai-has-shell .wrap{scroll-padding-bottom:90px}
 .opai-ib{width:36px;height:36px;border-radius:50%;border:1px solid var(--hair);background:var(--well,transparent);color:var(--ink-2,#4a4f52);display:grid;place-items:center;padding:0;cursor:pointer;flex:none;transition:background-color .2s,color .2s,border-color .2s}
 .opai-ib:hover{color:var(--ink);border-color:var(--ink-3,#7a7f80)}
 .opai-ib svg{width:18px;height:18px}
+
+/* Desktop: no floating dock (the top navbar already has these links). Phones keep it as the bottom tab bar. */
+@media(min-width:761px){.opai-dock{display:none!important}}
