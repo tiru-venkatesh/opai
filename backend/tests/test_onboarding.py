@@ -160,3 +160,30 @@ def test_explicitly_unfinished_account_stays_required_even_with_details(c):
     uid, _ = new_user(c)
     s = D.SessionLocal(); u = s.get(D.User, uid); u.name = "Asha Rao"; u.branch = "CSE"; u.profile_setup_completed = False; s.commit(); s.close()
     assert _status(c, uid)["required"] is True
+
+
+def test_dev_login_requires_valid_email_and_profile_name_cannot_be_nulled():
+    import uuid as _uuid
+    from fastapi.testclient import TestClient
+    import main
+    c = TestClient(main.app)
+    assert c.post("/v1/auth/dev-login").status_code == 422           # no silent shared default account
+    assert c.post("/v1/auth/dev-login", params={"email": "not-an-email"}).status_code == 422
+    uid = c.post("/v1/auth/dev-login", params={"email": "p-" + _uuid.uuid4().hex[:10] + "@test.local", "name": "Asha Rao"}).json()["user_id"]
+    assert c.patch("/v1/profile", params={"user_id": uid}, json={"name": None}).status_code == 422
+    assert c.patch("/v1/profile", params={"user_id": uid}, json={"cgpa": 11}).status_code == 422
+    assert c.get("/v1/profile", params={"user_id": uid}).status_code == 200      # still readable
+    assert c.patch("/v1/profile", params={"user_id": uid}, json={"cgpa": 8.4}).status_code == 200
+
+
+def test_feedback_retry_is_idempotent_and_needs_real_user():
+    import uuid as _uuid
+    from fastapi.testclient import TestClient
+    import main
+    c = TestClient(main.app)
+    uid = c.post("/v1/auth/dev-login", params={"email": "f-" + _uuid.uuid4().hex[:10] + "@test.local"}).json()["user_id"]
+    body = {"user_id": uid, "type": "general", "title": "Rating: 4 / 5", "request_id": "same-click-1"}
+    a, b = c.post("/v1/feedback", json=body).json(), c.post("/v1/feedback", json=body).json()
+    assert a["id"] == b["id"]
+    assert len(c.get("/v1/feedback/mine", params={"user_id": uid}).json()["items"]) == 1
+    assert c.post("/v1/feedback", json={**body, "user_id": "ghost-user", "request_id": "x"}).status_code == 404

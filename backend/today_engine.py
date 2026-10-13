@@ -249,7 +249,8 @@ def build(db: Session, user_id: str, today: Optional[date] = None, minutes: Opti
         items.append({"category": _category(x), "check": _check(x), "priority_label": "HIGH PRIORITY" if x["score"] >= 65 else "MEDIUM PRIORITY" if x["score"] >= 40 else "LOWER PRIORITY",
                       "kind": x["kind"], "ref_id": x["ref_id"], "title": x["title"], "subtitle": x["subtitle"], "minutes": x["plan_minutes"],
                       "score": x["score"], "due": "daily block" if x["kind"] == "dsa" else _when(x["days"]), "reason": explain(x)["why_important"], "split": bool(x.get("split")),
-                      "state": states.get(key, "ai_suggested"), "link": x["link"], "explain": explain(x)})
+                      "state": states.get(key, "ai_suggested"), "link": x["link"], "explain": explain(x),
+                      "facts": x["facts"], "days": x["days"]})
     nxt = next((i for i in items if i["state"] != "paused"), None)
     return {"date": today.isoformat(), "energy": energy, "items": items, "later_count": len(later),
             "later": [{"kind": x["kind"], "title": x["title"], "minutes": x["plan_minutes"], "due": _when(x["days"])} for x in later[:6]],

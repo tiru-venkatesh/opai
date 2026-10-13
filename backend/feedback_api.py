@@ -76,6 +76,15 @@ def submit(b: FeedbackIn):
     if b.importance not in LEVELS: raise HTTPException(422, "importance must be low, medium or high")
     since = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(timespec="seconds")
     with engine.begin() as c:
+        # Only real accounts may post: otherwise random user_ids bypass the daily limit.
+        if not c.execute(text("SELECT 1 FROM users WHERE id=:u"), {"u": b.user_id}).first():
+            raise HTTPException(404, "User not found")
+        # Same request_id from the same user = a retry; return the original instead of a duplicate.
+        if b.request_id:
+            dup = c.execute(text("SELECT id,status FROM feedback_items WHERE user_id=:u AND request_id=:r"),
+                            {"u": b.user_id, "r": b.request_id}).first()
+            if dup:
+                return {"id": dup.id, "status": dup.status}
         n = c.execute(text("SELECT COUNT(*) FROM feedback_items WHERE user_id=:u AND created_at>:s"),
                       {"u": b.user_id, "s": since}).scalar()
         if n >= DAILY_LIMIT: raise HTTPException(429, "Daily feedback limit reached. Try again tomorrow.")

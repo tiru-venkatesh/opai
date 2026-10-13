@@ -468,7 +468,9 @@ class DsaPlan(Base):
     days_per_week = Column(Integer, default=5)
     weeks = Column(Integer, default=12)
     start_date = Column(Date)
-    mode_override = Column(String, default="auto")   # auto | normal | maintenance
+    mode_override = Column(String, default="auto")   # auto | normal | maintenance | paused
+    level = Column(String)                            # starting level chosen at onboarding
+    target_date = Column(Date)                        # optional
     status = Column(String, default="active")         # active | archived
     created_at = Column(DateTime, default=_dt.utcnow)
 
@@ -491,6 +493,8 @@ class DsaTopic(Base):
     notes = Column(Text)
     sessions_done = Column(Integer, default=0)
     last_session = Column(Date)
+    next_review = Column(Date)                         # spaced revision (set from confidence)
+    review_count = Column(Integer, default=0)
     updated_at = Column(DateTime, default=_dt.utcnow)
 
 
@@ -507,6 +511,8 @@ class DsaSession(Base):
     mode = Column(String, default="normal")           # normal | maintenance
     kind = Column(String, default="learn")            # learn | review | revise
     status = Column(String, default="planned")        # planned | done | skipped
+    outcome = Column(String)                           # completed | partial | could_not_start
+    difficulty_tags = Column(JSON)                     # concept | pattern | implementation | time | nothing
     actual_minutes = Column(Integer)
     confidence = Column(Integer)
     created_at = Column(DateTime, default=_dt.utcnow)
@@ -772,3 +778,111 @@ class ActionApproval(Base):
     decision = Column(String, nullable=False)            # approved | rejected
     approved_payload_hash = Column(String(64))
     approved_at = Column(DateTime, default=_dt.utcnow)
+
+
+# ---------------- v8: Brief system, reminders, notifications, web push ----------------
+# Brand-new tables (create_all makes them); no existing production table is altered.
+class Brief(Base):
+    __tablename__ = "briefs"
+    __table_args__ = (Index("ix_briefs_user_type_scope", "user_id", "type", "scope_key"), Index("ix_briefs_user_created", "user_id", "created_at"))
+    id = Column(String(64), primary_key=True)                 # brf_<hex>, assigned by briefs.core
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    type = Column(String, nullable=False)
+    scope_key = Column(String)                                # e.g. the day for a daily plan
+    title = Column(String)
+    summary = Column(Text)
+    status = Column(String, default="generated")              # generated | shown | partially_acted | completed | expired | superseded | dismissed
+    confidence = Column(Numeric(4, 3), default=1.0)
+    params = Column(JSON, default=dict)
+    body = Column(JSON, default=dict)
+    actions_taken = Column(JSON, default=list)
+    superseded_by = Column(String(64))
+    expires_at = Column(DateTime)
+    shown_at = Column(DateTime)
+    created_at = Column(DateTime, default=_dt.utcnow)
+
+
+class BriefAction(Base):
+    __tablename__ = "brief_actions"
+    __table_args__ = (Index("ix_brief_actions_brief", "brief_id"), Index("ix_brief_actions_record", "action_record_id"))
+    id = Column(String(64), primary_key=True)                 # act_<hex>
+    brief_id = Column(String(64), ForeignKey("briefs.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    type = Column(String)
+    label = Column(String)
+    kind = Column(String, default="navigate")                 # navigate | execute | decision
+    risk = Column(String, default="low")
+    intent = Column(String)
+    payload = Column(JSON, default=dict)
+    payload_hash = Column(String(64))
+    link = Column(String)
+    entity_id = Column(String)
+    requires_confirmation = Column(Boolean, default=False)
+    primary = Column(Boolean, default=False)
+    status = Column(String, default="available")              # available | executed | pending_approval | rejected | closed | failed
+    result = Column(JSON)
+    action_record_id = Column(String(36))
+    created_at = Column(DateTime, default=_dt.utcnow)
+    executed_at = Column(DateTime)
+
+
+class Reminder(Base):
+    __tablename__ = "reminders"
+    __table_args__ = (Index("ix_reminders_due", "status", "remind_at"), Index("ix_reminders_user", "user_id", "status"))
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    kind = Column(String, default="reminder")                 # reminder | daily_brief
+    title = Column(String(160))
+    remind_at = Column(DateTime, nullable=False)              # naive UTC
+    repeat = Column(String, default="none")                   # none | daily
+    status = Column(String, default="pending")                # pending | awaiting_text | fired | done | cancelled
+    source = Column(String, default="chat")
+    timezone = Column(String(64))
+    snooze_count = Column(Integer, default=0)
+    snoozed_until = Column(DateTime)
+    fired_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    created_at = Column(DateTime, default=_dt.utcnow)
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    __table_args__ = (Index("ix_notifications_user_created", "user_id", "created_at"),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    kind = Column(String)
+    title = Column(String)
+    body = Column(Text)
+    link = Column(String)
+    data = Column(JSON, default=dict)
+    reminder_id = Column(String(36))
+    idempotency_key = Column(String(200), unique=True)        # one notification per occurrence
+    created_at = Column(DateTime, default=_dt.utcnow)
+    delivered_at = Column(DateTime)
+    read_at = Column(DateTime)
+
+
+class NotificationDelivery(Base):
+    __tablename__ = "notification_deliveries"
+    __table_args__ = (Index("ix_deliveries_retry", "status", "next_retry_at"),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    notification_id = Column(String(36), ForeignKey("notifications.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"))
+    channel = Column(String, default="web_push")
+    endpoint = Column(Text)
+    status = Column(String, default="pending")                # pending | ok | failed | gone
+    attempts = Column(Integer, default=0)
+    error = Column(Text)
+    delivered_at = Column(DateTime)
+    next_retry_at = Column(DateTime)
+    created_at = Column(DateTime, default=_dt.utcnow)
+
+
+class PushSubscription(Base):
+    __tablename__ = "push_subscriptions"
+    __table_args__ = (Index("ux_push_user_endpoint", "user_id", "endpoint", unique=True),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    endpoint = Column(Text, nullable=False)
+    keys = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=_dt.utcnow)

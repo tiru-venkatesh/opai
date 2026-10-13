@@ -461,13 +461,13 @@ class ProfileOut(BaseModel):
 
 
 class ProfileUpdate(BaseModel):
-    name: Optional[str] = None
-    branch: Optional[str] = None
-    degree: Optional[str] = None
-    cgpa: Optional[float] = None
-    github: Optional[str] = None
-    skills: Optional[str] = None
-    highlight: Optional[str] = None
+    name: Optional[str] = Field(default=None, max_length=80)
+    branch: Optional[str] = Field(default=None, max_length=120)
+    degree: Optional[str] = Field(default=None, max_length=120)
+    cgpa: Optional[float] = Field(default=None, ge=0, le=10)
+    github: Optional[str] = Field(default=None, max_length=200)
+    skills: Optional[str] = Field(default=None, max_length=1000)
+    highlight: Optional[str] = Field(default=None, max_length=1000)
 
 
 # ================= CLIENT REQUESTS (freelance pipeline) =================

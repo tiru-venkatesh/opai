@@ -121,6 +121,26 @@ def handle_message(user_id: UUID, message: str, db: Session, history=None, doc_i
         if ident:
             return JarvisChatResponse(action="chat", reply=ident["reply"], payload=ident["payload"])
 
+    # Reminders ("remind me at 5pm ...", daily-plan nudges) and brief requests ("what should I do today", "I only have 1 hour")
+    # are typed flows: they run before the free-form router and produce the same brief/action objects every surface renders.
+    if not doc_ids:
+        try:
+            from . import reminder_chat
+            rem = reminder_chat.handle(user_id, message, db)
+        except Exception:
+            db.rollback()
+            rem = None
+        if rem:
+            return rem
+        try:
+            from briefs import jarvis as brief_jarvis
+            brief_resp = brief_jarvis.respond(db, str(user_id), message)
+        except Exception:
+            db.rollback()
+            brief_resp = None
+        if brief_resp:
+            return brief_resp
+
     # Read-only lookups (lists / counts / deadlines / profile) are answered straight from the
     # user's own DB rows: exact, no LLM, no router. Anything that looks like an action falls through.
     try:

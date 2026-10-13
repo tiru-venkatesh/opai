@@ -20,6 +20,7 @@ import re
 import math
 import zlib
 import logging
+import threading
 from typing import Callable, Dict, Iterable, List, Optional, Sequence
 
 from sqlalchemy.orm import Session
@@ -53,28 +54,61 @@ HASH_TAG = f"hash-{HASH_DIM}-s1"  # bump when tokenize()/_hash_embed change so o
 
 _fe_model = None
 _fe_failed = False
+_fe_error: Optional[BaseException] = None
+_fe_thread: Optional[threading.Thread] = None
+_fe_lock = threading.Lock()
 
 
-def _load_fastembed():
-    global _fe_model, _fe_failed
-    if _fe_model is not None or _fe_failed:
-        return _fe_model
+def _fe_mode() -> str:
     # On Render's free tier (512 MB) the fastembed model download + load can exhaust RAM or the request
     # timeout; the worker dies and the browser reports a CORS error. Default to the light hashed embedder
     # there. Set RAG_EMBEDDER=fastembed on a bigger instance to opt back in.
-    _mode = os.getenv("RAG_EMBEDDER") or ("hash" if os.getenv("RENDER") else "auto")
-    if _mode.lower() == "hash":
-        _fe_failed = True
-        return None
+    return (os.getenv("RAG_EMBEDDER") or ("hash" if os.getenv("RENDER") else "auto")).lower()
+
+
+def _fe_worker(mode: str) -> None:
+    global _fe_model, _fe_failed, _fe_error
     try:
         from fastembed import TextEmbedding
         _fe_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
-    except Exception as e:  # import error, offline model download, etc.
+    except Exception as e:  # import error, offline model download (fastembed retries ~40s), etc.
+        _fe_failed, _fe_error = True, e
+        if mode != "fastembed":
+            log.warning("fastembed unavailable (%s); using hashed fallback embedder", e)
+
+
+def _load_fastembed(wait: bool = False):
+    """Returns the fastembed model if it is ready, else None.
+
+    Loading (a ~130 MB download on first boot, ~40 s of retries when offline) happens in a background thread and is
+    NEVER awaited by a request unless `wait=True` (reindex jobs): until the model is ready callers use the hashed
+    embedder, and retrieval re-embeds mismatched chunks lazily, so mixing the two is safe."""
+    global _fe_failed, _fe_thread
+    if _fe_model is not None or _fe_failed:
+        if _fe_error is not None and _fe_mode() == "fastembed":
+            raise _fe_error
+        return _fe_model
+    mode = _fe_mode()
+    if mode == "hash":
         _fe_failed = True
-        if _mode.lower() == "fastembed":
-            raise
-        log.warning("fastembed unavailable (%s); using hashed fallback embedder", e)
+        return None
+    with _fe_lock:
+        if _fe_thread is None:
+            _fe_thread = threading.Thread(target=_fe_worker, args=(mode,), name="opa-fastembed-load", daemon=True)
+            _fe_thread.start()
+    if wait and _fe_thread is not None:
+        _fe_thread.join()
+        if _fe_error is not None and mode == "fastembed":
+            raise _fe_error
     return _fe_model
+
+
+def warmup() -> None:
+    """Start loading the embedder at boot so it is ready before the first profile save / chat question."""
+    try:
+        _load_fastembed()
+    except Exception:
+        pass
 
 
 _STOP = set(

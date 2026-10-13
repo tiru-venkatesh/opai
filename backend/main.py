@@ -81,6 +81,17 @@ from onboarding_api import router as onboarding_router
 app.include_router(onboarding_router)
 from feedback_api import router as feedback_router
 app.include_router(feedback_router)
+from brief_api import router as brief_router
+app.include_router(brief_router)
+from reminders_api import router as reminders_router
+app.include_router(reminders_router)
+from chat_api import router as chat_router
+app.include_router(chat_router)
+from version_api import router as version_router
+app.include_router(version_router)
+
+from auth_guard import AuthGuard
+app.add_middleware(AuthGuard)   # added BEFORE CORS so CORS stays outermost and 401/403 still carry CORS headers
 
 _CORS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()] or ["*"]
 app.add_middleware(
@@ -100,6 +111,20 @@ if os.path.exists("static"):
 @app.on_event("startup")
 def on_startup():
     init_db()
+    try:
+        import rag_service
+        rag_service.warmup()             # embedder loads in the background; requests never wait for it
+        import auth_guard
+        if auth_guard.mode() != "off":
+            auth_guard.warm_keys()
+    except Exception:
+        pass
+    try:
+        import reminders
+        reminders.start_scheduler()      # in-process tick (OPAI_SCHEDULER=0 disables; /v1/system/tick works for sleeping hosts)
+    except Exception as e:
+        import logging
+        logging.getLogger("opa").warning("reminder scheduler not started: %s", e)
 
 
 @app.exception_handler(RuntimeError)
@@ -260,7 +285,7 @@ def serve_ui():
 
 # ================= AUTH (DEV) =================
 @app.post("/v1/auth/dev-login")
-def dev_login(email: str = "student@university.edu", name: str = None, db: Session = Depends(get_db)):
+def dev_login(email: str, name: str = None, db: Session = Depends(get_db)):
     # Guest accounts no longer exist. Refuse the old guest address pattern so a leftover guest row
     # cannot be opened by anyone until `python purge_guests.py --apply` removes it.
     if re.fullmatch(r"guest-[0-9a-f]{12}@opa\.local", (email or "").strip().lower()):
@@ -268,6 +293,8 @@ def dev_login(email: str = "student@university.edu", name: str = None, db: Sessi
     # Emails are case-insensitive: "Foo@Gmail.com" and "foo@gmail.com" must be one account,
     # otherwise the same person gets two workspaces and their data seems to go missing.
     email = (email or "").strip().lower()
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email) or len(email) > 254:
+        raise HTTPException(status_code=422, detail="Enter a valid email address.")
     user = db.query(User).filter(func.lower(User.email) == email).first()
     if not user:
         # Dev-login must create an empty, owned workspace. Never inject a
@@ -307,7 +334,13 @@ def update_profile(user_id: UUID, payload: ProfileUpdate, db: Session = Depends(
     user = db.query(User).filter(User.id == str(user_id)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    changes = payload.model_dump(exclude_unset=True)
+    if "name" in changes:
+        nm = re.sub(r"\s+", " ", changes["name"] or "").strip()
+        if len(nm) < 2:
+            raise HTTPException(status_code=422, detail="Name must be at least 2 characters.")
+        changes["name"] = nm
+    for field, value in changes.items():
         setattr(user, field, value)
     db.commit()
     db.refresh(user)

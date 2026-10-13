@@ -136,14 +136,30 @@ class DecideBody(BaseModel):
     payload_hash: Optional[str] = None
 
 
+def _decide(db, uid, action_id, approve, payload_hash):
+    """Generic approve/reject. Brief buttons (act_...) keep their brief in step; raw action ids sync any brief that shows them."""
+    from briefs import core as BC
+    try:
+        if BC.is_brief_action(db, action_id):
+            return BC.decide_action(db, uid, action_id, approve, payload_hash)
+    except BC.BriefError as e:
+        raise HTTPException(e.status, e.detail)
+    rec = _wrap(A.decide, db, uid, action_id, approve, payload_hash)
+    try:
+        BC.sync_from_record(db, uid, rec)
+    except Exception:
+        db.rollback()
+    return rec
+
+
 @router.post("/v1/actions/{action_id}/approve")
 def approve_action(action_id: str, p: DecideBody, db: Session = Depends(get_db)):
-    return _wrap(A.decide, db, _user(db, p.user_id), action_id, True, p.payload_hash)
+    return _decide(db, _user(db, p.user_id), action_id, True, p.payload_hash)
 
 
 @router.post("/v1/actions/{action_id}/reject")
 def reject_action(action_id: str, p: DecideBody, db: Session = Depends(get_db)):
-    return _wrap(A.decide, db, _user(db, p.user_id), action_id, False)
+    return _decide(db, _user(db, p.user_id), action_id, False, None)
 
 
 @router.get("/v1/actions")

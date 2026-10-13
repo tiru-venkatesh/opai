@@ -67,6 +67,11 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
 .opt{display:flex;gap:8px;flex-wrap:wrap}.opt label{display:inline-flex;margin:0;text-transform:none;font:13px var(--font);letter-spacing:0;color:var(--tx);cursor:pointer}
 .opt input{position:absolute;opacity:0}.opt span{padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--s2)}.opt input:checked+span{background:var(--pri);color:#fff;border-color:var(--pri)}
 .opt input:focus-visible+span{outline:2px solid var(--pri);outline-offset:2px}
+.rq{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:10px 0;border-top:1px solid #E3DFD3;align-items:center}.rq:first-of-type{border-top:0}
+.rq small{color:var(--dim);font:11px var(--mono)}.rq .conf{margin:0}.rq .conf button{width:28px;height:28px}
+.chip.pause{background:var(--s3);color:var(--mut)}
+.hist{display:grid;grid-template-columns:78px 1fr auto;gap:4px 10px;padding:6px 0;border-top:1px solid #E3DFD3;font-size:13px}.hist:first-of-type{border-top:0}.hist small{color:var(--dim);font:11px var(--mono)}
+.f input[type=number],.f input[type=date]{width:100%}
 .err{margin:12px 0;padding:10px 14px;border-radius:10px;background:var(--coral-soft);color:var(--coral-ink)}
 .note{margin-top:28px;color:var(--dim);font-size:13px;max-width:75ch}
 .row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
@@ -79,7 +84,7 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-ux.js"></script>
+<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
 <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 </head>
 <body>
@@ -117,7 +122,7 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
     location.replace('login.html'); throw new Error('Please sign in');
   }
 
-  let S = null, pendingConf = null; const openPh = new Set(), editing = new Set();
+  let S = null, pendingConf = null, pendingOutcome = 'completed', pendingTags = new Set(); const openPh = new Set(), editing = new Set();
   const err = (m) => { const e = $('err'); e.hidden = !m; e.textContent = m || ''; };
 
   /* external-link buttons: label by site, only plain http(s) links */
@@ -130,37 +135,53 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
 
   function setup(o) {
     const radios = (name, arr, def, fmt) => '<div class="opt">' + arr.map((v) => '<label><input type="radio" name="' + name + '" value="' + esc(v) + '"' + (v === def ? ' checked' : '') + '><span>' + esc(fmt ? fmt(v) : v) + '</span></label>').join('') + '</div>';
-    return '<section class="card"><h2>Create your DSA roadmap</h2><p class="tag" style="margin-bottom:0">Pick a goal, a language and the time you can give each day. OPAI builds an 11-phase, 12-week roadmap and puts one small DSA block in Today.</p>' +
-      '<div class="f"><div><label>Goal</label><select id="s-goal">' + o.goals.map((g) => '<option>' + esc(g) + '</option>').join('') + '</select></div>' +
-      '<div><label>Language</label>' + radios('lang', o.languages, 'Python') + '</div>' +
-      '<div><label>Daily time</label>' + radios('mins', o.daily_minutes, 60, (v) => v + ' min') + '</div>' +
-      '<div><label>Days per week</label>' + radios('dpw', o.days_per_week, 5) + '</div></div>' +
+    const mins = (o.daily_minutes || []).concat(['custom']);
+    return '<section class="card"><h2>Create your DSA roadmap</h2><p class="tag" style="margin-bottom:0">Answer five quick questions. OPAI builds an 11-phase, 12-week roadmap, starts it at your level, and puts one small DSA block in Today.</p>' +
+      '<div class="f"><div><label>1 · Goal</label>' + radios('goal', o.goals, o.goals[0]) + '</div>' +
+      '<div><label>2 · Language</label>' + radios('lang', o.languages, 'Python') + '</div>' +
+      '<div><label>3 · Current level</label>' + radios('level', o.levels || [], (o.levels || [])[0]) + '</div>' +
+      '<div><label>4 · Time available</label>' + radios('mins', mins, 30, (v) => v === 'custom' ? 'Custom' : v === 60 ? '1 hour/day' : v + ' min/day') + '<input id="s-custom" type="number" min="20" max="180" step="5" placeholder="Minutes per day (20-180)" style="margin-top:8px" hidden></div>' +
+      '<div><label>Days per week</label>' + radios('dpw', o.days_per_week, 5) + '</div>' +
+      '<div><label>5 · Target date (optional)</label><input id="s-target" type="date"></div></div>' +
       '<button class="btn p" data-act="create" type="button">Create roadmap</button></section>';
+  }
+
+  function revQueue(s) {
+    if (!s.revision_queue.length) return '<p class="tag" style="margin:0">Nothing due. Topics come back here when their review date arrives.</p>';
+    return s.revision_queue.map((q) => '<div class="rq" data-tid="' + esc(q.topic_id) + '"><div><b>' + esc(q.name) + '</b> <small>· ' + q.minutes + ' min' + (q.overdue_days > 0 ? ' · ' + q.overdue_days + 'd overdue' : ' · due today') + '</small><div class="ln" style="margin-top:4px">' + lnk(q.learn_url, 'learn') + lnk(q.practice_url, 'practice') + '</div></div>' +
+      '<div><small style="display:block">Reviewed? Confidence</small><div class="conf" role="group" aria-label="Log review of ' + esc(q.name) + '">' + [1, 2, 3, 4, 5].map((v) => '<button type="button" data-act="review" data-v="' + v + '">' + v + '</button>').join('') + '</div></div></div>').join('') +
+      '<p class="note" style="margin:8px 0 0">Recall it without notes, explain the pattern, open one external example only if stuck, then rate yourself.</p>';
   }
 
   function main(s) {
     const p = s.plan, g = s.progress, m = s.mode, c = s.consistency, pc = s.pace, t = s.today;
     const paceChip = '<span class="chip' + (pc.state === 'behind' ? ' warn' : '') + '" title="' + esc(pc.message) + '">' + (pc.state === 'behind' ? 'Behind' : pc.state === 'ahead' ? 'Ahead' : 'On track') + '</span>';
-    const modeChip = m.mode === 'maintenance' ? '<span class="chip warn">DSA mode: Maintenance</span>' : '<span class="chip">DSA mode: Normal</span>';
+    const modeChip = m.mode === 'maintenance' ? '<span class="chip warn">DSA mode: Maintenance</span>' : m.mode === 'paused' ? '<span class="chip pause">DSA mode: Paused</span>' : '<span class="chip">DSA mode: Normal</span>';
     let h = '<section class="card"><div class="row"><h2 style="margin:0">Overview</h2><div class="seg" role="group" aria-label="DSA mode">' +
-      [['auto', 'Auto'], ['normal', 'Normal'], ['maintenance', 'Maintenance']].map(([v, l]) => '<button type="button" data-act="mode" data-v="' + v + '" class="' + (m.override === v ? 'on' : '') + '">' + l + '</button>').join('') + '</div></div>' +
-      '<div class="facts" style="margin-top:14px"><div><small>Goal</small><b>' + esc(p.goal) + '</b></div><div><small>Language</small><b>' + esc(p.language) + '</b></div><div><small>Target</small><b>' + esc(p.target) + '</b></div>' +
+      [['auto', 'Auto'], ['normal', 'Normal'], ['maintenance', 'Maintenance'], ['paused', 'Paused']].map(([v, l]) => '<button type="button" data-act="mode" data-v="' + v + '" class="' + (m.override === v ? 'on' : '') + '">' + l + '</button>').join('') + '</div></div>' +
+      '<div class="facts" style="margin-top:14px"><div><small>Goal</small><b>' + esc(p.goal) + '</b></div><div><small>Language</small><b>' + esc(p.language) + '</b></div><div><small>Target</small><b>' + esc(p.target_date ? new Date(p.target_date + 'T00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : p.target) + '</b></div><div><small>Level</small><b>' + esc(p.level || '–') + '</b></div>' +
       '<div><small>Current phase</small><b>' + esc(g.current_phase) + '</b></div><div><small>Progress</small><b>Week ' + g.week + ' of ' + g.weeks + (g.overrun ? ' (past plan)' : '') + '</b></div><div><small>Topics advanced</small><b>' + g.advanced + ' of ' + g.total + '</b></div></div>' +
       '<div class="bar" role="progressbar" aria-valuenow="' + g.percent + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + g.percent + '%"></i></div>' +
       '<div class="chips">' + paceChip + modeChip + (m.reason ? '<span class="note" style="margin:0">' + esc(m.reason) + '</span>' : '') + '</div>' +
-      (m.mode === 'maintenance' ? '<div class="rules"><b>Exam season rules</b><ul><li>Only 15–20 minutes</li><li>Review concepts or watch one topic explanation</li><li>No new heavy DSA phase</li><li>Resume normal pace after exams</li></ul></div>' : '') + '</section>';
+      (m.heads_up ? '<div class="rules">' + esc(m.heads_up) + '</div>' : '') +
+      (m.mode === 'maintenance' ? '<div class="rules"><b>Maintenance rules</b><ul><li>Only 15–20 minutes</li><li>Revise what is due, or watch one topic explanation</li><li>No new heavy DSA topic</li><li>Normal pace resumes after your exam. You can switch back any time.</li></ul></div>' : '') +
+      (m.mode === 'paused' ? '<div class="rules"><b>DSA is paused</b><ul><li>No DSA blocks appear in Today</li><li>Your progress and revision dates are kept</li><li>Choose Auto or Normal to resume</li></ul></div>' : '') +
+      '<div class="chips" style="margin-top:10px"><span class="note" style="margin:0">Next milestone: <b>' + esc(g.milestone.text) + '</b>' + (g.milestone.sessions_remaining ? ' · about ' + g.milestone.sessions_remaining + ' sessions remaining' : '') + '</span></div></section>';
 
     h += '<div class="grid2"><section class="card"><h2>Today' + (t ? ' · ' + esc(t.topic.name) : '') + '</h2>';
     if (!t) h += '<p class="tag" style="margin:0">Nothing scheduled.</p>';
     else {
-      h += t.blocks.map((b) => '<div class="blk"><span class="m">' + b.minutes + ' min</span><span>' + esc(b.label) + '</span><span>' + lnk(b.url, b.kind === 'practice' ? 'practice' : 'learn') + '</span></div>').join('');
-      if (t.status === 'done') h += '<div class="mark"><p><b>Done today</b>' + (t.confidence ? ' · confidence ' + t.confidence + '/5' : '') + '. Tomorrow\'s block adapts to how it went.</p></div>';
+      h += t.blocks.map((b) => '<div class="blk"><span class="m">' + b.minutes + ' min</span><span>' + esc(b.label) + '</span><span>' + lnk(b.url, b.kind === 'practice' || b.kind === 'revision' ? 'practice' : 'learn') + '</span></div>').join('');
+      if (t.status === 'done') h += '<div class="mark"><p><b>Done today</b>' + (t.confidence ? ' · confidence ' + t.confidence + '/5' : '') + '. Tomorrow\'s block and your revision dates adapt to how it went.</p></div>';
       else if (t.status === 'skipped') h += '<div class="mark"><p>Skipped. Nothing is lost: tomorrow resumes with the same topic.</p></div>';
-      else h += '<div class="mark"><p>Back from the external site? Mark progress. How confident are you on <b>' + esc(t.topic.name) + '</b> now?</p>' +
-        '<div class="conf" role="group" aria-label="Confidence 1 to 5">' + [1, 2, 3, 4, 5].map((v) => '<button type="button" data-act="conf" data-v="' + v + '" class="' + (pendingConf === v ? 'on' : '') + '">' + v + '</button>').join('') + '</div>' +
-        '<button class="btn p" type="button" data-act="complete" data-id="' + esc(t.session_id) + '">Mark done</button> <button class="btn" type="button" data-act="skip" data-id="' + esc(t.session_id) + '">Skip today</button></div>';
+      else h += '<div class="mark"><p>Back from the external site? Log how it went on <b>' + esc(t.topic.name) + '</b>.</p>' +
+        '<div class="opt" role="group" aria-label="Outcome" style="margin-bottom:10px">' + [['completed', 'Completed'], ['partial', 'Partly completed'], ['could_not_start', 'Could not start']].map(([v, l]) => '<label><input type="radio" name="outcome" data-act="outcome" value="' + v + '"' + (pendingOutcome === v ? ' checked' : '') + '><span>' + l + '</span></label>').join('') + '</div>' +
+        (pendingOutcome === 'could_not_start' ? '' : '<p style="margin-bottom:6px">Confidence now</p><div class="conf" role="group" aria-label="Confidence 1 to 5">' + [1, 2, 3, 4, 5].map((v) => '<button type="button" data-act="conf" data-v="' + v + '" class="' + (pendingConf === v ? 'on' : '') + '">' + v + '</button>').join('') + '</div>' +
+          '<p style="margin:4px 0 6px">What was difficult?</p><div class="opt" role="group" aria-label="Difficulty" style="margin-bottom:10px">' + s.options.difficulty.map((d) => '<label><input type="checkbox" data-act="tag" value="' + d + '"' + (pendingTags.has(d) ? ' checked' : '') + '><span>' + d.charAt(0).toUpperCase() + d.slice(1) + '</span></label>').join('') + '</div>') +
+        '<button class="btn p" type="button" data-act="complete" data-id="' + esc(t.session_id) + '">' + (pendingOutcome === 'could_not_start' ? 'Log and move on' : 'Save') + '</button> <button class="btn" type="button" data-act="skip" data-id="' + esc(t.session_id) + '">Skip today</button></div>';
     }
-    h += '</section><div><section class="card"><h2>This week</h2><ul class="plain">' + s.this_week.map((b) => '<li class="' + (b.done ? 'd' : '') + '"><span class="dot">' + (b.done ? '✓' : '') + '</span><span>' + esc(b.text) + '</span></li>').join('') + '</ul></section>' +
+    h += '</section><div><section class="card"><h2>This week</h2><ul class="plain">' + s.this_week.map((b) => '<li class="' + (b.done ? 'd' : '') + '"><span class="dot">' + (b.done ? '✓' : '') + '</span><span>' + esc(b.text) + '</span></li>').join('') + '</ul><p class="note" style="margin:8px 0 0">Plan: ' + s.week_plan.learning + ' learning · ' + s.week_plan.revision + ' revision · ' + s.week_plan.reflection + ' reflection sessions</p></section>' +
+      '<section class="card" style="margin-top:16px"><h2>Revision queue</h2>' + revQueue(s) + '</section>' +
       '<section class="card" style="margin-top:16px"><h2>Weekly consistency</h2><div class="row"><span>Planned sessions <b>' + c.planned + '</b></span><span>Completed <b>' + c.completed + '</b></span></div><div class="days" aria-label="This week">' + c.days.map((d) => '<span class="' + d.state + '" title="' + esc(d.date + ' · ' + d.state) + '">' + esc(d.label) + '</span>').join('') + '</div></section></div></div>';
 
     h += '<h2 style="margin:28px 0 0">Roadmap</h2>' + s.phases.map((ph) => {
@@ -172,6 +193,8 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
           '<div class="ln">' + lnk(t.learn_url, 'learn') + lnk(t.practice_url, 'practice') + '<button class="ghost" type="button" data-act="edit">' + (editing.has(t.id) ? 'close' : 'edit links & notes') + '</button></div>' +
           (editing.has(t.id) ? '<div class="ed"><label>Primary learning resource (https://…)</label><input data-f="learn_url" value="' + esc(t.learn_url || '') + '" maxlength="500"><label>Practice link (https://…)</label><input data-f="practice_url" value="' + esc(t.practice_url || '') + '" maxlength="500"><label>Notes (optional)</label><textarea data-f="notes" rows="2" maxlength="2000">' + esc(t.notes || '') + '</textarea><div><button class="btn p" type="button" data-act="savelinks">Save</button></div></div>' : '') + '</div>').join('') + '</details>';
     }).join('');
+    h += '<h2 style="margin:28px 0 0">Learning history</h2><section class="card" style="margin-top:10px">' + (s.history.length ? s.history.map((x) => '<div class="hist"><small>' + esc(x.date) + '</small><span>' + esc(x.topic) + ' <small>· ' + esc(x.kind === 'learn' ? 'learn' : 'revision') + (x.outcome && x.outcome !== 'completed' ? ' · ' + esc(x.outcome.replace(/_/g, ' ')) : '') + (x.difficulty.length && x.difficulty[0] !== 'nothing' ? ' · hard: ' + esc(x.difficulty.join(', ')) : '') + '</small></span><small>' + (x.status === 'skipped' ? 'skipped' : x.minutes + ' min' + (x.confidence ? ' · ' + x.confidence + '/5' : '')) + '</small></div>').join('') : '<p class="tag" style="margin:0">Nothing logged yet. Your sessions show up here.</p>') + '</section>' +
+      '<section class="card" style="margin-top:16px"><h2>Settings</h2><div class="f"><div><label>Minutes per day</label><input id="st-mins" type="number" min="20" max="180" step="5" value="' + p.daily_minutes + '"></div><div><label>Target date</label><input id="st-target" type="date" value="' + esc(p.target_date || '') + '"></div></div><button class="btn" type="button" data-act="savesettings">Save settings</button></section>';
     h += '<p style="margin-top:18px"><button class="ghost" type="button" data-act="reset">Start over with a new roadmap</button></p>';
     return h;
   }
@@ -190,13 +213,25 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
     const n = +d.dataset.ph; if (d.open) { openPh.add(n); openPh.delete(-n); } else { openPh.delete(n); openPh.add(-n); }
   }, true);
   document.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-act]'); if (!b || b.tagName === 'SELECT') return; const a = b.dataset.act, row = b.closest('.tp');
+    const b = e.target.closest('[data-act]'); if (!b || b.tagName === 'SELECT' || b.tagName === 'INPUT') return; const a = b.dataset.act, row = b.closest('.tp');
     if (a === 'create') {
       const v = (n) => (document.querySelector('input[name=' + n + ']:checked') || {}).value;
-      call('/v1/dsa/plan', 'POST', { goal: $('s-goal').value, language: v('lang'), daily_minutes: +v('mins'), days_per_week: +v('dpw') });
+      const mins = v('mins') === 'custom' ? +($('s-custom').value || 0) : +v('mins');
+      if (!(mins >= 20 && mins <= 180)) { err('Enter a custom time between 20 and 180 minutes.'); return; }
+      call('/v1/dsa/plan', 'POST', { goal: v('goal'), language: v('lang'), level: v('level'), daily_minutes: mins, days_per_week: +v('dpw'), target_date: $('s-target').value || null });
     } else if (a === 'mode') call('/v1/dsa/plan', 'PATCH', { mode_override: b.dataset.v });
     else if (a === 'conf') { pendingConf = pendingConf === +b.dataset.v ? null : +b.dataset.v; render(); }
-    else if (a === 'complete') { const c = pendingConf; pendingConf = null; call('/v1/dsa/sessions/' + encodeURIComponent(b.dataset.id) + '/complete', 'POST', c ? { confidence: c } : {}); }
+    else if (a === 'complete') {
+      const body = { outcome: pendingOutcome, difficulty: Array.from(pendingTags) };
+      if (pendingConf && pendingOutcome !== 'could_not_start') body.confidence = pendingConf;
+      pendingConf = null; pendingOutcome = 'completed'; pendingTags = new Set();
+      call('/v1/dsa/sessions/' + encodeURIComponent(b.dataset.id) + '/complete', 'POST', body);
+    }
+    else if (a === 'review') call('/v1/dsa/topics/' + encodeURIComponent(b.closest('.rq').dataset.tid) + '/review', 'POST', { confidence: +b.dataset.v });
+    else if (a === 'savesettings') {
+      const m = +$('st-mins').value; if (!(m >= 20 && m <= 180)) { err('Minutes per day must be between 20 and 180.'); return; }
+      call('/v1/dsa/plan', 'PATCH', { daily_minutes: m, target_date: $('st-target').value || null });
+    }
     else if (a === 'skip') call('/v1/dsa/sessions/' + encodeURIComponent(b.dataset.id) + '/skip', 'POST', {});
     else if (a === 'edit') { const id = row.dataset.id; editing.has(id) ? editing.delete(id) : editing.add(id); render(); }
     else if (a === 'savelinks') {
@@ -205,7 +240,11 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
     } else if (a === 'reset') { if (confirm('Delete this roadmap and all its progress, then start a new one?')) { err(''); api('/v1/dsa/plan?user_id=' + encodeURIComponent(uid), { method: 'DELETE' }).then((r) => { S = r; render(); }).catch((x) => err(x.message)); } }
   });
   document.addEventListener('change', (e) => {
-    const s = e.target; if (!s.matches || !s.matches('select[data-act]')) return; const id = s.closest('.tp').dataset.id;
+    const s = e.target;
+    if (s.matches && s.matches('input[name=mins]')) { const cu = $('s-custom'); if (cu) cu.hidden = s.value !== 'custom'; return; }
+    if (s.matches && s.matches('input[data-act=outcome]')) { pendingOutcome = s.value; render(); return; }
+    if (s.matches && s.matches('input[data-act=tag]')) { s.checked ? pendingTags.add(s.value) : pendingTags.delete(s.value); return; }
+    if (!s.matches || !s.matches('select[data-act]')) return; const id = s.closest('.tp').dataset.id;
     if (s.dataset.act === 'status') call('/v1/dsa/topics/' + encodeURIComponent(id), 'PATCH', { status: s.value });
     else if (s.dataset.act === 'confsel') call('/v1/dsa/topics/' + encodeURIComponent(id), 'PATCH', { confidence: s.value ? +s.value : null });
   });

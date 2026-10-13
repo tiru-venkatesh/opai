@@ -86,12 +86,14 @@ def test_pace():
 
 def test_exam_season_maintenance():
     assert R.mode_for(None) == ("normal", "")
-    assert R.mode_for(30)[0] == "normal" and R.mode_for(15)[0] == "normal"
-    m, why = R.mode_for(10)
-    assert m == "maintenance" and "10 days" in why
+    assert R.mode_for(30)[0] == "normal" and R.mode_for(15)[0] == "normal" and R.mode_for(10)[0] == "normal"
+    m, why = R.mode_for(7)
+    assert m == "maintenance" and "7 days" in why
     assert R.mode_for(0)[0] == "maintenance" and R.mode_for(-3)[0] == "normal"
     assert R.mode_for(100, "maintenance")[0] == "maintenance" and R.mode_for(2, "normal")[0] == "normal"
+    assert R.mode_for(2, "paused")[0] == "paused" and R.mode_for(None, "paused")[0] == "paused"
     assert R.day_minutes(60, "maintenance") == 20 and R.day_minutes(60, "normal") == 60 and R.day_minutes(15, "maintenance") == 15
+    assert R.day_minutes(60, "maintenance", 7) == 20 and R.day_minutes(60, "maintenance", 3) == 15 and R.day_minutes(60, "paused") == 0
 
 
 def test_maintenance_never_starts_new_topic_and_is_review_only():

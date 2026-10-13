@@ -10,10 +10,11 @@
 
   var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
   var KEY='opai_popup_chat',OPEN='opai_popup_open';
+  function safeUrl(u){try{var x=new URL(u,location.href);if(x.protocol==='https:'||x.protocol==='http:')return x.href}catch(e){}return null}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function loadMsgs(){try{var m=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(m)?m.slice(-40):[]}catch(e){return[]}}
   function saveMsgs(){try{localStorage.setItem(KEY,JSON.stringify(msgs.slice(-40)))}catch(e){}}
-  var msgs=loadMsgs(),busy=false,ctrl=null,uid=null,changed=false;
+  var msgs=loadMsgs(),busy=false,ctrl=null,uid=null,changed=false,convId=null;
 
   async function api(path,opts){
     opts=opts||{};
@@ -84,7 +85,7 @@
     th=box.querySelector('.th');ta=box.querySelector('textarea');go=box.querySelector('.go');
     fab.onclick=function(){toggle()};
     box.querySelector('.x').onclick=function(){toggle(false)};
-    box.querySelector('.nw').onclick=function(){if(busy)return;msgs=[];changed=false;saveMsgs();draw()};
+    box.querySelector('.nw').onclick=function(){if(busy)return;msgs=[];changed=false;convId=null;saveMsgs();draw()};
     go.onclick=function(){send()};
     ta.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send()}});
     ta.addEventListener('input',function(){ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,110)+'px'});
@@ -106,8 +107,34 @@
     var d=document.createElement('div');
     if(m.role==='user'){d.className='m u';d.textContent=m.text}
     else if(m.role==='err'){d.className='m e';d.textContent=m.text}
-    else{d.className='m a';d.innerHTML=md(m.text||'(no reply)')}
+    else{d.className='m a';d.innerHTML=md(m.text||'(no reply)');if(m.actions&&m.actions.length)d.appendChild(actionRow(m.actions))}
     return d;
+  }
+  /* Brief/reminder actions from /v1/chat: same objects briefs.html renders. Labels are set with textContent only. */
+  function actionRow(list){
+    var row=document.createElement('div');row.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-top:8px';
+    list.forEach(function(a){
+      var b=document.createElement('button');b.type='button';b.className='rf';b.textContent=String(a.label||a.type||'Open').slice(0,60);
+      b.onclick=function(){runAction(a,b)};row.appendChild(b);
+    });
+    return row;
+  }
+  function note(text,role){var m={role:role||'agent',text:text};msgs.push(m);saveMsgs();th.appendChild(bubble(m));scrollEnd()}
+  async function runAction(a,btn){
+    if(a.kind==='prompt'&&a.prompt){ta.value=a.prompt;ta.focus();return}
+    if(a.client_only||a.kind==='navigate'){var u=a.link&&safeUrl(a.link);if(u)location.href=u;return}
+    btn.disabled=true;
+    try{
+      var u0=await ensureUser();
+      var r=await api('/v1/actions/'+encodeURIComponent(a.action_id||a.id)+'/execute',{method:'POST',body:JSON.stringify({user_id:u0,confirm:false})});
+      if(r.status==='needs_confirmation'){
+        if(!window.confirm((r.message||'Confirm this change?')+'\n\n'+(a.label||'')))return btn.disabled=false;
+        r=await api('/v1/actions/'+encodeURIComponent(a.action_id||a.id)+'/confirm',{method:'POST',body:JSON.stringify({user_id:u0})});
+      }
+      if(r.status==='executed'){btn.textContent='Done';changed=true;note((a.label||'Action')+': done.')}
+      else if(r.status==='pending_approval'){btn.textContent='Waiting for approval';note('This needs your approval first. Nothing has run yet. Open the brief to review it.')}
+      else{btn.disabled=false}
+    }catch(e){btn.disabled=false;var why=explain(e);if(why)note(why,'err')}
   }
   function draw(){
     th.innerHTML='';
@@ -138,8 +165,12 @@
     var t0=performance.now(),iv=setInterval(function(){t.firstChild.textContent='thinking '+((performance.now()-t0)/1000).toFixed(1)+'s'},100);
     ctrl=new AbortController();
     try{
-      var r=await api('/v1/jarvis/chat',{method:'POST',signal:ctrl.signal,body:JSON.stringify({user_id:await ensureUser(),message:text,history:history()})});
-      var am={role:'agent',text:r.reply||''};msgs.push(am);
+      var tz='';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||''}catch(e){}
+      var body={user_id:await ensureUser(),text:text,channel:'popup',history:history()};
+      if(tz)body.timezone=tz;if(convId)body.conversation_id=convId;
+      var r=await api('/v1/chat',{method:'POST',signal:ctrl.signal,body:JSON.stringify(body)});
+      if(r.conversation_id)convId=r.conversation_id;
+      var am={role:'agent',text:r.reply||'',actions:(r.actions||[]).slice(0,5)};msgs.push(am);
       if(r.action==='task'||(r.tool_calls&&r.tool_calls.length))changed=true;
       clearInterval(iv);saveMsgs();draw();
     }catch(e){

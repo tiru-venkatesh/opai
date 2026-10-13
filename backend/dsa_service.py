@@ -25,7 +25,8 @@ def _plan(db: Session, uid: str) -> Optional[DsaPlan]:
 def _tdict(t: DsaTopic) -> Dict[str, Any]:
     return dict(id=t.id, position=t.position or 0, phase_no=t.phase_no or 1, phase=t.phase or "", name=t.name,
                 planned_week=t.planned_week or 1, status=t.status or "not_started", confidence=t.confidence,
-                learn_url=t.learn_url, practice_url=t.practice_url, notes=t.notes or "", sessions_done=t.sessions_done or 0)
+                learn_url=t.learn_url, practice_url=t.practice_url, notes=t.notes or "", sessions_done=t.sessions_done or 0,
+                next_review=t.next_review, review_count=t.review_count or 0)
 
 
 def _topics(db: Session, plan: DsaPlan) -> List[Dict[str, Any]]:
@@ -44,15 +45,32 @@ def _exam_context(db: Session, uid: str, today: date):
     return (e.exam_date - today).days, name
 
 
+def _learn_streak(db: Session, plan: DsaPlan, today: date) -> int:
+    """Learn sessions in a row (most recent first) since the last revision slot. Skipped days do not count."""
+    rows = (db.query(DsaSession).filter(DsaSession.plan_id == plan.id, DsaSession.plan_date < today, DsaSession.status == "done")
+            .order_by(DsaSession.plan_date.desc()).limit(6).all())
+    n = 0
+    for r in rows:
+        if r.kind in ("revise", "review"):
+            break
+        n += 1
+    return n
+
+
 def ensure_session(db: Session, plan: DsaPlan, tdicts: List[Dict[str, Any]], today: date, exam_days: Optional[int]) -> Optional[DsaSession]:
     """The one DSA block for `today`. Re-evaluated while still 'planned' so exam season and topic changes adapt it;
     done/skipped blocks are frozen."""
     mode, _ = R.mode_for(exam_days, plan.mode_override or "auto")
-    topic, kind = R.pick_topic(tdicts, mode)
+    if mode == "paused":
+        return None                              # paused: no DSA block is generated (history and progress are kept)
+    due = R.due_reviews(tdicts, today)
+    topic, kind = R.pick_topic(tdicts, mode, due, _learn_streak(db, plan, today))
     s = db.query(DsaSession).filter(DsaSession.plan_id == plan.id, DsaSession.plan_date == today).first()
     if topic is None:
         return s
-    minutes = R.day_minutes(plan.daily_minutes or 60, mode)
+    minutes = R.day_minutes(plan.daily_minutes or 60, mode, exam_days)
+    if kind == "revise":
+        minutes = R.review_minutes(minutes, topic["confidence"])
     if s is None:
         s = DsaSession(user_id=plan.user_id, plan_id=plan.id, topic_id=topic["id"], plan_date=today, minutes=minutes,
                        mode=mode, kind=kind, status="planned")
@@ -72,7 +90,8 @@ def ensure_session(db: Session, plan: DsaPlan, tdicts: List[Dict[str, Any]], tod
 
 # ---------------------------------------------------------------- state for the DSA page
 def options() -> Dict[str, Any]:
-    return {"languages": list(R.LANGUAGES), "goals": list(R.GOALS), "daily_minutes": [30, 45, 60, 90], "days_per_week": [3, 4, 5, 6, 7],
+    return {"languages": list(R.LANGUAGES), "goals": list(R.GOALS), "levels": list(R.LEVELS), "daily_minutes": [20, 30, 60], "days_per_week": [3, 4, 5, 6, 7],
+            "modes": list(R.MODES), "outcomes": list(R.OUTCOMES), "difficulty": list(R.DIFFICULTY),
             "statuses": [{"id": s, "label": R.STATUS_LABEL[s]} for s in R.STATUSES]}
 
 
@@ -105,36 +124,56 @@ def state(db: Session, uid: str, today: Optional[date] = None) -> Dict[str, Any]
                        "topic": {"id": topic["id"], "name": topic["name"], "phase": topic["phase"]},
                        "blocks": R.day_blocks(topic, sess.mode, sess.kind, sess.minutes)}
 
+    queue = [dict(topic_id=t["id"], name=t["name"], phase=t["phase"], confidence=t["confidence"], minutes=R.review_minutes(plan.daily_minutes or 60, t["confidence"]),
+                  due=t["next_review"].isoformat(), overdue_days=(today - t["next_review"]).days,
+                  learn_url=t["learn_url"], practice_url=t["practice_url"]) for t in R.due_reviews(td, today)]
+    hist = (db.query(DsaSession).filter(DsaSession.plan_id == plan.id, DsaSession.status.in_(("done", "skipped")))
+            .order_by(DsaSession.plan_date.desc(), DsaSession.created_at.desc()).limit(15).all())
+    history = [dict(date=h.plan_date.isoformat(), topic=(byid.get(h.topic_id) or {}).get("name", "Topic"), kind=h.kind, status=h.status, outcome=h.outcome,
+                    minutes=h.actual_minutes or h.minutes, confidence=h.confidence, difficulty=h.difficulty_tags or []) for h in hist]
     first = start + timedelta(days=7 * (week - 1))
     rows = db.query(DsaSession).filter(DsaSession.plan_id == plan.id, DsaSession.plan_date >= first, DsaSession.plan_date <= first + timedelta(days=6)).all()
     by_date = {r.plan_date: r.status for r in rows}
     return {**base,
             "plan": {"id": plan.id, "goal": plan.goal, "language": plan.language, "daily_minutes": plan.daily_minutes, "days_per_week": plan.days_per_week,
-                     "start_date": start.isoformat(), "target": "90-day roadmap", "mode_override": plan.mode_override or "auto"},
+                     "start_date": start.isoformat(), "target": "90-day roadmap", "mode_override": plan.mode_override or "auto",
+                     "level": plan.level, "target_date": plan.target_date.isoformat() if plan.target_date else None},
             "progress": {"week": week, "weeks": R.WEEKS, "overrun": overrun, "advanced": adv, "total": len(td), "percent": round(100 * adv / max(1, len(td))),
-                         "current_phase": act["phase"] if act else "Roadmap complete", "current_topic": act["name"] if act else None},
+                         "current_phase": act["phase"] if act else "Roadmap complete", "current_topic": act["name"] if act else None,
+                         "milestone": R.next_milestone(td)},
             "pace": R.pace(td, week),
-            "mode": {"mode": mode, "reason": why, "exam_in_days": exam_days, "exam_name": exam_name, "override": plan.mode_override or "auto"},
+            "mode": {"mode": mode, "reason": why, "exam_in_days": exam_days, "exam_name": exam_name, "override": plan.mode_override or "auto",
+                     "heads_up": (f"{exam_name} exam in {exam_days} days. DSA moves to maintenance within {R.EXAM_WINDOW_DAYS} days; you can override this anytime."
+                                  if mode == "normal" and exam_days is not None and R.EXAM_WINDOW_DAYS < exam_days <= 14 and (plan.mode_override or "auto") == "auto" else "")},
             "this_week": R.week_bullets(td, week),
+            "week_plan": R.week_plan(plan.days_per_week or 5),
+            "revision_queue": queue,
+            "history": history,
             "today": today_block,
             "phases": phases,
             "consistency": {"planned": plan.days_per_week, "completed": sum(1 for v in by_date.values() if v == "done"), "days": R.week_days(start, week, by_date, today)}}
 
 
 # ---------------------------------------------------------------- mutations
-def create_plan(db: Session, uid: str, goal: str, language: str, daily_minutes: int, days_per_week: int, today: Optional[date] = None) -> DsaPlan:
+def create_plan(db: Session, uid: str, goal: str, language: str, daily_minutes: int, days_per_week: int, today: Optional[date] = None,
+                level: str = "Starting from basics", target_date: Optional[date] = None) -> DsaPlan:
     if language not in R.LANGUAGES:
         raise DsaError(422, "Pick one of: " + ", ".join(R.LANGUAGES))
-    if goal not in R.GOALS:
+    if goal not in R.GOALS + R.LEGACY_GOALS:
         raise DsaError(422, "Pick one of: " + ", ".join(R.GOALS))
+    if level not in R.LEVELS:
+        raise DsaError(422, "Pick one of: " + ", ".join(R.LEVELS))
+    start = today or date.today()
+    if target_date is not None and target_date <= start:
+        raise DsaError(422, "Target date must be in the future")
     daily_minutes, days_per_week = max(20, min(int(daily_minutes), 180)), max(1, min(int(days_per_week), 7))
     for model in (DsaSession, DsaTopic, DsaPlan):          # a fresh roadmap replaces the old one
         db.query(model).filter(model.user_id == uid).delete(synchronize_session=False)
     plan = DsaPlan(user_id=uid, goal=goal, language=language, daily_minutes=daily_minutes, days_per_week=days_per_week,
-                   weeks=R.WEEKS, start_date=today or date.today(), mode_override="auto", status="active")
+                   weeks=R.WEEKS, start_date=start, mode_override="auto", status="active", level=level, target_date=target_date)
     db.add(plan)
     db.flush()
-    for t in R.build_topics(language):
+    for t in R.build_topics(language, level, start):
         db.add(DsaTopic(plan_id=plan.id, user_id=uid, **t))
     db.commit()
     db.refresh(plan)
@@ -153,8 +192,13 @@ def update_settings(db: Session, uid: str, fields: Dict[str, Any]) -> None:
         raise DsaError(404, "No DSA roadmap yet")
     if "mode_override" in fields and fields["mode_override"] is not None:
         if fields["mode_override"] not in R.MODES:
-            raise DsaError(422, "mode_override must be auto, normal or maintenance")
+            raise DsaError(422, "mode_override must be auto, normal, maintenance or paused")
         plan.mode_override = fields["mode_override"]
+    if "target_date" in fields:
+        td_ = fields["target_date"]
+        if td_ is not None and td_ <= date.today():
+            raise DsaError(422, "Target date must be in the future")
+        plan.target_date = td_
     if fields.get("daily_minutes") is not None:
         plan.daily_minutes = max(20, min(int(fields["daily_minutes"]), 180))
     if fields.get("days_per_week") is not None:
@@ -194,26 +238,65 @@ def _session(db: Session, uid: str, sid: str) -> DsaSession:
     return s
 
 
-def complete_session(db: Session, uid: str, sid: str, actual_minutes: Optional[int] = None, confidence: Optional[int] = None) -> DsaSession:
-    """User is back from the external site and marks progress. Updates the topic, so tomorrow's block adapts."""
+def complete_session(db: Session, uid: str, sid: str, actual_minutes: Optional[int] = None, confidence: Optional[int] = None,
+                     outcome: str = "completed", difficulty: Optional[List[str]] = None) -> DsaSession:
+    """User is back from the external site and logs the outcome. Updates topic status, confidence, time spent and the
+    next revision date, so tomorrow's block adapts. outcome: completed | partial | could_not_start."""
+    if outcome not in R.OUTCOMES:
+        raise DsaError(422, "outcome must be one of: " + ", ".join(R.OUTCOMES))
+    try:
+        tags = R.clean_tags(difficulty)
+    except ValueError as e:
+        raise DsaError(422, str(e))
     s = _session(db, uid, sid)
     if s.status == "done":
         return s                                              # idempotent
     t = db.query(DsaTopic).filter(DsaTopic.id == s.topic_id).first()
+    s.outcome, s.difficulty_tags = outcome, tags
+    if outcome == "could_not_start":                          # nothing is lost: same topic tomorrow, no progress recorded
+        if s.status == "planned":
+            s.status = "skipped"
+        db.commit()
+        return s
     s.status, s.completed_at = "done", datetime.utcnow()
     s.actual_minutes = actual_minutes
     s.confidence = confidence
     if t:
         if confidence is not None:
             t.confidence = confidence
-        if s.mode == "normal":                               # maintenance reviews never advance the roadmap
-            before = t.sessions_done or 0
-            t.status = R.status_after_session(t.status or "not_started", before, confidence)
-            t.sessions_done = before + 1
+        before = t.sessions_done or 0
+        if s.mode == "normal" and s.kind == "learn":          # only a normal learn session moves the roadmap
+            t.status = R.status_after_session(t.status or "not_started", before, confidence, outcome)
+            if outcome == "completed":
+                t.sessions_done = before + 1
+        elif s.kind in ("revise", "review"):                  # a revision can lift a topic (practicing -> revised -> comfortable)
+            if outcome == "completed" and t.status in ("practicing", "revised"):
+                t.status = R.status_after_session(t.status, before, confidence)
+            t.review_count = (t.review_count or 0) + 1
         t.last_session = s.plan_date
+        # partly done = look again tomorrow; otherwise the interval follows the learner's own confidence
+        t.next_review = s.plan_date + timedelta(days=1) if outcome == "partial" else R.next_review_date(confidence if confidence is not None else t.confidence, s.plan_date)
         t.updated_at = datetime.utcnow()
     db.commit()
     return s
+
+
+def review_topic(db: Session, uid: str, topic_id: str, confidence: int, actual_minutes: Optional[int] = None, today: Optional[date] = None) -> None:
+    """Log a revision from the Revision Queue (separate from the one daily block). Resets the review date."""
+    t = db.query(DsaTopic).filter(DsaTopic.id == str(topic_id), DsaTopic.user_id == uid).first()
+    if not t:
+        raise DsaError(404, "Topic not found")
+    if not (1 <= int(confidence) <= 5):
+        raise DsaError(422, "Confidence is 1 to 5")
+    today = today or date.today()
+    t.confidence = int(confidence)
+    t.review_count = (t.review_count or 0) + 1
+    t.last_session = today
+    t.next_review = R.next_review_date(t.confidence, today)
+    if t.status in ("practicing", "revised"):
+        t.status = R.status_after_session(t.status, t.sessions_done or 0, t.confidence)
+    t.updated_at = datetime.utcnow()
+    db.commit()
 
 
 def skip_session(db: Session, uid: str, sid: str) -> DsaSession:
@@ -232,7 +315,7 @@ def today_candidates(db: Session, uid: str, today: date) -> List[Dict[str, Any]]
         return []
     td = _topics(db, plan)
     exam_days, exam_name = _exam_context(db, uid, today)
-    s = ensure_session(db, plan, td, today, exam_days)
+    s = ensure_session(db, plan, td, today, exam_days)       # None while paused
     if s is None or s.status == "skipped":
         return []
     topic = next((t for t in td if t["id"] == s.topic_id), None)
@@ -243,10 +326,11 @@ def today_candidates(db: Session, uid: str, today: date) -> List[Dict[str, Any]]
             .order_by(DsaSession.plan_date.desc()).first())
     stale = min(14, (today - last.plan_date).days) if last else 0
     maint = s.mode == "maintenance"
+    revise = s.kind in ("revise", "review")
     return [dict(kind="dsa", ref_id=s.id,
-                 title=(f"DSA maintenance — {topic['name']}" if maint else f"DSA Roadmap — {topic['name']}"),
+                 title=(f"DSA maintenance — {topic['name']}" if maint else f"DSA revision — {topic['name']}" if revise else f"DSA Roadmap — {topic['name']}"),
                  subtitle=("Maintenance · review only" + (f" · {exam_name} exam in {exam_days}d" if exam_days is not None else "")) if maint else f"Week {week} of {R.WEEKS} · {topic['phase']}",
-                 minutes=int(s.minutes or 30), days=None, importance=0.3 if maint else 0.55, stale=stale, done=s.status == "done",
+                 minutes=int(s.minutes or 30), days=None, importance=0.3 if (maint or revise) else 0.55, stale=stale, done=s.status == "done",
                  effort=int(s.minutes or 30), link="dsa.html",
                  facts=dict(topic=topic["name"], phase=topic["phase"], week=week, mode=s.mode, minutes=int(s.minutes or 30),
                             exam_in_days=exam_days, exam_name=exam_name, learn_url=topic.get("learn_url"), practice_url=topic.get("practice_url")))]

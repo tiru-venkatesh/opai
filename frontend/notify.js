@@ -5,12 +5,12 @@
 (function () {
   if (window.OPAI_NOTIFY) return; window.OPAI_NOTIFY = 1;
   var API = (localStorage.getItem('opa_api_base') || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8000' : 'https://opa-52ug.onrender.com')).replace(/\/+$/, '');
-  var uid = null, shown = {};
+  var uid = null, shown = {}, gone = false;   /* gone: this server has no notifications routes (older deploy), so stop polling it */
 
   function api(path, opts) {
     opts = opts || {};
     return fetch(API + path, Object.assign({ headers: opts.body ? { 'Content-Type': 'application/json' } : {} }, opts))
-      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text().then(function (t) { return t ? JSON.parse(t) : null; }); });
+      .then(function (r) { if (r.status === 404 && /\/v1\/(notifications|push|reminders)/.test(path)) gone = true; if (!r.ok) throw new Error(r.status); return r.text().then(function (t) { return t ? JSON.parse(t) : null; }); });
   }
   function ensureUser() {
     if (uid) return Promise.resolve(uid);
@@ -53,6 +53,7 @@
   }
 
   function poll() {
+    if (gone) return;
     ensureUser().then(function (u) {
       if (!u) return;
       return Promise.all([api('/v1/notifications?user_id=' + encodeURIComponent(u) + '&undelivered=true'), swReady()]).then(function (r) {

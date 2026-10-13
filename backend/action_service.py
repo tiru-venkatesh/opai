@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, Optional
 
@@ -15,9 +16,12 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 from sqlalchemy.orm import Session
 
 from agent.approval_engine import requires_approval as policy_requires_approval
+import obs
 from audit.logger import record as audit
-from database import (ActionRecord, ActionApproval, Application, Academic, OutboxItem,
-                      StudyBlock, Task, Topic, Exam)
+from database import (ActionRecord, ActionApproval, Application, Academic, Contact, OutboxItem, Opportunity,
+                      Semester, StudyBlock, Task, Topic, Exam)
+
+log = logging.getLogger("opa.actions")
 
 
 # ---------- payload contracts (one per intent) ----------
@@ -50,6 +54,8 @@ class TodayOp(BaseModel):
     actual_minutes: Optional[int] = Field(default=None, ge=1, le=600)
     difficulty_felt: Optional[int] = Field(default=None, ge=1, le=5)
     confidence_now: Optional[int] = Field(default=None, ge=1, le=5)
+    outcome: str = "completed"                      # dsa: completed | partial | could_not_start
+    difficulty: list = Field(default_factory=list, max_length=5)   # dsa: concept | pattern | implementation | time | nothing
     days: int = Field(default=1, ge=1, le=14)
 
     @field_validator("kind")
@@ -82,6 +88,56 @@ class DeleteTask(BaseModel):
     task_id: str
 
 
+class Empty(BaseModel):
+    pass
+
+
+class CreateReminder(BaseModel):
+    title: str = Field(min_length=1, max_length=160)
+    remind_at: datetime                       # naive UTC
+    repeat: str = "none"
+
+    @field_validator("repeat")
+    @classmethod
+    def _r(cls, v):
+        if v not in {"none", "daily"}:
+            raise ValueError("repeat must be none or daily")
+        return v
+
+
+class SetDsaMode(BaseModel):
+    mode: str
+
+    @field_validator("mode")
+    @classmethod
+    def _m(cls, v):
+        if v not in {"auto", "normal", "maintenance", "paused"}:
+            raise ValueError("mode must be auto, normal, maintenance or paused")
+        return v
+
+
+class SetDailyCapacity(BaseModel):
+    minutes: int = Field(ge=30, le=720)
+
+
+class CreateApplication(BaseModel):
+    opportunity_id: str
+
+
+class TailorResume(BaseModel):
+    application_id: str
+
+
+class CreateOutreachDraft(BaseModel):
+    contact_id: str
+    brief_id: Optional[str] = None
+
+
+class ReminderRef(BaseModel):
+    reminder_id: str
+    minutes: int = Field(default=10, ge=1, le=1440)
+
+
 # intent -> (contract, base risk)
 INTENTS: Dict[str, tuple] = {
     "create_task": (CreateTask, "low"),
@@ -90,6 +146,16 @@ INTENTS: Dict[str, tuple] = {
     "send_email": (SendEmail, "high"),
     "update_application_status": (UpdateApplicationStatus, "high"),   # "Applied" etc.: user-confirmed, never automatic
     "delete_task": (DeleteTask, "high"),
+    "create_reminder": (CreateReminder, "low"),
+    # brief actions. "medium" runs only after the user confirms on the brief (that confirmation is the approval).
+    "replan_today": (Empty, "low"),
+    "set_dsa_mode": (SetDsaMode, "medium"),
+    "set_daily_capacity": (SetDailyCapacity, "medium"),
+    "create_application": (CreateApplication, "low"),           # tracks it as 'To Apply'; never submits anything
+    "tailor_resume": (TailorResume, "low"),                     # suggestions only; the resume itself is not changed
+    "create_outreach_draft": (CreateOutreachDraft, "low"),      # creates a PENDING outbox draft; sending still needs approval
+    "complete_reminder": (ReminderRef, "low"),
+    "snooze_reminder": (ReminderRef, "low"),
 }
 
 
@@ -156,6 +222,7 @@ def propose(db: Session, user_id: str, intent: str, payload: dict, *, source: st
         db.add(a)
     db.commit(); db.refresh(a)
     audit(db, uid, f"action.propose:{intent}", {"action_id": a.id, "source": source}, {"status": a.status}, base_risk)
+    obs.emit("action_proposed", action_id=a.id, intent=intent, risk=base_risk, status=a.status)
     if not needs and execute_low_risk:
         return execute(db, a)
     return serialize(a)
@@ -172,16 +239,25 @@ def execute(db: Session, a: ActionRecord) -> dict:
         a.status, a.result_json, a.executed_at = "executed", result, datetime.utcnow()
         db.commit(); db.refresh(a)
         audit(db, uid, f"action.execute:{a.intent}", {"action_id": a.id}, result, a.risk)
+        obs.emit("action_executed", action_id=a.id, intent=a.intent)
     except ActionError:
         db.rollback(); raise
     except Exception as e:  # never leave a half-applied action looking successful
+        log.exception("action %s failed", a.intent)
         db.rollback()
         a = db.query(ActionRecord).filter(ActionRecord.id == a.id).first()
         a.status, a.result_json = "failed", {"error": str(e)[:300]}
         db.commit()
         audit(db, uid, f"action.execute:{a.intent}", {"action_id": a.id}, {"error": str(e)[:300]}, a.risk, status="error")
+        obs.emit("action_failed", action_id=a.id, intent=a.intent)
         raise ActionError(500, "Action failed; nothing was changed")
     return serialize(a)
+
+
+_PRECHECKS = {
+    "delete_task": lambda db, uid, p: _owner(db, Task, p["task_id"], uid),
+    "update_application_status": lambda db, uid, p: _owner(db, Application, p["application_id"], uid),
+}
 
 
 def decide(db: Session, user_id: str, action_id: str, approve: bool, payload_hash_seen: Optional[str] = None) -> dict:
@@ -192,10 +268,16 @@ def decide(db: Session, user_id: str, action_id: str, approve: bool, payload_has
     if a.status != "pending_approval":
         raise ActionError(409, f"Action is '{a.status}', not pending approval")
     h = payload_hash(a.payload_json or {})
-    if approve and payload_hash_seen and payload_hash_seen != h:
+    if approve and a.intent in _PRECHECKS:
+        _PRECHECKS[a.intent](db, uid, a.payload_json or {})          # a missing / someone else's target is 404 before anything else
+    if approve and not payload_hash_seen:
+        raise ActionError(428, "Approval must name the exact version you reviewed (payload_hash)")
+    if approve and payload_hash_seen != h:
         raise ActionError(409, "The action changed since you reviewed it; review it again")
     db.add(ActionApproval(action_id=a.id, user_id=uid, decision="approved" if approve else "rejected", approved_payload_hash=h))
     audit(db, uid, f"action.{'approve' if approve else 'reject'}:{a.intent}", {"action_id": a.id}, {"payload_hash": h}, a.risk)
+    if approve:
+        obs.emit("action_approved", action_id=a.id, intent=a.intent)
     if not approve:
         a.status = "rejected"; db.commit(); db.refresh(a)
         return serialize(a)
@@ -251,7 +333,7 @@ def _h_today_op(db, uid, p):
         import dsa_service as DS
         try:
             if op == "complete":
-                DS.complete_session(db, uid, rid, p.get("actual_minutes"), p.get("confidence_now"))
+                DS.complete_session(db, uid, rid, p.get("actual_minutes"), p.get("confidence_now"), p.get("outcome") or "completed", p.get("difficulty") or [])
                 return {"state": "completed", "kind": kind, "ref_id": rid}
             DS.skip_session(db, uid, rid)            # skip / snooze: tomorrow resumes with the same topic
         except DS.DsaError as e:
@@ -287,5 +369,110 @@ def _h_delete_task(db, uid, p):
     return {"deleted": "task", "id": p["task_id"]}
 
 
+def _http_to_action_error(e) -> "ActionError":
+    return ActionError(getattr(e, "status_code", 500), str(getattr(e, "detail", e)))
+
+
+def _h_create_reminder(db, uid, p):
+    import reminders as RM
+    at = datetime.fromisoformat(str(p["remind_at"]).replace("Z", "+00:00"))
+    if at.tzinfo:
+        from datetime import timezone
+        at = at.astimezone(timezone.utc).replace(tzinfo=None)
+    r = RM.create(db, uid, p["title"], at, p.get("repeat", "none"), source="jarvis")
+    return {"created": "reminder", "id": r.id}
+
+
+def _h_replan_today(db, uid, p):
+    from agent_service import generate_study_plan
+    blocks = generate_study_plan(uid, db, date.today())
+    return {"replanned": "today", "blocks": len(blocks or [])}
+
+
+def _h_set_dsa_mode(db, uid, p):
+    import dsa_service as DS
+    try:
+        DS.update_settings(db, uid, {"mode_override": p["mode"]})
+    except DS.DsaError as e:
+        raise ActionError(e.status, e.detail)
+    return {"dsa_mode": p["mode"]}
+
+
+def _h_set_daily_capacity(db, uid, p):
+    sem = db.query(Semester).filter(Semester.user_id == uid, Semester.is_current == True).first()  # noqa: E712
+    if not sem:
+        raise ActionError(409, "Set up your current semester first")
+    old = sem.daily_study_minutes
+    if old is None:
+        from today_engine import DEFAULT_MINUTES
+        old = DEFAULT_MINUTES
+    sem.daily_study_minutes = int(p["minutes"])
+    db.commit()
+    return {"from": int(old), "to": int(p["minutes"])}
+
+
+def _h_create_application(db, uid, p):
+    o = db.query(Opportunity).filter(Opportunity.id == str(p["opportunity_id"])).first()
+    if not o or (o.user_id and o.user_id != uid):          # NULL user_id = legacy/shared row, same rule as opportunities_api
+        raise ActionError(404, "Opportunity not found")
+    existing = db.query(Application).filter(Application.user_id == uid, Application.opportunity_id == o.id).first()
+    if existing:
+        return {"created": "application", "application_id": existing.id, "already_tracked": True}
+    from opportunities_api import build_brief
+    from database import User
+    u = db.query(User).filter(User.id == uid).first()
+    a = Application(user_id=uid, company=o.company_or_lab, role=o.title, type=o.type, status="To Apply", deadline=o.deadline, link=o.link,
+                    opportunity_id=o.id, source_type=o.source_type or o.source,
+                    effort_minutes=build_brief(db, u, o)["estimated_prep_minutes"])
+    o.status = "Converted"
+    db.add(a); db.commit(); db.refresh(a)
+    return {"created": "application", "application_id": a.id}
+
+
+def _h_tailor_resume(db, uid, p):
+    from fastapi import HTTPException
+    import extras_api as X
+    try:
+        out = X.tailor_resume(p["application_id"], X.TailorBody(user_id=uid), db)
+    except HTTPException as e:
+        raise _http_to_action_error(e)
+    return {"drafted": "resume_suggestions", "application_id": p["application_id"],
+            "summary": {k: out[k] for k in list(out)[:6] if isinstance(out[k], (str, int, float, bool))}}
+
+
+def _h_create_outreach_draft(db, uid, p):
+    from fastapi import HTTPException
+    import extras_api as X
+    if not db.query(Contact).filter(Contact.id == str(p["contact_id"])).first():
+        raise ActionError(404, "Contact not found")
+    try:
+        out = X.draft_email(p["contact_id"], X.DraftBody(user_id=uid, brief_id=p.get("brief_id")), db)
+    except HTTPException as e:
+        raise _http_to_action_error(e)
+    return {"queued": "outbox", "outbox_id": out["outbox_id"], "subject": out["subject"], "note": out["note"]}
+
+
+def _h_complete_reminder(db, uid, p):
+    import reminders as RM
+    try:
+        r = RM.mark_done(db, uid, p["reminder_id"])
+    except LookupError as e:
+        raise ActionError(404, str(e))
+    return {"reminder_id": r.id, "status": r.status}
+
+
+def _h_snooze_reminder(db, uid, p):
+    import reminders as RM
+    try:
+        r = RM.snooze(db, uid, p["reminder_id"], p.get("minutes", 10))
+    except LookupError as e:
+        raise ActionError(404, str(e))
+    return {"reminder_id": r.id, "status": r.status, "snoozed_until": r.snoozed_until.isoformat() + "Z"}
+
+
 _HANDLERS = {"create_task": _h_create_task, "create_study_block": _h_create_study_block, "today_op": _h_today_op,
-             "send_email": _h_send_email, "update_application_status": _h_update_application, "delete_task": _h_delete_task}
+             "send_email": _h_send_email, "update_application_status": _h_update_application, "delete_task": _h_delete_task,
+             "create_reminder": _h_create_reminder, "replan_today": _h_replan_today, "set_dsa_mode": _h_set_dsa_mode,
+             "set_daily_capacity": _h_set_daily_capacity, "create_application": _h_create_application,
+             "tailor_resume": _h_tailor_resume, "create_outreach_draft": _h_create_outreach_draft,
+             "complete_reminder": _h_complete_reminder, "snooze_reminder": _h_snooze_reminder}

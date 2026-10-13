@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
-from typing import Optional
+from typing import List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -38,16 +38,18 @@ class PlanBody(BaseModel):
     user_id: str
     goal: str = "Placement preparation"
     language: str = "Python"
+    level: str = "Starting from basics"
     daily_minutes: int = Field(default=60, ge=20, le=180)
     days_per_week: int = Field(default=5, ge=1, le=7)
+    target_date: Optional[date] = None
 
 
 @router.post("/v1/dsa/plan")
 def create_plan(p: PlanBody, db: Session = Depends(get_db)):
     """Creates the phase-based roadmap (replaces any existing one)."""
     uid = _user(db, p.user_id)
-    _wrap(S.create_plan, db, uid, p.goal, p.language, p.daily_minutes, p.days_per_week)
-    audit(db, uid, "dsa.plan_created", {"goal": p.goal, "language": p.language, "daily_minutes": p.daily_minutes}, {"ok": True}, "low")
+    _wrap(S.create_plan, db, uid, p.goal, p.language, p.daily_minutes, p.days_per_week, level=p.level, target_date=p.target_date)
+    audit(db, uid, "dsa.plan_created", {"goal": p.goal, "language": p.language, "level": p.level, "daily_minutes": p.daily_minutes}, {"ok": True}, "low")
     return S.state(db, uid)
 
 
@@ -56,6 +58,7 @@ class SettingsBody(BaseModel):
     mode_override: Optional[str] = None
     daily_minutes: Optional[int] = Field(default=None, ge=20, le=180)
     days_per_week: Optional[int] = Field(default=None, ge=1, le=7)
+    target_date: Optional[date] = None        # send null to clear
 
 
 @router.patch("/v1/dsa/plan")
@@ -93,12 +96,28 @@ class CompleteBody(BaseModel):
     user_id: str
     actual_minutes: Optional[int] = Field(default=None, ge=1, le=600)
     confidence: Optional[int] = Field(default=None, ge=1, le=5)
+    outcome: Literal["completed", "partial", "could_not_start"] = "completed"
+    difficulty: List[str] = Field(default_factory=list, max_length=5)
 
 
 @router.post("/v1/dsa/sessions/{session_id}/complete")
 def complete(session_id: str, p: CompleteBody, db: Session = Depends(get_db)):
     uid = _user(db, p.user_id)
-    _wrap(S.complete_session, db, uid, session_id, p.actual_minutes, p.confidence)
+    _wrap(S.complete_session, db, uid, session_id, p.actual_minutes, p.confidence, p.outcome, p.difficulty)
+    return S.state(db, uid)
+
+
+class ReviewBody(BaseModel):
+    user_id: str
+    confidence: int = Field(ge=1, le=5)
+    actual_minutes: Optional[int] = Field(default=None, ge=1, le=600)
+
+
+@router.post("/v1/dsa/topics/{topic_id}/review")
+def review(topic_id: str, p: ReviewBody, db: Session = Depends(get_db)):
+    """Log a spaced revision from the Revision Queue. Confidence sets the next review date."""
+    uid = _user(db, p.user_id)
+    _wrap(S.review_topic, db, uid, topic_id, p.confidence, p.actual_minutes)
     return S.state(db, uid)
 
 

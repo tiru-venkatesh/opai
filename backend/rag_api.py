@@ -234,6 +234,7 @@ def delete_doc(doc_id: str, user_id: str, db: Session = Depends(get_db)):
 def reindex_docs(user_id: str, db: Session = Depends(get_db)):
     """Re-embed every chunk (use after switching RAG_EMBEDDER) and rebuild workspace sources."""
     uid = _ensure_user(db, user_id)
+    rag._load_fastembed(wait=True)          # a deliberate reindex waits for the real embedder instead of using the fallback
     return rag.reindex_user(db, uid)
 
 
