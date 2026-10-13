@@ -134,17 +134,16 @@ html.opai-vt::view-transition-old(root){z-index:1}html.opai-vt::view-transition-
 
 /* ambient glow behind everything (very low contrast, never blocks clicks) */
 #o-amb{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;opacity:.55}
-#o-amb i{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
-#o-amb i:nth-child(1){width:46vw;height:46vw;left:-12vw;top:-14vw;background:rgba(23,80,74,.13);animation:oDrift1 26s ease-in-out infinite alternate}
-#o-amb i:nth-child(2){width:38vw;height:38vw;right:-10vw;top:20vh;background:rgba(232,112,90,.11);animation:oDrift2 31s ease-in-out infinite alternate}
-#o-amb i:nth-child(3){width:34vw;height:34vw;left:30vw;bottom:-18vw;background:rgba(23,80,74,.09);animation:oDrift3 36s ease-in-out infinite alternate}
+/* PERF: static soft glow. The old version animated three 90px-blurred layers forever, which also forced every
+   backdrop-filter above it to re-blur on every frame (3-8 fps on many laptops). Gradients cost nothing. */
+#o-amb i{position:absolute;border-radius:50%}
+#o-amb i:nth-child(1){width:60vw;height:60vw;left:-18vw;top:-20vw;background:radial-gradient(closest-side,rgba(23,80,74,.16),transparent)}
+#o-amb i:nth-child(2){width:50vw;height:50vw;right:-14vw;top:16vh;background:radial-gradient(closest-side,rgba(232,112,90,.13),transparent)}
+#o-amb i:nth-child(3){width:46vw;height:46vw;left:28vw;bottom:-24vw;background:radial-gradient(closest-side,rgba(23,80,74,.11),transparent)}
+html[data-theme=dark] #o-amb i:nth-child(1){background:radial-gradient(closest-side,rgba(47,143,130,.19),transparent)}
+html[data-theme=dark] #o-amb i:nth-child(2){background:radial-gradient(closest-side,rgba(240,138,117,.12),transparent)}
+html[data-theme=dark] #o-amb i:nth-child(3){background:radial-gradient(closest-side,rgba(47,143,130,.13),transparent)}
 html[data-theme=dark] #o-amb{opacity:.9}
-html[data-theme=dark] #o-amb i:nth-child(1){background:rgba(47,143,130,.16)}
-html[data-theme=dark] #o-amb i:nth-child(2){background:rgba(240,138,117,.10)}
-html[data-theme=dark] #o-amb i:nth-child(3){background:rgba(47,143,130,.11)}
-@keyframes oDrift1{to{transform:translate(14vw,10vh) scale(1.15)}}
-@keyframes oDrift2{to{transform:translate(-12vw,-8vh) scale(1.2)}}
-@keyframes oDrift3{to{transform:translate(-16vw,-6vh) scale(.9)}}
 
 /* cursor spotlight on cards */
 .o-spot{background-image:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(47,143,130,.10),transparent 55%)!important}

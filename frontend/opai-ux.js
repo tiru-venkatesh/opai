@@ -46,7 +46,7 @@
     if(RM)return;
     var $=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
     /* ambient glow */
-    var amb=document.createElement('div');amb.id='o-amb';amb.innerHTML='<i></i><i></i><i></i>';document.body.appendChild(amb);
+    if(window.top===window.self&&!/[?&]embed=1/.test(location.search)){var amb=document.createElement('div');amb.id='o-amb';amb.innerHTML='<i></i><i></i><i></i>';document.body.appendChild(amb);} /* not inside Work iframes: the parent page already has the glow */
     /* header: shrink on scroll */
     var hd=document.querySelector('.opai-hd');
     addEventListener('scroll',function(){var h=document.querySelector('.opai-hd');h&&h.classList.toggle('o-sc',scrollY>24)},{passive:true});
