@@ -471,6 +471,7 @@ class DsaPlan(Base):
     mode_override = Column(String, default="auto")   # auto | normal | maintenance | paused
     level = Column(String)                            # starting level chosen at onboarding
     target_date = Column(Date)                        # optional
+    resources = Column(JSON)                          # per-plan learn/practice/notes source choices
     status = Column(String, default="active")         # active | archived
     created_at = Column(DateTime, default=_dt.utcnow)
 
