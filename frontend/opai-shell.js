@@ -17,9 +17,14 @@
     var hd=h('<header class="opai-hd" role="banner"><div class="in"><a class="opai-logo" href="today.html" aria-label="OPAI home">'+LOGO+'<span><b>OPAI</b><small>v8</small></span></a>'+
       '<nav class="opai-pills" aria-label="Pages">'+NAV.map(function(n){return '<a href="'+n[1]+'"'+((n[1]===path||(n[1]==='work.html'&&/^(opportunities|dsa|projects|academics|applications)\.html$/.test(path)))?' aria-current="page"':'')+'>'+n[0]+'</a>'}).join('')+'</nav>'+
       '<div class="opai-right"><button class="opai-k" type="button" id="opai-k" aria-label="Search sections">Search <kbd>Ctrl K</kbd></button><span class="opai-st" id="opai-st"><i></i><span>Connecting…</span></span>'+
-      '<a class="opai-user" href="profile.html" title="Profile" aria-label="Open your profile"'+(path==='profile.html'?' aria-current="page"':'')+'><span class="av" id="opai-av">·</span><span><b id="opai-un">Account</b><small id="opai-us">OPAI</small></span></a></div></div></header>');
+      (isChat?'':'<button class="opai-ib" type="button" id="hd-guide" title="Guide: which section does what" aria-label="Open the guide">'+icons().guide+'</button><button class="opai-ib" type="button" id="hd-install" title="Install OPAI as an app" aria-label="Install OPAI as an app">'+icons().dl+'</button>')+'<a class="opai-user" href="profile.html" title="Profile" aria-label="Open your profile"'+(path==='profile.html'?' aria-current="page"':'')+'><span class="av" id="opai-av">·</span><span><b id="opai-un">Account</b><small id="opai-us">OPAI</small></span></a></div></div></header>');
     var pos=old?getComputedStyle(old).position:'';
     if(old&&(pos==='fixed'||pos==='sticky'||old.parentNode===document.body))old.replaceWith(hd);else document.body.insertBefore(hd,document.body.firstChild);
+    var gb=hd.querySelector('#hd-guide'),ib=hd.querySelector('#hd-install');
+    if(gb)gb.onclick=function(){window.OPAI_GUIDE&&OPAI_GUIDE.open('')};
+    if(ib){var standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
+      if(standalone)ib.style.display='none';   /* already installed */
+      ib.onclick=function(){if(deferred){deferred.prompt();deferred=null}else alert('To install: browser menu → "Add to Home Screen" (or "Install app").')}}
     document.body.classList.add('opai-has-shell');if(pos!=='fixed')document.body.classList.add('opai-pad');
     requestAnimationFrame(function(){try{var nv=hd.querySelector('.opai-pills'),ac=nv&&nv.querySelector('[aria-current=page]');if(ac&&nv.scrollWidth>nv.clientWidth)nv.scrollLeft=Math.max(0,ac.offsetLeft-6)}catch(e){}});return hd;
   }
@@ -34,10 +39,8 @@
   var deferred=null;addEventListener('beforeinstallprompt',function(e){if(isChat)return;e.preventDefault();deferred=e});
   function dock(){
     if(isChat)return;var I=icons();
-    var d=h('<div class="opai-dock" role="toolbar" aria-label="Quick actions"><a href="today.html" title="Today" '+(path==='today.html'?'aria-current="page"':'')+'>'+I.today+'<small>Today</small></a><a href="super-chat.html" title="Ask KARNA">'+I.chat+'<small>KARNA</small></a><a href="work.html" title="Work" '+(/^(work|opportunities|dsa|projects|academics)\.html$/.test(path)?'aria-current="page"':'')+'>'+I.work+'<small>Work</small></a><button type="button" id="dk-guide" title="Guide: which section does what">'+I.guide+'<small>Guide</small></button><button type="button" id="dk-install" title="Install OPAI as an app">'+I.dl+'<small>Install</small></button></div>');
+    var d=h('<div class="opai-dock" role="toolbar" aria-label="Quick actions"><a href="today.html" title="Today" '+(path==='today.html'?'aria-current="page"':'')+'>'+I.today+'<small>Today</small></a><a href="super-chat.html" title="Ask KARNA">'+I.chat+'<small>KARNA</small></a><a href="work.html" title="Work" '+(/^(work|opportunities|dsa|projects|academics)\.html$/.test(path)?'aria-current="page"':'')+'>'+I.work+'<small>Work</small></a></div>');
     document.body.appendChild(d);
-    document.getElementById('dk-guide').onclick=function(){window.OPAI_GUIDE&&OPAI_GUIDE.open('')};
-    document.getElementById('dk-install').onclick=function(){if(deferred){deferred.prompt();deferred=null}else alert('To install: browser menu → "Add to Home Screen" (or "Install app").')};
   }
   /* focus timer, persisted so it survives page changes */
   var KEY='opai_focus',tm,tick;

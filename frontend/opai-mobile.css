@@ -30,6 +30,7 @@ input.sr,.sr{position:absolute!important;width:1px!important;height:1px!importan
   .opai-right{flex:none;display:flex;align-items:center;gap:6px;margin-left:0}
   .opai-right>*{flex:none}
   .opai-user{padding:2px}
+  .opai-ib{width:32px;height:32px}.opai-ib svg{width:17px;height:17px}
   body.opai-pad{padding-top:56px}
 
   /* ---------- bottom dock becomes a proper tab bar ---------- */
