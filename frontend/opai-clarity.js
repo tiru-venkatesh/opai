@@ -62,6 +62,7 @@
     if (g.scrollWidth > g.clientWidth + 2) { try { g.scrollTo({ left: Math.max(0, a.offsetLeft - g.clientWidth / 2 + a.offsetWidth / 2), behavior: RM ? 'auto' : 'smooth' }); } catch (e) {} }
   }
   function helpFor(g) {
+    return; /* one-line help strips under tab bars were removed: they read as an extra mini bar */
     var a = activeOf(g); if (!a) return;
     var txt = HELP[norm(a.textContent)];
     var host = g.closest('.wk-bar') || g, el = host.nextElementSibling;

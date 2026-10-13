@@ -162,3 +162,6 @@ html.o2-embed .o2-top{display:none}
 
 /* Inside Work the parent page already has the theme switch; don't show a second floating one in every embedded page */
 html.o2-embed .opai-theme.float{display:none}
+
+/* help strips removed */
+.o2-help{display:none!important}
