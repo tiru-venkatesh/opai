@@ -9,126 +9,181 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
+<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><link rel="stylesheet" href="opai-mobile.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
 <style>
-:root{--bg:#F6F4EE;--card:#fff;--ink:#16181A;--mut:#5a6064;--pri:#17504A;--coral:#E8705A;--line:#e3e0d6;--warn:#b4580f;--bad:#b3261e;--good:#17704a;--font:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif}
-*{box-sizing:border-box}html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/22px var(--font);min-height:100vh}
-main{max-width:1080px;margin:0 auto;padding:20px 16px 140px}
-h1{font-size:28px;letter-spacing:-.03em;margin:4px 0 2px;color:var(--pri)} h2{font-size:18px;margin:0 0 10px} h3{font-size:15px;margin:0}
-.sub{color:var(--mut);margin:0 0 16px}
-.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;border-bottom:1px solid var(--line)}
-.tabs button{border:0;background:none;padding:8px 12px;border-radius:999px;font:500 14px var(--font);color:var(--mut);cursor:pointer;white-space:nowrap}
-.tabs button[aria-selected=true]{background:var(--pri);color:#fff}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.sp{justify-content:space-between}
-.pill{display:inline-block;padding:2px 10px;border-radius:999px;font:600 12px/18px var(--font);background:#eef2f0;color:var(--pri)}
-.pill.Strong,.pill.good{background:#dff3e8;color:var(--good)}.pill.Good{background:#e8f3df;color:#3c6b17}.pill.Partial,.pill.warn{background:#fdecd9;color:var(--warn)}.pill.Poor,.pill.bad{background:#fbe0dd;color:var(--bad)}
-.mut{color:var(--mut);font-size:13px}
-button.b,a.b{border:1px solid var(--pri);background:var(--pri);color:#fff;border-radius:10px;padding:7px 12px;font:600 13px var(--font);cursor:pointer;text-decoration:none;display:inline-block}
-button.b.alt,a.b.alt{background:#fff;color:var(--pri)} button.b.dng{background:#fff;color:var(--bad);border-color:var(--bad)}
-button:disabled{opacity:.5;cursor:default}
-input,textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:14px var(--font);background:#fff;color:var(--ink)}
-textarea{min-height:110px;resize:vertical} label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin:8px 0 3px}
-.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-.sig{margin:8px 0}.sig b{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}.sig ul{margin:4px 0 0;padding-left:18px}
-.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(210px,1fr);gap:10px;overflow-x:auto;padding-bottom:8px}
-.col{background:#efece3;border-radius:12px;padding:8px}.col h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin:2px 4px 8px}
-.col .card{padding:10px;margin-bottom:8px;cursor:pointer}
-.note{background:#fff7e6;border:1px solid #f1d9a6;border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;z-index:90}.modal.on{display:flex}
-.modal>div{background:#fff;border-radius:16px;max-width:640px;width:100%;padding:18px}
-pre.mail{white-space:pre-wrap;font:14px/21px var(--font);background:#faf9f5;border:1px solid var(--line);border-radius:10px;padding:10px}
-.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;display:none;z-index:99}
-
-/* ---------- motion (all disabled under prefers-reduced-motion) ---------- */
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
-@keyframes fade{from{opacity:0}to{opacity:1}}
-@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
-@keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(232,112,90,.55)}70%{box-shadow:0 0 0 9px rgba(232,112,90,0)}100%{box-shadow:0 0 0 0 rgba(232,112,90,0)}}
-@keyframes toastIn{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
-@keyframes grow{from{width:0}to{width:var(--w)}}
-@keyframes tabIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-#hero .card{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
-#view>*,.board .col,.col .card,#fc_out>.card{animation:fadeUp .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*55ms)}
-.card{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
-.card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(23,80,74,.10);border-color:#cfd8d4}
-.col .card:hover{transform:translateY(-2px) scale(1.01)}
-.tabs button{transition:background .25s ease,color .25s ease,transform .15s ease}
-.tabs button:hover{transform:translateY(-1px);color:var(--pri)}.tabs button[aria-selected=true]:hover{color:#fff}
-.tabs button[aria-selected=true]{animation:tabIn .3s ease both}
-button.b,a.b{transition:transform .15s ease,box-shadow .2s ease,background .2s ease,color .2s ease}
-button.b:hover:not(:disabled),a.b:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(23,80,74,.22)}
-button.b:active:not(:disabled),a.b:active{transform:scale(.96);box-shadow:none}
-input,textarea,select{transition:border-color .2s ease,box-shadow .2s ease}
-input:focus,textarea:focus,select:focus{outline:0;border-color:var(--pri);box-shadow:0 0 0 3px rgba(23,80,74,.14)}
-.modal.on{animation:fade .2s ease both}.modal.on>div{animation:pop .3s cubic-bezier(.2,.8,.2,1) both}
-.toast.show{animation:toastIn .3s ease both}
-.pill.Strong{animation:pulseRing 1.8s ease-out 2 .6s}
-.pill.crit{background:#fbe0dd;color:var(--bad);animation:pulseRing 1.6s ease-out infinite}
-.meter{height:6px;border-radius:99px;background:#ebe8de;overflow:hidden;margin:8px 0 2px}
-.meter i{display:block;height:100%;width:var(--w);border-radius:99px;background:linear-gradient(90deg,var(--coral),var(--pri));animation:grow .9s cubic-bezier(.2,.8,.2,1) .15s both}
-.skel{height:92px;border-radius:14px;margin-bottom:12px;background:linear-gradient(90deg,#ece9df 25%,#f6f4ee 37%,#ece9df 63%);background-size:800px 100%;animation:shimmer 1.3s linear infinite}
-.sig li{animation:fade .5s ease both}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+:root{
+  --opp-bg:var(--paper,#F6F4EE);--opp-card:var(--card,#fff);--opp-ink:var(--ink,#16181A);
+  --opp-muted:var(--mut,#5a6064);--opp-primary:var(--pri,#17504A);--opp-line:var(--line,var(--hair,#e3e0d6));
+  --opp-well:var(--well,#efede5);--opp-coral:var(--coral,#E8705A);--opp-good:var(--good,#17704a);
+  --opp-warn:var(--warn,#b4580f);--opp-bad:var(--bad,#b3261e);--opp-field:var(--card-2,#fff);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;scroll-behavior:smooth}
+body{background:var(--opp-bg);color:var(--opp-ink);font:15px/1.55 'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;min-height:100vh}
+#main{position:relative;z-index:2;width:min(100%,1160px);margin:0 auto;padding:28px 24px 132px}
+.op-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin:4px 0 24px}
+.op-eyebrow{display:inline-flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--opp-primary);font-size:11px;font-weight:750;letter-spacing:.14em;text-transform:uppercase}
+.op-eyebrow:before{content:"";width:18px;height:2px;border-radius:9px;background:var(--opp-coral)}
+#main h1{margin:0;color:var(--opp-ink);font-size:clamp(29px,3.3vw,38px);line-height:1.12;letter-spacing:-.045em;font-weight:750}
+#main .sub{max-width:690px;margin:10px 0 0;color:var(--opp-muted);font-size:14px;line-height:1.7}
+.op-flow{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end;color:var(--opp-muted);font-size:11px;font-weight:650;white-space:nowrap;padding-bottom:3px}
+.op-flow span{padding:6px 9px;border:1px solid var(--opp-line);border-radius:99px;background:color-mix(in srgb,var(--opp-card) 75%,transparent)}
+.op-flow i{font-style:normal;color:var(--opp-coral)}
+#hero{margin:0 0 22px}
+.card{background:var(--opp-card);color:var(--opp-ink);border:1px solid var(--opp-line);border-radius:17px;padding:18px;margin:0 0 14px;box-shadow:0 2px 8px rgba(24,32,28,.025);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+#view>.card:hover,#view .board .card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--opp-primary) 30%,var(--opp-line));box-shadow:0 9px 24px rgba(24,32,28,.07)}
+#main h2{font-size:19px;line-height:1.3;letter-spacing:-.025em;margin:0 0 9px;color:var(--opp-ink)}
+#main h3{font-size:15px;line-height:1.4;margin:0;color:var(--opp-ink)}
+.mut{color:var(--opp-muted);font-size:13px;line-height:1.6}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.sp{justify-content:space-between}
+.opp-hero{padding:20px;overflow:hidden}
+.opp-hero-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+.opp-section-kicker{font-size:10px;font-weight:750;letter-spacing:.12em;text-transform:uppercase;color:var(--opp-muted);margin-bottom:6px}
+.opp-hero-top h2{margin-bottom:4px!important}
+.opp-hero-top p{margin:0}
+.opp-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.opp-stat{position:relative;min-width:0;padding:14px 15px;border:1px solid var(--opp-line);border-radius:13px;background:color-mix(in srgb,var(--opp-well) 37%,var(--opp-card));}
+.opp-stat-label{display:block;color:var(--opp-muted);font-size:12px;font-weight:600;line-height:1.4}
+.opp-stat strong{display:block;margin:8px 0 2px;font-size:27px;line-height:1;font-weight:750;letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.opp-stat small{display:block;color:var(--opp-muted);font-size:11px;line-height:1.45}
+.opp-next{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:13px;padding:13px 15px;border-radius:12px;border:1px solid color-mix(in srgb,var(--opp-primary) 20%,var(--opp-line));background:color-mix(in srgb,var(--opp-primary) 6%,var(--opp-card))}
+.opp-next-copy{min-width:0}.opp-next-title{display:block;margin-bottom:3px;color:var(--opp-primary);font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-weight:750}
+.opp-next p{margin:0;font-size:13px;line-height:1.55;color:var(--opp-ink)}
+.tabs-wrap{position:sticky;top:58px;z-index:18;padding:8px 0 10px;margin:0 0 17px;background:color-mix(in srgb,var(--opp-bg) 90%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.tabs{display:flex;gap:5px;overflow-x:auto;overscroll-behavior-x:contain;padding:5px;border:1px solid var(--opp-line);border-radius:14px;background:var(--opp-card);margin:0;scrollbar-width:thin;scrollbar-color:var(--opp-line) transparent}
+.tabs button{flex:0 0 auto;border:1px solid transparent;background:transparent;color:var(--opp-muted);padding:9px 12px;border-radius:9px;font:600 12px/1.4 'Geist',system-ui,sans-serif;cursor:pointer;white-space:nowrap;transition:background .18s ease,color .18s ease,border-color .18s ease}
+.tabs button:hover{color:var(--opp-ink);background:color-mix(in srgb,var(--opp-well) 58%,transparent)}
+.tabs button[aria-selected=true]{background:var(--opp-primary);border-color:var(--opp-primary);color:#fff;box-shadow:0 2px 5px rgba(23,80,74,.14)}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--opp-coral) 65%,transparent);outline-offset:2px}
+button.b,a.b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;border:1px solid var(--opp-primary);border-radius:10px;background:var(--opp-primary);color:#fff;padding:8px 13px;font:650 12px/1.25 'Geist',system-ui,sans-serif;text-decoration:none;cursor:pointer;white-space:normal;text-align:center;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease}
+button.b:hover:not(:disabled),a.b:hover{transform:translateY(-1px);box-shadow:0 4px 13px rgba(23,80,74,.17)}
+button.b.alt,a.b.alt{background:var(--opp-card);color:var(--opp-primary)}
+button.b.dng{background:var(--opp-card);color:var(--opp-bad);border-color:color-mix(in srgb,var(--opp-bad) 52%,var(--opp-line))}
+button:disabled{opacity:.55;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+input,textarea,select{display:block;max-width:100%;min-width:0;width:100%;border:1px solid var(--opp-line);border-radius:10px;padding:10px 11px;background:var(--opp-field);color:var(--opp-ink);font:14px/1.4 'Geist',system-ui,sans-serif;box-shadow:none;transition:border-color .16s ease,box-shadow .16s ease}
+input::placeholder,textarea::placeholder{color:var(--opp-muted);opacity:.8}
+input:focus,textarea:focus,select:focus{outline:0;border-color:var(--opp-primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--opp-primary) 13%,transparent)}
+textarea{min-height:106px;resize:vertical}
+label{display:block;margin:9px 0 4px;color:var(--opp-muted);font-size:12px;font-weight:650;line-height:1.4}
+.row>input,.row>select{flex:1 1 210px;width:auto}
+.grid{display:grid;gap:13px;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr))}
+.grid label{margin-top:0}
+.pill{display:inline-flex;align-items:center;gap:4px;max-width:100%;padding:4px 9px;border:1px solid transparent;border-radius:99px;background:var(--opp-well);color:var(--opp-primary);font-size:11px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+.pill.Strong,.pill.good{background:#dff3e8;color:var(--opp-good)}.pill.Good{background:#e8f3df;color:#3c6b17}.pill.Partial,.pill.warn{background:#fdecd9;color:var(--opp-warn)}.pill.Poor,.pill.bad,.pill.crit{background:#fbe0dd;color:var(--opp-bad)}
+.sig{margin:14px 0}.sig b,.k{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--opp-muted)}.sig ul,.k ul{margin:6px 0 0;padding-left:18px}.sig li{margin:4px 0}
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(240px,1fr);gap:12px;overflow-x:auto;align-items:start;padding:2px 2px 14px;scroll-snap-type:x proximity}
+.col{min-height:150px;background:var(--opp-well);border:1px solid var(--opp-line);border-radius:14px;padding:11px;scroll-snap-align:start}
+.col h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--opp-muted);margin:2px 4px 10px}
+.col .card{padding:13px;margin-bottom:9px;cursor:pointer;box-shadow:none}.col .card:last-child{margin-bottom:0}
+.note{background:#fff7e6;border:1px solid #f1d9a6;border-radius:11px;padding:11px 13px;font-size:13px;line-height:1.55;margin:10px 0;color:#654b13}
+pre.mail{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.65 'Geist',system-ui,sans-serif;background:var(--opp-well);border:1px solid var(--opp-line);border-radius:11px;padding:12px}
+.meter{height:6px;border-radius:99px;background:var(--opp-well);overflow:hidden;margin:11px 0 3px}.meter i{display:block;height:100%;width:var(--w);border-radius:99px;background:linear-gradient(90deg,var(--opp-coral),var(--opp-primary))}
+.skel{height:82px;border-radius:14px;margin-bottom:12px;background:linear-gradient(90deg,color-mix(in srgb,var(--opp-well) 85%,var(--opp-card)),var(--opp-card),color-mix(in srgb,var(--opp-well) 85%,var(--opp-card)));background-size:800px 100%;animation:oppShimmer 1.25s linear infinite}
+@keyframes oppShimmer{to{background-position:800px 0}}
+.modal{position:fixed;inset:0;z-index:100;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;overscroll-behavior:contain;padding:clamp(12px,4vh,34px) 12px;background:rgba(7,13,11,.48);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.modal.on{display:flex}
+.modal>div{width:min(100%,680px);max-height:none;min-height:0;padding:22px;background:var(--opp-card);color:var(--opp-ink);border:1px solid var(--opp-line);border-radius:19px;box-shadow:0 24px 70px rgba(0,0,0,.2)}
+.modal h2{margin-bottom:12px!important}.modal .row{gap:8px}.modal p{margin:10px 0;color:var(--opp-ink)}.modal .grid{gap:12px}
+.toast{position:fixed;z-index:120;left:50%;bottom:clamp(76px,8vh,100px);transform:translateX(-50%);max-width:calc(100vw - 28px);width:max-content;background:var(--opp-ink);color:var(--opp-bg);padding:11px 16px;border:1px solid var(--opp-line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.17);font-size:13px;line-height:1.4;display:none;text-align:center}
+#view[aria-busy=true]{min-height:180px}
+#view>h2{margin:25px 0 12px}#view>h2:first-child{margin-top:0}
+#view .card p{line-height:1.7}
+#view a:not(.b){color:var(--opp-primary);text-underline-offset:3px;overflow-wrap:anywhere}
+#view .row{margin-top:7px}
+#view .row:first-child{margin-top:0}
+#view .card>.mut:first-child{margin-top:2px}
+@media(max-width:900px){#main{padding:24px 18px 124px}.op-head{align-items:flex-start;flex-direction:column;gap:14px}.op-flow{justify-content:flex-start}.opp-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){#main{padding:20px 13px 115px}.op-head{margin-bottom:17px}#main h1{font-size:30px}.op-flow{gap:5px}.op-flow span{padding:5px 7px;font-size:10px}.opp-hero{padding:14px}.opp-hero-top{align-items:flex-start;flex-direction:column}.opp-hero-top .b{width:100%}.opp-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.opp-stat{padding:12px}.opp-stat strong{font-size:25px}.opp-next{align-items:stretch;flex-direction:column}.opp-next .b{width:100%}.tabs-wrap{top:54px;margin-bottom:13px}.tabs{border-radius:12px;gap:3px}.tabs button{padding:9px 10px;font-size:12px}.card{padding:14px;border-radius:14px}.row{gap:7px}.row>button.b,.row>a.b{flex:1 1 auto}.board{grid-auto-columns:minmax(78vw,1fr)}.modal{padding:10px 8px}.modal>div{padding:16px;border-radius:15px}input,textarea,select{font-size:16px}label{font-size:12px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+html[data-theme=dark] .pill.Strong,html[data-theme=dark] .pill.good{background:#173a2b;color:#8fe0b5}
+html[data-theme=dark] .pill.Good{background:#263723;color:#b8dc97}
+html[data-theme=dark] .pill.Partial,html[data-theme=dark] .pill.warn{background:#3a2f14;color:#f0cb7a}
+html[data-theme=dark] .pill.Poor,html[data-theme=dark] .pill.bad,html[data-theme=dark] .pill.crit{background:#3a1f1b;color:#f5a396}
+html[data-theme=dark] .note{background:#2d2616;border-color:#5a4a1f;color:#ebd9a6}
+html[data-theme=dark] .opp-stat{background:color-mix(in srgb,var(--opp-well) 55%,var(--opp-card))}
 </style>
 <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
-<link rel="stylesheet" href="opai-mobile.css">
 </head>
 <body>
 <main id="main">
-  <h1>Opportunities</h1>
-  <p class="sub">Discover → Evaluate → Prepare → Apply or reach out → Follow up → Learn. You review and approve every message and every submission. OPAI never applies or emails for you.</p>
+  <header class="op-head">
+    <div>
+      <div class="op-eyebrow">Career workspace</div>
+      <h1>Internship tracker</h1>
+      <p class="sub">Find opportunities, check your fit, prepare your application, and keep every follow-up in one place. You approve every message and submit every application yourself.</p>
+    </div>
+    <div class="op-flow" aria-label="Opportunity workflow"><span>Discover</span><i>→</i><span>Evaluate</span><i>→</i><span>Prepare</span><i>→</i><span>Apply</span></div>
+  </header>
   <div id="hero"></div>
-  <div class="tabs" role="tablist" id="tabs"></div>
-  <section id="view"></section>
+  <div class="tabs-wrap"><div class="tabs" role="tablist" aria-label="Internship workspace sections" id="tabs"></div></div>
+  <section id="view" aria-live="polite" aria-busy="true"></section>
 </main>
-<div class="modal" id="modal"><div id="mbody"></div></div>
-<div class="toast" id="toast"></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Opportunity details"><div id="mbody"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="opai-shell.js" defer></script>
 <script src="guide.js" defer></script>
 <script>
 (function(){
-var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
-var uid=null;
-var TABS=[['today','Today\u2019s Matches'],['saved','Saved Opportunities'],['apps','Applications'],['prof','Professor Outreach'],['programs','Programs & Challenges'],['email','Email & Follow-ups'],['docs','Documents'],['reports','Reports']];
+function storageGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+var API=(storageGet('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
+var uid=null,userPromise=null,renderVersion=0,modalReturnFocus=null;
+var TABS=[['today','Today’s Matches'],['saved','Saved Opportunities'],['apps','Applications'],['prof','Professor Outreach'],['programs','Programs & Challenges'],['email','Email & Follow-ups'],['docs','Documents'],['reports','Reports']];
 var tab=(location.hash||'#today').slice(1);if(!TABS.some(function(t){return t[0]===tab}))tab='today';
 function $(i){return document.getElementById(i)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
-function toast(m){var t=$('toast');t.textContent=m;t.style.display='block';t.classList.remove('show');void t.offsetWidth;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(function(){t.style.display='none';t.classList.remove('show')},3500)}
-async function api(path,opt){opt=opt||{};var q=path+(path.indexOf('?')<0?'?':'&')+'user_id='+encodeURIComponent(uid);
-  var r=await fetch(API+q,{method:opt.method||'GET',headers:Object.assign({'Content-Type':'application/json'},opt.headers||{}),body:opt.body?JSON.stringify(Object.assign({user_id:uid},opt.body)):undefined});
+function safeHref(value){var raw=String(value==null?'':value).trim();if(!raw)return '';try{var u=new URL(raw,location.href);if(u.protocol!=='http:'&&u.protocol!=='https:')return '';return esc(u.href)}catch(e){return ''}}
+function hostLabel(value){try{return esc(new URL(value).hostname.replace(/^www\./i,''))}catch(e){return 'Official page'}}
+function toast(m){var t=$('toast');t.textContent=String(m||'Something went wrong.');t.style.display='block';t.classList.remove('show');void t.offsetWidth;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(function(){t.style.display='none';t.classList.remove('show')},3800)}
+async function api(path,opt){opt=opt||{};var q=path+(path.indexOf('?')<0?'?':'&')+'user_id='+encodeURIComponent(uid),r;
+  try{r=await fetch(API+q,{method:opt.method||'GET',headers:Object.assign({'Content-Type':'application/json'},opt.headers||{}),body:opt.body?JSON.stringify(Object.assign({user_id:uid},opt.body)):undefined})}
+  catch(e){throw new Error('Could not reach OPAI. Check your connection and API URL, then try again.')}
   var d=null;try{d=await r.json()}catch(e){}
-  if(!r.ok){var m=d&&d.detail;if(Array.isArray(m))m=m.map(function(x){return x.msg}).join('; ');throw new Error(m||('Request failed ('+r.status+')'))}return d}
+  if(!r.ok){var m=d&&d.detail;if(Array.isArray(m))m=m.map(function(x){return x.msg||x.loc&&x.loc.join('.')||'Invalid field'}).join('; ');throw new Error(typeof m==='string'?m:('Request failed ('+r.status+'). Please try again.'))}return d}
 function post(p,b){return api(p,{method:'POST',body:b||{}})}
-async function ensureUser(){if(uid)return;var e=null;try{e=localStorage.getItem('opai_sc_email')}catch(x){}if(!e){location.replace('login.html');throw new Error('Please sign in')}var r=await fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(e),{method:'POST'});var d=await r.json();uid=d.user_id}
+async function ensureUser(){if(uid)return uid;if(userPromise)return userPromise;
+  userPromise=(async function(){var e=storageGet('opai_sc_email');if(!e){location.replace('login.html');throw new Error('Please sign in to open your internship workspace.')}
+    var r;try{r=await fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(e.trim()),{method:'POST'})}catch(x){throw new Error('Could not reach OPAI sign-in. Check your connection and try again.')}
+    var d=null;try{d=await r.json()}catch(x){}if(!r.ok||!d||!d.user_id)throw new Error((d&&d.detail)||'Your session could not be verified. Please sign in again.');uid=d.user_id;return uid})();
+  try{return await userPromise}finally{userPromise=null}}
 
 function stagger(root){var n=0;root.querySelectorAll(':scope > *, .board .col, .col .card, #fc_out > .card').forEach(function(el){el.style.setProperty('--i',Math.min(n++,14))})}
 function countUp(root){root.querySelectorAll('[data-n]').forEach(function(el){var to=+el.dataset.n,t0=null;if(!to||matchMedia('(prefers-reduced-motion:reduce)').matches){el.textContent=to;return}
   function step(t){if(!t0)t0=t;var k=Math.min(1,(t-t0)/700),e=1-Math.pow(1-k,3);el.textContent=Math.round(to*e);if(k<1)requestAnimationFrame(step)}requestAnimationFrame(step)})}
 var METER={Strong:92,Good:68,Partial:38,Unclear:22,Poor:10};
-function modal(html){$('mbody').innerHTML=html;$('modal').classList.add('on')}
-function closeModal(){$('modal').classList.remove('on')}
+function modal(html){
+  if(!$('modal').classList.contains('on'))modalReturnFocus=document.activeElement;
+  $('mbody').innerHTML=html;$('modal').classList.add('on');
+  var title=$('mbody').querySelector('h2');if(title){title.id='opp-modal-heading';$('modal').setAttribute('aria-labelledby','opp-modal-heading')}
+  var focusable=$('mbody').querySelector('input:not([type=hidden]),textarea,select,button,a[href]');if(focusable)setTimeout(function(){try{focusable.focus({preventScroll:true})}catch(e){}},0);
+}
+function closeModal(){$('modal').classList.remove('on');if(modalReturnFocus&&modalReturnFocus.isConnected){try{modalReturnFocus.focus({preventScroll:true})}catch(e){}}modalReturnFocus=null}
 $('modal').addEventListener('click',function(e){if(e.target===$('modal'))closeModal()});
-function fmt(d){return d?esc(d):'<span class="mut">none stated</span>'}
-function list(a){return a&&a.length?'<ul>'+a.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>':'<div class="mut">None</div>'}
+$('modal').addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();closeModal()}});
+function fmt(d){return d?esc(d):'<span class="mut">Not stated</span>'}
+function list(a){return a&&a.length?'<ul>'+a.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>':'<div class="mut">None listed</div>'}
 
-/* ---------- hero (summary) ---------- */
+/* ---------- overview / summary ---------- */
 async function hero(){
-  try{var s=await api('/v1/opp/summary');var n=s.recommended_next_action;
-  $('hero').innerHTML='<div class="card"><h2>Your opportunity search</h2><div class="row">'+
-    '<span class="pill">'+'<b data-n="'+s.strong_to_review+'">0</b>'+' strong to review</span><span class="pill warn">'+'<b data-n="'+s.deadlines_this_week+'">0</b>'+' deadline(s) this week</span>'+
-    '<span class="pill">'+'<b data-n="'+s.applications_waiting_for_you+'">0</b>'+' application(s) waiting for you</span><span class="pill">'+'<b data-n="'+s.professors_with_research_match+'">0</b>'+' professor match(es)</span>'+
-    '<span class="pill">'+'<b data-n="'+s.drafts_awaiting_approval+'">0</b>'+' draft(s) to approve</span><span class="pill">'+'<b data-n="'+s.followups_due+'">0</b>'+' follow-up(s) due</span>'+(s.programs_live?'<span class="pill good"><b data-n="'+s.programs_live+'">0</b> program(s) open or active</span>':'')+(s.programs_to_verify?'<span class="pill warn"><b data-n="'+s.programs_to_verify+'">0</b> program(s) to verify</span>':'')+'</div>'+
-    (n?'<p style="margin:10px 0 0"><b>Next:</b> '+esc(n.text)+'</p>':'<p class="mut" style="margin:10px 0 0">Nothing urgent. Add an opportunity to get started.</p>')+
-    '<div class="row" style="margin-top:8px"><button class="b alt" id="bprof">Edit my profile</button></div></div>';
-  $('bprof').onclick=profileModal;countUp($('hero'))}catch(e){$('hero').innerHTML=''}}
+  try{
+    var s=await api('/v1/opp/summary'),n=s.recommended_next_action;
+    function metric(key,label,help){var val=Number(s[key]);if(!Number.isFinite(val)||val<0)val=0;
+      return '<div class="opp-stat"><span class="opp-stat-label">'+label+'</span><strong data-n="'+val+'">0</strong><small>'+help+'</small></div>'}
+    var nextLink=n&&safeHref(n.link);
+    $('hero').innerHTML='<div class="card opp-hero"><div class="opp-hero-top"><div><div class="opp-section-kicker">Your search pulse</div><h2>Opportunity overview</h2><p class="mut">A quick view of what needs your attention.</p></div><button class="b alt" id="bprof" type="button">Edit my profile</button></div>'+
+      '<div class="opp-stats">'+metric('strong_to_review','Strong matches','Ready for your review')+metric('deadlines_this_week','Deadlines this week','Roles and applications')+metric('applications_waiting_for_you','In preparation','Applications not submitted')+metric('professors_with_research_match','Research matches','Professor briefs available')+metric('drafts_awaiting_approval','Drafts to approve','Nothing sends automatically')+metric('followups_due','Follow-ups due','Replies are checked by you')+
+      (Number(s.programs_live)>0?metric('programs_live','Live programs','Open or active cycles'):'')+(Number(s.programs_to_verify)>0?metric('programs_to_verify','Programs to verify','Check official dates'):'')+'</div>'+
+      '<div class="opp-next"><div class="opp-next-copy"><span class="opp-next-title">Recommended next step</span><p>'+(n?esc(n.text):'You’re all caught up. Save an opportunity or confirm your profile to get started.')+'</p></div>'+
+      (n&&nextLink?'<a class="b alt" href="'+nextLink+'">Open next step</a>':'<a class="b alt" href="#saved">Explore opportunities</a>')+'</div></div>';
+    $('bprof').onclick=function(){profileModal().catch(function(e){toast(e.message)})};countUp($('hero'))
+  }catch(e){$('hero').innerHTML='<div class="card"><div class="row sp"><div><h2>Opportunity overview</h2><p class="mut">Your summary is temporarily unavailable. You can still use the sections below.</p></div><button class="b alt" id="bprof" type="button">Edit my profile</button></div></div>';var b=$('bprof');if(b)b.onclick=function(){profileModal().catch(function(e){toast(e.message)})}}
+}
 
 /* ---------- profile ---------- */
 async function profileModal(){
   var v=await api('/v1/opp/profile'),p=v.profile;
-  function f(k,l,ph){return '<label>'+l+'</label><input id="pf_'+k+'" value="'+esc(Array.isArray(p[k])?p[k].join(', '):(p[k]==null?'':p[k]))+'" placeholder="'+(ph||'')+'">'}
+  function f(k,l,ph){var type='text';if(k==='year'||k==='cgpa')type='number';else if(k==='graduation_date')type='month';else if(k==='available_from'||k==='available_to')type='date';else if(k==='resume_url'||k==='portfolio_url'||k==='github_url')type='url';
+    var limits=k==='year'?' min="1" max="6" step="1"':(k==='cgpa'?' min="0" max="10" step="0.01"':'');
+    return '<label>'+l+'<input id="pf_'+k+'" type="'+type+'"'+limits+' value="'+esc(Array.isArray(p[k])?p[k].join(', '):(p[k]==null?'':p[k]))+'" placeholder="'+esc(ph||'')+'"></label>'}
   modal('<h2>Opportunity profile</h2><p class="mut">Matching only uses what you confirm here. OPAI does not guess eligibility details like work authorization.</p>'+
     (v.is_confirmed?'<div class="pill good">Confirmed</div>':'<div class="note">Not confirmed yet. Matches are provisional until you confirm.</div>')+
     '<div class="grid">'+f('degree','Degree','B.Tech')+f('year','Year of study (1-4)','2')+f('branch','Branch')+f('college','College')+f('graduation_date','Graduation (YYYY-MM)','2029-05')+f('cgpa','CGPA')+
@@ -140,7 +195,7 @@ async function profileModal(){
   $('pfsave').onclick=async function(){
     var body={confirm:true},num={year:1,cgpa:1},arr={skills:1,role_types:1,locations:1,work_modes:1};
     ['degree','year','branch','college','graduation_date','cgpa','skills','role_types','locations','work_modes','available_from','available_to','resume_url','portfolio_url','github_url','eligibility_notes','communication_style'].forEach(function(k){
-      var x=$('pf_'+k).value.trim();if(!x)return;body[k]=arr[k]?x.split(',').map(function(s){return s.trim()}).filter(Boolean):(num[k]?Number(x):x)});
+      var x=$('pf_'+k).value.trim();body[k]=arr[k]?(x?x.split(',').map(function(s){return s.trim()}).filter(Boolean):[]):(num[k]?(x?Number(x):null):(x||null))});
     try{await api('/v1/opp/profile',{method:'PUT',body:body});closeModal();toast('Profile confirmed');render()}catch(e){toast(e.message)}}}
 
 /* ---------- brief card ---------- */
@@ -153,7 +208,7 @@ function briefCard(o){
     '<div class="sig"><b>Profile match</b>'+list(b.signals.profile_match)+'</div><div class="sig"><b>Gaps (not shown in your profile)</b>'+list(b.match_detail.gaps)+'</div>'+
     '<div class="sig"><b>Unknown, needs your check</b>'+list(b.signals.unknown)+'</div><div class="sig"><b>AI suggestion (not a fact)</b>'+list(b.signals.ai_suggestions)+'</div>'}
   h+='<p style="margin:8px 0"><b>Next step:</b> '+esc(b.recommended_next_step)+'</p><div class="row">'+
-    (o.source_url?'<a class="b alt" target="_blank" rel="noopener noreferrer" href="'+esc(o.source_url)+'">Open source</a>':'')+
+    (safeHref(o.source_url)?'<a class="b alt" target="_blank" rel="noopener noreferrer" href="'+safeHref(o.source_url)+'">Open source</a>':'')+
     '<button class="b" data-a="track" data-id="'+esc(id)+'">Track opportunity</button>'+(full?'':'<button class="b alt" data-a="brief" data-id="'+esc(id)+'">Full brief</button>')+
     '<button class="b alt" data-a="verified" data-id="'+esc(id)+'">I re-checked the source</button><button class="b dng" data-a="dismiss" data-id="'+esc(id)+'">Not interested</button></div></div>';
   return h}
@@ -176,10 +231,10 @@ function pgCard(p){var c=p.cycle,src=c.source||{};
    '<div style="margin-top:4px"><b>Eligibility:</b> '+esc(c.eligibility)+'</div>'+
    '<div style="margin-top:4px"><b>Next step:</b> '+esc(p.next_step)+'</div>'+
    (p.fit&&p.fit.level!=='unknown'?'<div class="mut" style="margin-top:4px">Why it may fit: '+esc(p.fit.why)+'</div>':'')+
-   '<div class="mut" style="margin-top:4px">Official source: '+(p.official_url?'<a target="_blank" rel="noopener noreferrer" href="'+esc(p.official_url)+'">'+esc(new URL(p.official_url).host)+'</a>':'none')+' · Last checked: '+esc(src.last_checked||'Not checked yet')+(c.needs_reverify?' <span class="pill warn">re-check</span>':'')+'</div>'+
+   '<div class="mut" style="margin-top:4px">Official source: '+(safeHref(p.official_url)?'<a target="_blank" rel="noopener noreferrer" href="'+safeHref(p.official_url)+'">'+hostLabel(p.official_url)+'</a>':'Not provided or invalid')+' · Last checked: '+esc(src.last_checked||'Not checked yet')+(c.needs_reverify?' <span class="pill warn">re-check</span>':'')+'</div>'+
    '<div class="mut">'+esc(c.status_why)+'</div>'+
    (p.next_cycle?'<div class="note" style="margin-top:6px"><b>Next announced cycle:</b> '+esc(p.next_cycle.status)+'. '+esc(p.next_cycle.next_step)+'</div>':'')+
-   '<div class="row" style="margin-top:8px"><a class="b alt" target="_blank" rel="noopener noreferrer" href="'+esc(p.official_url||'#')+'">View official page</a>'+
+   '<div class="row" style="margin-top:8px">'+(safeHref(p.official_url)?'<a class="b alt" target="_blank" rel="noopener noreferrer" href="'+safeHref(p.official_url)+'">View official page</a>':'')+
    (c.status==='Closed'||c.status==='Ended'?(p.next_cycle?'<button class="b" data-pg="nextcycle" data-id="'+esc(p.id)+'">Add next cycle</button>':''):'<button class="b" data-pg="plan" data-id="'+esc(c.id)+'">Add to my plan</button>')+
    '<button class="b alt" data-pg="confirm" data-id="'+esc(c.id)+'">Confirm dates & rules</button><button class="b alt" data-pg="track" data-id="'+esc(c.id)+'" data-cur="'+esc(c.participation)+'">Track participation ('+esc(c.participation)+')</button><button class="b dng" data-pg="remove" data-id="'+esc(p.id)+'">Remove</button></div></div>'}
 async function pgConfirmModal(cid){var r=await api('/v1/opp/programs');var p=r.items.find(function(x){return x.cycle.id===cid});if(!p)return;var c=p.cycle;
@@ -212,7 +267,7 @@ today:async function(){var r=await api('/v1/opp/today-matches');
   '<div class="card">No strong matches to review. Add opportunities in <a href="#saved">Saved Opportunities</a>, and confirm your profile so matching is reliable.</div>'},
 
 programs:async function(){var f=pgFilter?'&type='+encodeURIComponent(pgFilter):'';
-  var r=await api('/v1/opp/programs?x=1'+f),cat=await api('/v1/opp/programs/catalog'),ty=await api('/v1/opp/programs/types');
+  var r=await api('/v1/opp/programs'+(pgFilter?'?type='+encodeURIComponent(pgFilter):'')),cat=await api('/v1/opp/programs/catalog'),ty=await api('/v1/opp/programs/types');
   var sel='<select id="pg_type" style="max-width:260px"><option value="">All types</option>'+ty.types.map(function(t){return '<option value="'+t.key+'"'+(pgFilter===t.key?' selected':'')+'>'+esc(t.label)+'</option>'}).join('')+'</select>';
   var mine=r.items.length?r.items.map(pgCard).join(''):'<div class="card mut">You are not tracking any program yet. Add one from the starter list below.</div>';
   var disc=cat.items.filter(function(c){return !c.already_added}).map(function(c){return '<div class="card"><div class="row sp"><b>'+esc(c.name)+'</b><span class="pill">'+esc(c.type_label)+'</span></div><div class="mut">'+esc(c.organizer)+'</div><p style="margin:6px 0">'+esc(c.blurb)+'</p><div class="mut">'+esc(c.fit.why)+'</div><div class="row" style="margin-top:8px"><a class="b alt" target="_blank" rel="noopener noreferrer" href="'+esc(c.official_url)+'">View official page</a><button class="b" data-pg="addcat" data-id="'+esc(c.id)+'">Track this program</button></div></div>'}).join('');
@@ -241,7 +296,7 @@ prof:async function(){var r=await api('/v1/opp/professors');
     '<label style="font-weight:500"><input type="checkbox" id="pr_shown" style="width:auto"> This email is shown on the official page</label><div class="row" style="margin-top:8px"><button class="b" id="pr_add">Add</button></div></div>';
   var rows=r.items.map(function(c){return '<div class="card"><div class="row sp"><h3>'+esc(c.name)+' <span class="mut">· '+esc(c.institute)+'</span></h3><span class="pill">'+esc(c.outreach_status)+'</span></div>'+
     '<div class="mut">Email: '+esc(c.email||'none')+' · '+esc(c.email_verification.replace(/_/g,' '))+(c.suppressed?' · <b style="color:#b3261e">do-not-contact</b>':'')+'</div>'+
-    '<div class="mut">Areas: '+esc((c.research_areas||[]).join(', ')||'none')+'</div><div class="mut">Source: '+(c.source_url?'<a target="_blank" rel="noopener noreferrer" href="'+esc(c.source_url)+'">official page</a> · checked '+esc(c.source_checked_on||'?'):'none yet')+'</div>'+
+    '<div class="mut">Areas: '+esc((c.research_areas||[]).join(', ')||'none')+'</div><div class="mut">Source: '+(safeHref(c.source_url)?'<a target="_blank" rel="noopener noreferrer" href="'+safeHref(c.source_url)+'">official page</a> · checked '+esc(c.source_checked_on||'?'):'none yet')+'</div>'+
     '<div class="row" style="margin-top:8px"><button class="b alt" data-pa="brief" data-id="'+esc(c.id)+'">Build research brief</button><button class="b" data-pa="draft" data-id="'+esc(c.id)+'">Draft email</button></div></div>'}).join('')||'<div class="card mut">No professors yet.</div>';
   return find+add+'<h2>Contacts ('+r.items.length+') <span class="mut">· '+r.daily_cap_remaining+' sends left today</span></h2>'+rows},
 
@@ -265,11 +320,17 @@ reports:async function(){var r=await api('/v1/opp/reports');
 };
 
 async function render(){
-  $('tabs').innerHTML=TABS.map(function(t){return '<button role="tab" aria-selected="'+(t[0]===tab)+'" data-t="'+t[0]+'">'+t[1]+'</button>'}).join('');
-  $('view').innerHTML='<div class="skel"></div><div class="skel" style="animation-delay:.1s"></div><div class="skel" style="animation-delay:.2s"></div>';
-  try{await ensureUser();hero();$('view').innerHTML=await V[tab]();stagger($('view'));if(tab==='prof')facSearch()}catch(e){$('view').innerHTML='<div class="card">Could not load: '+esc(e.message)+'</div>'}}
+  var version=++renderVersion,activeTab=tab;
+  $('tabs').innerHTML=TABS.map(function(t){var active=t[0]===activeTab;return '<button type="button" role="tab" id="opp-tab-'+esc(t[0])+'" aria-controls="view" aria-selected="'+active+'" tabindex="'+(active?'0':'-1')+'" data-t="'+esc(t[0])+'">'+esc(t[1])+'</button>'}).join('');
+  $('view').setAttribute('aria-busy','true');$('view').innerHTML='<div class="skel"></div><div class="skel" style="animation-delay:.1s"></div><div class="skel" style="animation-delay:.2s"></div>';
+  try{await ensureUser();if(version!==renderVersion)return;hero();var html=await V[activeTab]();if(version!==renderVersion)return;$('view').innerHTML=html;stagger($('view'));if(activeTab==='prof')facSearch()}
+  catch(e){if(version!==renderVersion)return;$('view').innerHTML='<div class="card"><h2>Couldn’t load this section</h2><p class="mut">'+esc(e.message)+'</p><button class="b alt" id="opp_retry" type="button">Try again</button></div>';var retry=$('opp_retry');if(retry)retry.onclick=render}
+  finally{if(version===renderVersion)$('view').setAttribute('aria-busy','false')}
+}
 document.addEventListener('change',function(e){if(e.target.id==='pg_type'){pgFilter=e.target.value;render()}});
-$('tabs').addEventListener('click',function(e){var b=e.target.closest('[data-t]');if(b){tab=b.dataset.t;location.hash='#'+tab;render()}});
+function switchTab(k){if(!V[k])return;tab=k;if(location.hash!=='#'+k)location.hash='#'+k;render()}
+$('tabs').addEventListener('click',function(e){var b=e.target.closest('[data-t]');if(b)switchTab(b.dataset.t)});
+$('tabs').addEventListener('keydown',function(e){if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;var btns=[].slice.call($('tabs').querySelectorAll('[role=tab]')),i=btns.indexOf(document.activeElement);if(i<0)i=btns.findIndex(function(b){return b.getAttribute('aria-selected')==='true'});if(e.key==='Home')i=0;else if(e.key==='End')i=btns.length-1;else i=(i+(e.key==='ArrowRight'?1:btns.length-1))%btns.length;e.preventDefault();var k=btns[i].dataset.t;switchTab(k);requestAnimationFrame(function(){var b=$('opp-tab-'+k);if(b)b.focus()})});
 addEventListener('hashchange',function(){var h=(location.hash||'#today').slice(1);if(h!==tab&&V[h]){tab=h;render()}});
 
 /* ---------- delegated actions ---------- */
@@ -309,40 +370,66 @@ async function facSearch(){
   try{var r=await api('/v1/opp/faculty/search?q='+encodeURIComponent(q)+(inst?'&institute='+encodeURIComponent(inst):'')+'&limit='+facLimit);
     var sel=$('fc_inst');if(sel.options.length<2)r.institutes.forEach(function(i){var o=document.createElement('option');o.textContent=i;sel.appendChild(o)});sel.value=inst;
     if(!r.items.length){out.innerHTML='<div class="note">'+esc(r.note||'No matches. Try different research terms.')+'</div>';return}
-    out.innerHTML='<div class="mut">'+(r.browse?'All professors ('+r.total+'), A-Z':(r.auto?'Recommended for you, based on: ':'Results for: ')+esc(r.query_used.slice(0,120)))+'</div>'+r.items.map(function(f){
+    out.innerHTML='<div class="mut">'+(r.browse?'All professors ('+r.total+'), A-Z':(r.auto?'Recommended for you, based on: ':'Results for: ')+esc(String(r.query_used||'your profile').slice(0,120)))+'</div>'+r.items.map(function(f){
       return '<div class="card" style="margin:8px 0"><div class="row sp"><b>'+esc(f.name)+' <span class="mut">· '+esc(f.institute)+(f.department?', '+esc(f.department):'')+(f.designation?' · '+esc(f.designation):'')+'</span></b><span class="pill">'+f.score+'% match</span></div>'+
       '<div class="mut">'+esc(f.research_areas.join(', ')||'No research areas listed')+'</div><div class="mut">'+esc(f.why)+'</div>'+
-      '<div class="row" style="margin-top:6px">'+(f.website?'<a class="b alt" target="_blank" rel="noopener noreferrer" href="'+esc(f.website)+'">Their page</a>':'')+
+      '<div class="row" style="margin-top:6px">'+(safeHref(f.website)?'<a class="b alt" target="_blank" rel="noopener noreferrer" href="'+safeHref(f.website)+'">Their page</a>':'')+
       (f.already_added?'<span class="pill good">In your contacts</span>':'<button class="b" data-fadd="'+esc(f.id)+'">Add to contacts</button>')+'</div></div>'}).join('')+(r.browse&&r.total>r.items.length?'<button class="b alt" id="fc_more">Show more ('+(r.total-r.items.length)+' left)</button> ':'')+'<div class="mut">'+esc(r.note)+'</div>';stagger(out)
   }catch(e){out.innerHTML='<div class="note">'+esc(e.message)+'</div>'}}
 
 async function intake(){
   var url=$('in_url').value.trim(),text=$('in_text').value.trim();
-  var pv=await post('/v1/opp/intake/preview',{url:url||null,text:text||null});var f=pv.fields;
-  function fld(k,l,t){var v=f[k]&&f[k].value;var c=f[k]&&f[k].confidence;return '<label>'+l+' <span class="pill '+(c==='stated'?'good':'warn')+'">'+(c||'missing')+'</span></label><input id="cf_'+k+'" '+(t||'')+' value="'+esc(v==null?'':v)+'">'}
-  modal('<h2>Confirm details</h2><div class="note">'+esc(pv.message)+'</div>'+(pv.possible_duplicates.length?'<div class="note">Possible duplicate: '+esc(pv.possible_duplicates[0].title)+'</div>':'')+
-    '<div class="grid">'+fld('title','Title')+fld('company','Organization')+fld('location','Location')+fld('work_mode','Work mode (remote/hybrid/onsite)')+fld('deadline','Deadline (YYYY-MM-DD)')+fld('role_type','Type')+'</div>'+
-    '<label>Requirements found</label><textarea id="cf_req">'+esc((f.requirements.value||[]).join('\n'))+'</textarea>'+
-    '<div class="row" style="margin-top:10px"><button class="b" id="cf_ok">Confirm and save</button><button class="b alt" id="cf_x">Cancel</button></div>');
-  $('cf_x').onclick=closeModal;
-  $('cf_ok').onclick=async function(){
-    var g=function(k){return $('cf_'+k).value.trim()},extracted=Object.keys(f).filter(function(k){return f[k].value}),confirmed=['title','company','location','work_mode','deadline'].filter(function(k){return g(k)});
-    try{var r=await post('/v1/opp/intake/confirm',{title:g('title'),company:g('company'),location:g('location')||null,work_mode:g('work_mode')||null,deadline:g('deadline')||null,role_type:g('role_type')||'internship',
-      source_url:pv.source_url,source_type:pv.source_type,description_text:pv.description_text,requirements:$('cf_req').value.split('\n').map(function(s){return s.trim()}).filter(Boolean),tags:f.tags.value||[],confirmed_fields:confirmed,extracted_fields:extracted});
-      closeModal();toast('Saved. Match: '+r.brief.match);tab='saved';location.hash='#saved';render()}catch(err){toast(err.message)}}}
+  try{
+    var pv=await post('/v1/opp/intake/preview',{url:url||null,text:text||null}),f=pv.fields||{};
+    function field(k,l,placeholder){var item=f[k]||{},v=item.value,conf=item.confidence||'missing',type=k==='deadline'?'date':'text';
+      if(Array.isArray(v))v=v.join(', ');return '<label>'+l+' <span class="pill '+(conf==='stated'?'good':'warn')+'">'+esc(conf)+'</span><input id="cf_'+k+'" type="'+type+'" value="'+esc(v==null?'':v)+'" placeholder="'+esc(placeholder||'')+'"></label>'}
+    var req=f.requirements&&Array.isArray(f.requirements.value)?f.requirements.value.join('\n'):'';
+    var tags=f.tags&&Array.isArray(f.tags.value)?f.tags.value.join(', '):'';
+    var dups=Array.isArray(pv.possible_duplicates)?pv.possible_duplicates:[],src=safeHref(pv.source_url);
+    modal('<h2>Review opportunity</h2><div class="note">'+esc(pv.message||'Check the extracted details before saving.')+(src?' <a target="_blank" rel="noopener noreferrer" href="'+src+'">Open source ↗</a>':'')+'</div>'+
+      (dups.length?'<div class="note">Possible duplicate: <b>'+esc(dups[0].title||'Existing role')+'</b>'+(dups[0].company?' at '+esc(dups[0].company):'')+'. Check before saving another copy.</div>':'')+
+      '<div class="grid">'+field('title','Role title','e.g. Machine Learning Intern')+field('company','Company / organization','e.g. Example AI')+field('location','Location','Remote, Hyderabad…')+field('work_mode','Work mode','remote, hybrid, onsite')+field('deadline','Application deadline')+field('role_type','Opportunity type','internship, research, part-time…')+field('tags','Skills / tags (comma separated)','Python, RAG, FastAPI')+'</div>'+
+      '<label>Requirements / eligibility <textarea id="cf_req" placeholder="One requirement per line">'+esc(req)+'</textarea></label>'+
+      '<div class="row" style="margin-top:12px"><button class="b" id="cf_ok" type="button">Confirm and save</button><button class="b alt" id="cf_x" type="button">Cancel</button></div>');
+    $('cf_x').onclick=closeModal;
+    $('cf_ok').onclick=async function(){
+      var btn=$('cf_ok'),g=function(k){var el=$('cf_'+k);return el?el.value.trim():''};
+      if(!g('title')||!g('company')){toast('Add both a role title and company before saving.');return}
+      var requirementList=$('cf_req').value.split('\n').map(function(x){return x.trim()}).filter(Boolean),tagList=g('tags').split(',').map(function(x){return x.trim()}).filter(Boolean);
+      var extracted=Object.keys(f).filter(function(k){var v=f[k]&&f[k].value;return v!=null&&v!==''&&(!Array.isArray(v)||v.length>0)});
+      var confirmed=['title','company','location','work_mode','deadline','role_type'].filter(function(k){return !!g(k)});
+      if(requirementList.length)confirmed.push('requirements');if(tagList.length)confirmed.push('tags');
+      btn.disabled=true;btn.textContent='Saving…';
+      try{var r=await post('/v1/opp/intake/confirm',{title:g('title'),company:g('company'),location:g('location')||null,work_mode:g('work_mode')?g('work_mode').toLowerCase():null,deadline:g('deadline')||null,role_type:g('role_type')||'internship',
+        source_url:pv.source_url,source_type:pv.source_type,description_text:pv.description_text,requirements:requirementList,tags:tagList,confirmed_fields:confirmed,extracted_fields:extracted});
+        closeModal();toast('Opportunity saved. Match: '+((r.brief&&r.brief.match)||'Review it next'));tab='saved';location.hash='#saved';render()}
+      catch(err){btn.disabled=false;btn.textContent='Confirm and save';toast(err.message)}};
+  }catch(err){toast(err.message)}
+}
 
 async function emailIntake(){
-  modal('<h2>Job-alert email</h2><div class="mut">Paste the text of a LinkedIn job-alert email (or forward its text). Nothing is read from your inbox.</div><textarea id="em_text" style="min-height:160px"></textarea><div class="row" style="margin-top:8px"><button class="b" id="em_go">Find roles</button><button class="b alt" id="em_x">Cancel</button></div><div id="em_out"></div>');
-  $('em_x').onclick=closeModal;
-  $('em_go').onclick=async function(){try{var r=await post('/v1/opp/intake/email-preview',{text:$('em_text').value});
-    $('em_out').innerHTML=r.candidates.length?r.candidates.map(function(c,i){return '<div class="card"><b>'+esc(c.title||'(title unclear)')+'</b> <span class="mut">'+esc(c.company||'')+'</span><div class="row" style="margin-top:6px"><a class="b alt" target="_blank" rel="noopener noreferrer" href="'+esc(c.source_url)+'">Open on LinkedIn</a><button class="b" data-ei="'+i+'">Track this</button></div></div>'}).join(''):'<div class="note">No job links found in that text.</div>';
-    $('em_out').querySelectorAll('[data-ei]').forEach(function(b){b.onclick=async function(){var c=r.candidates[+b.dataset.ei];
-      try{await post('/v1/opp/intake/confirm',{title:c.title||'Untitled role',company:c.company||'Unknown',source_url:c.source_url,source_type:'email_alert',location:c.location||null,extracted_fields:['title','company'],allow_duplicate:false});b.textContent='Saved';b.disabled=true}catch(err){toast(err.message)}}})}catch(err){toast(err.message)}}}
+  modal('<h2>Import a job-alert email</h2><p class="mut">Paste a LinkedIn job-alert email. OPAI only reads the text you paste here; it never opens your inbox.</p><textarea id="em_text" style="min-height:160px" placeholder="Paste the email text, including the job links…"></textarea><div class="row" style="margin-top:10px"><button class="b" id="em_go" type="button">Find roles</button><button class="b alt" id="em_x" type="button">Cancel</button></div><div id="em_out"></div>');
+  $('em_x').onclick=function(){closeModal();if(tab==='saved')render()};
+  $('em_go').onclick=async function(){var btn=$('em_go');if(!$('em_text').value.trim()){toast('Paste the job-alert email text first.');return}btn.disabled=true;btn.textContent='Finding roles…';
+    try{var r=await post('/v1/opp/intake/email-preview',{text:$('em_text').value});var candidates=Array.isArray(r.candidates)?r.candidates:[];
+      $('em_out').innerHTML=candidates.length?candidates.map(function(c,i){var src=safeHref(c.source_url),dups=Array.isArray(c.possible_duplicates)?c.possible_duplicates:[];
+        return '<div class="card" data-ei-card="'+i+'"><div class="row sp"><div><b>'+esc(c.title||'Title needs review')+'</b><div class="mut">'+esc(c.company||'Organization needs review')+(c.location?' · '+esc(c.location):'')+'</div></div><span class="pill warn">Needs review</span></div>'+
+          (dups.length?'<div class="note">Possible duplicate: '+esc(dups[0].title||'an existing role')+'.</div>':'')+
+          '<div class="row" style="margin-top:8px">'+(src?'<a class="b alt" target="_blank" rel="noopener noreferrer" href="'+src+'">Open LinkedIn</a>':'')+'<button class="b" type="button" data-ei-open="'+i+'">Review & track</button></div>'+
+          '<div class="ei-editor" id="ei_editor_'+i+'" hidden><div class="grid" style="margin-top:10px"><label>Role title<input id="ei_title_'+i+'" value="'+esc(c.title||'')+'" placeholder="Role title"></label><label>Company<input id="ei_company_'+i+'" value="'+esc(c.company||'')+'" placeholder="Company or lab"></label><label>Location<input id="ei_location_'+i+'" value="'+esc(c.location||'')+'" placeholder="Remote / city"></label></div><div class="row" style="margin-top:8px"><button class="b" type="button" data-ei-save="'+i+'">Confirm & save</button><button class="b alt" type="button" data-ei-cancel="'+i+'">Cancel</button></div></div></div>'}).join(''):'<div class="note">No LinkedIn job links found. Paste the email body with its job links and try again.</div>';
+      $('em_out').querySelectorAll('[data-ei-open]').forEach(function(b){b.onclick=function(){var i=b.dataset.eiOpen,ed=$('ei_editor_'+i);ed.hidden=false;b.hidden=true;var field=$('ei_title_'+i);if(field)field.focus()}});
+      $('em_out').querySelectorAll('[data-ei-cancel]').forEach(function(b){b.onclick=function(){var i=b.dataset.eiCancel,ed=$('ei_editor_'+i),open=$('em_out').querySelector('[data-ei-open="'+i+'"]');ed.hidden=true;if(open)open.hidden=false}});
+      $('em_out').querySelectorAll('[data-ei-save]').forEach(function(b){b.onclick=async function(){var i=b.dataset.eiSave,title=$('ei_title_'+i).value.trim(),company=$('ei_company_'+i).value.trim(),loc=$('ei_location_'+i).value.trim();
+        if(!title||!company){toast('Enter both the role title and company to continue.');return}b.disabled=true;b.textContent='Saving…';
+        try{await post('/v1/opp/intake/confirm',{title:title,company:company,source_url:candidates[+i].source_url,source_type:'email_alert',location:loc||null,extracted_fields:['title','company'],confirmed_fields:['title','company'].concat(loc?['location']:[]),allow_duplicate:false});
+          b.textContent='Saved';b.classList.add('alt');toast('Saved after your review. You can review another role.');var card=$('em_out').querySelector('[data-ei-card="'+i+'"]');var badge=card&&card.querySelector('.pill');if(badge){badge.textContent='Saved';badge.className='pill good'}
+        }catch(err){b.disabled=false;b.textContent='Confirm & save';toast(err.message)}}});
+    }catch(err){toast(err.message)}finally{btn.disabled=false;btn.textContent='Find roles'}}}
 
 async function appModal(id){
   var a=await api('/v1/opp/applications/'+id);
   var opts=['Saved','Reviewing','Preparing','Ready to submit','Applied','Assessment','Interview','Offer','Rejected','Withdrawn'].map(function(s){return '<option'+(s===a.stage?' selected':'')+'>'+s+'</option>'}).join('');
-  modal('<h2>'+esc(a.role)+' <span class="mut">· '+esc(a.company)+'</span></h2><div class="row"><span class="pill">'+esc(a.stage)+'</span>'+(a.link?'<a class="b alt" target="_blank" rel="noopener noreferrer" href="'+esc(a.link)+'">Open original posting</a>':'')+'</div>'+
+  modal('<h2>'+esc(a.role)+' <span class="mut">· '+esc(a.company)+'</span></h2><div class="row"><span class="pill">'+esc(a.stage)+'</span>'+(safeHref(a.link)?'<a class="b alt" target="_blank" rel="noopener noreferrer" href="'+safeHref(a.link)+'">Open original posting</a>':'')+'</div>'+
     '<h3 style="margin-top:12px">Checklist</h3>'+a.checklist.map(function(c){return '<div>'+(c.done?'\u2611':'\u2610')+' '+esc(c.item)+'</div>'}).join('')+
     '<label>Move to stage</label><select id="as_st">'+opts+'</select><label style="font-weight:500"><input type="checkbox" id="as_sub" style="width:auto"> I submitted this on the original site myself (required for Applied)</label>'+
     '<label>Note</label><input id="as_note"><label>Recruiter / referral email (for follow-ups)</label><input id="as_ref" value="'+esc(a.contact_ref||'')+'">'+
@@ -365,7 +452,7 @@ async function sendViaGmail(id){var cfg=await gmailCfg();if(!cfg.gmail_send_enab
 async function reviewModal(id){
   var r=await api('/v1/opp/outbox/'+id+'/review');var ri=r.recipient;
   modal('<h2>Review before approving</h2><div class="mut">Approval covers exactly this message. If anything changes, you will need to review again.</div>'+
-    '<p><b>To:</b> '+esc(ri.to||'(none)')+' <span class="pill '+(ri.verification==='unverified'?'warn':'good')+'">'+esc(ri.verification.replace(/_/g,' '))+'</span></p>'+(ri.source?'<div class="mut">Source: <a target="_blank" rel="noopener noreferrer" href="'+esc(ri.source)+'">'+esc(ri.source)+'</a> · checked '+esc(ri.source_checked_on||'?')+'</div>':'')+
+    '<p><b>To:</b> '+esc(ri.to||'(none)')+' <span class="pill '+(ri.verification==='unverified'?'warn':'good')+'">'+esc(ri.verification.replace(/_/g,' '))+'</span></p>'+(safeHref(ri.source)?'<div class="mut">Source: <a target="_blank" rel="noopener noreferrer" href="'+safeHref(ri.source)+'">'+esc(ri.source)+'</a> · checked '+esc(ri.source_checked_on||'?')+'</div>':'')+
     '<p><b>Sending account:</b> '+esc(r.sending_account)+'</p><p><b>Subject</b></p><input id="rv_sub" value="'+esc(r.subject||'')+'"><p><b>Body</b></p><textarea id="rv_body" style="min-height:200px">'+esc(r.body||'')+'</textarea>'+
     (r.attachments.length?'<p><b>Attachments:</b> '+esc(r.attachments.join(', '))+'</p>':'')+r.warnings.map(function(w){return '<div class="note">'+esc(w)+'</div>'}).join('')+
     '<div class="mut">Follow-up scheduled: '+esc(r.follow_up_if_sent)+'</div>'+(ri.verification==='unverified'?'<label style="font-weight:500"><input type="checkbox" id="rv_conf" style="width:auto"> I checked this email address</label>':'')+
