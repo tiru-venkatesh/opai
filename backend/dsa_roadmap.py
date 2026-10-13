@@ -40,7 +40,7 @@ LEGACY_GOALS = ("Internship interviews", "Strengthen fundamentals")      # accep
 LEVELS = ("Starting from basics", "Know syntax, weak at DSA", "Already know basic DSA", "Revising for interviews")
 MODES = ("auto", "normal", "maintenance", "paused")
 OUTCOMES = ("completed", "partial", "could_not_start")
-DIFFICULTY = ("concept", "pattern", "implementation", "time", "nothing")
+DIFFICULTY = ("concept", "pattern", "implementation", "time", "resource_unclear", "need_practice", "nothing")
 
 LEARN_URL = "https://neetcode.io/roadmap"
 GFG_ROADMAP = "https://www.geeksforgeeks.org/dsa/complete-roadmap-to-learn-dsa-from-scratch/"
@@ -52,8 +52,8 @@ def _lc(slug: str) -> str:
 
 # (phase no, name, [first week, last week], [(topic name, practice link or None)])
 PHASES: List[Tuple[int, str, Tuple[int, int], List[Tuple[str, Optional[str]]]]] = [
-    (1, "Foundation", (1, 1), [("{lang} basics", _lc("fizz-buzz")), ("Big-O", _lc("contains-duplicate")), ("Recursion basics", _lc("fibonacci-number"))]),
-    (2, "Arrays and Hashing", (2, 3), [("Arrays and strings", _lc("contains-duplicate")), ("Hash maps and sets", _lc("two-sum")), ("Prefix sums", _lc("product-of-array-except-self"))]),
+    (1, "Foundation", (1, 2), [("{lang} basics", _lc("fizz-buzz")), ("Big-O", _lc("contains-duplicate")), ("Recursion basics", _lc("fibonacci-number")), ("Foundation review", None)]),
+    (2, "Arrays and Hashing", (3, 3), [("Arrays and strings", _lc("contains-duplicate")), ("Hash maps and sets", _lc("two-sum")), ("Prefix sums", _lc("product-of-array-except-self"))]),
     (3, "Two Pointers and Sliding Window", (4, 4), [("Two pointers", _lc("valid-palindrome")), ("Sliding window", _lc("best-time-to-buy-and-sell-stock"))]),
     (4, "Stack, Queue, and Linked Lists", (5, 5), [("Stack and queue", _lc("valid-parentheses")), ("Linked lists", _lc("reverse-linked-list"))]),
     (5, "Binary Search and Sorting", (6, 6), [("Sorting algorithms", _lc("sort-an-array")), ("Binary search", _lc("binary-search")), ("Rotated arrays and search on answer", _lc("search-in-rotated-sorted-array"))]),
@@ -235,12 +235,59 @@ def day_blocks(topic: Dict[str, Any], mode: str, kind: str, daily: int) -> List[
             {"kind": "revision", "label": "Open one external example if you got stuck", "minutes": max(5, daily - recall), "url": topic.get("practice_url") or topic.get("learn_url")},
         ]
     learn, practice, notes = split_minutes(daily)
-    verb = "Learn"
+    if not int(topic.get("sessions_done") or 0):      # concept first: external practice only after the first session
+        return [
+            {"kind": "learn", "label": f"Learn {name}", "minutes": learn + practice, "url": topic.get("learn_url")},
+            {"kind": "notes", "label": "Write what you understood in your own words", "minutes": notes, "url": None},
+        ]
     return [
-        {"kind": "learn", "label": f"{verb} {name}", "minutes": learn, "url": topic.get("learn_url")},
-        {"kind": "practice", "label": "Practice one linked external question" if topic.get("practice_url") else "Revisit problems you found hard", "minutes": practice, "url": topic.get("practice_url")},
+        {"kind": "learn", "label": f"Learn {name}", "minutes": learn, "url": topic.get("learn_url")},
+        {"kind": "practice", "label": "Optional external practice" if topic.get("practice_url") else "Revisit what you found hard", "minutes": practice, "url": topic.get("practice_url")},
         {"kind": "notes", "label": "Write short notes / pattern summary", "minutes": notes, "url": None},
     ]
+
+
+PHASE_WHY = {
+    1: "later topics need comfort with loops, functions, lists and how to reason about cost",
+    2: "most interview patterns start with fast lookup and counting",
+    3: "these two patterns remove nested loops from array and string problems",
+    4: "they teach how data is linked and ordered in memory",
+    5: "ordered search shows up in many problems once data is sorted",
+    6: "trees build on recursion and prepare you for graphs",
+    7: "they handle scheduling and top-k choices that appear in interviews",
+    8: "it is recursion applied to choices, a bridge to graphs and DP",
+    9: "graphs combine traversal, recursion and queues",
+    10: "DP needs recursion and patterns you already studied",
+    11: "this is where weak topics get fixed before interviews",
+}
+
+
+def why_now(topic: Dict[str, Any], kind: str, mode: str) -> str:
+    n = topic["name"]
+    if mode == "maintenance":
+        return "Exams come first, so DSA stays light: only revise, no new heavy topic."
+    if kind in ("revise", "review"):
+        return f"{n} is due for recall. A short review now keeps it from fading."
+    return f"{n} is next because {PHASE_WHY.get(topic.get('phase_no'), 'it follows the roadmap order')}."
+
+
+def lock_states(topics: List[Dict[str, Any]]) -> Dict[str, Dict[str, str]]:
+    """Per topic: done | current | next | later. Later topics say what unlocks them (user can still mark them known)."""
+    out: Dict[str, Dict[str, str]] = {}
+    seen_current, seen_next, prev = False, False, None
+    for t in sorted(topics, key=lambda x: x["position"]):
+        if is_advanced(t["status"]):
+            out[t["id"]] = {"state": "done", "why": ""}
+        elif not seen_current:
+            seen_current = True
+            out[t["id"]] = {"state": "current", "why": ""}
+        elif not seen_next:
+            seen_next = True
+            out[t["id"]] = {"state": "next", "why": ""}
+        else:
+            out[t["id"]] = {"state": "later", "why": f"Opens after {prev}" if prev else ""}
+        prev = t["name"]
+    return out
 
 
 def status_after_session(status: str, sessions_before: int, confidence: Optional[int], outcome: str = "completed") -> str:
@@ -267,7 +314,7 @@ def week_bullets(topics: List[Dict[str, Any]], week: int) -> List[Dict[str, Any]
     cur = [t for t in ordered if t["planned_week"] == week]
     prev = [t for t in ordered if t["planned_week"] < week]
     out = [{"text": f"Learn {t['name']}", "done": is_advanced(t["status"])} for t in cur]
-    out.append({"text": "Practice selected external problems", "done": False})
+    out.append({"text": "Optional: external practice for finished topics", "done": False})
     if prev:
         out.append({"text": f"Revise {prev[-1]['name']}", "done": prev[-1]["status"] in ("revised", "comfortable")})
     return out

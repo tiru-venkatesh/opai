@@ -35,7 +35,7 @@ def test_weeks_cover_twelve_and_are_monotonic():
     ts = R.build_topics()
     weeks = [t["planned_week"] for t in ts]
     assert weeks == sorted(weeks) and min(weeks) == 1 and max(weeks) == R.WEEKS
-    assert {t["planned_week"] for t in ts if t["phase_no"] == 2} == {2, 3}   # Arrays & Hashing spans weeks 2-3
+    assert {t["planned_week"] for t in ts if t["phase_no"] == 2} == {3}   # Arrays & Hashing now sits in week 3 (Foundation takes weeks 1-2)
 
 
 def test_split_minutes_matches_spec_example():
@@ -108,7 +108,8 @@ def test_maintenance_never_starts_new_topic_and_is_review_only():
 
 def test_normal_day_has_learn_practice_notes_with_external_links():
     t = R.active_topic(R.build_topics())
-    b = R.day_blocks(t, "normal", "learn", 65)
+    assert [x["kind"] for x in R.day_blocks(t, "normal", "learn", 65)] == ["learn", "notes"]     # concept first
+    b = R.day_blocks(dict(t, sessions_done=1), "normal", "learn", 65)
     assert [x["kind"] for x in b] == ["learn", "practice", "notes"] and [x["minutes"] for x in b] == [25, 30, 10]
     assert b[1]["url"].startswith("https://leetcode.com/problems/") and b[2]["url"] is None
 
@@ -119,7 +120,7 @@ def test_revision_phase_without_link_has_no_url():
         t["status"] = "practicing"
     t = R.active_topic(ts)
     assert t["name"] == "Revise weakest topics"
-    assert R.day_blocks(t, "normal", "learn", 60)[1]["url"] is None
+    assert R.day_blocks(dict(t, sessions_done=1), "normal", "learn", 60)[1]["url"] is None
 
 
 def test_all_done_revises_weakest():
@@ -133,8 +134,8 @@ def test_all_done_revises_weakest():
 
 def test_week_bullets():
     ts = R.build_topics()
-    b = R.week_bullets(ts, 2)
-    assert b[0]["text"] == "Learn Arrays and strings" and any("Practice selected external problems" == x["text"] for x in b)
+    b = R.week_bullets(ts, 3)
+    assert b[0]["text"] == "Learn Arrays and strings" and any(x["text"].startswith("Optional: external practice") for x in b)
     assert b[-1]["text"].startswith("Revise ")
 
 
@@ -150,3 +151,13 @@ def test_clean_url():
     for bad in ("javascript:alert(1)", "data:text/html,x", "ftp://x.y", "https://a b.com", "https://" + "a" * 600):
         with pytest.raises(ValueError):
             R.clean_url(bad)
+
+
+def test_why_now_and_lock_states():
+    ts = R.build_topics()
+    for i, t in enumerate(ts):
+        t["id"] = str(i)
+    L = R.lock_states(ts)
+    assert L["0"]["state"] == "current" and L["1"]["state"] == "next" and L["5"]["state"] == "later" and L["5"]["why"].startswith("Opens after")
+    assert "next because" in R.why_now(ts[0], "learn", "normal") and "Exams" in R.why_now(ts[0], "learn", "maintenance")
+    assert any(t["name"] == "Foundation review" for t in ts) and R.clean_tags(["resource_unclear", "need_practice"])

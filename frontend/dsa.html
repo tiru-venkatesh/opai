@@ -76,6 +76,30 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
 .note{margin-top:28px;color:var(--dim);font-size:13px;max-width:75ch}
 .row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
 .ghost{background:none;border:0;color:var(--dim);font:12px var(--mono);cursor:pointer;text-decoration:underline;padding:0}
+.hero .meta,.hero-today .meta{font:12px/18px var(--mono);color:var(--mut);letter-spacing:.03em}
+.lead{font-size:17px;line-height:26px;margin:6px 0 16px;max-width:62ch}
+.hero .facts{margin-bottom:12px}
+.sec{margin-top:16px}
+.eyebrow{display:block;font:11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--coral-ink);margin-bottom:8px}
+h2.big{font-size:24px;line-height:30px;font-weight:500;letter-spacing:-.02em;color:var(--pri);margin:0 0 2px}
+.steps{margin:14px 0 4px;padding:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px solid #E3DFD3}
+.steps li::before{content:counter(s);width:22px;height:22px;border-radius:50%;background:var(--pri-soft);color:var(--pri);display:grid;place-items:center;font:11px var(--mono);flex:none}
+.steps li span{flex:1;min-width:180px}.steps li small{font:11px var(--mono);color:var(--dim)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.why{margin-top:12px;padding:10px 14px;border-radius:12px;background:var(--pri-soft);color:var(--pri);font-size:13px}
+.goal{font-size:12px;color:var(--mut);margin-top:2px}
+.capt{display:block;color:var(--dim);font:11px var(--mono);margin-top:-2px}
+.strip{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.strip span{padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--s2);font:11px/16px var(--mono);color:var(--dim)}
+.strip .done{background:var(--pri);color:#fff;border-color:var(--pri)}.strip .cur{background:var(--pri-soft);color:var(--pri);border-color:var(--pri)}
+.tp .tst{font:12px var(--mono);color:var(--mut)}.tp.later .nm,.tp.later .tst{color:var(--dim)}
+.ed .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ed select{width:100%}.ed .ln{display:flex;gap:8px;flex-wrap:wrap}
+details.dr{border:1px solid #E3DFD399;border-radius:14px;background:var(--s1);margin-top:10px;overflow:hidden}
+details.dr>summary{cursor:pointer;list-style:none;display:flex;align-items:center;padding:12px 16px;font-weight:500}details.dr>summary::-webkit-details-marker{display:none}
+details.dr>summary .c{margin-left:auto;font:11px var(--mono);color:var(--mut)}
+details.dr>summary::after{content:"+";color:var(--dim);font:16px var(--mono);margin-left:10px}details.dr[open]>summary::after{content:"\2212"}
+details.dr .drb{padding:4px 16px 16px;border-top:1px solid #E3DFD3}
 @media (prefers-reduced-motion:no-preference){.card,details.ph{animation:up .4s cubic-bezier(.2,.8,.2,1) both}@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}
 </style>
 <link rel="manifest" href="manifest.json">
@@ -90,11 +114,10 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
 <body>
 <main>
   <h1>DSA Roadmap</h1>
-  <p class="tag">Learn consistently, stay on track, and prepare for placements without losing focus on semester exams. OPAI plans, tracks, reminds and adapts. The actual practice happens on external sites.</p>
+  <p class="tag">One realistic next learning block, remembered confidence, and a plan that adapts around your exams.</p>
   <div id="err" class="err" hidden role="alert"></div>
-  <div id="streak"></div>
   <div id="app" aria-live="polite"><div class="card">Loading your roadmap…</div></div>
-  <p class="note">No in-app coding editor, no judge, no problem statements, no solutions and no mock interviews. Open problems and articles on LeetCode, GeeksforGeeks, Codeforces or any site you prefer, then come back and mark progress. Each topic keeps one learning link and one practice link that you can change.</p>
+  <p class="note">OPAI plans and tracks. Practice happens on the external sites you choose; you can change each topic's resources under Roadmap → details.</p>
 </main>
 <script src="opai-shell.js" defer></script>
 <script src="guide.js" defer></script>
@@ -122,15 +145,15 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
     location.replace('login.html'); throw new Error('Please sign in');
   }
 
-  let S = null, pendingConf = null, pendingOutcome = 'completed', pendingTags = new Set(); const openPh = new Set(), editing = new Set();
+  let S = null, K = null, logOpen = false, showWhy = false, showRoad = false, pendingConf = null, pendingOutcome = 'completed', pendingTags = new Set(); const openPh = new Set(), editing = new Set(), openDr = new Set();
   const err = (m) => { const e = $('err'); e.hidden = !m; e.textContent = m || ''; };
 
   /* external-link buttons: label by site, only plain http(s) links */
   function lnk(url, kind) {
     if (!url || !/^https?:\/\//i.test(url)) return '';
     let h = ''; try { h = new URL(url).hostname; } catch (e) { return ''; }
-    const label = /leetcode/.test(h) ? (kind === 'practice' ? 'Open LeetCode problem' : 'Open LeetCode') : /geeksforgeeks/.test(h) ? 'Open GeeksforGeeks article' : /codeforces/.test(h) ? 'Open Codeforces' : /neetcode/.test(h) ? 'Open NeetCode roadmap' : (kind === 'practice' ? 'Open practice link' : 'Open learning resource');
-    return '<a class="lnk" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(label) + ' ↗</a>';
+    const label = kind === 'practice' ? 'Optional practice' : 'Open learning resource';
+    return '<a class="lnk" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(label) + ' <small>' + esc(h.replace(/^www\./, '')) + '</small> ↗</a>';
   }
 
   function setup(o) {
@@ -146,56 +169,98 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
       '<button class="btn p" data-act="create" type="button">Create roadmap</button></section>';
   }
 
+  const DIFF = { concept: 'Concept', pattern: 'Pattern', implementation: 'Implementation', time: 'Time', resource_unclear: 'Resource unclear', need_practice: 'Need practice', nothing: 'Nothing' };
+  const CONF = { 1: 'Still confused', 2: 'Need guided review', 3: 'Understand basics', 4: 'Can explain it', 5: 'Comfortable' };
+  const KIND = { learn: 'Learn', revise: 'Revision', review: 'Review' };
+
   function revQueue(s) {
-    if (!s.revision_queue.length) return '<p class="tag" style="margin:0">Nothing due. Topics come back here when their review date arrives.</p>';
-    return s.revision_queue.map((q) => '<div class="rq" data-tid="' + esc(q.topic_id) + '"><div><b>' + esc(q.name) + '</b> <small>· ' + q.minutes + ' min' + (q.overdue_days > 0 ? ' · ' + q.overdue_days + 'd overdue' : ' · due today') + '</small><div class="ln" style="margin-top:4px">' + lnk(q.learn_url, 'learn') + lnk(q.practice_url, 'practice') + '</div></div>' +
-      '<div><small style="display:block">Reviewed? Confidence</small><div class="conf" role="group" aria-label="Log review of ' + esc(q.name) + '">' + [1, 2, 3, 4, 5].map((v) => '<button type="button" data-act="review" data-v="' + v + '">' + v + '</button>').join('') + '</div></div></div>').join('') +
-      '<p class="note" style="margin:8px 0 0">Recall it without notes, explain the pattern, open one external example only if stuck, then rate yourself.</p>';
+    if (!s.revision_queue.length) return '<p class="tag" style="margin:0">No reviews are due yet. After you finish a topic, OPAI brings it back for a short recall session based on your confidence.</p>';
+    return s.revision_queue.map((q) => '<div class="rq" data-tid="' + esc(q.topic_id) + '"><div><b>' + esc(q.name) + '</b> <small>· ' + q.minutes + ' min · ' + (q.overdue_days > 0 ? 'overdue ' + q.overdue_days + 'd' : 'recall due today') + '</small>' +
+      '<div class="goal">Goal: explain ' + esc(q.name) + ' without notes.</div><div class="ln" style="margin-top:4px">' + lnk(q.learn_url, 'learn') + '</div></div>' +
+      '<div><small style="display:block">How confident now?</small><div class="conf" role="group" aria-label="Log review of ' + esc(q.name) + '">' + [1, 2, 3, 4, 5].map((v) => '<button type="button" data-act="review" data-v="' + v + '" title="' + CONF[v] + '">' + v + '</button>').join('') + '</div></div></div>').join('');
   }
 
-  function main(s) {
-    const p = s.plan, g = s.progress, m = s.mode, c = s.consistency, pc = s.pace, t = s.today;
-    const paceChip = '<span class="chip' + (pc.state === 'behind' ? ' warn' : '') + '" title="' + esc(pc.message) + '">' + (pc.state === 'behind' ? 'Behind' : pc.state === 'ahead' ? 'Ahead' : 'On track') + '</span>';
-    const modeChip = m.mode === 'maintenance' ? '<span class="chip warn">DSA mode: Maintenance</span>' : m.mode === 'paused' ? '<span class="chip pause">DSA mode: Paused</span>' : '<span class="chip">DSA mode: Normal</span>';
-    let h = '<section class="card"><div class="row"><h2 style="margin:0">Overview</h2><div class="seg" role="group" aria-label="DSA mode">' +
-      [['auto', 'Auto'], ['normal', 'Normal'], ['maintenance', 'Maintenance'], ['paused', 'Paused']].map(([v, l]) => '<button type="button" data-act="mode" data-v="' + v + '" class="' + (m.override === v ? 'on' : '') + '">' + l + '</button>').join('') + '</div></div>' +
-      '<div class="facts" style="margin-top:14px"><div><small>Goal</small><b>' + esc(p.goal) + '</b></div><div><small>Language</small><b>' + esc(p.language) + '</b></div><div><small>Target</small><b>' + esc(p.target_date ? new Date(p.target_date + 'T00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : p.target) + '</b></div><div><small>Level</small><b>' + esc(p.level || '–') + '</b></div>' +
-      '<div><small>Current phase</small><b>' + esc(g.current_phase) + '</b></div><div><small>Progress</small><b>Week ' + g.week + ' of ' + g.weeks + (g.overrun ? ' (past plan)' : '') + '</b></div><div><small>Topics advanced</small><b>' + g.advanced + ' of ' + g.total + '</b></div></div>' +
-      '<div class="bar" role="progressbar" aria-valuenow="' + g.percent + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + g.percent + '%"></i></div>' +
-      '<div class="chips">' + paceChip + modeChip + (m.reason ? '<span class="note" style="margin:0">' + esc(m.reason) + '</span>' : '') + '</div>' +
-      (m.heads_up ? '<div class="rules">' + esc(m.heads_up) + '</div>' : '') +
-      (m.mode === 'maintenance' ? '<div class="rules"><b>Maintenance rules</b><ul><li>Only 15–20 minutes</li><li>Revise what is due, or watch one topic explanation</li><li>No new heavy DSA topic</li><li>Normal pace resumes after your exam. You can switch back any time.</li></ul></div>' : '') +
-      (m.mode === 'paused' ? '<div class="rules"><b>DSA is paused</b><ul><li>No DSA blocks appear in Today</li><li>Your progress and revision dates are kept</li><li>Choose Auto or Normal to resume</li></ul></div>' : '') +
-      '<div class="chips" style="margin-top:10px"><span class="note" style="margin:0">Next milestone: <b>' + esc(g.milestone.text) + '</b>' + (g.milestone.sessions_remaining ? ' · about ' + g.milestone.sessions_remaining + ' sessions remaining' : '') + '</span></div></section>';
-
-    h += '<div class="grid2"><section class="card"><h2>Today' + (t ? ' · ' + esc(t.topic.name) : '') + '</h2>';
-    if (!t) h += '<p class="tag" style="margin:0">Nothing scheduled.</p>';
-    else {
-      h += t.blocks.map((b) => '<div class="blk"><span class="m">' + b.minutes + ' min</span><span>' + esc(b.label) + '</span><span>' + lnk(b.url, b.kind === 'practice' || b.kind === 'revision' ? 'practice' : 'learn') + '</span></div>').join('');
-      if (t.status === 'done') h += '<div class="mark"><p><b>Done today</b>' + (t.confidence ? ' · confidence ' + t.confidence + '/5' : '') + '. Tomorrow\'s block and your revision dates adapt to how it went.</p></div>';
-      else if (t.status === 'skipped') h += '<div class="mark"><p>Skipped. Nothing is lost: tomorrow resumes with the same topic.</p></div>';
-      else h += '<div class="mark"><p>Back from the external site? Log how it went on <b>' + esc(t.topic.name) + '</b>.</p>' +
-        '<div class="opt" role="group" aria-label="Outcome" style="margin-bottom:10px">' + [['completed', 'Completed'], ['partial', 'Partly completed'], ['could_not_start', 'Could not start']].map(([v, l]) => '<label><input type="radio" name="outcome" data-act="outcome" value="' + v + '"' + (pendingOutcome === v ? ' checked' : '') + '><span>' + l + '</span></label>').join('') + '</div>' +
-        (pendingOutcome === 'could_not_start' ? '' : '<p style="margin-bottom:6px">Confidence now</p><div class="conf" role="group" aria-label="Confidence 1 to 5">' + [1, 2, 3, 4, 5].map((v) => '<button type="button" data-act="conf" data-v="' + v + '" class="' + (pendingConf === v ? 'on' : '') + '">' + v + '</button>').join('') + '</div>' +
-          '<p style="margin:4px 0 6px">What was difficult?</p><div class="opt" role="group" aria-label="Difficulty" style="margin-bottom:10px">' + s.options.difficulty.map((d) => '<label><input type="checkbox" data-act="tag" value="' + d + '"' + (pendingTags.has(d) ? ' checked' : '') + '><span>' + d.charAt(0).toUpperCase() + d.slice(1) + '</span></label>').join('') + '</div>') +
-        '<button class="btn p" type="button" data-act="complete" data-id="' + esc(t.session_id) + '">' + (pendingOutcome === 'could_not_start' ? 'Log and move on' : 'Save') + '</button> <button class="btn" type="button" data-act="skip" data-id="' + esc(t.session_id) + '">Skip today</button></div>';
+  function todayCard(s) {
+    const t = s.today, m = s.mode;
+    let h = '<section class="card hero-today"><small class="eyebrow">Today\'s DSA block</small>';
+    if (m.mode === 'paused') return h + '<h2>DSA is paused</h2><p class="tag" style="margin:0">No DSA block today. Your progress and revision dates are kept. Choose Auto or Normal in Settings to resume.</p></section>';
+    if (!t) return h + '<h2>Nothing scheduled</h2><p class="tag" style="margin:0">Check back tomorrow.</p></section>';
+    const first = t.blocks.find((b) => b.url);
+    h += '<h2 class="big">' + esc(t.topic.name) + '</h2><div class="meta">' + t.minutes + ' minutes · ' + (KIND[t.kind] || 'Learn') + ' · ' + esc(t.topic.phase) + (m.mode === 'maintenance' ? ' · Maintenance' : '') + '</div>';
+    h += '<ol class="steps">' + t.blocks.map((b) => '<li><span>' + esc(b.label) + '</span><small>' + b.minutes + ' min</small>' + (b.url ? lnk(b.url, b.kind === 'practice' || b.kind === 'revision' ? 'practice' : 'learn') : '') + '</li>').join('') + '</ol>';
+    if (t.status === 'done') {
+      h += '<div class="mark"><p><b>Done today</b>' + (t.confidence ? ' · confidence ' + t.confidence + '/5 (' + CONF[t.confidence] + ')' : '') + '.</p><p style="margin:0"><b>What next?</b> ' + (t.next_up ? 'Next up: ' + esc(t.next_up) + '. ' : '') + (t.confidence && t.confidence <= 3 ? 'A short review comes back soon before you move on.' : 'Your next block adapts to how this went.') + '</p></div></section>';
+      return h;
     }
-    h += '</section><div><section class="card"><h2>This week</h2><ul class="plain">' + s.this_week.map((b) => '<li class="' + (b.done ? 'd' : '') + '"><span class="dot">' + (b.done ? '✓' : '') + '</span><span>' + esc(b.text) + '</span></li>').join('') + '</ul><p class="note" style="margin:8px 0 0">Plan: ' + s.week_plan.learning + ' learning · ' + s.week_plan.revision + ' revision · ' + s.week_plan.reflection + ' reflection sessions</p></section>' +
-      '<section class="card" style="margin-top:16px"><h2>Revision queue</h2>' + revQueue(s) + '</section>' +
-      '<section class="card" style="margin-top:16px"><h2>Weekly consistency</h2><div class="row"><span>Planned sessions <b>' + c.planned + '</b></span><span>Completed <b>' + c.completed + '</b></span></div><div class="days" aria-label="This week">' + c.days.map((d) => '<span class="' + d.state + '" title="' + esc(d.date + ' · ' + d.state) + '">' + esc(d.label) + '</span>').join('') + '</div></section></div></div>';
+    if (t.status === 'skipped') return h + '<div class="mark"><p style="margin:0">Skipped. Nothing is lost: tomorrow resumes with the same topic.</p></div></section>';
+    h += '<div class="actions"><button class="btn p" type="button" data-act="start"' + (first ? ' data-url="' + esc(first.url) + '"' : '') + '>Start focus</button>' +
+      (first ? lnk(first.url, 'learn') : '') + '<button class="btn" type="button" data-act="why">' + (showWhy ? 'Hide why' : 'Why this?') + '</button><button class="ghost" type="button" data-act="openlog">' + (logOpen ? '' : 'Log a finished session') + '</button></div>';
+    if (showWhy) h += '<div class="why"><b>Why this now?</b> ' + esc(t.why || '') + '</div>';
+    if (logOpen) h += '<div class="mark"><p><b>How did the session go?</b></p>' +
+      '<div class="opt" role="group" aria-label="Completion" style="margin-bottom:10px">' + [['completed', 'Completed'], ['partial', 'Partly completed'], ['could_not_start', 'Could not start']].map(([v, l]) => '<label><input type="radio" name="outcome" data-act="outcome" value="' + v + '"' + (pendingOutcome === v ? ' checked' : '') + '><span>' + l + '</span></label>').join('') + '</div>' +
+      (pendingOutcome === 'could_not_start' ? '<p style="margin:0 0 10px">No guilt. Same topic tomorrow, or reduce your daily time in Settings.</p>' :
+        '<p style="margin-bottom:6px">Confidence after this session</p><div class="conf" role="group" aria-label="Confidence 1 to 5">' + [1, 2, 3, 4, 5].map((v) => '<button type="button" data-act="conf" data-v="' + v + '" title="' + CONF[v] + '" class="' + (pendingConf === v ? 'on' : '') + '">' + v + '</button>').join('') + '</div><small class="capt">' + (pendingConf ? pendingConf + ' · ' + CONF[pendingConf] : '1 = still confused · 5 = comfortable') + '</small>' +
+        '<p style="margin:10px 0 6px">What blocked you? (optional)</p><div class="opt" role="group" aria-label="Blockers" style="margin-bottom:10px">' + s.options.difficulty.map((d) => '<label><input type="checkbox" data-act="tag" value="' + d + '"' + (pendingTags.has(d) ? ' checked' : '') + '><span>' + esc(DIFF[d] || d) + '</span></label>').join('') + '</div>') +
+      '<button class="btn p" type="button" data-act="complete" data-id="' + esc(t.session_id) + '">' + (pendingOutcome === 'could_not_start' ? 'Log and move on' : 'Save and plan next step') + '</button> <button class="btn" type="button" data-act="skip" data-id="' + esc(t.session_id) + '">Skip today</button></div>';
+    return h + '</section>';
+  }
 
-    h += '<h2 style="margin:28px 0 0">Roadmap</h2>' + s.phases.map((ph) => {
+  function topicRow(t, s) {
+    const lk = t.lock;
+    let st;
+    if (lk === 'done') st = esc(t.status_label) + (t.confidence ? ' · ' + t.confidence + '/5' : '');
+    else if (lk === 'current') st = (t.status === 'learning' ? 'Learning · ' + (t.sessions_done || 0) + '/2 sessions' : 'Current · not started');
+    else if (lk === 'next') st = 'Next';
+    else st = 'Locked' + (t.lock_why ? ' · ' + esc(t.lock_why) : '');
+    const open = editing.has(t.id);
+    return '<div class="tp ' + esc(lk) + '" data-id="' + esc(t.id) + '"><div class="nm">' + esc(t.name) + (t.is_active ? '<em>current</em>' : '') + '</div><span class="tst">' + st + '</span>' +
+      '<button class="ghost" type="button" data-act="edit">' + (open ? 'close' : 'details') + '</button>' +
+      (open ? '<div class="ed"><div class="two"><div><label>Status</label><select data-act="status" aria-label="Status of ' + esc(t.name) + '">' + s.options.statuses.map((o) => '<option value="' + o.id + '"' + (o.id === t.status ? ' selected' : '') + '>' + esc(o.label) + '</option>').join('') + '</select></div>' +
+        '<div><label>Confidence</label><select data-act="confsel" aria-label="Confidence in ' + esc(t.name) + '"><option value="">–</option>' + [1, 2, 3, 4, 5].map((v) => '<option value="' + v + '"' + (t.confidence === v ? ' selected' : '') + '>' + v + '/5 · ' + CONF[v] + '</option>').join('') + '</select></div></div>' +
+        '<div class="ln">' + lnk(t.learn_url, 'learn') + lnk(t.practice_url, 'practice') + (lk === 'later' || lk === 'next' ? '<button class="btn" type="button" data-act="known">I already know this</button>' : '') + '</div>' +
+        '<label>Learning resource (https://…)</label><input data-f="learn_url" value="' + esc(t.learn_url || '') + '" maxlength="500"><label>Optional practice link (https://…)</label><input data-f="practice_url" value="' + esc(t.practice_url || '') + '" maxlength="500"><label>Notes</label><textarea data-f="notes" rows="2" maxlength="2000">' + esc(t.notes || '') + '</textarea><div><button class="btn p" type="button" data-act="savelinks">Save</button></div></div>' : '') + '</div>';
+  }
+
+  const drawer = (id, title, body, extra) => '<details class="dr" data-dr="' + id + '" id="dr-' + id + '"' + (openDr.has(id) ? ' open' : '') + '><summary>' + title + (extra ? '<span class="c">' + extra + '</span>' : '') + '</summary><div class="drb">' + body + '</div></details>';
+
+  function main(s) {
+    const p = s.plan, g = s.progress, m = s.mode, c = s.consistency, pc = s.pace;
+    const modeName = m.mode === 'maintenance' ? 'Maintenance' : m.mode === 'paused' ? 'Paused' : 'Normal';
+    const fresh = !s.history.length;
+    const lead = m.mode === 'maintenance' ? 'Exams come first. Keep DSA light: short revision only.' : m.mode === 'paused' ? 'DSA is paused. Your progress is kept.' :
+      fresh ? 'You are at the start of your ' + g.current_phase + ' phase. Complete one ' + ((s.today && s.today.minutes) || p.daily_minutes) + '-minute learning block today to build momentum.' : pc.message;
+    let h = '<section class="card hero"><div class="meta">' + esc(p.goal) + ' · ' + esc(p.language) + ' · ' + modeName + ' mode</div><p class="lead">' + esc(lead) + '</p>' +
+      '<div class="facts"><div><small>Current phase</small><b>' + esc(g.current_phase) + '</b></div><div><small>Roadmap pace</small><b>Week ' + g.week + ' of ' + g.weeks + (g.overrun ? ' (past plan)' : '') + '</b></div><div><small>Focus capacity</small><b>' + p.daily_minutes + ' min/day</b></div></div>' +
+      '<div class="bar" role="progressbar" aria-valuenow="' + g.percent + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + g.percent + '%"></i></div>' +
+      '<div class="chips"><span class="chip' + (pc.state === 'behind' ? ' warn' : '') + '" title="' + esc(pc.message) + '">' + (pc.state === 'behind' ? 'Slightly behind' : pc.state === 'ahead' ? 'Ahead' : 'On track') + '</span><span class="chip">This week: ' + c.completed + ' / ' + c.planned + ' sessions</span>' + (m.reason ? '<span class="note" style="margin:0">' + esc(m.reason) + '</span>' : '') + '</div>' +
+      (m.heads_up ? '<div class="rules">' + esc(m.heads_up) + '</div>' : '') + '</section>';
+
+    h += '<div class="sec">' + todayCard(s) + '</div>';
+
+    const wp = s.week_plan, mins = c.planned * p.daily_minutes;
+    const behind = pc.state === 'behind';
+    h += '<div class="grid2"><section class="card"><h2>This week</h2><p class="tag" style="margin:0 0 8px">Main objective: ' + esc(g.current_phase) + '.</p><ul class="plain">' + s.this_week.map((b) => '<li class="' + (b.done ? 'd' : '') + '"><span class="dot">' + (b.done ? '✓' : '') + '</span><span>' + esc(b.text) + '</span></li>').join('') + '</ul>' +
+      '<p class="note" style="margin:8px 0 0">Capacity: ' + mins + ' min planned · ' + p.daily_minutes + ' min/day. Mix: ' + wp.learning + ' learning, ' + wp.revision + ' revision, ' + wp.reflection + ' reflection.</p>' +
+      '<div class="days" aria-label="This week">' + c.days.map((d) => '<span class="' + d.state + '" title="' + esc(d.date + ' · ' + d.state) + '">' + esc(d.label) + '</span>').join('') + '</div>' +
+      (behind ? '<div class="rules" style="margin-top:12px"><b>Slightly behind</b>Add one short session this weekend, or move your target date. OPAI never piles extra work onto tomorrow.<div style="margin-top:8px"><button class="btn" type="button" data-act="gotoset">Adjust target</button></div></div>' : '') +
+      (m.mode === 'normal' ? '<p style="margin:12px 0 0"><button class="ghost" type="button" data-act="mode" data-v="maintenance">Switch to maintenance mode</button></p>' : '') + '</section>' +
+      '<section class="card"><h2>Review queue</h2>' + revQueue(s) + '</section></div>';
+
+    const total = s.phases.reduce((a, x) => a + x.total, 0);
+    h += '<section class="card sec"><div class="row"><h2 style="margin:0">Roadmap</h2><button class="btn" type="button" data-act="road">' + (showRoad ? 'Hide full roadmap' : 'View complete roadmap') + '</button></div>' +
+      '<div class="strip" aria-label="Roadmap phases">' + s.phases.map((ph) => { const cls = ph.advanced === ph.total ? 'done' : ph.topics.some((t) => t.is_active) ? 'cur' : ''; return '<span class="' + cls + '" title="' + esc(ph.name) + '">' + esc(ph.name.split(' ')[0].replace(/,$/, '')) + '</span>'; }).join('') + '</div>' +
+      '<p class="note" style="margin:10px 0 0">Now: <b>' + esc(g.current_phase) + '</b>' + (g.current_topic ? ' · ' + esc(g.current_topic) : '') + ' · Next milestone: ' + esc(g.milestone.text) + (g.milestone.sessions_remaining ? ' (about ' + g.milestone.sessions_remaining + ' sessions)' : '') + ' · ' + g.advanced + ' of ' + total + ' topics advanced.</p></section>';
+    if (showRoad) h += s.phases.map((ph) => {
       const act = ph.topics.some((t) => t.is_active), open = openPh.has(ph.no) || (act && !openPh.has(-ph.no));
-      return '<details class="ph" data-ph="' + ph.no + '"' + (open ? ' open' : '') + '><summary><span class="n">' + String(ph.no).padStart(2, '0') + '</span>' + esc(ph.name) + '<span class="c">' + ph.advanced + '/' + ph.total + ' · wk ' + (ph.weeks[0] === ph.weeks[1] ? ph.weeks[0] : ph.weeks[0] + '–' + ph.weeks[1]) + '</span></summary>' +
-        ph.topics.map((t) => '<div class="tp" data-id="' + esc(t.id) + '"><div class="nm">' + esc(t.name) + (t.is_active ? '<em>current</em>' : '') + '</div>' +
-          '<select data-act="status" aria-label="Status of ' + esc(t.name) + '">' + s.options.statuses.map((o) => '<option value="' + o.id + '"' + (o.id === t.status ? ' selected' : '') + '>' + esc(o.label) + '</option>').join('') + '</select>' +
-          '<select data-act="confsel" aria-label="Confidence in ' + esc(t.name) + '"><option value="">Confidence –</option>' + [1, 2, 3, 4, 5].map((v) => '<option value="' + v + '"' + (t.confidence === v ? ' selected' : '') + '>Confidence ' + v + '/5</option>').join('') + '</select>' +
-          '<div class="ln">' + lnk(t.learn_url, 'learn') + lnk(t.practice_url, 'practice') + '<button class="ghost" type="button" data-act="edit">' + (editing.has(t.id) ? 'close' : 'edit links & notes') + '</button></div>' +
-          (editing.has(t.id) ? '<div class="ed"><label>Primary learning resource (https://…)</label><input data-f="learn_url" value="' + esc(t.learn_url || '') + '" maxlength="500"><label>Practice link (https://…)</label><input data-f="practice_url" value="' + esc(t.practice_url || '') + '" maxlength="500"><label>Notes (optional)</label><textarea data-f="notes" rows="2" maxlength="2000">' + esc(t.notes || '') + '</textarea><div><button class="btn p" type="button" data-act="savelinks">Save</button></div></div>' : '') + '</div>').join('') + '</details>';
+      return '<details class="ph" data-ph="' + ph.no + '"' + (open ? ' open' : '') + '><summary><span class="n">' + String(ph.no).padStart(2, '0') + '</span>' + esc(ph.name) + '<span class="c">' + ph.advanced + '/' + ph.total + ' · wk ' + (ph.weeks[0] === ph.weeks[1] ? ph.weeks[0] : ph.weeks[0] + '–' + ph.weeks[1]) + '</span></summary>' + ph.topics.map((t) => topicRow(t, s)).join('') + '</details>';
     }).join('');
-    h += '<h2 style="margin:28px 0 0">Learning history</h2><section class="card" style="margin-top:10px">' + (s.history.length ? s.history.map((x) => '<div class="hist"><small>' + esc(x.date) + '</small><span>' + esc(x.topic) + ' <small>· ' + esc(x.kind === 'learn' ? 'learn' : 'revision') + (x.outcome && x.outcome !== 'completed' ? ' · ' + esc(x.outcome.replace(/_/g, ' ')) : '') + (x.difficulty.length && x.difficulty[0] !== 'nothing' ? ' · hard: ' + esc(x.difficulty.join(', ')) : '') + '</small></span><small>' + (x.status === 'skipped' ? 'skipped' : x.minutes + ' min' + (x.confidence ? ' · ' + x.confidence + '/5' : '')) + '</small></div>').join('') : '<p class="tag" style="margin:0">Nothing logged yet. Your sessions show up here.</p>') + '</section>' +
-      '<section class="card" style="margin-top:16px"><h2>Settings</h2><div class="f"><div><label>Minutes per day</label><input id="st-mins" type="number" min="20" max="180" step="5" value="' + p.daily_minutes + '"></div><div><label>Target date</label><input id="st-target" type="date" value="' + esc(p.target_date || '') + '"></div></div><button class="btn" type="button" data-act="savesettings">Save settings</button></section>';
-    h += '<p style="margin-top:18px"><button class="ghost" type="button" data-act="reset">Start over with a new roadmap</button></p>';
+
+    const hist = s.history.length ? s.history.map((x) => '<div class="hist"><small>' + esc(x.date) + '</small><span>' + esc(x.topic) + ' <small>· ' + esc(x.kind === 'learn' ? 'learn' : 'revision') + (x.outcome && x.outcome !== 'completed' ? ' · ' + esc(x.outcome.replace(/_/g, ' ')) : '') + (x.difficulty.length && x.difficulty[0] !== 'nothing' ? ' · blocked: ' + esc(x.difficulty.map((d) => DIFF[d] || d).join(', ')) : '') + '</small></span><small>' + (x.status === 'skipped' ? 'skipped' : x.minutes + ' min' + (x.confidence ? ' · ' + x.confidence + '/5' : '')) + '</small></div>').join('') : '<p class="tag" style="margin:0">Nothing logged yet. Your sessions show up here.</p>';
+    const notify = window.Notification ? '<div class="row" style="margin-top:14px"><span class="note" style="margin:0">Reminders show while OPAI is open in your browser (not background push).</span><button type="button" class="btn" id="dsa-notify">' + (notifyOn() ? 'Reminders on (turn off)' : 'Remind me to study') + '</button></div>' : '';
+    const settings = '<div class="seg" role="group" aria-label="DSA mode">' + [['auto', 'Auto'], ['normal', 'Normal'], ['maintenance', 'Maintenance'], ['paused', 'Paused']].map(([v, l]) => '<button type="button" data-act="mode" data-v="' + v + '" class="' + (m.override === v ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
+      '<div class="f"><div><label>Minutes per day</label><input id="st-mins" type="number" min="20" max="180" step="5" value="' + p.daily_minutes + '"></div><div><label>Target date</label><input id="st-target" type="date" value="' + esc(p.target_date || '') + '"></div></div><button class="btn" type="button" data-act="savesettings">Save settings</button>' + notify +
+      '<p style="margin:16px 0 0"><button class="ghost" type="button" data-act="reset">Start over with a new roadmap</button></p>';
+    h += '<div class="sec">' + drawer('hist', 'Progress &amp; history', hist, s.history.length + ' sessions') + drawer('set', 'Settings', settings) + '</div>';
     return h;
   }
 
@@ -209,7 +274,8 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
   }
 
   document.addEventListener('toggle', (e) => {          // remember which phases the learner opened/closed
-    const d = e.target; if (!d.matches || !d.matches('details.ph')) return;
+    const d = e.target; if (d.matches && d.matches('details.dr')) { d.open ? openDr.add(d.dataset.dr) : openDr.delete(d.dataset.dr); return; }
+    if (!d.matches || !d.matches('details.ph')) return;
     const n = +d.dataset.ph; if (d.open) { openPh.add(n); openPh.delete(-n); } else { openPh.delete(n); openPh.add(-n); }
   }, true);
   document.addEventListener('click', (e) => {
@@ -220,11 +286,17 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
       if (!(mins >= 20 && mins <= 180)) { err('Enter a custom time between 20 and 180 minutes.'); return; }
       call('/v1/dsa/plan', 'POST', { goal: v('goal'), language: v('lang'), level: v('level'), daily_minutes: mins, days_per_week: +v('dpw'), target_date: $('s-target').value || null });
     } else if (a === 'mode') call('/v1/dsa/plan', 'PATCH', { mode_override: b.dataset.v });
+    else if (a === 'start') { logOpen = true; if (b.dataset.url) window.open(b.dataset.url, '_blank', 'noopener'); render(); }
+    else if (a === 'openlog') { logOpen = true; render(); }
+    else if (a === 'why') { showWhy = !showWhy; render(); }
+    else if (a === 'road') { showRoad = !showRoad; render(); }
+    else if (a === 'gotoset') { openDr.add('set'); render(); const d = $('dr-set'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    else if (a === 'known') { if (confirm('Mark this topic as already known? It moves forward and comes back later through revision.')) call('/v1/dsa/topics/' + encodeURIComponent(row.dataset.id), 'PATCH', { status: 'practicing', confidence: 3 }); }
     else if (a === 'conf') { pendingConf = pendingConf === +b.dataset.v ? null : +b.dataset.v; render(); }
     else if (a === 'complete') {
       const body = { outcome: pendingOutcome, difficulty: Array.from(pendingTags) };
       if (pendingConf && pendingOutcome !== 'could_not_start') body.confidence = pendingConf;
-      pendingConf = null; pendingOutcome = 'completed'; pendingTags = new Set();
+      pendingConf = null; pendingOutcome = 'completed'; pendingTags = new Set(); logOpen = false; showWhy = false;
       call('/v1/dsa/sessions/' + encodeURIComponent(b.dataset.id) + '/complete', 'POST', body);
     }
     else if (a === 'review') call('/v1/dsa/topics/' + encodeURIComponent(b.closest('.rq').dataset.tid) + '/review', 'POST', { confidence: +b.dataset.v });
@@ -250,31 +322,21 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
   });
 
 
-  /* ---- streak + reminder (streak counts planned days only; rest days never break it) ---- */
+  /* ---- study reminder (no streak guilt: planned days only, rest days never count against you) ---- */
+  const notifyOn = () => localStorage.getItem('opai_dsa_notify') === '1' && window.Notification && Notification.permission === 'granted';
+  document.addEventListener('click', async (e) => {
+    if (!e.target || e.target.id !== 'dsa-notify') return;
+    if (notifyOn()) { localStorage.removeItem('opai_dsa_notify'); return render(); }
+    const p = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+    if (p === 'granted') localStorage.setItem('opai_dsa_notify', '1'); else alert('Notifications are blocked for this site. Allow them in your browser settings to use reminders.');
+    render();
+  });
   async function loadStreak() {
-    let k; try { k = await api('/v1/dsa/streak?user_id=' + encodeURIComponent(uid)); } catch (e) { return; }
-    const box = $('streak'); if (!box) return;
-    const on = localStorage.getItem('opai_dsa_notify') === '1' && window.Notification && Notification.permission === 'granted';
-    let msg;
-    if (k.lost_streak) msg = 'You lost a ' + k.lost_streak + '-day streak (' + k.missed_days + ' planned day' + (k.missed_days > 1 ? 's' : '') + ' missed). Finish today\'s block to start a new one. Your longest is ' + k.longest + '.';
-    else if (k.at_risk) msg = k.current + '-day streak. Finish today\'s block to keep it.';
-    else if (k.today_status === 'done') msg = k.current + '-day streak. Today is done.';
-    else if (k.today_status === 'rest_day') msg = k.current ? k.current + '-day streak. Today is a rest day, so it is safe.' : 'No streak yet. Your next planned day starts one.';
-    else msg = k.current ? k.current + '-day streak.' : 'No streak yet. Finish today\'s block to start one.';
-    box.innerHTML = '<div class="card" style="margin-bottom:14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between' + (k.lost_streak ? ';border-color:#e8705a' : '') + '"><div><b style="font-size:22px">' + k.current + '</b> <span>day streak</span><div style="color:#5a6064">' + esc(msg) + '</div></div>' +
-      (window.Notification ? '<button type="button" class="btn" id="dsa-notify">' + (on ? 'Reminders on (turn off)' : 'Remind me to study') + '</button>' : '') + '</div>' +
-      (window.Notification ? '<p class="fine" style="margin:-6px 0 14px;color:#5a6064;font-size:13px">Reminders appear while OPAI is open in your browser. They are not background push notifications.</p>' : '');
-    const b = $('dsa-notify');
-    if (b) b.onclick = async () => {
-      if (on) { localStorage.removeItem('opai_dsa_notify'); return loadStreak(); }
-      const p = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
-      if (p === 'granted') localStorage.setItem('opai_dsa_notify', '1'); else alert('Notifications are blocked for this site. Allow them in your browser settings to use reminders.');
-      loadStreak();
-    };
+    try { K = await api('/v1/dsa/streak?user_id=' + encodeURIComponent(uid)); } catch (e) { return; }
     const key = 'opai_dsa_notified', day = new Date().toDateString();
-    if (on && (k.at_risk || k.lost_streak || k.today_status === 'planned') && localStorage.getItem(key) !== day) {
+    if (notifyOn() && K.today_status === 'planned' && localStorage.getItem(key) !== day) {
       localStorage.setItem(key, day);
-      try { new Notification('OPAI · DSA', { body: k.lost_streak ? 'Your streak ended. Start a new one with today\'s block.' : k.at_risk ? 'Finish today\'s DSA block to keep your ' + k.current + '-day streak.' : 'Today\'s DSA block is waiting.' }); } catch (e) {}
+      try { new Notification('OPAI · DSA', { body: 'Today\'s DSA block is waiting. A short session is enough.' }); } catch (e) {}
     }
   }
   (async () => {

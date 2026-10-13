@@ -37,7 +37,7 @@ def test_no_plan_then_create(c, uid):
     assert s["plan"] is None and "Python" in s["options"]["languages"]
     s = make(c, uid)
     assert s["plan"]["target"] == "90-day roadmap" and len(s["phases"]) == 11 and s["today"]["topic"]["name"] == "Python basics"
-    assert [b["kind"] for b in s["today"]["blocks"]] == ["learn", "practice", "notes"]
+    assert [b["kind"] for b in s["today"]["blocks"]] == ["learn", "notes"]
 
 
 def test_validation(c, uid):

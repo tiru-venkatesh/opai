@@ -110,9 +110,11 @@ def state(db: Session, uid: str, today: Optional[date] = None) -> Dict[str, Any]
     sess = ensure_session(db, plan, td, today, exam_days)
     byid = {t["id"]: t for t in td}
 
+    locks = R.lock_states(td)
     phases = []
     for no, name, (a, b), _ in R.PHASES:
-        ts = [dict(t, is_active=bool(act and act["id"] == t["id"]), status_label=R.STATUS_LABEL.get(t["status"], t["status"])) for t in td if t["phase_no"] == no]
+        ts = [dict(t, is_active=bool(act and act["id"] == t["id"]), status_label=R.STATUS_LABEL.get(t["status"], t["status"]),
+                   lock=locks[t["id"]]["state"], lock_why=locks[t["id"]]["why"]) for t in td if t["phase_no"] == no]
         phases.append({"no": no, "name": name, "weeks": [a, b], "topics": ts, "advanced": sum(1 for t in ts if R.is_advanced(t["status"])), "total": len(ts)})
 
     adv = sum(1 for t in td if R.is_advanced(t["status"]))
@@ -122,6 +124,8 @@ def state(db: Session, uid: str, today: Optional[date] = None) -> Dict[str, Any]
         today_block = {"date": today.isoformat(), "session_id": sess.id, "status": sess.status, "minutes": sess.minutes, "mode": sess.mode,
                        "kind": sess.kind, "confidence": sess.confidence,
                        "topic": {"id": topic["id"], "name": topic["name"], "phase": topic["phase"]},
+                       "why": R.why_now(topic, sess.kind, sess.mode),
+                       "next_up": next((t["name"] for t in td if t["position"] > topic["position"] and not R.is_advanced(t["status"])), None),
                        "blocks": R.day_blocks(topic, sess.mode, sess.kind, sess.minutes)}
 
     queue = [dict(topic_id=t["id"], name=t["name"], phase=t["phase"], confidence=t["confidence"], minutes=R.review_minutes(plan.daily_minutes or 60, t["confidence"]),
