@@ -107,9 +107,10 @@ def _with_notes(blocks: List[Dict[str, Any]], plan: DsaPlan) -> List[Dict[str, A
 
 # ---------------------------------------------------------------- state for the DSA page
 def options() -> Dict[str, Any]:
-    return {"languages": list(R.LANGUAGES), "goals": list(R.GOALS), "levels": list(R.LEVELS), "daily_minutes": [20, 30, 60], "days_per_week": [3, 4, 5, 6, 7],
+    return {"languages": list(R.LANGUAGES), "goals": list(R.GOALS), "levels": list(R.LEVELS), "daily_minutes": [20, 30, 45, 60], "days_per_week": [3, 4, 5, 6, 7],
             "modes": list(R.MODES), "resources": {"learn": list(R.LEARN_SOURCES), "practice": list(R.PRACTICE_SOURCES), "notes": list(R.NOTES_SOURCES)}, "outcomes": list(R.OUTCOMES), "difficulty": list(R.DIFFICULTY),
-            "statuses": [{"id": s, "label": R.STATUS_LABEL[s]} for s in R.STATUSES]}
+            "statuses": [{"id": s, "label": R.STATUS_LABEL[s]} for s in R.STATUSES],
+            "tracks": [{k: t[k] for k in ("key", "name", "best_for", "goal", "level", "minutes")} for t in R.TRACKS]}
 
 
 def state(db: Session, uid: str, today: Optional[date] = None) -> Dict[str, Any]:
@@ -161,7 +162,8 @@ def state(db: Session, uid: str, today: Optional[date] = None) -> Dict[str, Any]
             "plan": {"id": plan.id, "goal": plan.goal, "language": plan.language, "daily_minutes": plan.daily_minutes, "days_per_week": plan.days_per_week,
                      "start_date": start.isoformat(), "target": "90-day roadmap", "mode_override": plan.mode_override or "auto",
                      "level": plan.level, "target_date": plan.target_date.isoformat() if plan.target_date else None,
-                     "weeks": weeks, "resources": _res(plan)},
+                     "weeks": weeks, "resources": _res(plan),
+                     "track": R.track_summary(plan.goal or "", plan.level or "", plan.daily_minutes or 60)},
             "progress": {"week": week, "weeks": weeks, "overrun": overrun, "advanced": adv, "total": len(td), "percent": round(100 * adv / max(1, len(td))),
                          "current_phase": act["phase"] if act else "Roadmap complete", "current_topic": act["name"] if act else None,
                          "milestone": R.next_milestone(td)},
@@ -175,6 +177,8 @@ def state(db: Session, uid: str, today: Optional[date] = None) -> Dict[str, Any]
             "history": history,
             "today": today_block,
             "phases": phases,
+            "weekly_review": R.weekly_review(td, [dict(topic_id=r.topic_id, status=r.status, outcome=r.outcome, confidence=r.confidence) for r in rows],
+                                             plan.days_per_week or 5, week, today),
             "consistency": {"planned": plan.days_per_week, "completed": sum(1 for v in by_date.values() if v == "done"), "days": R.week_days(start, week, by_date, today)}}
 
 

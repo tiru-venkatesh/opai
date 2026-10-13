@@ -127,6 +127,13 @@ ul.plain li>span,.steps li>span,.rq>div,.hist>span{min-width:0;overflow-wrap:any
   input,select,textarea{font-size:16px!important}   /* stops iOS zooming into fields */
 }
 @media(max-width:380px){.facts{grid-template-columns:1fr}}
+
+.trk{margin:16px 0 4px}.trk .cap{display:block;font:11px var(--mono);letter-spacing:.05em;color:var(--dim);text-transform:uppercase;margin-bottom:8px}
+.trk .opt span{display:flex;flex-direction:column;gap:2px;border-radius:12px;padding:10px 14px;align-items:flex-start;text-align:left}
+.trk .opt small{font:11px/15px var(--mono);opacity:.8;font-weight:400}
+.trk .rec{margin:10px 0 0;padding:10px 14px;border-radius:12px;background:var(--pri-soft);color:var(--pri);font-size:13px}.trk .rec:empty{display:none}
+@media(max-width:760px){.trk .opt label{flex:1 1 calc(50% - 4px)}.trk .opt label span{width:100%}}
+@media(max-width:380px){.trk .opt label{flex-basis:100%}}
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#F6F4EE">
@@ -187,6 +194,7 @@ ul.plain li>span,.steps li>span,.rq>div,.hist>span{min-width:0;overflow-wrap:any
     const radios = (name, arr, def, fmt) => '<div class="opt">' + arr.map((v) => '<label><input type="radio" name="' + name + '" value="' + esc(v) + '"' + (v === def ? ' checked' : '') + '><span>' + esc(fmt ? fmt(v) : v) + '</span></label>').join('') + '</div>';
     const mins = (o.daily_minutes || []).concat(['custom']);
     return '<section class="card"><h2>Create your DSA roadmap</h2><p class="tag" style="margin-bottom:0">Answer five quick questions. OPAI builds an 11-phase roadmap sized to your daily time (about 10 to 18 weeks), starts it at your level, and puts one small DSA block in Today.</p>' +
+      '<div class="trk"><label class="cap">Pick a track (fills the answers below, you can still change them)</label><div class="opt" id="trk-opt">' + (o.tracks || []).map((t) => '<label><input type="radio" name="track" value="' + esc(t.key) + '"><span><b>' + esc(t.name) + '</b><small>' + esc(t.best_for) + '</small></span></label>').join('') + '</div><p class="rec" id="trk-rec" aria-live="polite"></p></div>' +
       '<div class="f"><div><label>1 · Goal</label>' + radios('goal', o.goals, o.goals[0]) + '</div>' +
       '<div><label>2 · Language</label>' + radios('lang', o.languages, 'Python') + '</div>' +
       '<div><label>3 · Current level</label>' + radios('level', o.levels || [], (o.levels || [])[0]) + '</div>' +
@@ -259,13 +267,26 @@ ul.plain li>span,.steps li>span,.rq>div,.hist>span{min-width:0;overflow-wrap:any
       '<button class="btn" type="button" data-act="saveres">Save resources</button>';
   }
 
+  function weeklyReview(s) {
+    const w = s.weekly_review; if (!w) return '';
+    const P = { on_track: 'On track', behind: 'Slightly behind', ahead: 'Ahead' }[w.pace] || 'On track';
+    if (w.empty) return '<p style="margin:0 0 8px"><b>No DSA sessions were completed this week.</b></p><p class="tag" style="margin:0 0 10px">Your progress and revision dates are kept. Do not restart the entire roadmap. Choose one:</p><div class="actions" style="margin-top:0">' +
+      w.options.map((o) => '<button class="btn' + (o.id === 'gentle' ? ' p' : '') + '" type="button" data-act="wk" data-v="' + esc(o.id) + '">' + esc(o.label) + '</button>').join('') + '</div>';
+    const row = (k, v) => '<div><small>' + k + '</small><b>' + v + '</b></div>';
+    return '<div class="facts">' + row('Completed', w.completed + ' of ' + w.planned + ' sessions') +
+      (w.strongest ? row('Strongest', esc(w.strongest.name) + ' · ' + w.strongest.confidence + '/5') : '') +
+      (w.needs_attention ? row('Needs attention', esc(w.needs_attention.name) + ' · ' + w.needs_attention.confidence + '/5') : '') +
+      row('Roadmap pace', P) + '</div><p class="note" style="margin:0 0 6px">Next week</p><ul class="plain">' +
+      w.next_week.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul><div class="actions"><button class="btn" type="button" data-act="wk" data-v="availability">Adjust availability</button></div>';
+  }
+
   function main(s) {
     const p = s.plan, g = s.progress, m = s.mode, c = s.consistency, pc = s.pace;
     const modeName = m.mode === 'maintenance' ? 'Maintenance' : m.mode === 'paused' ? 'Paused' : 'Normal';
     const fresh = !s.history.length;
     const lead = m.mode === 'maintenance' ? 'Exams come first. Keep DSA light: short revision only.' : m.mode === 'paused' ? 'DSA is paused. Your progress is kept.' :
       fresh ? 'You are at the start of your ' + g.current_phase + ' phase. Complete one ' + ((s.today && s.today.minutes) || p.daily_minutes) + '-minute learning block today to build momentum.' : pc.message;
-    let h = '<section class="card hero"><div class="meta">' + esc(p.goal) + ' · ' + esc(p.language) + ' · ' + modeName + ' mode</div><p class="lead">' + esc(lead) + '</p>' +
+    let h = '<section class="card hero"><div class="meta">' + esc(p.goal) + ' · ' + esc(p.language) + ' · ' + modeName + ' mode' + (p.track ? ' · ' + esc(p.track.name) : '') + '</div><p class="lead">' + esc(lead) + '</p>' +
       '<div class="facts"><div><small>Current phase</small><b>' + esc(g.current_phase) + '</b></div><div><small>Roadmap pace</small><b>Week ' + g.week + ' of ' + g.weeks + (g.overrun ? ' (past plan)' : '') + '</b></div><div><small>Focus capacity</small><b>' + p.daily_minutes + ' min/day</b></div></div>' +
       '<div class="bar" role="progressbar" aria-valuenow="' + g.percent + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + g.percent + '%"></i></div>' +
       '<div class="chips"><span class="chip' + (pc.state === 'behind' ? ' warn' : '') + '" title="' + esc(pc.message) + '">' + (pc.state === 'behind' ? 'Slightly behind' : pc.state === 'ahead' ? 'Ahead' : 'On track') + '</span><span class="chip">This week: ' + c.completed + ' / ' + c.planned + ' sessions</span>' + (m.reason ? '<span class="note" style="margin:0">' + esc(m.reason) + '</span>' : '') + '</div>' +
@@ -298,12 +319,13 @@ ul.plain li>span,.steps li>span,.rq>div,.hist>span{min-width:0;overflow-wrap:any
       '<div class="f"><div><label>Minutes per day</label><input id="st-mins" type="number" min="20" max="180" step="5" value="' + p.daily_minutes + '"></div><div><label>Target date</label><input id="st-target" type="date" value="' + esc(p.target_date || '') + '"></div></div><button class="btn" type="button" data-act="savesettings">Save settings</button>' + notify +
       resSettings(s) +
       '<p style="margin:16px 0 0"><button class="ghost" type="button" data-act="reset">Start over with a new roadmap</button></p>';
-    h += '<div class="sec">' + drawer('hist', 'Progress &amp; history', hist, s.history.length + ' sessions') + drawer('set', 'Settings', settings) + '</div>';
+    h += '<div class="sec">' + drawer('wk', 'Weekly review', weeklyReview(s), s.weekly_review ? (s.weekly_review.empty ? 'no sessions' : s.weekly_review.completed + '/' + s.weekly_review.planned) : '') + drawer('hist', 'Progress &amp; history', hist, s.history.length + ' sessions') + drawer('set', 'Settings', settings) + '</div>';
     return h;
   }
 
   function render() {
     $('app').innerHTML = S && S.plan ? main(S) : setup(S ? S.options : { goals: [], languages: [], daily_minutes: [], days_per_week: [] });
+    trackNote();
   }
   async function call(path, method, body) {
     err('');
@@ -311,6 +333,35 @@ ul.plain li>span,.steps li>span,.rq>div,.hist>span{min-width:0;overflow-wrap:any
     catch (e) { err(e.message); render(); }
   }
 
+
+  /* roadmap tracks: same rules as dsa_roadmap.recommend_track / weeks_for on the server */
+  const weeksFor = (d) => d <= 25 ? 18 : d <= 35 ? 16 : d <= 50 ? 14 : d < 90 ? 12 : 10;
+  function recommend(goal, level, d) {
+    if (level === 'Starting from basics' || goal === 'Learn DSA from basics') return 'foundation';
+    if (goal === 'Interview revision' || level === 'Revising for interviews') return 'interview';
+    if (goal === 'Internship preparation' && d >= 45) return 'internship';
+    return 'placement';
+  }
+  function trackNote() {
+    const el = $('trk-rec'); if (!el || !S) return;
+    const v = (n) => (document.querySelector('input[name=' + n + ']:checked') || {}).value;
+    const d = v('mins') === 'custom' ? +(($('s-custom') || {}).value || 0) : +v('mins');
+    if (!(d >= 20 && d <= 180)) { el.textContent = ''; return; }
+    const key = recommend(v('goal'), v('level'), d), t = (S.options.tracks || []).find((x) => x.key === key);
+    if (!t) return;
+    let m = 'Recommended: ' + t.name + ' · about ' + weeksFor(d) + ' weeks at ' + d + ' min/day · exam-aware pacing on.';
+    if (d < 45 && (key === 'placement' || key === 'internship')) m += ' At this pace a close target date is unrealistic; 45+ min/day is better.';
+    el.textContent = m;
+  }
+  document.addEventListener('change', (e) => {
+    const t = e.target; if (!t.matches || !t.matches('#app input[type=radio], #s-custom')) return;
+    if (t.name === 'track') {
+      const tr = (S.options.tracks || []).find((x) => x.key === t.value); if (!tr) return;
+      const pick = (n, val) => { const r = [...document.querySelectorAll('input[name=' + n + ']')].find((x) => x.value === String(val)); if (r) r.checked = true; };
+      pick('goal', tr.goal); pick('level', tr.level); pick('mins', tr.minutes);
+    }
+    trackNote();
+  });
   document.addEventListener('toggle', (e) => {          // remember which phases the learner opened/closed
     const d = e.target; if (d.matches && d.matches('details.dr')) { d.open ? openDr.add(d.dataset.dr) : openDr.delete(d.dataset.dr); return; }
     if (!d.matches || !d.matches('details.ph')) return;
@@ -323,6 +374,11 @@ ul.plain li>span,.steps li>span,.rq>div,.hist>span{min-width:0;overflow-wrap:any
       const mins = v('mins') === 'custom' ? +($('s-custom').value || 0) : +v('mins');
       if (!(mins >= 20 && mins <= 180)) { err('Enter a custom time between 20 and 180 minutes.'); return; }
       call('/v1/dsa/plan', 'POST', { goal: v('goal'), language: v('lang'), level: v('level'), daily_minutes: mins, days_per_week: +v('dpw'), target_date: $('s-target').value || null });
+    } else if (a === 'wk') {
+      const v = b.dataset.v;
+      if (v === 'gentle') call('/v1/dsa/plan', 'PATCH', { daily_minutes: 20, mode_override: 'normal' });
+      else if (v === 'pause') call('/v1/dsa/plan', 'PATCH', { mode_override: 'paused' });
+      else { openDr.add('set'); render(); const t = $('dr-set'); if (t) { t.scrollIntoView({ block: 'start' }); const f = $(v === 'target' ? 'st-target' : 'st-mins'); if (f) f.focus(); } }
     } else if (a === 'mode') call('/v1/dsa/plan', 'PATCH', { mode_override: b.dataset.v });
     else if (a === 'start') { logOpen = true; if (b.dataset.url) window.open(b.dataset.url, '_blank', 'noopener'); render(); }
     else if (a === 'openlog') { logOpen = true; render(); }

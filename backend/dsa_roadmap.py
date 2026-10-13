@@ -125,6 +125,82 @@ def planned_weeks(language: str, weeks: int) -> List[int]:
     return [t["planned_week"] for t in _build(language, weeks)]
 
 
+
+# ---------------------------------------------------------------- roadmap tracks
+# A track is a preset over (goal, level, daily minutes). It is not stored: it is derived from the plan, so no migration is needed.
+TRACKS: List[Dict[str, Any]] = [
+    dict(key="foundation", name="Foundation Track", best_for="Beginner or weak programming basics", goal="Learn DSA from basics", level="Starting from basics", minutes=30, minutes_range=(20, 35)),
+    dict(key="placement", name="Placement Core", best_for="Basic coding ability, aiming for placements", goal="Placement preparation", level="Know syntax, weak at DSA", minutes=45, minutes_range=(36, 90)),
+    dict(key="internship", name="Internship Sprint", best_for="An internship or assessment is coming up", goal="Internship preparation", level="Know syntax, weak at DSA", minutes=60, minutes_range=(45, 180)),
+    dict(key="interview", name="Interview Revision", best_for="Already knows the fundamentals", goal="Interview revision", level="Revising for interviews", minutes=45, minutes_range=(30, 90)),
+]
+TRACK_BY_KEY = {t["key"]: t for t in TRACKS}
+
+
+def recommend_track(goal: str, level: str, daily: int) -> str:
+    """Track key for an answer set. Level beats goal for beginners: weak basics always start on Foundation."""
+    if level == "Starting from basics" or goal in ("Learn DSA from basics", "Strengthen fundamentals"):
+        return "foundation"
+    if goal == "Interview revision" or goal == "Interview" or level == "Revising for interviews":
+        return "interview"
+    if goal in ("Internship preparation", "Internship interviews") and daily >= 45:
+        return "internship"
+    return "placement"
+
+
+def track_summary(goal: str, level: str, daily: int) -> Dict[str, Any]:
+    """Recommendation shown to the learner, with an honest pace note (never promises more than the time allows)."""
+    t = TRACK_BY_KEY[recommend_track(goal, level, daily)]
+    weeks = weeks_for(daily)
+    note = ""
+    if daily < 45 and t["key"] in ("placement", "internship"):
+        note = f"At {daily} min/day the full roadmap takes about {weeks} weeks. Aim for 45+ min/day if your target date is close."
+    elif daily >= 90 and t["key"] == "foundation":
+        note = "You have time to spare: if the basics feel easy, switch to Placement Core."
+    return dict(key=t["key"], name=t["name"], best_for=t["best_for"], weeks=weeks, minutes=daily, note=note)
+
+
+
+def weekly_review(topics: List[Dict[str, Any]], rows: List[Dict[str, Any]], planned: int, week: int, today: date,
+                  pace_info: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Summary of the current roadmap week. `rows` = this week's sessions: {topic_id, status, outcome, confidence}.
+    A session only counts when it was really done (could_not_start is logged but not counted). Never shames an empty week."""
+    byid = {t["id"]: t for t in topics}
+    done = [r for r in rows if r.get("status") == "done" and r.get("outcome") != "could_not_start"]
+    pace_info = pace_info or pace(topics, week)
+    studied: Dict[str, int] = {}
+    for r in done:
+        c = r.get("confidence") or (byid.get(r["topic_id"]) or {}).get("confidence")
+        if c and r["topic_id"] in byid:
+            studied[r["topic_id"]] = c
+    strongest = max(studied.items(), key=lambda kv: kv[1], default=None)
+    weakest = min(studied.items(), key=lambda kv: kv[1], default=None)
+    out: Dict[str, Any] = dict(week=week, completed=len(done), planned=planned, empty=not done, pace=pace_info["state"], pace_message=pace_info["message"],
+                               strongest=None, needs_attention=None, next_week=[], options=[])
+    if strongest:
+        out["strongest"] = dict(name=byid[strongest[0]]["name"], confidence=strongest[1])
+    if weakest and weakest[1] <= 3 and (not strongest or weakest[0] != strongest[0]):
+        out["needs_attention"] = dict(name=byid[weakest[0]]["name"], confidence=weakest[1])
+    if out["empty"]:
+        out["message"] = "No DSA sessions were completed this week. Do not restart the roadmap: your progress and revision dates are kept."
+        out["options"] = [dict(id="gentle", label="Restart gently with 20 min"), dict(id="target", label="Move target date"), dict(id="pause", label="Pause until exams end")]
+        return out
+    nxt: List[str] = []
+    if out["needs_attention"]:
+        nxt.append(f"Finish {out['needs_attention']['name']}")
+    for t in sorted(topics, key=lambda x: x["position"]):
+        if len(nxt) >= 2:
+            break
+        if t["planned_week"] == week + 1 and not is_advanced(t["status"]):
+            nxt.append(f"Start {t['name']}")
+    due = due_reviews(topics, today + timedelta(days=7))
+    if due and len(nxt) < 3:
+        nxt.append(f"Review {due[0]['name']}")
+    out["next_week"] = nxt[:3] or ["Keep going with the current topic"]
+    out["message"] = f"Completed {len(done)} of {planned} planned sessions."
+    return out
+
+
 def split_minutes(daily: int) -> Tuple[int, int, int]:
     """(learn, practice, notes). 65 -> (25, 30, 10)."""
     daily = max(15, int(daily))

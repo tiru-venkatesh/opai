@@ -161,3 +161,31 @@ def test_why_now_and_lock_states():
     assert L["0"]["state"] == "current" and L["1"]["state"] == "next" and L["5"]["state"] == "later" and L["5"]["why"].startswith("Opens after")
     assert "next because" in R.why_now(ts[0], "learn", "normal") and "Exams" in R.why_now(ts[0], "learn", "maintenance")
     assert any(t["name"] == "Foundation review" for t in ts) and R.clean_tags(["resource_unclear", "need_practice"])
+
+
+def test_track_recommendation_and_honest_pace():
+    import dsa_roadmap as R
+    assert R.recommend_track("Learn DSA from basics", "Starting from basics", 25) == "foundation"
+    assert R.recommend_track("Placement preparation", "Starting from basics", 60) == "foundation"
+    assert R.recommend_track("Placement preparation", "Know syntax, weak at DSA", 60) == "placement"
+    assert R.recommend_track("Internship preparation", "Already know basic DSA", 60) == "internship"
+    assert R.recommend_track("Internship preparation", "Already know basic DSA", 30) == "placement"
+    assert R.recommend_track("Interview revision", "Revising for interviews", 45) == "interview"
+    s = R.track_summary("Placement preparation", "Know syntax, weak at DSA", 30)
+    assert s["weeks"] == R.weeks_for(30) and "45+" in s["note"]      # never promises a short roadmap at 30 min/day
+    assert R.track_summary("Placement preparation", "Know syntax, weak at DSA", 60)["note"] == ""
+
+
+def test_weekly_review_counts_only_real_sessions_and_never_shames():
+    today = date(2026, 10, 13)
+    def T(i, name, week, status="not_started", conf=None, rev=None):
+        return dict(id=f"t{i}", position=i, name=name, planned_week=week, status=status, confidence=conf, next_review=rev, phase="P", phase_no=1)
+    topics = [T(0, "Big-O", 1, "practicing", 2), T(1, "Python basics", 1, "comfortable", 5), T(2, "Arrays", 2), T(3, "Hashing", 2)]
+    rows = [dict(topic_id="t1", status="done", outcome="completed", confidence=5), dict(topic_id="t0", status="done", outcome="completed", confidence=2),
+            dict(topic_id="t0", status="done", outcome="could_not_start", confidence=None), dict(topic_id="t2", status="planned", outcome=None, confidence=None)]
+    r = R.weekly_review(topics, rows, 5, 1, today)
+    assert r["completed"] == 2 and r["planned"] == 5 and not r["empty"]
+    assert r["strongest"]["name"] == "Python basics" and r["needs_attention"]["name"] == "Big-O"
+    assert r["next_week"][0] == "Finish Big-O" and "Start Arrays" in r["next_week"]
+    e = R.weekly_review(topics, [dict(topic_id="t0", status="done", outcome="could_not_start", confidence=None)], 5, 1, today)
+    assert e["empty"] and [o["id"] for o in e["options"]] == ["gentle", "target", "pause"] and "Do not restart" in e["message"]
