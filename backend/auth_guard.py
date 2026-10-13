@@ -28,6 +28,7 @@ from typing import Dict, Optional, Tuple
 from urllib.parse import parse_qs
 
 import jwt
+import ownership
 from jwt import algorithms  # noqa: F401  (ensures the crypto backend is importable)
 
 log = logging.getLogger("opai.auth")
@@ -194,10 +195,13 @@ class AuthGuard:
                     asked = _norm((qs.get("email") or [""])[0])
                     if asked != email:
                         problem = (403, "That email does not match the account you are signed in with.")
-                elif wanted:
+                else:
                     uid = await asyncio.to_thread(_uid_for, email)
-                    if uid is None or wanted != {uid}:
+                    scope["opai_uid"] = uid                       # handlers that read multipart forms use assert_same_user()
+                    if wanted and (uid is None or wanted != {uid}):
                         problem = (403, "That workspace belongs to a different account.")
+                    elif uid and await asyncio.to_thread(ownership.forbidden, path, uid):
+                        problem = (404, "Not found.")             # someone else's row: same answer as a missing one
             except ValueError as e:
                 problem = (401, "Your session expired or is invalid. Sign in again.")
                 log.warning("auth_guard token rejected on %s: %s", path, e)
@@ -215,3 +219,13 @@ class AuthGuard:
                             "headers": [(b"content-type", b"application/json"), (b"content-length", str(len(body_out)).encode())]})
                 return await send({"type": "http.response.body", "body": body_out})
         return await self.app(scope, replay, send)
+
+
+def assert_same_user(request, user_id) -> None:
+    """For multipart routes (the guard cannot read form fields): the user_id the form names must be the token's user."""
+    if mode() != "enforce":
+        return
+    uid = request.scope.get("opai_uid")
+    if uid is None or _norm(user_id) != uid:
+        from fastapi import HTTPException
+        raise HTTPException(403, "That workspace belongs to a different account.")

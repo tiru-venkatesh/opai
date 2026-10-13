@@ -15,7 +15,7 @@ from datetime import datetime
 from collections import Counter
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
+from fastapi import Request, APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -28,6 +28,7 @@ from resume_lab_core import (  # noqa: F401  (pure logic lives in resume_lab_cor
     build_tailored, bullet_stats, coach_bullet, compare_versions, doc_bullets, parse_resume, render_txt, rewrite_is_grounded,
 )
 
+from auth_guard import assert_same_user
 router = APIRouter()
 
 MAX_VERSIONS = 10
@@ -217,8 +218,9 @@ def import_resumes(p: ImportBody, db: Session = Depends(get_db)):
 
 
 @router.post("/v1/resume-lab/import-files")
-async def import_resume_files(user_id: str = Form(...), target_role: Optional[str] = Form(None),
+async def import_resume_files(request: Request, user_id: str = Form(...), target_role: Optional[str] = Form(None),
                               files: List[UploadFile] = File(...), db: Session = Depends(get_db)):
+    assert_same_user(request, user_id)
     """Upload PDF / DOCX / TXT resumes (several at once). Same rules as /import: exact duplicates and a full
     library are skipped with a reason, and every bullet is indexed into the bullet bank."""
     import rag_api

@@ -18,7 +18,7 @@ import re
 import uuid
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import Request, APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -26,6 +26,7 @@ import rag_service as rag
 from database import DocumentChunk, User, get_db
 
 log = logging.getLogger("opa.rag.api")
+from auth_guard import assert_same_user
 router = APIRouter(prefix="/v1/rag", tags=["rag"])
 
 MAX_FILE_BYTES = int(os.getenv("RAG_MAX_FILE_MB", "10")) * 1024 * 1024
@@ -176,7 +177,8 @@ def list_docs(db: Session, uid: str) -> List[dict]:
 
 
 @router.post("/docs")
-async def upload_docs(user_id: str = Form(...), files: List[UploadFile] = File(...), db: Session = Depends(get_db)):
+async def upload_docs(request: Request, user_id: str = Form(...), files: List[UploadFile] = File(...), db: Session = Depends(get_db)):
+    assert_same_user(request, user_id)
     uid = _ensure_user(db, user_id)
     if len(files) > MAX_FILES_PER_REQUEST:
         raise HTTPException(400, f"Upload at most {MAX_FILES_PER_REQUEST} files at a time")

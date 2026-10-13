@@ -11,7 +11,7 @@ import os
 from datetime import date
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import Request, APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -21,6 +21,7 @@ from database import Course, Exam, Semester, Topic, User, get_db
 from syllabus_parse import extract_structure, pick_course, split_courses
 
 log = logging.getLogger("opa.syllabus")
+from auth_guard import assert_same_user
 router = APIRouter(prefix="/v1/academics", tags=["academics-intake"])
 SYLLABUS = "syllabus"
 
@@ -98,8 +99,9 @@ def build_from_text(db: Session, uid: str, text: str, filename: str, course_name
 
 
 @router.post("/syllabus")
-async def upload_syllabus(user_id: str = Form(...), course_name: str = Form(""), course_code: str = Form(""),
+async def upload_syllabus(request: Request, user_id: str = Form(...), course_name: str = Form(""), course_code: str = Form(""),
                           files: List[UploadFile] = File(...), db: Session = Depends(get_db)):
+    assert_same_user(request, user_id)
     uid = _user(db, user_id)
     out = []
     for f in files[:5]:
