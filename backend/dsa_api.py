@@ -59,6 +59,7 @@ class SettingsBody(BaseModel):
     daily_minutes: Optional[int] = Field(default=None, ge=20, le=180)
     days_per_week: Optional[int] = Field(default=None, ge=1, le=7)
     target_date: Optional[date] = None        # send null to clear
+    resources: Optional[dict] = None          # {"learn": {"source": "YouTube"}, "practice": {...}, "notes": {...}}
 
 
 @router.patch("/v1/dsa/plan")

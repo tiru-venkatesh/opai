@@ -159,7 +159,7 @@ details.dr .drb{padding:4px 16px 16px;border-top:1px solid #E3DFD3}
   function setup(o) {
     const radios = (name, arr, def, fmt) => '<div class="opt">' + arr.map((v) => '<label><input type="radio" name="' + name + '" value="' + esc(v) + '"' + (v === def ? ' checked' : '') + '><span>' + esc(fmt ? fmt(v) : v) + '</span></label>').join('') + '</div>';
     const mins = (o.daily_minutes || []).concat(['custom']);
-    return '<section class="card"><h2>Create your DSA roadmap</h2><p class="tag" style="margin-bottom:0">Answer five quick questions. OPAI builds an 11-phase, 12-week roadmap, starts it at your level, and puts one small DSA block in Today.</p>' +
+    return '<section class="card"><h2>Create your DSA roadmap</h2><p class="tag" style="margin-bottom:0">Answer five quick questions. OPAI builds an 11-phase roadmap sized to your daily time (about 10 to 18 weeks), starts it at your level, and puts one small DSA block in Today.</p>' +
       '<div class="f"><div><label>1 · Goal</label>' + radios('goal', o.goals, o.goals[0]) + '</div>' +
       '<div><label>2 · Language</label>' + radios('lang', o.languages, 'Python') + '</div>' +
       '<div><label>3 · Current level</label>' + radios('level', o.levels || [], (o.levels || [])[0]) + '</div>' +
@@ -223,6 +223,15 @@ details.dr .drb{padding:4px 16px 16px;border-top:1px solid #E3DFD3}
 
   const drawer = (id, title, body, extra) => '<details class="dr" data-dr="' + id + '" id="dr-' + id + '"' + (openDr.has(id) ? ' open' : '') + '><summary>' + title + (extra ? '<span class="c">' + extra + '</span>' : '') + '</summary><div class="drb">' + body + '</div></details>';
 
+  function resSettings(s) {
+    const r = s.plan.resources || {}, o = s.options.resources || {};
+    const row = (k, label, hint) => '<div><label>' + label + '</label><select data-res="' + k + '" data-f="source">' + (o[k] || []).map((x) => '<option' + (((r[k] || {}).source === x) ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>' +
+      '<input data-res="' + k + '" data-f="url" placeholder="' + hint + '" value="' + esc((r[k] || {}).url || '') + '" maxlength="500" style="margin-top:6px"></div>';
+    return '<h2 style="margin:18px 0 0;font-size:14px">My DSA resources</h2><p class="note" style="margin:4px 0 0">Every topic uses these. A link you edit on a single topic still wins.</p>' +
+      '<div class="f">' + row('learn', 'Learning source', 'Link (needed for Custom)') + row('practice', 'Practice source', 'Link (needed for Custom)') + row('notes', 'Notes location', 'Optional link (Notion, Drive, Custom)') + '</div>' +
+      '<button class="btn" type="button" data-act="saveres">Save resources</button>';
+  }
+
   function main(s) {
     const p = s.plan, g = s.progress, m = s.mode, c = s.consistency, pc = s.pace;
     const modeName = m.mode === 'maintenance' ? 'Maintenance' : m.mode === 'paused' ? 'Paused' : 'Normal';
@@ -258,7 +267,9 @@ details.dr .drb{padding:4px 16px 16px;border-top:1px solid #E3DFD3}
     const hist = s.history.length ? s.history.map((x) => '<div class="hist"><small>' + esc(x.date) + '</small><span>' + esc(x.topic) + ' <small>· ' + esc(x.kind === 'learn' ? 'learn' : 'revision') + (x.outcome && x.outcome !== 'completed' ? ' · ' + esc(x.outcome.replace(/_/g, ' ')) : '') + (x.difficulty.length && x.difficulty[0] !== 'nothing' ? ' · blocked: ' + esc(x.difficulty.map((d) => DIFF[d] || d).join(', ')) : '') + '</small></span><small>' + (x.status === 'skipped' ? 'skipped' : x.minutes + ' min' + (x.confidence ? ' · ' + x.confidence + '/5' : '')) + '</small></div>').join('') : '<p class="tag" style="margin:0">Nothing logged yet. Your sessions show up here.</p>';
     const notify = window.Notification ? '<div class="row" style="margin-top:14px"><span class="note" style="margin:0">Reminders show while OPAI is open in your browser (not background push).</span><button type="button" class="btn" id="dsa-notify">' + (notifyOn() ? 'Reminders on (turn off)' : 'Remind me to study') + '</button></div>' : '';
     const settings = '<div class="seg" role="group" aria-label="DSA mode">' + [['auto', 'Auto'], ['normal', 'Normal'], ['maintenance', 'Maintenance'], ['paused', 'Paused']].map(([v, l]) => '<button type="button" data-act="mode" data-v="' + v + '" class="' + (m.override === v ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
+      '<p class="note" style="margin:14px 0 0">Roadmap length follows your daily time: <b>' + g.weeks + ' weeks</b> at ' + p.daily_minutes + ' min/day. Change the minutes and it adjusts; topic progress is kept.</p>' +
       '<div class="f"><div><label>Minutes per day</label><input id="st-mins" type="number" min="20" max="180" step="5" value="' + p.daily_minutes + '"></div><div><label>Target date</label><input id="st-target" type="date" value="' + esc(p.target_date || '') + '"></div></div><button class="btn" type="button" data-act="savesettings">Save settings</button>' + notify +
+      resSettings(s) +
       '<p style="margin:16px 0 0"><button class="ghost" type="button" data-act="reset">Start over with a new roadmap</button></p>';
     h += '<div class="sec">' + drawer('hist', 'Progress &amp; history', hist, s.history.length + ' sessions') + drawer('set', 'Settings', settings) + '</div>';
     return h;
@@ -303,6 +314,10 @@ details.dr .drb{padding:4px 16px 16px;border-top:1px solid #E3DFD3}
     else if (a === 'savesettings') {
       const m = +$('st-mins').value; if (!(m >= 20 && m <= 180)) { err('Minutes per day must be between 20 and 180.'); return; }
       call('/v1/dsa/plan', 'PATCH', { daily_minutes: m, target_date: $('st-target').value || null });
+    }
+    else if (a === 'saveres') {
+      const res = {}; document.querySelectorAll('[data-res]').forEach((el) => { (res[el.dataset.res] = res[el.dataset.res] || {})[el.dataset.f] = el.value.trim() || (el.dataset.f === 'url' ? null : el.value); });
+      openDr.add('set'); call('/v1/dsa/plan', 'PATCH', { resources: res });
     }
     else if (a === 'skip') call('/v1/dsa/sessions/' + encodeURIComponent(b.dataset.id) + '/skip', 'POST', {});
     else if (a === 'edit') { const id = row.dataset.id; editing.has(id) ? editing.delete(id) : editing.add(id); render(); }

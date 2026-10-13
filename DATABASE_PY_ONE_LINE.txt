@@ -1,0 +1,6 @@
+database.py is NOT in this patch (so your v8-merge models are not overwritten).
+Add ONE line to class DsaPlan, right after the target_date line:
+
+    resources = Column(JSON)    # preferred learn / practice / notes sources
+
+_auto_migrate adds the column on startup; existing plans keep working (defaults apply).

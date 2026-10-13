@@ -66,13 +66,26 @@ PHASES: List[Tuple[int, str, Tuple[int, int], List[Tuple[str, Optional[str]]]]] 
 ]
 
 
-def build_topics(language: str = "Python", level: str = "Starting from basics", today: Optional[date] = None) -> List[Dict[str, Any]]:
+def weeks_for(daily: int) -> int:
+    """Honest roadmap length from daily time: 20-25 min -> 18 weeks, 30 -> 16, 45 -> 14, 60 -> 12, 90+ -> 10."""
+    d = int(daily)
+    return 18 if d <= 25 else 16 if d <= 35 else 14 if d <= 50 else 12 if d < 90 else 10
+
+
+def scaled(a: int, b: int, weeks: int = WEEKS) -> Tuple[int, int]:
+    """A phase's week range stretched/squeezed from the 12-week base to `weeks`, still contiguous."""
+    lo = (a - 1) * weeks // WEEKS + 1
+    hi = max(lo, b * weeks // WEEKS)
+    return lo, hi
+
+
+def build_topics(language: str = "Python", level: str = "Starting from basics", today: Optional[date] = None, weeks: int = WEEKS) -> List[Dict[str, Any]]:
     """Flat, ordered topic list for a new roadmap. Links are only defaults; the user can edit them.
 
     `level` only sets the starting point: topics the learner already knows are marked 'practicing' (advanced,
     confidence 3) so the roadmap opens at the first topic they still need. They are NOT deleted; they come back
     through spaced revision. 'Revising for interviews' marks everything as revised and staggers the reviews."""
-    out = _build(language)
+    out = _build(language, weeks)
     today = today or date.today()
     skip_through = {"Know syntax, weak at DSA": 0, "Already know basic DSA": 2}.get(level)   # phase numbers fully skipped
     if level == "Know syntax, weak at DSA":
@@ -88,10 +101,11 @@ def build_topics(language: str = "Python", level: str = "Starting from basics", 
     return out
 
 
-def _build(language: str) -> List[Dict[str, Any]]:
+def _build(language: str, weeks: int = WEEKS) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
     pos = 0
     for no, name, (a, b), topics in PHASES:
+        a, b = scaled(a, b, weeks)
         n = len(topics)
         span = b - a + 1
         for i, (tname, practice) in enumerate(topics):
@@ -102,8 +116,13 @@ def _build(language: str) -> List[Dict[str, Any]]:
     return out
 
 
-def phase_weeks(no: int) -> Tuple[int, int]:
-    return next(p[2] for p in PHASES if p[0] == no)
+def phase_weeks(no: int, weeks: int = WEEKS) -> Tuple[int, int]:
+    return scaled(*next(p[2] for p in PHASES if p[0] == no), weeks)
+
+
+def planned_weeks(language: str, weeks: int) -> List[int]:
+    """planned_week for every topic position at a given roadmap length (used when daily time changes)."""
+    return [t["planned_week"] for t in _build(language, weeks)]
 
 
 def split_minutes(daily: int) -> Tuple[int, int, int]:
@@ -115,10 +134,10 @@ def split_minutes(daily: int) -> Tuple[int, int, int]:
     return learn, practice, notes
 
 
-def week_number(start: date, today: date) -> Tuple[int, bool]:
-    """(week 1..WEEKS, overrun). overrun = past the planned 12 weeks."""
+def week_number(start: date, today: date, weeks: int = WEEKS) -> Tuple[int, bool]:
+    """(week 1..weeks, overrun). overrun = past the planned roadmap length."""
     w = (today - start).days // 7 + 1
-    return min(WEEKS, max(1, w)), w > WEEKS
+    return min(weeks, max(1, w)), w > weeks
 
 
 def is_advanced(status: str) -> bool:
@@ -372,3 +391,56 @@ def clean_tags(tags: Optional[List[str]]) -> List[str]:
         if t not in out:
             out.append(t)
     return out
+
+
+# ---------------------------------------------------------------- resource preferences (inherited by every topic)
+LEARN_SOURCES = {"NeetCode": LEARN_URL, "YouTube": None, "GeeksforGeeks": GFG_ROADMAP, "Custom": None}
+PRACTICE_SOURCES = {"LeetCode": "https://leetcode.com/problemset/", "Codeforces": "https://codeforces.com/problemset",
+                    "GeeksforGeeks": "https://www.geeksforgeeks.org/explore", "Custom": None}
+NOTES_SOURCES = ("OPAI notes", "Notion", "Google Drive", "Custom")
+DEFAULT_RESOURCES = {"learn": {"source": "NeetCode", "url": None}, "practice": {"source": "LeetCode", "url": None},
+                     "notes": {"source": "OPAI notes", "url": None}}
+_CHOICES = {"learn": tuple(LEARN_SOURCES), "practice": tuple(PRACTICE_SOURCES), "notes": NOTES_SOURCES}
+
+
+def clean_resources(cur: Optional[Dict[str, Any]], new: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """Merge a partial update into the stored preferences. Custom needs a link; Notion/Drive may carry an optional link."""
+    out = {k: dict(v) for k, v in DEFAULT_RESOURCES.items()}
+    for k, v in (cur or {}).items():
+        if k in out and isinstance(v, dict):
+            out[k].update({x: v.get(x) for x in ("source", "url")})
+    for k, v in (new or {}).items():
+        if k not in out or not isinstance(v, dict):
+            raise ValueError("Unknown resource setting")
+        src = v.get("source", out[k]["source"])
+        if src not in _CHOICES[k]:
+            raise ValueError(f"{k} source must be one of: " + ", ".join(_CHOICES[k]))
+        url = clean_url(v.get("url")) if "url" in v else out[k]["url"]
+        if src == "Custom" and not url:
+            raise ValueError("Custom needs a link (https://…)")
+        out[k] = {"source": src, "url": url if src in ("Custom", "Notion", "Google Drive") else None}
+    return out
+
+
+def default_links(language: str) -> List[Tuple[Optional[str], Optional[str]]]:
+    return [(t["learn_url"], t["practice_url"]) for t in _build(language)]
+
+
+def source_url(kind: str, res: Optional[Dict[str, Any]], topic_name: str) -> Optional[str]:
+    from urllib.parse import quote_plus
+    r = {**DEFAULT_RESOURCES[kind], **((res or {}).get(kind) or {})}
+    if r["source"] == "Custom":
+        return r["url"]
+    if kind == "learn" and r["source"] == "YouTube":
+        return "https://www.youtube.com/results?search_query=" + quote_plus(topic_name + " DSA")
+    return (LEARN_SOURCES if kind == "learn" else PRACTICE_SOURCES)[r["source"]]
+
+
+def effective_links(topic: Dict[str, Any], default: Tuple[Optional[str], Optional[str]], res: Optional[Dict[str, Any]]) -> Tuple[Optional[str], Optional[str]]:
+    """A link the learner edited on the topic wins; untouched topics inherit the chosen sources (never a fixed problem)."""
+    learn, practice = topic.get("learn_url"), topic.get("practice_url")
+    if not learn or learn == default[0]:
+        learn = source_url("learn", res, topic["name"])
+    if practice == default[1]:                       # untouched default (a specific problem) -> the chosen practice source
+        practice = source_url("practice", res, topic["name"]) if default[1] else None
+    return learn, practice

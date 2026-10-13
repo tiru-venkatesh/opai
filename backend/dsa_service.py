@@ -29,9 +29,18 @@ def _tdict(t: DsaTopic) -> Dict[str, Any]:
                 next_review=t.next_review, review_count=t.review_count or 0)
 
 
+def _res(plan: DsaPlan) -> Dict[str, Any]:
+    return R.clean_resources(getattr(plan, "resources", None), None)
+
+
 def _topics(db: Session, plan: DsaPlan) -> List[Dict[str, Any]]:
     rows = db.query(DsaTopic).filter(DsaTopic.plan_id == plan.id).order_by(DsaTopic.position).all()
-    return [_tdict(t) for t in rows]
+    defaults, res, out = R.default_links(plan.language or "Python"), _res(plan), []
+    for t in rows:
+        d = _tdict(t)
+        d["learn_url"], d["practice_url"] = R.effective_links(d, defaults[d["position"]] if d["position"] < len(defaults) else (None, None), res)
+        out.append(d)
+    return out
 
 
 def _exam_context(db: Session, uid: str, today: date):
@@ -88,10 +97,18 @@ def ensure_session(db: Session, plan: DsaPlan, tdicts: List[Dict[str, Any]], tod
     return s
 
 
+def _with_notes(blocks: List[Dict[str, Any]], plan: DsaPlan) -> List[Dict[str, Any]]:
+    n = _res(plan)["notes"]
+    for b in blocks:
+        if b["kind"] == "notes" and n["url"]:
+            b["url"] = n["url"]
+    return blocks
+
+
 # ---------------------------------------------------------------- state for the DSA page
 def options() -> Dict[str, Any]:
     return {"languages": list(R.LANGUAGES), "goals": list(R.GOALS), "levels": list(R.LEVELS), "daily_minutes": [20, 30, 60], "days_per_week": [3, 4, 5, 6, 7],
-            "modes": list(R.MODES), "outcomes": list(R.OUTCOMES), "difficulty": list(R.DIFFICULTY),
+            "modes": list(R.MODES), "resources": {"learn": list(R.LEARN_SOURCES), "practice": list(R.PRACTICE_SOURCES), "notes": list(R.NOTES_SOURCES)}, "outcomes": list(R.OUTCOMES), "difficulty": list(R.DIFFICULTY),
             "statuses": [{"id": s, "label": R.STATUS_LABEL[s]} for s in R.STATUSES]}
 
 
@@ -103,7 +120,8 @@ def state(db: Session, uid: str, today: Optional[date] = None) -> Dict[str, Any]
         return {**base, "plan": None}
     td = _topics(db, plan)
     start = plan.start_date or today
-    week, overrun = R.week_number(start, today)
+    weeks = plan.weeks or R.WEEKS
+    week, overrun = R.week_number(start, today, weeks)
     exam_days, exam_name = _exam_context(db, uid, today)
     mode, why = R.mode_for(exam_days, plan.mode_override or "auto")
     act = R.active_topic(td)
@@ -112,7 +130,8 @@ def state(db: Session, uid: str, today: Optional[date] = None) -> Dict[str, Any]
 
     locks = R.lock_states(td)
     phases = []
-    for no, name, (a, b), _ in R.PHASES:
+    for no, name, _w, _ in R.PHASES:
+        a, b = R.phase_weeks(no, weeks)
         ts = [dict(t, is_active=bool(act and act["id"] == t["id"]), status_label=R.STATUS_LABEL.get(t["status"], t["status"]),
                    lock=locks[t["id"]]["state"], lock_why=locks[t["id"]]["why"]) for t in td if t["phase_no"] == no]
         phases.append({"no": no, "name": name, "weeks": [a, b], "topics": ts, "advanced": sum(1 for t in ts if R.is_advanced(t["status"])), "total": len(ts)})
@@ -126,7 +145,7 @@ def state(db: Session, uid: str, today: Optional[date] = None) -> Dict[str, Any]
                        "topic": {"id": topic["id"], "name": topic["name"], "phase": topic["phase"]},
                        "why": R.why_now(topic, sess.kind, sess.mode),
                        "next_up": next((t["name"] for t in td if t["position"] > topic["position"] and not R.is_advanced(t["status"])), None),
-                       "blocks": R.day_blocks(topic, sess.mode, sess.kind, sess.minutes)}
+                       "blocks": _with_notes(R.day_blocks(topic, sess.mode, sess.kind, sess.minutes), plan)}
 
     queue = [dict(topic_id=t["id"], name=t["name"], phase=t["phase"], confidence=t["confidence"], minutes=R.review_minutes(plan.daily_minutes or 60, t["confidence"]),
                   due=t["next_review"].isoformat(), overdue_days=(today - t["next_review"]).days,
@@ -141,8 +160,9 @@ def state(db: Session, uid: str, today: Optional[date] = None) -> Dict[str, Any]
     return {**base,
             "plan": {"id": plan.id, "goal": plan.goal, "language": plan.language, "daily_minutes": plan.daily_minutes, "days_per_week": plan.days_per_week,
                      "start_date": start.isoformat(), "target": "90-day roadmap", "mode_override": plan.mode_override or "auto",
-                     "level": plan.level, "target_date": plan.target_date.isoformat() if plan.target_date else None},
-            "progress": {"week": week, "weeks": R.WEEKS, "overrun": overrun, "advanced": adv, "total": len(td), "percent": round(100 * adv / max(1, len(td))),
+                     "level": plan.level, "target_date": plan.target_date.isoformat() if plan.target_date else None,
+                     "weeks": weeks, "resources": _res(plan)},
+            "progress": {"week": week, "weeks": weeks, "overrun": overrun, "advanced": adv, "total": len(td), "percent": round(100 * adv / max(1, len(td))),
                          "current_phase": act["phase"] if act else "Roadmap complete", "current_topic": act["name"] if act else None,
                          "milestone": R.next_milestone(td)},
             "pace": R.pace(td, week),
@@ -173,11 +193,12 @@ def create_plan(db: Session, uid: str, goal: str, language: str, daily_minutes: 
     daily_minutes, days_per_week = max(20, min(int(daily_minutes), 180)), max(1, min(int(days_per_week), 7))
     for model in (DsaSession, DsaTopic, DsaPlan):          # a fresh roadmap replaces the old one
         db.query(model).filter(model.user_id == uid).delete(synchronize_session=False)
+    weeks = R.weeks_for(daily_minutes)
     plan = DsaPlan(user_id=uid, goal=goal, language=language, daily_minutes=daily_minutes, days_per_week=days_per_week,
-                   weeks=R.WEEKS, start_date=start, mode_override="auto", status="active", level=level, target_date=target_date)
+                   weeks=weeks, resources=R.clean_resources(None, None), start_date=start, mode_override="auto", status="active", level=level, target_date=target_date)
     db.add(plan)
     db.flush()
-    for t in R.build_topics(language, level, start):
+    for t in R.build_topics(language, level, start, weeks):
         db.add(DsaTopic(plan_id=plan.id, user_id=uid, **t))
     db.commit()
     db.refresh(plan)
@@ -205,6 +226,18 @@ def update_settings(db: Session, uid: str, fields: Dict[str, Any]) -> None:
         plan.target_date = td_
     if fields.get("daily_minutes") is not None:
         plan.daily_minutes = max(20, min(int(fields["daily_minutes"]), 180))
+        new_weeks = R.weeks_for(plan.daily_minutes)
+        if new_weeks != (plan.weeks or R.WEEKS):                    # roadmap length follows daily time; topics keep their status
+            plan.weeks = new_weeks
+            pw = R.planned_weeks(plan.language or "Python", new_weeks)
+            for t in db.query(DsaTopic).filter(DsaTopic.plan_id == plan.id).all():
+                if t.position is not None and t.position < len(pw):
+                    t.planned_week = pw[t.position]
+    if fields.get("resources") is not None:
+        try:
+            plan.resources = R.clean_resources(getattr(plan, "resources", None), fields["resources"])
+        except ValueError as e:
+            raise DsaError(422, str(e))
     if fields.get("days_per_week") is not None:
         plan.days_per_week = max(1, min(int(fields["days_per_week"]), 7))
     db.commit()
@@ -223,12 +256,22 @@ def update_topic(db: Session, uid: str, topic_id: str, fields: Dict[str, Any]) -
         if c is not None and not (1 <= int(c) <= 5):
             raise DsaError(422, "Confidence is 1 to 5")
         t.confidence = c
-    for k in ("learn_url", "practice_url"):
+    plan = db.query(DsaPlan).filter(DsaPlan.id == t.plan_id).first()
+    if plan is not None and any(k in fields for k in ("learn_url", "practice_url")):
+        dl = R.default_links(plan.language or "Python")
+        cur = dict(name=t.name, learn_url=t.learn_url, practice_url=t.practice_url)
+        eff = R.effective_links(cur, dl[t.position] if t.position is not None and t.position < len(dl) else (None, None), _res(plan))
+    else:
+        eff = (None, None)
+    for i, k in enumerate(("learn_url", "practice_url")):
         if k in fields:
             try:
-                setattr(t, k, R.clean_url(fields[k]))
+                v = R.clean_url(fields[k])
             except ValueError as e:
                 raise DsaError(422, str(e))
+            if v is not None and v == eff[i]:
+                continue                                              # shown value unchanged: keep inheriting, don't pin it
+            setattr(t, k, v)
     if "notes" in fields:
         t.notes = (fields["notes"] or "")[:2000]
     t.updated_at = datetime.utcnow()
@@ -325,7 +368,7 @@ def today_candidates(db: Session, uid: str, today: date) -> List[Dict[str, Any]]
     topic = next((t for t in td if t["id"] == s.topic_id), None)
     if not topic:
         return []
-    week, _ = R.week_number(plan.start_date or today, today)
+    week, _ = R.week_number(plan.start_date or today, today, plan.weeks or R.WEEKS)
     last = (db.query(DsaSession).filter(DsaSession.plan_id == plan.id, DsaSession.status == "done", DsaSession.plan_date < today)
             .order_by(DsaSession.plan_date.desc()).first())
     stale = min(14, (today - last.plan_date).days) if last else 0
@@ -333,7 +376,7 @@ def today_candidates(db: Session, uid: str, today: date) -> List[Dict[str, Any]]
     revise = s.kind in ("revise", "review")
     return [dict(kind="dsa", ref_id=s.id,
                  title=(f"DSA maintenance — {topic['name']}" if maint else f"DSA revision — {topic['name']}" if revise else f"DSA Roadmap — {topic['name']}"),
-                 subtitle=("Maintenance · review only" + (f" · {exam_name} exam in {exam_days}d" if exam_days is not None else "")) if maint else f"Week {week} of {R.WEEKS} · {topic['phase']}",
+                 subtitle=("Maintenance · review only" + (f" · {exam_name} exam in {exam_days}d" if exam_days is not None else "")) if maint else f"Week {week} of {plan.weeks or R.WEEKS} · {topic['phase']}",
                  minutes=int(s.minutes or 30), days=None, importance=0.3 if (maint or revise) else 0.55, stale=stale, done=s.status == "done",
                  effort=int(s.minutes or 30), link="dsa.html",
                  facts=dict(topic=topic["name"], phase=topic["phase"], week=week, mode=s.mode, minutes=int(s.minutes or 30),
