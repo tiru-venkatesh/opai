@@ -633,6 +633,12 @@ html[data-theme=dark] .msg.agent .av.av-k{background:#10151a;border-color:var(--
     return out.replace(/\u0000(\d+)\u0000/g, (_, i) => blocks[+i]);
   }
   /* [n] markers become clickable citation chips (only for numbers that exist; others are dropped) */
+    // Hide the "Result data" dropdown for empty objects or payloads that only hold internal routing/debug keys.
+  function hasUserData(p) {
+    if (p == null || typeof p !== 'object' || Array.isArray(p)) return true;
+    const internal = { routing: 1, debug: 1, trace: 1, reason_code: 1 };
+    return Object.keys(p).some((k) => !internal[k]);
+  }
   function withCites(html, srcs) {
     if (!srcs || !srcs.length) return html;
     return html.replace(/\[(\d+)\]/g, (m, n) => (+n >= 1 && +n <= srcs.length) ? '<button type="button" class="cite" data-n="' + n + '" aria-label="Source ' + n + '">' + n + '</button>' : '');
@@ -834,7 +840,7 @@ html[data-theme=dark] .msg.agent .av.av-k{background:#10151a;border-color:var(--
       if (tcs.length) h += '<details class="trace"><summary>Tool calls this turn (' + tcs.length + ')</summary>' + tcs.map(stepHTML).join('') + '</details>';
       h += '<div class="bubble">' + withCites(md(m.text || 'Done.'), srcs) + '</div>';
       if (srcs.length) h += '<div class="srcs">' + srcs.map((s) => '<button type="button" class="src" data-n="' + s.n + '"><b>' + s.n + '</b><span>' + srcLabel(s) + '</span></button>').join('') + '</div><div class="snip-slot"></div>';
-      if (m.payload != null && m.payload !== '' && !(Array.isArray(m.payload) && !m.payload.length) && !(m.payload && m.payload.source === 'database') && !(m.payload && m.payload.answer_mode) && !(m.payload && m.payload.intent === 'memory_pending'))
+      if (m.payload != null && m.payload !== '' && !(Array.isArray(m.payload) && !m.payload.length) && !(m.payload && m.payload.source === 'database') && !(m.payload && m.payload.answer_mode) && !(m.payload && m.payload.intent === 'memory_pending') && hasUserData(m.payload))
         h += '<details class="data"><summary>Result data</summary><pre class="json">' + esc(JSON.stringify(m.payload, null, 2)) + '</pre></details>';
       const mq = m.memory || (m.payload && m.payload.memory);
       if (m.memdone) h += '<div class="memq"><span class="done">' + esc(m.memdone) + '</span></div>';
