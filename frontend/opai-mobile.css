@@ -18,8 +18,8 @@ input.sr,.sr{position:absolute!important;width:1px!important;height:1px!importan
 @media (max-width:760px){
 
   /* ---------- header: logo + scrollable page pills + avatar ---------- */
-  .opai-hd{height:56px;padding:0 6px;gap:6px}
-  .opai-hd .in{gap:6px;padding:0 2px;min-width:0}
+  .opai-hd{box-sizing:border-box;width:100%;max-width:100%;height:56px;padding:0 6px;gap:6px}
+  .opai-hd .in{box-sizing:border-box;max-width:100%;gap:6px;padding:0 2px;min-width:0}
   .opai-logo{flex:none;gap:0}
   .opai-logo>span{display:none}               /* mark only; the wordmark ate the room the pills need */
   .opai-pills{flex:1 1 0;min-width:0;margin:0;padding:3px 18px 3px 3px;justify-content:flex-start;
@@ -33,7 +33,7 @@ input.sr,.sr{position:absolute!important;width:1px!important;height:1px!importan
   body.opai-pad{padding-top:56px}
 
   /* ---------- bottom dock becomes a proper tab bar ---------- */
-  .opai-dock{left:0;right:0;bottom:0;transform:none;width:100%;gap:0;justify-content:space-around;
+  .opai-dock{box-sizing:border-box;left:0;right:0;bottom:0;transform:none;width:100%;gap:0;justify-content:space-around;
     padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));
     border-radius:18px 18px 0 0;border:0;border-top:1px solid var(--hair,#E3DFD3);
     background:var(--card,#FBFAF6);backdrop-filter:none;box-shadow:0 -10px 24px -18px rgba(22,24,26,.45)}

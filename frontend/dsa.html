@@ -101,6 +101,32 @@ details.dr>summary .c{margin-left:auto;font:11px var(--mono);color:var(--mut)}
 details.dr>summary::after{content:"+";color:var(--dim);font:16px var(--mono);margin-left:10px}details.dr[open]>summary::after{content:"\2212"}
 details.dr .drb{padding:4px 16px 16px;border-top:1px solid #E3DFD3}
 @media (prefers-reduced-motion:no-preference){.card,details.ph{animation:up .4s cubic-bezier(.2,.8,.2,1) both}@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}
+
+/* ---- phone layout: nothing may be wider than the screen ---- */
+.grid2>*,.card,.hero,.hero-today,details.ph,details.dr{min-width:0}
+ul.plain li>span,.steps li>span,.rq>div,.hist>span{min-width:0;overflow-wrap:anywhere}
+.days{flex-wrap:wrap}
+@media(max-width:760px){
+  main{padding:76px 12px 96px}
+  .card{padding:14px 14px;border-radius:14px}
+  .lnk{white-space:normal;max-width:100%;text-align:left}
+  h2.big{font-size:21px;line-height:27px}
+  .lead{font-size:15px;line-height:23px}
+  .facts{grid-template-columns:1fr 1fr;gap:12px}
+  .f{grid-template-columns:1fr}
+  .actions>.btn,.actions>.lnk{flex:1 1 auto;text-align:center}
+  .opt span{padding:8px 14px}
+  .conf button{width:40px;height:40px}.rq .conf button{width:36px;height:36px}
+  .rq{grid-template-columns:1fr}
+  .hist{grid-template-columns:64px 1fr}.hist>*:last-child{grid-column:2}
+  .tp{padding:10px 12px}
+  details.ph>summary,details.dr>summary{padding:12px}
+  .seg{display:flex;flex-wrap:wrap}.seg button{flex:1 1 40%;padding:8px 10px}
+  .ed .two{grid-template-columns:1fr}
+  .btn,.ghost,select,input,textarea{min-height:40px}
+  input,select,textarea{font-size:16px!important}   /* stops iOS zooming into fields */
+}
+@media(max-width:380px){.facts{grid-template-columns:1fr}}
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#F6F4EE">
