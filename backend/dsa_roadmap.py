@@ -357,6 +357,46 @@ PHASE_WHY = {
 }
 
 
+
+# ---------------------------------------------------------------- DSA Brief: what "done" looks like for a block
+TOPIC_OUTCOME = {
+    "basics": "Write, read and explain a small program with loops, functions and lists.",
+    "big-o": "Recognize O(1), O(n), O(n²) and O(log n) in simple examples.",
+    "recursion basics": "Trace a small recursive call by hand and point to its base case.",
+    "foundation review": "Name the foundation topics you still find shaky.",
+    "arrays and strings": "Explain traversal and in-place updates on an array.",
+    "hash maps and sets": "Explain when a hash map turns an O(n²) lookup into O(n).",
+    "prefix sums": "Answer a range-sum question with a prefix array instead of a loop.",
+    "two pointers": "Spot a problem where two moving pointers replace a nested loop.",
+    "sliding window": "Explain how a moving window avoids recomputing overlapping work.",
+    "stack and queue": "Say which of stack or queue fits a given ordering problem.",
+    "linked lists": "Draw how a pointer reversal changes the links.",
+    "sorting algorithms": "Describe merge sort and quick sort in your own words and compare their cost.",
+    "binary search": "Explain why the search space halves and what the loop condition guards.",
+    "rotated arrays and search on answer": "Recognize a monotonic condition you can binary search on.",
+    "binary tree traversals": "Trace preorder, inorder and postorder on a small tree.",
+    "binary search trees": "Explain how the BST property makes lookup fast.",
+    "heaps and priority queues": "Explain when a heap gives the next best item cheaply.",
+    "intervals": "Merge overlapping intervals on paper after sorting.",
+    "greedy": "Say why a local choice is safe for a given problem.",
+    "subsets and permutations": "Explain choose, explore, unchoose on a small decision tree.",
+    "graph traversal (bfs and dfs)": "Choose BFS or DFS for a given problem and say why.",
+    "topological sort": "Order a small dependency graph by hand.",
+    "1d dynamic programming": "Write the state, transition and base case before coding.",
+    "classic dp patterns": "Write the recurrence for a knapsack-style problem.",
+    "revise weakest topics": "Explain your weakest topic without notes.",
+    "pattern summary sheet": "Have a one-page sheet of patterns and when each applies.",
+}
+
+
+def expected_outcome(name: str, kind: str = "learn", mode: str = "normal") -> str:
+    key = re.sub(r"^(python|java|c\+\+|javascript)\s+", "", (name or "").strip().lower())
+    base = TOPIC_OUTCOME.get(key) or f"Explain {name} in your own words and note one thing that is still unclear."
+    if mode == "maintenance" or kind in ("revise", "review"):
+        return "Recall without notes: " + base[0].lower() + base[1:]
+    return base
+
+
 def why_now(topic: Dict[str, Any], kind: str, mode: str) -> str:
     n = topic["name"]
     if mode == "maintenance":

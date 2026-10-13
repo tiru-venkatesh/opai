@@ -350,6 +350,19 @@ def review_topic(db: Session, uid: str, topic_id: str, confidence: int, actual_m
     db.commit()
 
 
+def shorten_session(db: Session, uid: str, sid: str, minutes: int) -> DsaSession:
+    """Make today's block shorter (never longer). Blocks are rebuilt from `minutes`, so the plan stays consistent."""
+    s = _session(db, uid, sid)
+    if s.status not in ("planned", "in_progress"):
+        raise DsaError(409, "Only an open block can be shortened")
+    m = int(minutes)
+    if m < 5 or m >= (s.minutes or 0):
+        raise DsaError(422, "Pick a time between 5 minutes and less than the planned block")
+    s.minutes = m
+    db.commit()
+    return s
+
+
 def skip_session(db: Session, uid: str, sid: str) -> DsaSession:
     """Skip/move: nothing is lost. Tomorrow resumes with the same topic."""
     s = _session(db, uid, sid)

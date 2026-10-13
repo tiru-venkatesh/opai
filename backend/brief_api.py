@@ -94,10 +94,14 @@ def get_exam(exam_id: str, user_id: str, narrative: bool = False, db: Session = 
 
 
 # ---------------- dsa
+class DsaBody(Body):
+    minutes: Optional[int] = Field(default=None, ge=5, le=180)      # "I only have 15 minutes"
+
+
 @router.post("/v1/briefs/dsa")
-def post_dsa(body: Optional[Body] = None, user_id: Optional[str] = None, db: Session = Depends(get_db)):
-    b = body or Body()
-    return _run(service.generate, db, _uid(db, b.user_id, user_id), "dsa_roadmap", {}, b.narrative)
+def post_dsa(body: Optional[DsaBody] = None, user_id: Optional[str] = None, db: Session = Depends(get_db)):
+    b = body or DsaBody()
+    return _run(service.generate, db, _uid(db, b.user_id, user_id), "dsa_roadmap", {"minutes": b.minutes}, b.narrative)
 
 
 @router.get("/v1/briefs/dsa")

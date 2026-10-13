@@ -304,6 +304,33 @@ def build_dsa(ctx: Ctx) -> Dict[str, Any]:
         priorities.append({"rank": 1, "entity_type": "dsa", "entity_id": tb["session_id"], "title": f"DSA — {tb['topic']['name']}", "duration_min": tb["minutes"],
                            "urgency": "low", "reason_codes": [c for c in codes if c], "reason_text": mode["reason"] or "Small daily sessions beat long irregular ones.",
                            "next_action": "open_resource", "actions": [open_res, start]})
+    brief_card = None
+    if tb:                                          # the spec's DSA Brief: block, duration, reason, outcome + four actions
+        cap = ctx.params.get("minutes")
+        dur = tb["minutes"]
+        if cap and 5 <= int(cap) < dur:             # "I only have 15 minutes"
+            dur = int(cap)
+        short = max(10, int(round(dur / 2 / 5)) * 5)
+        open_res_a = priorities[0]["actions"][0] if priorities else None
+        card_actions = []
+        if tb["status"] in ("planned", "in_progress"):
+            if open_res_a:
+                card_actions.append(open_res_a)
+            if dur < tb["minutes"]:                  # capped by the learner: offer the shorter block instead of the full one
+                card_actions.append(ctx.act("shorten_block", f"Make it {dur} min", kind="execute", intent="today_op", primary=True,
+                                            payload={"kind": "dsa", "ref_id": tb["session_id"], "op": "shorten", "actual_minutes": dur}, entity_id=tb["session_id"]))
+            else:
+                card_actions.append(priorities[0]["actions"][1])         # Start N-minute block
+                if short < tb["minutes"]:
+                    card_actions.append(ctx.act("shorten_block", f"Make it {short} min", kind="execute", intent="today_op",
+                                                payload={"kind": "dsa", "ref_id": tb["session_id"], "op": "shorten", "actual_minutes": short}, entity_id=tb["session_id"]))
+            card_actions.append(ctx.act("move_block", "Move to tomorrow", kind="execute", intent="today_op",
+                                        payload={"kind": "dsa", "ref_id": tb["session_id"], "op": "snooze"}, entity_id=tb["session_id"]))
+        brief_card = {"recommended_block": tb["topic"]["name"], "duration_min": dur, "kind": tb["kind"], "phase": tb["topic"]["phase"],
+                      "reason": tb.get("why") or mode["reason"] or "Small daily sessions beat long irregular ones.",
+                      "expected_outcome": R.expected_outcome(tb["topic"]["name"], tb["kind"], tb["mode"]),
+                      "blocks": R.day_blocks(topic_row or {"name": tb["topic"]["name"]}, tb["mode"], tb["kind"], dur) if dur != tb["minutes"] else tb["blocks"],
+                      "action_ids": [a["action_id"] for a in card_actions]}
     maint = tb and tb["mode"] == "maintenance"
     if mode["override"] != "maintenance":
         ctx.act("pause_dsa", "Keep DSA in maintenance until exams end", kind="execute", risk="medium", intent="set_dsa_mode", payload={"mode": "maintenance"}, confirm=True)
@@ -325,7 +352,7 @@ def build_dsa(ctx: Ctx) -> Dict[str, Any]:
                             "status": "active", "mode": mode["mode"], "pace": st["pace"]["state"], "percent": prog["percent"]},
                    today={"duration_min": tb["minutes"] if tb else 0, "learning_target": tb["topic"]["name"] if tb else None,
                           "external_resources": resources, "blocks": tb["blocks"] if tb else []},
-                   reason=mode["reason"] or "Consistency beats volume.")
+                   reason=mode["reason"] or "Consistency beats volume.", brief=brief_card)
 
 
 # ================================================================== 4. APPLICATION BRIEF

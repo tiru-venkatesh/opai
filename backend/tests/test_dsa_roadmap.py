@@ -189,3 +189,14 @@ def test_weekly_review_counts_only_real_sessions_and_never_shames():
     assert r["next_week"][0] == "Finish Big-O" and "Start Arrays" in r["next_week"]
     e = R.weekly_review(topics, [dict(topic_id="t0", status="done", outcome="could_not_start", confidence=None)], 5, 1, today)
     assert e["empty"] and [o["id"] for o in e["options"]] == ["gentle", "target", "pause"] and "Do not restart" in e["message"]
+
+
+def test_expected_outcome_per_topic_and_revision_wording():
+    assert "O(n²)" in R.expected_outcome("Big-O")
+    assert R.expected_outcome("Python basics") == R.TOPIC_OUTCOME["basics"]           # language prefix is ignored
+    assert R.expected_outcome("Hash maps and sets", "revise").startswith("Recall without notes: ")
+    assert "Brand new topic" in R.expected_outcome("Brand new topic")                 # safe fallback for unknown topics
+    for _no, _name, _w, topics in R.PHASES:                                            # every roadmap topic has a specific outcome
+        for tname, _p in topics:
+            key = tname.replace("{lang} ", "").lower()
+            assert key in R.TOPIC_OUTCOME, tname

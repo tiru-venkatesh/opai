@@ -68,7 +68,7 @@ class TodayOp(BaseModel):
     @field_validator("op")
     @classmethod
     def _o(cls, v):
-        if v not in {"start", "complete", "skip", "snooze"}:
+        if v not in {"start", "complete", "skip", "snooze", "shorten"}:
             raise ValueError("unknown op")
         return v
 
@@ -311,6 +311,15 @@ def _h_today_op(db, uid, p):
     today = date.today()
     if op == "start":
         return {"state": "in_progress", "kind": kind, "ref_id": rid}
+    if op == "shorten":                               # only DSA blocks can be shortened; never fall through to snooze
+        if kind != "dsa":
+            raise ActionError(422, "Only DSA blocks can be shortened")
+        import dsa_service as DS
+        try:
+            DS.shorten_session(db, uid, rid, int(p.get("actual_minutes") or 0))
+        except DS.DsaError as e:
+            raise ActionError(e.status, e.detail)
+        return {"state": "shortened", "kind": kind, "ref_id": rid, "minutes": int(p["actual_minutes"])}
     if kind == "study_block":
         b = _owner(db, StudyBlock, rid, uid)
         if op == "complete":
