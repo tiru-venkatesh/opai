@@ -88,7 +88,7 @@ details.closed summary{cursor:pointer;color:var(--mut);font-weight:600;padding:6
 details.more{margin-top:32px}details.more>summary{cursor:pointer;font-weight:600;color:var(--pri);margin-bottom:14px}
 details.addbox>summary{cursor:pointer;font-weight:600;color:var(--pri)}
 #rq{width:100%;margin:10px 0;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font:inherit}
-html[data-view=programs] #focus{display:none}
+html[data-view=programs] #focus,html[data-view=hackathons] #focus{display:none}
 @media(max-width:640px){.grid{grid-template-columns:1fr}}
 </style>
 <link rel="manifest" href="manifest.json">
@@ -100,7 +100,7 @@ html[data-view=programs] #focus{display:none}
 <script>document.documentElement.setAttribute('data-view',new URLSearchParams(location.search).get('view')||'all')</script>
 <style>
 html[data-view=projects] #hack,html[data-view=projects] #comp,html[data-view=projects] #prog{display:none}
-html[data-view=programs] #projwrap{display:none}
+html[data-view=hackathons] #projwrap,html[data-view=hackathons] #prog,html[data-view=hackathons] #comp,html[data-view=programs] #projwrap,html[data-view=programs] #hack{display:none}
 .addbox{background:#fff;border:1px solid #D8E2E0;border-radius:14px;padding:14px 16px;margin:0 0 14px}
 .addbox h3{margin:0 0 8px;font-size:16px}.addbox .r{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
 .addbox input{flex:1;min-width:150px;border:1px solid #D8E2E0;border-radius:10px;padding:8px 10px;font:inherit}
@@ -141,7 +141,13 @@ html[data-view=programs] #projwrap{display:none}
 <p class="fine" id="hfine"></p>
 </section>
 <section id="prog" aria-labelledby="ph2"><h2 class="sec" id="ph2" style="font-size:24px;margin-top:28px">Programs, fellowships and your tracker</h2>
-<p class="sec-sub">Open-source programs, startup competitions, fellowships and company programs. Track each one and confirm dates on the organizer's own page.</p>
+<p class="sec-sub">Open-source programs, fellowships, developer events and company or research programs. Track each cycle and confirm dates on the organizer's official page.</p>
+<h3 class="sec" style="font-size:20px;margin:18px 0 12px">Featured programs &amp; events</h3>
+<div class="cgrid" aria-label="Featured programs and events">
+<div class="cc"><h3>Google Summer of Code (GSoC)</h3><p>Open-source mentorship with participating organizations. Check the official timeline for the next cycle.</p><a class="btn alt" href="https://developers.google.com/open-source/gsoc/timeline" target="_blank" rel="noopener noreferrer">Official timeline ↗</a></div>
+<div class="cc"><h3>Hacktoberfest</h3><p>An annual open-source contribution event. Review current participation rules and project requirements.</p><a class="btn alt" href="https://hacktoberfest.com/" target="_blank" rel="noopener noreferrer">Official site ↗</a></div>
+<div class="cc"><h3>MLH Global Hack Week</h3><p>Recurring developer events, hands-on challenges and workshops. Check the organizer's page for upcoming events.</p><a class="btn alt" href="https://ghw.mlh.com/" target="_blank" rel="noopener noreferrer">Official site ↗</a></div>
+</div>
 <iframe id="pgf" title="Programs tracker" style="width:100%;height:700px;border:0;background:transparent;display:block"></iframe></section>
 <div id="projwrap">
 <h2 class="sec" style="font-size:24px">Your projects</h2>
@@ -287,7 +293,7 @@ function renderHack(){
   $('hclosed-s').textContent='Closed ('+past.length+')';
   $('hclosed-l').innerHTML=past.map(function(h){return card(h,true)}).join('');
   document.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',c.getAttribute('data-f')===HF?'true':'false')});
-  $('halso').innerHTML='Also running: <a href="https://hacktoberfest.com/" target="_blank" rel="noopener noreferrer">Hacktoberfest</a> is open all October, and MLH Global Hack Week runs Oct 9 to 15. GSoC 2026 applications closed on March 31; the next cycle’s dates are not announced yet (<a href="https://developers.google.com/open-source/gsoc/timeline" target="_blank" rel="noopener noreferrer">timeline</a>). More programs are under Opportunities.';
+  $('halso').innerHTML='Looking for open-source programs, GSoC, Hacktoberfest, fellowships or recurring initiatives? Open the separate <b>Programs</b> section in Work.';
   $('hfine').textContent='Listings from Unstop, Internshala and news sites are marked “verify”. Confirm dates, eligibility and team rules on the organizer’s page before you register.';
 }
 function trackHack(id){
@@ -355,7 +361,10 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
   var x=REPOS[+b.getAttribute('data-repo')];if(!x)return;
   var r=addProject(x.name,(x.description?x.description+' · ':'')+x.html_url);if(r===true){b.textContent='Added';b.disabled=true}});
 load();render();
-if(document.documentElement.getAttribute('data-view')!=='projects')$('pgf').src='opportunities.html?embed=1&only=programs';
+var VIEW=document.documentElement.getAttribute('data-view')||'all';
+if(VIEW==='hackathons'){$('hh').textContent='Hackathons';document.title='Hackathons · OPAI';}
+else if(VIEW==='programs'){document.title='Programs · OPAI';}
+if(VIEW==='programs'||VIEW==='all')$('pgf').src='opportunities.html?embed=1&only=programs';
 addEventListener('message',function(e){var d=e.data;if(d&&d.opaiH&&d.k==='programs'&&e.source===$('pgf').contentWindow)$('pgf').style.height=Math.max(300,d.opaiH+8)+'px'});
 })();
 </script>
