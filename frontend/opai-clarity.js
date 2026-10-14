@@ -22,10 +22,11 @@
   var HELP = {
     /* Work */
     'internship': 'Find opportunities that fit you, track applications, and handle professor outreach.',
-    'dsa': 'Your DSA roadmap, today’s topic and weekly consistency.',
-    'projects': 'Your projects and the coding contests you can enter.',
+    'coding': 'Your DSA roadmap, coding contests, GSoC/open source, ICPC, hackathons and fests in one place.',
+    'roadmap': 'Your DSA roadmap, today’s topic and weekly consistency.',
+    'projects': 'Your own projects, repositories and build progress.',
     'resume': 'Keep resume versions, match them to a posting and tailor them.',
-    'programs': 'Hackathons and programs you could join.',
+    'events': 'Hackathons, GSoC/open source programs, ICPC and coding contests you could join.',
     'academics': 'Your courses, exams and assignments.',
     /* Opportunities */
     'today’s matches': 'Opportunities ranked against your profile, with a summary of what needs attention.',

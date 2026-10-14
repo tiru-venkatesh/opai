@@ -5,7 +5,7 @@
   function saved(){try{return localStorage.getItem(KEY)}catch(e){return null}}
   function current(){var s=saved();return s==='dark'||s==='light'?s:(mq.matches?'dark':'light')}
   function apply(t){root.setAttribute('data-theme',t);root.classList.toggle('dark',t==='dark');
-    var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',t==='dark'?'#120F0F':'#F0F4F3')}
+    var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',t==='dark'?'#1B120D':'#EDE0D4')}
   apply(current());
   mq.addEventListener&&mq.addEventListener('change',function(){if(!saved())apply(current())});
   addEventListener('storage',function(e){if(e.key===KEY)apply(current())});

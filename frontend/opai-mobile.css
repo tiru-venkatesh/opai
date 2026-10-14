@@ -36,8 +36,8 @@ input.sr,.sr{position:absolute!important;width:1px!important;height:1px!importan
   /* ---------- bottom dock becomes a proper tab bar ---------- */
   .opai-dock{box-sizing:border-box;left:0;right:0;bottom:0;transform:none;width:100%;gap:0;justify-content:space-around;
     padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));
-    border-radius:18px 18px 0 0;border:0;border-top:1px solid var(--hair,#D5E1DE);
-    background:var(--card,#F7FAF9);backdrop-filter:none;box-shadow:0 -10px 24px -18px rgba(27,21,22,.45)}
+    border-radius:18px 18px 0 0;border:0;border-top:1px solid var(--hair,#DDB892);
+    background:var(--card,#F6EBE1);backdrop-filter:none;box-shadow:0 -10px 24px -18px rgba(51,33,22,.45)}
   .opai-dock a,.opai-dock button{flex:1 1 0;min-width:0;width:auto;height:50px;min-height:0;border-radius:12px;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0}
   .opai-dock small{display:block;font:500 10.5px/1 var(--sans,system-ui);letter-spacing:.01em}

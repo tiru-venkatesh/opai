@@ -6,7 +6,7 @@
 <title>Projects · OPAI</title>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#F0F4F3;--s1:#F7FAF9;--s2:#EAEFEE;--s3:#D5E1DE;--line:#C8D8D4;--tx:#1B1516;--mut:#504A4D;--pri:#1A404D;--font:'Geist',system-ui,-apple-system,Segoe UI,sans-serif}
+:root{--bg:#EDE0D4;--s1:#F6EBE1;--s2:#E6CCB2;--s3:#DDB892;--line:#B08968;--tx:#332116;--mut:#63452F;--pri:#7F5539;--font:'Geist',system-ui,-apple-system,Segoe UI,sans-serif}
 *{box-sizing:border-box}html,body{margin:0}
 body{background:var(--bg);color:var(--tx);font:14px/22px var(--font)}
 header{position:sticky;top:0;z-index:5;background:rgba(17,13,13,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(74,65,67,.4)}
@@ -30,7 +30,7 @@ h1{font-size:30px;line-height:36px;letter-spacing:-.03em;font-weight:500;margin:
 ul{list-style:none;margin:0 0 12px;padding:0}
 li label{display:flex;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:6px;cursor:pointer}
 li label:hover{background:var(--s2)}
-li input{margin-top:5px;accent-color:#1A404D}
+li input{margin-top:5px;accent-color:#7F5539}
 li.done span{color:var(--mut);text-decoration:line-through}
 form{display:flex;gap:8px}
 form input{flex:1;min-width:0;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font:inherit}
@@ -48,10 +48,10 @@ form button{background:var(--pri);color:#FFFFFF;border:0;border-radius:6px;paddi
 .hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px;align-items:stretch}
 .hk{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px}
 .hk-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.pill{display:inline-block;border-radius:999px;padding:4px 12px;font-size:13px;line-height:20px;font-weight:600;background:#DFE8E6;color:#14313B}
-.pill.soon{background:#D8E2E0;color:#6B3400}.pill.hot{background:#E0EAE7;color:#A05005}.pill.done{background:var(--s3);color:var(--mut)}
+.pill{display:inline-block;border-radius:999px;padding:4px 12px;font-size:13px;line-height:20px;font-weight:600;background:#E6CCB2;color:#3E2A20}
+.pill.soon{background:#DDB892;color:#6B3400}.pill.hot{background:#E0EAE7;color:#A05005}.pill.done{background:var(--s3);color:var(--mut)}
 .src{font-size:12px;line-height:18px;font-weight:600;border-radius:6px;padding:2px 8px}
-.src.ok{background:#DFE8E6;color:#14313B}.src.warn{background:#D8E2E0;color:#6B3400}
+.src.ok{background:#E6CCB2;color:#3E2A20}.src.warn{background:#DDB892;color:#6B3400}
 .hk h3{font-size:22px;line-height:28px;letter-spacing:-.02em;font-weight:600;margin:0;color:var(--tx)}
 .hk-dl small{display:block;color:var(--mut);font-size:12px;line-height:16px;text-transform:uppercase;letter-spacing:.06em}
 .hk-dl b{display:block;font-size:26px;line-height:32px;letter-spacing:-.02em;color:var(--pri)}
@@ -62,8 +62,8 @@ form button{background:var(--pri);color:#FFFFFF;border:0;border-radius:6px;paddi
 .hk-act{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap;padding-top:6px}
 .btn{display:inline-block;background:var(--pri);color:#fff;text-decoration:none;border:0;border-radius:8px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}
 .btn.alt{background:transparent;color:var(--pri);border:1px solid var(--pri)}
-.btn.on{background:#DFE8E6;color:#14313B;border-color:#DFE8E6}
-.banner{background:#D8E2E0;color:#4A2400;border-radius:10px;padding:12px 16px;margin:0 0 16px}
+.btn.on{background:#E6CCB2;color:#3E2A20;border-color:#E6CCB2}
+.banner{background:#DDB892;color:#4A2400;border-radius:10px;padding:12px 16px;margin:0 0 16px}
 .also{margin:22px 0 0;color:var(--mut);font-size:14px}
 .also a{color:var(--pri);font-weight:600}
 details.closed{margin-top:22px}
@@ -79,9 +79,9 @@ details.closed summary{cursor:pointer;color:var(--mut);font-weight:600;padding:6
 .nxt{margin:0 0 14px;color:var(--tx)}.nxt b{color:var(--mut);font-weight:500;margin-right:6px}
 .fact{display:flex;flex-wrap:wrap;gap:10px}
 .ph{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.pill.blue{background:#E6EDEB;color:#275A6B}
+.pill.blue{background:#E6EDEB;color:#9C6644}
 .proj{border:1px solid var(--line);border-radius:16px;transition:transform .15s,box-shadow .15s}
-.proj:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(27,21,22,.07)}
+.proj:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(51,33,22,.07)}
 .sugs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
 .sug{background:var(--bg);color:var(--pri);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
 .sug:hover{background:var(--s2)}
@@ -92,7 +92,7 @@ html[data-view=programs] #focus{display:none}
 @media(max-width:640px){.grid{grid-template-columns:1fr}}
 </style>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#F0F4F3">
+<meta name="theme-color" content="#EDE0D4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -101,13 +101,13 @@ html[data-view=programs] #focus{display:none}
 <style>
 html[data-view=projects] #hack,html[data-view=projects] #comp,html[data-view=projects] #prog{display:none}
 html[data-view=programs] #projwrap{display:none}
-.addbox{background:#fff;border:1px solid #D8E2E0;border-radius:14px;padding:14px 16px;margin:0 0 14px}
+.addbox{background:#fff;border:1px solid #DDB892;border-radius:14px;padding:14px 16px;margin:0 0 14px}
 .addbox h3{margin:0 0 8px;font-size:16px}.addbox .r{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
-.addbox input{flex:1;min-width:150px;border:1px solid #D8E2E0;border-radius:10px;padding:8px 10px;font:inherit}
+.addbox input{flex:1;min-width:150px;border:1px solid #DDB892;border-radius:10px;padding:8px 10px;font:inherit}
 .repo{display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid #EBF1EF;padding:8px 0}
 .repo small{color:#5C5F63;display:block}
 .cgrid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
-.cc{background:#fff;border:1px solid #D8E2E0;border-radius:14px;padding:14px 16px}.cc h3{margin:0 0 4px;font-size:16px}.cc p{margin:0 0 10px;color:#5C5F63;font-size:14px}
+.cc{background:#fff;border:1px solid #DDB892;border-radius:14px;padding:14px 16px}.cc h3{margin:0 0 4px;font-size:16px}.cc p{margin:0 0 10px;color:#5C5F63;font-size:14px}
 </style>
 <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 <link rel="stylesheet" href="opai-mobile.css">

@@ -2,20 +2,20 @@
  * Loaded LAST (after app.css, fx.css). Re-skins tokens, shell and components
  * without touching app.js markup. Delete this file to roll back.
  *
- * Palette  paper #F3F7F6 · ink #0E232A · cobalt #7AAFC1 · sidebar #0C1D22
+ * Palette  paper #F6EBE1 · ink #2A1D14 · cobalt #B08968 · sidebar #0C1D22
  * Type     Bricolage Grotesque (headings) · Onest (UI) · JetBrains Mono (numbers)
  */
 
 /* ---------- tokens ---------- */
 html:root:root:root{
-  --bg:#F3F7F6; --surface:#FFFFFF; --surface-2:#ECF2F0;
-  --ink:#0E232A; --ink-2:#367184; --ink-3:#65A2B7;
-  --line:#E5ECEA; --line-2:#D1DDDA;
-  --accent:#7AAFC1; --accent-d:#5296AD; --accent-soft:#F0F4F3; --on-accent:#fff;
-  --good:#275A6B; --good-soft:#E4ECEA;
-  --warn:#B85E0A; --warn-soft:#E4EBE9;
+  --bg:#F6EBE1; --surface:#FFFFFF; --surface-2:#ECF2F0;
+  --ink:#2A1D14; --ink-2:#367184; --ink-3:#65A2B7;
+  --line:#E6CCB2; --line-2:#D1DDDA;
+  --accent:#B08968; --accent-d:#9C6644; --accent-soft:#EDE0D4; --on-accent:#fff;
+  --good:#9C6644; --good-soft:#E6CCB2;
+  --warn:#B85E0A; --warn-soft:#E6CCB2;
   --bad:#E47E1F;  --bad-soft:#ECF2F0;
-  --c-app:#7AAFC1; --c-out:#E47C1B; --c-proj:#275A6B; --c-acad:#8AB8C8; --c-req:#E28C3C; --c-opp:#65A2B7;
+  --c-app:#B08968; --c-out:#E47C1B; --c-proj:#9C6644; --c-acad:#8AB8C8; --c-req:#E28C3C; --c-opp:#65A2B7;
   --side:#0C1D22;
   --r-lg:14px; --r-md:10px; --r-sm:8px;
   --shadow-1:0 1px 2px rgba(14,35,42,.05);
@@ -27,14 +27,14 @@ html:root:root:root{
   color-scheme:light;
 }
 html:root:root:root[data-theme="dark"]{
-  --bg:#09161B; --surface:#0E242C; --surface-2:#14323C;
-  --ink:#EDF2F1; --ink-2:#9AC2D0; --ink-3:#5699AF;
+  --bg:#211710; --surface:#0E242C; --surface-2:#14323C;
+  --ink:#EDF2F1; --ink-2:#E6CCB2; --ink-3:#5699AF;
   --line:#183B46; --line-2:#453B3C;
-  --accent:#AACBD3; --accent-d:#C8DCDC; --accent-soft:#1B4351; --on-accent:#09161B;
+  --accent:#E6CCB2; --accent-d:#C8DCDC; --accent-soft:#1B4351; --on-accent:#211710;
   --good:#5F9FB4; --good-soft:#0E242C;
   --warn:#E09C5C; --warn-soft:#422000;
-  --bad:#E2BD97;  --bad-soft:#542900;
-  --c-app:#AACBD3; --c-out:#E09C5C; --c-proj:#5F9FB4; --c-acad:#BAD4D7; --c-req:#E2BD97; --c-opp:#5699AF;
+  --bad:#DDB892;  --bad-soft:#542900;
+  --c-app:#E6CCB2; --c-out:#E09C5C; --c-proj:#5F9FB4; --c-acad:#BAD4D7; --c-req:#DDB892; --c-opp:#5699AF;
   --side:#071114;
   --shadow-1:0 0 0 1px var(--line);
   --shadow-2:0 24px 60px -24px rgba(0,0,0,.7);
@@ -62,11 +62,11 @@ h1,h2,h3,h4,.head h1,.panel-h h3{font-family:var(--display)}
 .nav button:hover{background:rgba(255,255,255,.07);color:#fff;padding-left:11px}
 .nav button.on{background:rgba(170,203,211,.16);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
 html:root:root:root .nav button.on .count{background:var(--accent);color:var(--on-accent)}
-.nav .count{background:rgba(255,255,255,.1);color:#E4EBE9}
-.nav .count.alert{background:var(--warn);color:#0E232A}
+.nav .count{background:rgba(255,255,255,.1);color:#E6CCB2}
+.nav .count.alert{background:var(--warn);color:#2A1D14}
 .conn{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.08);border-radius:10px}
-.conn b{font-family:var(--body);letter-spacing:0;text-transform:none;font-size:12.5px;color:#97C0CE}
-.conn i{background:#97C0CE}
+.conn b{font-family:var(--body);letter-spacing:0;text-transform:none;font-size:12.5px;color:#E6CCB2}
+.conn i{background:#E6CCB2}
 
 @media (min-width:1024px){
   .side{transform:none;width:264px}
@@ -181,7 +181,7 @@ input[type=checkbox].ck:checked:not(:disabled){animation:fxTick .4s var(--spring
 
 /* live status dot: soft ring pulse */
 .conn i{animation:fxRing 2.2s ease-out infinite}
-@keyframes fxRing{0%{box-shadow:0 0 0 0 color-mix(in srgb,currentColor 0%,#97C0CE)}70%{box-shadow:0 0 0 7px rgba(151,192,206,0)}100%{box-shadow:0 0 0 0 rgba(151,192,206,0)}}
+@keyframes fxRing{0%{box-shadow:0 0 0 0 color-mix(in srgb,currentColor 0%,#E6CCB2)}70%{box-shadow:0 0 0 7px rgba(151,192,206,0)}100%{box-shadow:0 0 0 0 rgba(151,192,206,0)}}
 
 /* progress bars fill from left */
 .kh-bar b,.bar>i,.progress>i{transform-origin:left;animation:fxFill .9s var(--out) backwards}

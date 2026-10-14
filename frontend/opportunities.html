@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Opportunities · OPAI</title>
-<meta name="theme-color" content="#F0F4F3">
+<meta name="theme-color" content="#EDE0D4">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
 <style>
-:root{--bg:#F0F4F3;--card:#fff;--ink:#1B1516;--mut:#5C5F63;--pri:#1A404D;--coral:#E09F62;--line:#D7E2DF;--warn:#B95F0A;--bad:#C3650E;--good:#245363;--font:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif}
+:root{--bg:#EDE0D4;--card:#fff;--ink:#332116;--mut:#5C5F63;--pri:#7F5539;--coral:#DDB892;--line:#DDB892;--warn:#B95F0A;--bad:#C3650E;--good:#245363;--font:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif}
 *{box-sizing:border-box}html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/22px var(--font);min-height:100vh}
 main{max-width:1080px;margin:0 auto;padding:20px 16px 140px}
@@ -23,7 +23,7 @@ h1{font-size:28px;letter-spacing:-.03em;margin:4px 0 2px;color:var(--pri)} h2{fo
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.sp{justify-content:space-between}
 .pill{display:inline-block;padding:2px 10px;border-radius:999px;font:600 12px/18px var(--font);background:#EEF2F1;color:var(--pri)}
-.pill.Strong,.pill.good{background:#E5EDEB;color:var(--good)}.pill.Good{background:#E5EDEB;color:#225060}.pill.Partial,.pill.warn{background:#E8EEED;color:var(--warn)}.pill.Poor,.pill.bad{background:#E9EFEE;color:var(--bad)}
+.pill.Strong,.pill.good{background:#F0E2D5;color:var(--good)}.pill.Good{background:#F0E2D5;color:#225060}.pill.Partial,.pill.warn{background:#E8EEED;color:var(--warn)}.pill.Poor,.pill.bad{background:#E9EFEE;color:var(--bad)}
 .mut{color:var(--mut);font-size:13px}
 button.b,a.b{border:1px solid var(--pri);background:var(--pri);color:#fff;border-radius:10px;padding:7px 12px;font:600 13px var(--font);cursor:pointer;text-decoration:none;display:inline-block}
 button.b.alt,a.b.alt{background:#fff;color:var(--pri)} button.b.dng{background:#fff;color:var(--bad);border-color:var(--bad)}
@@ -33,12 +33,12 @@ textarea{min-height:110px;resize:vertical} label{display:block;font-size:12px;fo
 .grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 .sig{margin:8px 0}.sig b{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}.sig ul{margin:4px 0 0;padding-left:18px}
 .board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(210px,1fr);gap:10px;overflow-x:auto;padding-bottom:8px}
-.col{background:#E5EDEB;border-radius:12px;padding:8px}.col h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin:2px 4px 8px}
+.col{background:#F0E2D5;border-radius:12px;padding:8px}.col h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin:2px 4px 8px}
 .col .card{padding:10px;margin-bottom:8px;cursor:pointer}
-.note{background:#F0F4F3;border:1px solid #DACFBB;border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}
+.note{background:#EDE0D4;border:1px solid #DACFBB;border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;z-index:90}.modal.on{display:flex}
 .modal>div{background:#fff;border-radius:16px;max-width:640px;width:100%;padding:18px}
-pre.mail{white-space:pre-wrap;font:14px/21px var(--font);background:#F6F9F8;border:1px solid var(--line);border-radius:10px;padding:10px}
+pre.mail{white-space:pre-wrap;font:14px/21px var(--font);background:#F6EBE1;border:1px solid var(--line);border-radius:10px;padding:10px}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;display:none;z-index:99}
 
 /* ---------- motion (all disabled under prefers-reduced-motion) ---------- */
@@ -46,30 +46,30 @@ pre.mail{white-space:pre-wrap;font:14px/21px var(--font);background:#F6F9F8;bord
 @keyframes pop{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
-@keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(224,159,98,.55)}70%{box-shadow:0 0 0 9px rgba(224,159,98,0)}100%{box-shadow:0 0 0 0 rgba(224,159,98,0)}}
+@keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(221,184,146,.55)}70%{box-shadow:0 0 0 9px rgba(221,184,146,0)}100%{box-shadow:0 0 0 0 rgba(221,184,146,0)}}
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
 @keyframes grow{from{width:0}to{width:var(--w)}}
 @keyframes tabIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 #hero .card{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
 #view>*,.board .col,.col .card,#fc_out>.card{animation:fadeUp .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*55ms)}
 .card{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
-.card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(26,64,77,.10);border-color:#CDDAD7}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(127,85,57,.10);border-color:#CDDAD7}
 .col .card:hover{transform:translateY(-2px) scale(1.01)}
 .tabs button{transition:background .25s ease,color .25s ease,transform .15s ease}
 .tabs button:hover{transform:translateY(-1px);color:var(--pri)}.tabs button[aria-selected=true]:hover{color:#fff}
 .tabs button[aria-selected=true]{animation:tabIn .3s ease both}
 button.b,a.b{transition:transform .15s ease,box-shadow .2s ease,background .2s ease,color .2s ease}
-button.b:hover:not(:disabled),a.b:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(26,64,77,.22)}
+button.b:hover:not(:disabled),a.b:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(127,85,57,.22)}
 button.b:active:not(:disabled),a.b:active{transform:scale(.96);box-shadow:none}
 input,textarea,select{transition:border-color .2s ease,box-shadow .2s ease}
-input:focus,textarea:focus,select:focus{outline:0;border-color:var(--pri);box-shadow:0 0 0 3px rgba(26,64,77,.14)}
+input:focus,textarea:focus,select:focus{outline:0;border-color:var(--pri);box-shadow:0 0 0 3px rgba(127,85,57,.14)}
 .modal.on{animation:fade .2s ease both}.modal.on>div{animation:pop .3s cubic-bezier(.2,.8,.2,1) both}
 .toast.show{animation:toastIn .3s ease both}
 .pill.Strong{animation:pulseRing 1.8s ease-out 2 .6s}
 .pill.crit{background:#E9EFEE;color:var(--bad);animation:pulseRing 1.6s ease-out infinite}
-.meter{height:6px;border-radius:99px;background:#E0E9E7;overflow:hidden;margin:8px 0 2px}
+.meter{height:6px;border-radius:99px;background:#E6CCB2;overflow:hidden;margin:8px 0 2px}
 .meter i{display:block;height:100%;width:var(--w);border-radius:99px;background:linear-gradient(90deg,var(--coral),var(--pri));animation:grow .9s cubic-bezier(.2,.8,.2,1) .15s both}
-.skel{height:92px;border-radius:14px;margin-bottom:12px;background:linear-gradient(90deg,#E1EAE8 25%,#F0F4F3 37%,#E1EAE8 63%);background-size:800px 100%;animation:shimmer 1.3s linear infinite}
+.skel{height:92px;border-radius:14px;margin-bottom:12px;background:linear-gradient(90deg,#E1EAE8 25%,#EDE0D4 37%,#E1EAE8 63%);background-size:800px 100%;animation:shimmer 1.3s linear infinite}
 .sig li{animation:fade .5s ease both}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
