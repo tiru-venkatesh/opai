@@ -10,7 +10,7 @@
 <style>
 /* =====================================================================
    OPA DESIGN SYSTEM  ·  "Personal AI" light skin
-   Palette   cream #F6F4EE · deep green #134E48 · coral #EE7B5D
+   Palette   beige #D9CAB3 · maroon #5E0B15 · crimson #90323D · ochre #BC8034 · taupe #8C7A6B
    Type      Newsreader (display) · Inter (body) · IBM Plex Mono (labels/data)
    The base rules below are the original system; the block at the very end
    of this <style> re-skins them to the light look.

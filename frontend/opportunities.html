@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Opportunities · OPAI</title>
-<meta name="theme-color" content="#F6F4EE">
+<meta name="theme-color" content="#F6F3EE">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
 <style>
-:root{--bg:#F6F4EE;--card:#fff;--ink:#16181A;--mut:#5a6064;--pri:#17504A;--coral:#E8705A;--line:#e3e0d6;--warn:#b4580f;--bad:#b3261e;--good:#17704a;--font:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif}
+:root{--bg:#F6F3EE;--card:#fff;--ink:#230D11;--mut:#75514D;--pri:#5C0B16;--coral:#D8A66A;--line:#E8E0D1;--warn:#9A6729;--bad:#983946;--good:#711622;--font:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif}
 *{box-sizing:border-box}html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/22px var(--font);min-height:100vh}
 main{max-width:1080px;margin:0 auto;padding:20px 16px 140px}
@@ -22,8 +22,8 @@ h1{font-size:28px;letter-spacing:-.03em;margin:4px 0 2px;color:var(--pri)} h2{fo
 .tabs button[aria-selected=true]{background:var(--pri);color:#fff}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.sp{justify-content:space-between}
-.pill{display:inline-block;padding:2px 10px;border-radius:999px;font:600 12px/18px var(--font);background:#eef2f0;color:var(--pri)}
-.pill.Strong,.pill.good{background:#dff3e8;color:var(--good)}.pill.Good{background:#e8f3df;color:#3c6b17}.pill.Partial,.pill.warn{background:#fdecd9;color:var(--warn)}.pill.Poor,.pill.bad{background:#fbe0dd;color:var(--bad)}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font:600 12px/18px var(--font);background:#F5F1EB;color:var(--pri)}
+.pill.Strong,.pill.good{background:#F0EBE2;color:var(--good)}.pill.Good{background:#F0EBE2;color:#6E1420}.pill.Partial,.pill.warn{background:#F2EDE4;color:var(--warn)}.pill.Poor,.pill.bad{background:#F2EEE6;color:var(--bad)}
 .mut{color:var(--mut);font-size:13px}
 button.b,a.b{border:1px solid var(--pri);background:var(--pri);color:#fff;border-radius:10px;padding:7px 12px;font:600 13px var(--font);cursor:pointer;text-decoration:none;display:inline-block}
 button.b.alt,a.b.alt{background:#fff;color:var(--pri)} button.b.dng{background:#fff;color:var(--bad);border-color:var(--bad)}
@@ -33,12 +33,12 @@ textarea{min-height:110px;resize:vertical} label{display:block;font-size:12px;fo
 .grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 .sig{margin:8px 0}.sig b{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}.sig ul{margin:4px 0 0;padding-left:18px}
 .board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(210px,1fr);gap:10px;overflow-x:auto;padding-bottom:8px}
-.col{background:#efece3;border-radius:12px;padding:8px}.col h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin:2px 4px 8px}
+.col{background:#F0EBE2;border-radius:12px;padding:8px}.col h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin:2px 4px 8px}
 .col .card{padding:10px;margin-bottom:8px;cursor:pointer}
-.note{background:#fff7e6;border:1px solid #f1d9a6;border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}
+.note{background:#F7F4EE;border:1px solid #E5CFB2;border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;z-index:90}.modal.on{display:flex}
 .modal>div{background:#fff;border-radius:16px;max-width:640px;width:100%;padding:18px}
-pre.mail{white-space:pre-wrap;font:14px/21px var(--font);background:#faf9f5;border:1px solid var(--line);border-radius:10px;padding:10px}
+pre.mail{white-space:pre-wrap;font:14px/21px var(--font);background:#FAF8F5;border:1px solid var(--line);border-radius:10px;padding:10px}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;display:none;z-index:99}
 
 /* ---------- motion (all disabled under prefers-reduced-motion) ---------- */
@@ -46,30 +46,30 @@ pre.mail{white-space:pre-wrap;font:14px/21px var(--font);background:#faf9f5;bord
 @keyframes pop{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
-@keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(232,112,90,.55)}70%{box-shadow:0 0 0 9px rgba(232,112,90,0)}100%{box-shadow:0 0 0 0 rgba(232,112,90,0)}}
+@keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(216,166,106,.55)}70%{box-shadow:0 0 0 9px rgba(216,166,106,0)}100%{box-shadow:0 0 0 0 rgba(216,166,106,0)}}
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
 @keyframes grow{from{width:0}to{width:var(--w)}}
 @keyframes tabIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 #hero .card{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
 #view>*,.board .col,.col .card,#fc_out>.card{animation:fadeUp .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*55ms)}
 .card{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
-.card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(23,80,74,.10);border-color:#cfd8d4}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(92,11,22,.10);border-color:#E2D7C5}
 .col .card:hover{transform:translateY(-2px) scale(1.01)}
 .tabs button{transition:background .25s ease,color .25s ease,transform .15s ease}
 .tabs button:hover{transform:translateY(-1px);color:var(--pri)}.tabs button[aria-selected=true]:hover{color:#fff}
 .tabs button[aria-selected=true]{animation:tabIn .3s ease both}
 button.b,a.b{transition:transform .15s ease,box-shadow .2s ease,background .2s ease,color .2s ease}
-button.b:hover:not(:disabled),a.b:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(23,80,74,.22)}
+button.b:hover:not(:disabled),a.b:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(92,11,22,.22)}
 button.b:active:not(:disabled),a.b:active{transform:scale(.96);box-shadow:none}
 input,textarea,select{transition:border-color .2s ease,box-shadow .2s ease}
-input:focus,textarea:focus,select:focus{outline:0;border-color:var(--pri);box-shadow:0 0 0 3px rgba(23,80,74,.14)}
+input:focus,textarea:focus,select:focus{outline:0;border-color:var(--pri);box-shadow:0 0 0 3px rgba(92,11,22,.14)}
 .modal.on{animation:fade .2s ease both}.modal.on>div{animation:pop .3s cubic-bezier(.2,.8,.2,1) both}
 .toast.show{animation:toastIn .3s ease both}
 .pill.Strong{animation:pulseRing 1.8s ease-out 2 .6s}
-.pill.crit{background:#fbe0dd;color:var(--bad);animation:pulseRing 1.6s ease-out infinite}
-.meter{height:6px;border-radius:99px;background:#ebe8de;overflow:hidden;margin:8px 0 2px}
+.pill.crit{background:#F2EEE6;color:var(--bad);animation:pulseRing 1.6s ease-out infinite}
+.meter{height:6px;border-radius:99px;background:#EEE7DB;overflow:hidden;margin:8px 0 2px}
 .meter i{display:block;height:100%;width:var(--w);border-radius:99px;background:linear-gradient(90deg,var(--coral),var(--pri));animation:grow .9s cubic-bezier(.2,.8,.2,1) .15s both}
-.skel{height:92px;border-radius:14px;margin-bottom:12px;background:linear-gradient(90deg,#ece9df 25%,#f6f4ee 37%,#ece9df 63%);background-size:800px 100%;animation:shimmer 1.3s linear infinite}
+.skel{height:92px;border-radius:14px;margin-bottom:12px;background:linear-gradient(90deg,#EEE8DD 25%,#F6F3EE 37%,#EEE8DD 63%);background-size:800px 100%;animation:shimmer 1.3s linear infinite}
 .sig li{animation:fade .5s ease both}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
@@ -242,7 +242,7 @@ prof:async function(){var r=await api('/v1/opp/professors');
     '<div><label>Research areas (comma separated)</label><input id="pr_areas"></div><div><label>Paper or project that connects to you</label><input id="pr_work"></div></div>'+
     '<label style="font-weight:500"><input type="checkbox" id="pr_shown" style="width:auto"> This email is shown on the official page</label><div class="row" style="margin-top:8px"><button class="b" id="pr_add">Add</button></div></div>';
   var rows=r.items.map(function(c){return '<div class="card"><div class="row sp"><h3>'+esc(c.name)+' <span class="mut">· '+esc(c.institute)+'</span></h3><span class="pill">'+esc(c.outreach_status)+'</span></div>'+
-    '<div class="mut">Email: '+esc(c.email||'none')+' · '+esc(c.email_verification.replace(/_/g,' '))+(c.suppressed?' · <b style="color:#b3261e">do-not-contact</b>':'')+'</div>'+
+    '<div class="mut">Email: '+esc(c.email||'none')+' · '+esc(c.email_verification.replace(/_/g,' '))+(c.suppressed?' · <b style="color:#983946">do-not-contact</b>':'')+'</div>'+
     '<div class="mut">Areas: '+esc((c.research_areas||[]).join(', ')||'none')+'</div><div class="mut">Source: '+(c.source_url?'<a target="_blank" rel="noopener noreferrer" href="'+esc(c.source_url)+'">official page</a> · checked '+esc(c.source_checked_on||'?'):'none yet')+'</div>'+
     '<div class="row" style="margin-top:8px"><button class="b alt" data-pa="brief" data-id="'+esc(c.id)+'">Build research brief</button><button class="b" data-pa="draft" data-id="'+esc(c.id)+'">Draft email</button></div></div>'}).join('')||'<div class="card mut">No professors yet.</div>';
   return find+'<h2>Your professor list ('+r.items.length+')</h2><div class="mut" style="margin:-4px 0 10px">Email as many professors as you like. Each professor can be emailed once every 24 hours.</div>'+rows+'<details style="margin-top:6px"><summary style="cursor:pointer;font-weight:600;color:var(--pri);margin-bottom:10px">Add a professor who is not in the IIT list</summary>'+add+'</details>'},

@@ -6,7 +6,7 @@
 :root{
   --o2-ease:cubic-bezier(.22,.61,.36,1);
   --o2-spring:cubic-bezier(.34,1.56,.64,1);
-  --o2-acc:var(--pri,var(--teal,#17504A));
+  --o2-acc:var(--pri,var(--teal,#5C0B16));
   --o2-hd:64px;              /* height of the OPAI header the sticky bars sit under */
   interpolate-size:allow-keywords;
 }
@@ -18,7 +18,7 @@ html.o2-embed{--o2-hd:0px}
 /* Small grey text was 11px / low contrast on the light theme. Keep the mono "label" look but make it readable. */
 .tg,.tag,.sec,.state,.ex h4,.idx,.cap,.sechd .r{font-size:12px}
 .mut{font-size:max(13px,1em)}
-html[data-theme=light],html:not([data-theme]){--ink-3:#5f6766}   /* was #7A7F80 (3.6:1) -> 5.5:1 on the paper background */
+html[data-theme=light],html:not([data-theme]){--ink-3:#785751}   /* was #8F7B6B (3.6:1) -> 5.5:1 on the paper background */
 
 /* Headings land below the sticky header + jump bar instead of underneath them */
 :where(h1,h2,h3,section,[id]){scroll-margin-top:calc(var(--o2-hd) + 64px)}
@@ -30,26 +30,26 @@ h2.o2-hx.o2-in{background-size:34px 2px}
 :is(.card,.panel,section):hover>h2.o2-hx.o2-in,:is(.card,.panel,section):hover>.row>h2.o2-hx.o2-in{background-size:72px 2px}
 
 /* Stacked top-level sections inside a tab get a clear break */
-#view>h2:not(:first-child),main>h2:not(:first-child){margin-top:30px;padding-top:18px;border-top:1px solid var(--line,var(--hair,#e4e0d6))}
+#view>h2:not(:first-child),main>h2:not(:first-child){margin-top:30px;padding-top:18px;border-top:1px solid var(--line,var(--hair,#E9E0D1))}
 
 /* "What is this tab for?" line under every tab strip */
-.o2-help{margin:-6px 0 14px;max-width:1080px;font-size:13.5px;line-height:20px;color:var(--mut,var(--ink-2,#5a6064));
+.o2-help{margin:-6px 0 14px;max-width:1080px;font-size:13.5px;line-height:20px;color:var(--mut,var(--ink-2,#75514D));
   display:flex;align-items:center;gap:8px;min-height:20px}
 .o2-help::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;background:var(--o2-acc);opacity:.85}
 .o2-help span{display:inline-block;animation:o2Txt .35s var(--o2-ease) both}
-.wk-bar+.o2-help,.o2-help.o2-flush{margin:0;padding:8px max(14px,calc((100% - 1100px)/2 + 14px));border-bottom:1px solid var(--line,var(--hair,#e4e0d6));
+.wk-bar+.o2-help,.o2-help.o2-flush{margin:0;padding:8px max(14px,calc((100% - 1100px)/2 + 14px));border-bottom:1px solid var(--line,var(--hair,#E9E0D1));
   background:var(--bg,transparent);max-width:none;justify-content:flex-start}
 @keyframes o2Txt{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 
 /* "On this page" jump bar (built from the page's own section headings) */
 .o2-jump{position:sticky;top:var(--o2-hd);z-index:18;margin:0 0 16px;padding:8px 4px;max-width:100%;box-sizing:border-box;display:flex;align-items:center;gap:6px;
-  background:color-mix(in srgb,var(--bg,#F6F4EE) 96%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--line,var(--hair,#e4e0d6));overflow-x:auto;scrollbar-width:none;
+  background:color-mix(in srgb,var(--bg,#F6F3EE) 96%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line,var(--hair,#E9E0D1));overflow-x:auto;scrollbar-width:none;
   animation:o2Drop .5s var(--o2-ease) both}
 .o2-jump::-webkit-scrollbar{display:none}
-.o2-jump>b{flex:none;font:600 11px/1 var(--mono,var(--font,system-ui));letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3,#5f6766);margin-right:4px}
+.o2-jump>b{flex:none;font:600 11px/1 var(--mono,var(--font,system-ui));letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3,#785751);margin-right:4px}
 .o2-jump a{position:relative;flex:none;display:inline-flex;gap:6px;align-items:center;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:500;
-  text-decoration:none;color:var(--mut,var(--ink-2,#5a6064));transition:color .25s,background .25s,transform .2s var(--o2-spring)}
+  text-decoration:none;color:var(--mut,var(--ink-2,#75514D));transition:color .25s,background .25s,transform .2s var(--o2-spring)}
 .o2-jump a i{font:600 10px/1 var(--mono,var(--font,system-ui));font-style:normal;opacity:.55}
 .o2-jump a:hover{color:var(--o2-acc);background:color-mix(in srgb,var(--o2-acc) 9%,transparent);transform:translateY(-1px)}
 .o2-jump a[aria-current=true]{color:#fff;background:var(--o2-acc);box-shadow:0 6px 16px -8px var(--o2-acc)}
