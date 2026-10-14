@@ -6,7 +6,7 @@
 <title>Today · OPAI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#EDE0D4"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#F0F4F3"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
 <style>
@@ -26,7 +26,7 @@ h1{margin:0 0 10px;font-size:clamp(34px,6vw,56px);line-height:1.05;letter-spacin
 .ctas{display:flex;gap:12px;flex-wrap:wrap}
 .pill{display:inline-flex;align-items:center;gap:9px;padding:13px 22px;border-radius:999px;border:0;font-weight:500;font-size:15px;text-decoration:none;white-space:nowrap}
 .pill.teal{background:var(--teal);color:#fff}.pill.teal:hover{background:var(--teal-2)}.pill.teal i{width:8px;height:8px;border-radius:50%;background:var(--coral)}
-.pill.coral{background:var(--coral-soft);color:var(--coral-ink)}.pill.coral:hover{background:#F9D6CA}
+.pill.coral{background:var(--coral-soft);color:var(--coral-ink)}.pill.coral:hover{background:#DEE7E3}
 .pill.line{background:transparent;border:1px solid var(--hair);color:var(--ink)}.pill.line:hover{background:var(--card)}
 .tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0 4px}
 .chip{padding:5px 12px;border-radius:999px;border:1px solid var(--hair);background:var(--card);font:12px/18px var(--mono);color:var(--ink-2)}
@@ -59,10 +59,10 @@ h1{margin:0 0 10px;font-size:clamp(34px,6vw,56px);line-height:1.05;letter-spacin
 .sec{font:11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:26px 0 10px}
 .row{display:flex;justify-content:space-between;gap:10px;padding:11px 16px;border:1px solid var(--hair);border-radius:14px;background:var(--card);font-size:14px;margin-bottom:8px}.row .m{font:12px var(--mono);color:var(--ink-3);white-space:nowrap}
 .note{border:1px dashed var(--line-2);border-radius:20px;padding:22px;color:var(--ink-2)}
-.pend{border-color:#F3B9A9;background:#FFF6F2}
+.pend{border-color:#DAD2C0;background:#F7FAF9}
 .err{color:var(--bad)}
 dialog{border:1px solid var(--hair);border-radius:24px;background:var(--card);color:var(--ink);padding:22px;width:min(440px,92vw)}
-dialog::backdrop{background:rgba(42,27,18,.4)}dialog h3{margin:0 0 6px;font-size:20px}
+dialog::backdrop{background:rgba(27,21,22,.4)}dialog h3{margin:0 0 6px;font-size:20px}
 dialog label{display:block;margin:14px 0 6px;font-size:13px;color:var(--ink-2)}
 dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-radius:12px;color:var(--ink);padding:10px;font:inherit;min-height:70px}
 .en{display:flex;gap:6px}.en button{flex:1;padding:10px 0;border-radius:12px;border:1px solid var(--hair);background:#fff}.en button.p{background:var(--teal);color:#fff;border-color:var(--teal)}
@@ -74,7 +74,7 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
 </head>
 <body>
 <main>
-  <svg class="deco" viewBox="0 0 520 360" aria-hidden="true" fill="none" stroke="#B08968" stroke-width="1"><g opacity=".55"><ellipse cx="330" cy="170" rx="150" ry="95"/><ellipse cx="330" cy="170" rx="118" ry="74"/><ellipse cx="330" cy="170" rx="86" ry="53"/><ellipse cx="330" cy="170" rx="54" ry="32"/><path d="M180 170c0 60 66 100 150 100s150-40 150-100M180 170c0-60 66-100 150-100s150 40 150 100"/></g><path d="M0 130C140 40 360 60 520 190" stroke="#7F5539" opacity=".5"/></svg>
+  <svg class="deco" viewBox="0 0 520 360" aria-hidden="true" fill="none" stroke="#E09F62" stroke-width="1"><g opacity=".55"><ellipse cx="330" cy="170" rx="150" ry="95"/><ellipse cx="330" cy="170" rx="118" ry="74"/><ellipse cx="330" cy="170" rx="86" ry="53"/><ellipse cx="330" cy="170" rx="54" ry="32"/><path d="M180 170c0 60 66 100 150 100s150-40 150-100M180 170c0-60 66-100 150-100s150 40 150 100"/></g><path d="M0 130C140 40 360 60 520 190" stroke="#1A404D" opacity=".5"/></svg>
   <div class="eyebrow"><span><i></i><span id="eb">TODAY</span></span><span class="guard"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>Deterministic guardrails active</span></div>
   <section class="hero">
     <div><h1 id="hi">Good day.</h1><p class="lede" id="sum" aria-live="polite">Loading your day…</p></div>

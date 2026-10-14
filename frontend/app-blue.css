@@ -30,43 +30,43 @@
 .jv-main,
 .jv-ctx,
 .prompts button {
-  background-color: rgba(255, 255, 255, 0.90);
+  background-color: rgba(255,255,255, 0.90);
 }
 
 /* Blue glass treatment for secondary surfaces */
 .quick button,
 .spc-node,
 .pl-node {
-  background-color: rgba(245, 249, 255, 0.88);
+  background-color: rgba(249,251,250, 0.88);
 }
 
 /* Stronger blue navigation state */
 .nav button.on {
-  background: rgba(61, 90, 254, 0.16);
-  color: #8fb8ff;
+  background: rgba(122,175,193, 0.16);
+  color: #B6D1D6;
   box-shadow:
-    inset 2px 0 0 #3d8bff,
-    0 0 18px -7px rgba(45, 132, 255, 0.9);
+    inset 2px 0 0 #7BAFC1,
+    0 0 18px -7px rgba(112,169,188, 0.9);
 }
 
 /* Search / controls */
 .search-btn,
 .conn {
-  background: rgba(4, 23, 61, 0.72) !important;
-  border-color: rgba(92, 160, 255, 0.18) !important;
+  background: rgba(16,41,49, 0.72) !important;
+  border-color: rgba(144,188,203, 0.18) !important;
 }
 
 /* Blue accent for the existing orange/gold accent system */
 :root {
-  --accent: #3D8BFF;
-  --accent-d: #6EACFF;
-  --accent-soft: rgba(61, 139, 255, 0.14);
-  --good: #39D6A0;
-  --good-soft: rgba(57, 214, 160, 0.13);
-  --warn: #FFB84D;
-  --warn-soft: rgba(255, 184, 77, 0.14);
-  --bad: #FF6B7A;
-  --bad-soft: rgba(255, 107, 122, 0.14);
+  --accent: #7BAFC1;
+  --accent-d: #9CC4D1;
+  --accent-soft: rgba(123,175,193, 0.14);
+  --good: #5C9DB3;
+  --good-soft: rgba(92,157,179, 0.13);
+  --warn: #E1A46B;
+  --warn-soft: rgba(225,164,107, 0.14);
+  --bad: #E5B385;
+  --bad-soft: rgba(229,179,133, 0.14);
 }
 
 /* Make the brand mark electric blue */
@@ -74,11 +74,11 @@
   background:
     radial-gradient(
       circle at 34% 28%,
-      #B8DDFF 0%,
-      #3D8BFF 48%,
-      #0755D9 100%
+      #D3E2E1 0%,
+      #7BAFC1 48%,
+      #45869B 100%
     ) !important;
-  box-shadow: 0 0 20px rgba(61, 139, 255, 0.65) !important;
+  box-shadow: 0 0 20px rgba(123,175,193, 0.65) !important;
 }
 
 /* Blue futuristic focus/orb */
@@ -87,9 +87,9 @@
     radial-gradient(
       circle at 32% 28%,
       #fff 0 12%,
-      #8CC8FF 35%,
-      #3D8BFF 62%,
-      #0755D9 100%
+      #B4D0D6 35%,
+      #7BAFC1 62%,
+      #45869B 100%
     ) !important;
 }
 
@@ -102,7 +102,7 @@
 .welcome p,
 .ctx-row,
 .ctx-note {
-  color: #53627C;
+  color: #3E7C91;
 }
 
 /* Responsive background behavior */

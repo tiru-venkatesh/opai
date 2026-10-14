@@ -38,10 +38,10 @@
   /* ---------------- banner ---------------- */
   var CSS = '#opai-conn{position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:99999;max-width:min(560px,calc(100vw - 20px));' +
     'display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-radius:12px;font:500 13px/1.35 system-ui,sans-serif;' +
-    'background:var(--card,#fff);color:var(--ink,#1c1b19);border:1px solid var(--line,#DEC6AC);box-shadow:0 6px 24px rgba(0,0,0,.18)}' +
-    '#opai-conn[hidden]{display:none}#opai-conn[data-s=waking]{border-color:#c98a1b}#opai-conn[data-s=offline],#opai-conn[data-s=mismatch]{border-color:#b3402f}' +
+    'background:var(--card,#fff);color:var(--ink,#1E1718);border:1px solid var(--line,#C8D8D4);box-shadow:0 6px 24px rgba(0,0,0,.18)}' +
+    '#opai-conn[hidden]{display:none}#opai-conn[data-s=waking]{border-color:#D16F13}#opai-conn[data-s=offline],#opai-conn[data-s=mismatch]{border-color:#D06E12}' +
     '#opai-conn .sp{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:opaiconn 0.9s linear infinite}' +
-    '#opai-conn button{font:600 12px system-ui,sans-serif;padding:4px 10px;border-radius:8px;border:1px solid var(--line,#DEC6AC);background:transparent;color:inherit;cursor:pointer}' +
+    '#opai-conn button{font:600 12px system-ui,sans-serif;padding:4px 10px;border-radius:8px;border:1px solid var(--line,#C8D8D4);background:transparent;color:inherit;cursor:pointer}' +
     '#opai-conn button:focus-visible{outline:2px solid currentColor;outline-offset:2px}' +
     '@keyframes opaiconn{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){#opai-conn .sp{animation:none}}';
 

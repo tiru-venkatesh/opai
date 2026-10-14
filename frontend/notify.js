@@ -26,12 +26,12 @@
   function toast(n) {
     var el = document.createElement('div');
     el.setAttribute('role', 'status');
-    el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:84px;max-width:min(92vw,420px);z-index:99999;background:#1C140E;color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:12px 14px;font:14px/1.4 system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.4)';
+    el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:84px;max-width:min(92vw,420px);z-index:99999;background:#1D1617;color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:12px 14px;font:14px/1.4 system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.4)';
     var b = document.createElement('b'); b.textContent = n.title; el.appendChild(b);
     el.appendChild(document.createElement('br'));
     el.appendChild(document.createTextNode(n.body));
     var row = document.createElement('div'); row.style.cssText = 'margin-top:8px;display:flex;gap:8px';
-    function btn(label, fn) { var x = document.createElement('button'); x.textContent = label; x.style.cssText = 'border:0;border-radius:10px;padding:6px 12px;background:#9C6644;color:#fff;font:inherit;cursor:pointer'; x.onclick = function () { fn(); el.remove(); }; row.appendChild(x); }
+    function btn(label, fn) { var x = document.createElement('button'); x.textContent = label; x.style.cssText = 'border:0;border-radius:10px;padding:6px 12px;background:#5A9CB2;color:#fff;font:inherit;cursor:pointer'; x.onclick = function () { fn(); el.remove(); }; row.appendChild(x); }
     if (n.link) btn('Open', function () { location.href = n.link; });
     if (n.data && n.data.reminder_id) {
       btn('Done', function () { api('/v1/reminders/' + n.data.reminder_id + '/done', { method: 'POST', body: JSON.stringify({ user_id: uid }) }); });
@@ -86,7 +86,7 @@
     if (localStorage.getItem('opai_notify_dismissed')) return;
     var b = document.createElement('button');
     b.textContent = 'Turn on reminders & daily plan';
-    b.style.cssText = 'position:fixed;left:14px;bottom:14px;z-index:99998;border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:9px 14px;background:#1C140E;color:#fff;font:600 13px system-ui,sans-serif;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35)';
+    b.style.cssText = 'position:fixed;left:14px;bottom:14px;z-index:99998;border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:9px 14px;background:#1D1617;color:#fff;font:600 13px system-ui,sans-serif;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35)';
     b.onclick = function () {
       Notification.requestPermission().then(function (p) {
         b.remove();

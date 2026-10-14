@@ -1850,7 +1850,7 @@ let SPC_LINK_FROM = null;
 let SPC_DRAG = null;
 function spcState() { return S.studyPlanCanvas[SPC_MODE]; }
 function spcSetMode(m) { if (m === 'pipeline') { SPC_VIEW = 'pipeline'; } else { SPC_VIEW = 'board'; SPC_MODE = m; } SPC_LINK_FROM = null; render(true); }
-const SPC_COLORS = ['#7CA8E0','#4ADE80','#FBBF24','#C084FC','#F87171','#9CA3AF'];
+const SPC_COLORS = ['#91BDCB','#6DA7BB','#E18D3E','#B3C4CC','#E5B384','#9AAEAE'];
 function spcAddNode() {
   const st = spcState();
   const perRow = 3;
@@ -2057,7 +2057,7 @@ function spcBoardHTML() {
   const animIds = SPC_ANIMATE_IDS;
   const nodesHTML = st.nodes.map((n, idx) => {
     const isNew = animIds && animIds.has(n.id);
-    return '<div class="spc-node' + (SPC_LINK_FROM === n.id ? ' spc-linking' : '') + (isNew ? ' spc-enter' : '') + '" data-id="' + n.id + '" style="left:' + n.x + 'px;top:' + n.y + 'px;border-left-color:' + (n.color || '#7CA8E0') + (isNew ? ';animation-delay:' + (idx * 110) + 'ms' : '') + '">' +
+    return '<div class="spc-node' + (SPC_LINK_FROM === n.id ? ' spc-linking' : '') + (isNew ? ' spc-enter' : '') + '" data-id="' + n.id + '" style="left:' + n.x + 'px;top:' + n.y + 'px;border-left-color:' + (n.color || '#91BDCB') + (isNew ? ';animation-delay:' + (idx * 110) + 'ms' : '') + '">' +
       '<div class="spc-node-h"><b>' + esc(n.title) + '</b><div class="spc-node-actions">' +
         '<button title="Connect an arrow" onclick="spcToggleLink(\'' + n.id + '\')">' + icon('send', 12) + '</button>' +
         '<button title="Edit" onclick="spcEditNode(\'' + n.id + '\')">' + icon('edit', 12) + '</button>' +
