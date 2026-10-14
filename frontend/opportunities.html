@@ -121,14 +121,8 @@ function list(a){return a&&a.length?'<ul>'+a.map(function(x){return '<li>'+esc(x
 
 /* ---------- hero (summary) ---------- */
 async function hero(){
-  try{var s=await api('/v1/opp/summary');var n=s.recommended_next_action;
-  $('hero').innerHTML='<div class="card"><h2>Your opportunity search</h2><div class="row">'+
-    '<span class="pill">'+'<b data-n="'+s.strong_to_review+'">0</b>'+' strong to review</span><span class="pill warn">'+'<b data-n="'+s.deadlines_this_week+'">0</b>'+' deadline(s) this week</span>'+
-    '<span class="pill">'+'<b data-n="'+s.applications_waiting_for_you+'">0</b>'+' application(s) waiting for you</span><span class="pill">'+'<b data-n="'+s.professors_with_research_match+'">0</b>'+' professor match(es)</span>'+
-    '<span class="pill">'+'<b data-n="'+s.drafts_awaiting_approval+'">0</b>'+' draft(s) to approve</span><span class="pill">'+'<b data-n="'+s.followups_due+'">0</b>'+' follow-up(s) due</span>'+(s.programs_live?'<span class="pill good"><b data-n="'+s.programs_live+'">0</b> program(s) open or active</span>':'')+(s.programs_to_verify?'<span class="pill warn"><b data-n="'+s.programs_to_verify+'">0</b> program(s) to verify</span>':'')+'</div>'+
-    (n?'<p style="margin:10px 0 0"><b>Next:</b> '+esc(n.text)+'</p>':'<p class="mut" style="margin:10px 0 0">Nothing urgent. Add an opportunity to get started.</p>')+
-    '<div class="row" style="margin-top:8px"><button class="b alt" id="bprof">Edit my profile</button></div></div>';
-  $('bprof').onclick=profileModal;countUp($('hero'))}catch(e){$('hero').innerHTML=''}}
+  $('hero').innerHTML='<div class="row" style="justify-content:flex-end;margin:0 0 6px"><button class="b alt" id="bprof">Edit my profile</button></div>';
+  $('bprof').onclick=profileModal}
 
 /* ---------- profile ---------- */
 async function profileModal(){
