@@ -2,24 +2,24 @@
  * Loaded LAST (after app.css, fx.css). Re-skins tokens, shell and components
  * without touching app.js markup. Delete this file to roll back.
  *
- * Palette  paper #F8F6F2 · ink #32060C · cobalt #C9727D · sidebar #29050A
+ * Palette  paper #F2F4F8 · ink #0F1729 · cobalt #3D5AFE · sidebar #0C1222
  * Type     Bricolage Grotesque (headings) · Onest (UI) · JetBrains Mono (numbers)
  */
 
 /* ---------- tokens ---------- */
 html:root:root:root{
-  --bg:#F8F6F2; --surface:#FFFFFF; --surface-2:#F4F0EA;
-  --ink:#32060C; --ink-2:#8C2E3A; --ink-3:#C15B69;
-  --line:#F0EBE1; --line-2:#E5DBC9;
-  --accent:#C9727D; --accent-d:#B94655; --accent-soft:#F7F4EE; --on-accent:#fff;
-  --good:#781A27; --good-soft:#F0EAE0;
-  --warn:#996729; --warn-soft:#EFEAE0;
-  --bad:#CA8939;  --bad-soft:#F4F0EA;
-  --c-app:#C9727D; --c-out:#C98736; --c-proj:#781A27; --c-acad:#D0828D; --c-req:#D0954E; --c-opp:#C15B69;
-  --side:#29050A;
+  --bg:#F2F4F8; --surface:#FFFFFF; --surface-2:#E9EDF5;
+  --ink:#0F1729; --ink-2:#4A5570; --ink-3:#7C86A0;
+  --line:#E2E6EF; --line-2:#CDD3E1;
+  --accent:#3D5AFE; --accent-d:#2740D8; --accent-soft:#E6EAFF; --on-accent:#fff;
+  --good:#12805C; --good-soft:#DDF3EA;
+  --warn:#B7620B; --warn-soft:#FCEBD3;
+  --bad:#C93A3A;  --bad-soft:#FBE3E3;
+  --c-app:#3D5AFE; --c-out:#E0871F; --c-proj:#12805C; --c-acad:#8B5CF6; --c-req:#D9455F; --c-opp:#7C86A0;
+  --side:#0C1222;
   --r-lg:14px; --r-md:10px; --r-sm:8px;
-  --shadow-1:0 1px 2px rgba(50,6,12,.05);
-  --shadow-2:0 18px 44px -20px rgba(50,6,12,.35);
+  --shadow-1:0 1px 2px rgba(15,23,41,.05);
+  --shadow-2:0 18px 44px -20px rgba(15,23,41,.35);
   --glow:none;
   --display:'Bricolage Grotesque',system-ui,sans-serif;
   --body:'Onest',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -27,15 +27,15 @@ html:root:root:root{
   color-scheme:light;
 }
 html:root:root:root[data-theme="dark"]{
-  --bg:#200408; --surface:#34060C; --surface-2:#470911;
-  --ink:#F5F1EA; --ink-2:#D6949D; --ink-3:#BB4A59;
-  --line:#540A14; --line-2:#59292F;
-  --accent:#DBA8A9; --accent-d:#E5CFC4; --accent-soft:#5F0D18; --on-accent:#200408;
-  --good:#BE5563; --good-soft:#34060C;
-  --warn:#D6A466; --warn-soft:#34230E;
-  --bad:#E2C197;  --bad-soft:#4B0912;
-  --c-app:#DBA8A9; --c-out:#D6A466; --c-proj:#BE5563; --c-acad:#E0BDB7; --c-req:#E2C197; --c-opp:#BB4A59;
-  --side:#180306;
+  --bg:#0A0E1A; --surface:#121828; --surface-2:#1A2136;
+  --ink:#E8ECF7; --ink-2:#A3ADC7; --ink-3:#6F7A96;
+  --line:#1E2640; --line-2:#2C3654;
+  --accent:#7F93FF; --accent-d:#A8B5FF; --accent-soft:#1C2450; --on-accent:#0A0E1A;
+  --good:#3DD6A0; --good-soft:#0E2C25;
+  --warn:#F2A54A; --warn-soft:#33240F;
+  --bad:#FF7A7A;  --bad-soft:#3A1A1E;
+  --c-app:#7F93FF; --c-out:#F2A54A; --c-proj:#3DD6A0; --c-acad:#B197FC; --c-req:#FF7A90; --c-opp:#6F7A96;
+  --side:#070A14;
   --shadow-1:0 0 0 1px var(--line);
   --shadow-2:0 24px 60px -24px rgba(0,0,0,.7);
   color-scheme:dark;
@@ -50,23 +50,23 @@ h1,h2,h3,h4,.head h1,.panel-h h3{font-family:var(--display)}
 ::selection{background:var(--accent-soft);color:var(--accent-d)}
 
 /* ---------- shell: docked sidebar on desktop ---------- */
-.side{background:var(--side);color:#DFB9B4;border-right:0;box-shadow:none}
+.side{background:var(--side);color:#B9C0D6;border-right:0;box-shadow:none}
 .brand-mark{background:var(--accent);border-radius:10px;box-shadow:none}
 .brand-mark svg{stroke:var(--on-accent)}
 .brand b{color:#fff;font-size:19px;font-weight:650}
-.brand span{font-family:var(--body);font-size:12px;letter-spacing:0;text-transform:none;color:#C3606D}
-.search-btn{display:flex;background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);color:#D18791;border-radius:10px}
+.brand span{font-family:var(--body);font-size:12px;letter-spacing:0;text-transform:none;color:#7D87A6}
+.search-btn{display:flex;background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);color:#9AA3BE;border-radius:10px}
 .search-btn:hover{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.18)}
-.nav-group{font-family:var(--body);font-size:12px;letter-spacing:0;text-transform:none;font-weight:600;color:#B94857;padding:16px 10px 6px}
-.nav button{color:#DFB9B4;border-radius:10px;padding:9px 11px;font-size:14px}
+.nav-group{font-family:var(--body);font-size:12px;letter-spacing:0;text-transform:none;font-weight:600;color:#6C7695;padding:16px 10px 6px}
+.nav button{color:#B9C0D6;border-radius:10px;padding:9px 11px;font-size:14px}
 .nav button:hover{background:rgba(255,255,255,.07);color:#fff;padding-left:11px}
-.nav button.on{background:rgba(219,168,169,.16);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
+.nav button.on{background:rgba(127,147,255,.16);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
 html:root:root:root .nav button.on .count{background:var(--accent);color:var(--on-accent)}
-.nav .count{background:rgba(255,255,255,.1);color:#EFEAE0}
-.nav .count.alert{background:var(--warn);color:#32060C}
+.nav .count{background:rgba(255,255,255,.1);color:#DDE2F2}
+.nav .count.alert{background:var(--warn);color:#0F1729}
 .conn{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.08);border-radius:10px}
-.conn b{font-family:var(--body);letter-spacing:0;text-transform:none;font-size:12.5px;color:#D59099}
-.conn i{background:#D59099}
+.conn b{font-family:var(--body);letter-spacing:0;text-transform:none;font-size:12.5px;color:#7EE7C0}
+.conn i{background:#7EE7C0}
 
 @media (min-width:1024px){
   .side{transform:none;width:264px}
@@ -149,7 +149,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .panel::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;
   background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--accent) 12%,transparent),transparent 70%)}
 .panel:hover::before{opacity:1;display:block}
-.panel:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:0 16px 32px -22px rgba(50,6,12,.4)}
+.panel:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:0 16px 32px -22px rgba(15,23,41,.4)}
 .panel:has(input:focus),.panel:has(textarea:focus),.panel:has(.dialog){transform:none}
 
 /* buttons: spring press + ripple */
@@ -181,7 +181,7 @@ input[type=checkbox].ck:checked:not(:disabled){animation:fxTick .4s var(--spring
 
 /* live status dot: soft ring pulse */
 .conn i{animation:fxRing 2.2s ease-out infinite}
-@keyframes fxRing{0%{box-shadow:0 0 0 0 color-mix(in srgb,currentColor 0%,#D59099)}70%{box-shadow:0 0 0 7px rgba(213,144,153,0)}100%{box-shadow:0 0 0 0 rgba(213,144,153,0)}}
+@keyframes fxRing{0%{box-shadow:0 0 0 0 color-mix(in srgb,currentColor 0%,#7EE7C0)}70%{box-shadow:0 0 0 7px rgba(126,231,192,0)}100%{box-shadow:0 0 0 0 rgba(126,231,192,0)}}
 
 /* progress bars fill from left */
 .kh-bar b,.bar>i,.progress>i{transform-origin:left;animation:fxFill .9s var(--out) backwards}
