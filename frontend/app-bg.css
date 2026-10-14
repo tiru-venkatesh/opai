@@ -4,30 +4,30 @@ html:not([data-theme="light"]) body{background:#09171C}
 html:not([data-theme="light"]) body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 background:linear-gradient(rgba(9,23,28,.80),rgba(9,23,28,.80)),var(--opai-bg) center/cover no-repeat}
 html:not([data-theme="light"]) #page,html:not([data-theme="light"]) .app{background:transparent!important}
-html:not([data-theme="light"]) :root,html:not([data-theme="light"]){--accent:#E6CCB2;--accent-d:#E6CCB2;--accent-soft:rgba(132,181,197,.15)}
+html:not([data-theme="light"]) :root,html:not([data-theme="light"]){--accent:#84B5C5;--accent-d:#BED6D9;--accent-soft:rgba(132,181,197,.15)}
 html:not([data-theme="light"]) .panel,html:not([data-theme="light"]) .hm-card,html:not([data-theme="light"]) .kcard,html:not([data-theme="light"]) .col{background:rgba(14,36,44,.55)!important;border-color:rgba(156,196,209,.18)!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 html:not([data-theme="light"]) .hdr{background:rgba(9,23,28,.55)!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-color:rgba(156,196,209,.15)!important}
 html:not([data-theme="light"]) .side{background:rgba(9,23,28,.82)!important}
-html:not([data-theme="light"]) .btn:not(.ghost):not(.soft),html:not([data-theme="light"]) .nav button.on{background-color:#B08968;color:#fff}
+html:not([data-theme="light"]) .btn:not(.ghost):not(.soft),html:not([data-theme="light"]) .nav button.on{background-color:#72AABC;color:#fff}
 /* KARNA chat shows the same background */
 html:not([data-theme="light"]) .jv-main{background:rgba(9,23,28,.35)!important}
 
 /* ---- Light theme: same background, lightened ---- */
-html[data-theme="light"] body{background:#F6EBE1}
+html[data-theme="light"] body{background:#F5F8F7}
 html[data-theme="light"] body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
-background:linear-gradient(rgba(246,235,225,.88),rgba(246,235,225,.88)),var(--opai-bg) center/cover no-repeat}
+background:linear-gradient(rgba(247,250,249,.88),rgba(247,250,249,.88)),var(--opai-bg) center/cover no-repeat}
 html[data-theme="light"] #page,html[data-theme="light"] .app{background:transparent!important}
-html[data-theme="light"],html[data-theme="light"] :root{--accent:#B08968;--accent-d:#4A8DA4;--accent-soft:#EFF3F2}
+html[data-theme="light"],html[data-theme="light"] :root{--accent:#72AABC;--accent-d:#4A8DA4;--accent-soft:#EFF3F2}
 html[data-theme="light"] .panel,html[data-theme="light"] .hm-card,html[data-theme="light"] .kcard,html[data-theme="light"] .col{background:rgba(255,255,255,.72)!important;border-color:rgba(114,170,188,.16)!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 html[data-theme="light"] .hdr{background:rgba(255,255,255,.7)!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-color:rgba(114,170,188,.14)!important}
-html[data-theme="light"] .btn:not(.ghost):not(.soft),html[data-theme="light"] .nav button.on{background-color:#B08968;color:#fff}
-html[data-theme="light"] .hdr-av,html[data-theme="light"] .av{background:#B08968;color:#fff}
+html[data-theme="light"] .btn:not(.ghost):not(.soft),html[data-theme="light"] .nav button.on{background-color:#72AABC;color:#fff}
+html[data-theme="light"] .hdr-av,html[data-theme="light"] .av{background:#72AABC;color:#fff}
 /* Auto theme with a light OS: no data-theme attribute */
 @media (prefers-color-scheme:light){
-html:not([data-theme]) body{background:#F6EBE1}
-html:not([data-theme]) body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(rgba(246,235,225,.88),rgba(246,235,225,.88)),var(--opai-bg) center/cover no-repeat}
+html:not([data-theme]) body{background:#F5F8F7}
+html:not([data-theme]) body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(rgba(247,250,249,.88),rgba(247,250,249,.88)),var(--opai-bg) center/cover no-repeat}
 html:not([data-theme]) #page,html:not([data-theme]) .app{background:transparent!important}
-html:not([data-theme]){--accent:#B08968;--accent-d:#4A8DA4;--accent-soft:#EFF3F2}
+html:not([data-theme]){--accent:#72AABC;--accent-d:#4A8DA4;--accent-soft:#EFF3F2}
 html:not([data-theme]) .panel,html:not([data-theme]) .hm-card,html:not([data-theme]) .kcard,html:not([data-theme]) .col{background:rgba(255,255,255,.72)!important;border-color:rgba(114,170,188,.16)!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 html:not([data-theme]) .hdr{background:rgba(255,255,255,.7)!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 }

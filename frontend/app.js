@@ -1850,7 +1850,7 @@ let SPC_LINK_FROM = null;
 let SPC_DRAG = null;
 function spcState() { return S.studyPlanCanvas[SPC_MODE]; }
 function spcSetMode(m) { if (m === 'pipeline') { SPC_VIEW = 'pipeline'; } else { SPC_VIEW = 'board'; SPC_MODE = m; } SPC_LINK_FROM = null; render(true); }
-const SPC_COLORS = ['#91BDCB','#B08968','#E18D3E','#B3C4CC','#E5B384','#9AAEAE'];
+const SPC_COLORS = ['#91BDCB','#6DA7BB','#E18D3E','#B3C4CC','#E5B384','#9AAEAE'];
 function spcAddNode() {
   const st = spcState();
   const perRow = 3;
@@ -2503,7 +2503,7 @@ const NAV = [
   { id:'outreach', l:'Internships', i:'mail' },
   { id:'projects', l:'Projects', i:'layers', g:'Work' },
   { id:'academics', l:'Academics', i:'book' },
-  { id:'coding', l:'Coding', i:'target', href:'work.html#coding' },
+  { id:'dsa', l:'DSA Roadmap', i:'target', href:'dsa.html' },
   { id:'sems', l:'Exams & Courses', i:'grad' },
   { id:'requests', l:'Requests', i:'chat' },
   { id:'outbox', l:'Outbox', i:'send', g:'Tools' },

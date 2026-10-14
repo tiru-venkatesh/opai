@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Work · OPAI</title>
-<meta name="theme-color" content="#EDE0D4">
+<meta name="theme-color" content="#F0F4F3">
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
 <style>
-:root{--bg:#EDE0D4;--ink:#332116;--mut:#5C5F63;--pri:#7F5539;--line:#DDB892;--font:'Geist',system-ui,sans-serif}
+:root{--bg:#F0F4F3;--ink:#1B1516;--mut:#5C5F63;--pri:#1A404D;--line:#D8E2E0;--font:'Geist',system-ui,sans-serif}
 *{box-sizing:border-box}html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--ink);font:15px/22px var(--font);display:flex;flex-direction:column}
 .wk-bar{position:sticky;top:64px;z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 92%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:0 12px}
@@ -35,8 +35,9 @@ body.opai-pad{padding-top:64px}
 /* Work = one home for everything you build and apply for. Each tab loads its page inside this shell (lazy). */
 var TABS=[
  ['internship','Internship','opportunities.html?embed=1'],
- ['coding','Coding','coding.html?embed=1'],
+ ['programs','Hackathons & Programs','projects.html?view=programs&embed=1'],
  ['projects','Projects','projects.html?view=projects&embed=1'],
+ ['dsa','DSA','dsa.html?embed=1'],
  ['resume','Resume','resume-lab.html?embed=1'],
  ['academics','Academics','academics.html?embed=1']
 ];
@@ -44,7 +45,6 @@ var tabsEl=document.getElementById('tabs'),fr=document.getElementById('frames'),
 tabsEl.innerHTML=TABS.map(function(t){return '<button role="tab" id="t-'+t[0]+'" aria-selected="false" data-k="'+t[0]+'">'+t[1]+'</button>'}).join('');
 TABS.forEach(function(t){var f=document.createElement('iframe');f.id='f-'+t[0];f.title=t[1];fr.appendChild(f)});
 function show(k,push){
-  if(k==='programs'||k==='dsa')k='coding';
   if(!TABS.some(function(t){return t[0]===k}))k='internship';
   TABS.forEach(function(t){var on=t[0]===k;document.getElementById('t-'+t[0]).setAttribute('aria-selected',on);
     var f=document.getElementById('f-'+t[0]);f.classList.toggle('on',on);

@@ -6,25 +6,25 @@ html{filter:grayscale(1)}
 
 html:root:root:root{
   --bg:#F3F6F5; --surface:rgba(255,255,255,.78); --surface-2:rgba(239,243,242,.85);
-  --ink:#110C09; --ink-2:#4F494C; --ink-3:#839499;
+  --ink:#0B0909; --ink-2:#4F494C; --ink-3:#839499;
   --line:rgba(0,0,0,.09); --line-2:rgba(0,0,0,.18);
-  --accent:#110C09; --accent-d:#000; --accent-soft:rgba(0,0,0,.06); --on-accent:#fff;
+  --accent:#0B0909; --accent-d:#000; --accent-soft:rgba(0,0,0,.06); --on-accent:#fff;
   --good:#231B1C; --good-soft:rgba(0,0,0,.07); --warn:#403435; --warn-soft:rgba(0,0,0,.07);
   --bad:#000; --bad-soft:rgba(0,0,0,.10);
-  --c-app:#1B120D; --c-out:#555356; --c-proj:#392D2E; --c-acad:#6B7D83; --c-req:#000; --c-opp:#8EA0A3;
+  --c-app:#130F0F; --c-out:#555356; --c-proj:#392D2E; --c-acad:#6B7D83; --c-req:#000; --c-opp:#8EA0A3;
   --side:rgba(255,255,255,.70);
   --r-lg:20px; --r-md:14px; --r-sm:10px;
   --shadow-1:0 1px 0 #fff inset,0 8px 24px -14px rgba(0,0,0,.25);
   --shadow-2:0 28px 60px -26px rgba(0,0,0,.45);
   --display:'Plus Jakarta Sans',system-ui,sans-serif; --body:'Plus Jakarta Sans',system-ui,sans-serif;
-  --pine:#110C09; --pine-soft:rgba(0,0,0,.06);
+  --pine:#0B0909; --pine-soft:rgba(0,0,0,.06);
   color-scheme:light;
 }
 html:root:root:root[data-theme="dark"]{
   --bg:#060404; --surface:rgba(32,26,26,.72); --surface-2:rgba(52,40,41,.8);
-  --ink:#F6EBE1; --ink-2:#ADC0BD; --ink-3:#73868D;
+  --ink:#F3F7F6; --ink-2:#ADC0BD; --ink-3:#73868D;
   --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.20);
-  --accent:#F6EBE1; --accent-d:#fff; --accent-soft:rgba(255,255,255,.10); --on-accent:#110C09;
+  --accent:#F3F7F6; --accent-d:#fff; --accent-soft:rgba(255,255,255,.10); --on-accent:#0B0909;
   --good:#E1E9E7; --warn:#C7D7D3; --bad:#fff;
   --side:rgba(19,15,15,.75);
   --shadow-1:0 1px 0 rgba(255,255,255,.06) inset,0 10px 28px -14px rgba(0,0,0,.8);
@@ -65,7 +65,7 @@ html[data-theme="dark"] .overlay{background:rgba(0,0,0,.6)!important}
 .side{background:var(--side)!important;color:var(--ink-2)!important;border-right:1px solid var(--line)!important;
   backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:none!important}
 .side .brand span,.side-foot,.side .kbd{color:var(--ink-3)!important}
-.brand-mark{background:#110C09!important;border-radius:12px!important;box-shadow:none!important}
+.brand-mark{background:#0B0909!important;border-radius:12px!important;box-shadow:none!important}
 .brand-mark svg{stroke:#fff!important}
 html[data-theme="dark"] .brand-mark{background:#fff!important}
 html[data-theme="dark"] .brand-mark svg{stroke:#000!important}

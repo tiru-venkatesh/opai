@@ -15,7 +15,7 @@
   function header(){
     var old=document.querySelector('body > header, body > .app > header, header');
     var hd=h('<header class="opai-hd" role="banner"><div class="in"><a class="opai-logo" href="today.html" aria-label="OPAI home">'+LOGO+'<span><b>OPAI</b><small>v8</small></span></a>'+
-      '<nav class="opai-pills" aria-label="Pages">'+NAV.map(function(n){return '<a href="'+n[1]+'"'+((n[1]===path||(n[1]==='work.html'&&/^(opportunities|dsa|coding|projects|academics|applications)\.html$/.test(path)))?' aria-current="page"':'')+'>'+n[0]+'</a>'}).join('')+'</nav>'+
+      '<nav class="opai-pills" aria-label="Pages">'+NAV.map(function(n){return '<a href="'+n[1]+'"'+((n[1]===path||(n[1]==='work.html'&&/^(opportunities|dsa|projects|academics|applications)\.html$/.test(path)))?' aria-current="page"':'')+'>'+n[0]+'</a>'}).join('')+'</nav>'+
       '<div class="opai-right"><button class="opai-k" type="button" id="opai-k" aria-label="Search sections">Search <kbd>Ctrl K</kbd></button><span class="opai-st" id="opai-st"><i></i><span>Connecting…</span></span>'+
       (isChat?'':'<button class="opai-ib" type="button" id="hd-guide" title="Guide: which section does what" aria-label="Open the guide">'+icons().guide+'</button><button class="opai-ib" type="button" id="hd-install" title="Install OPAI as an app" aria-label="Install OPAI as an app">'+icons().dl+'</button>')+'<a class="opai-user" href="profile.html" title="Profile" aria-label="Open your profile"'+(path==='profile.html'?' aria-current="page"':'')+'><span class="av" id="opai-av">·</span><span><b id="opai-un">Account</b><small id="opai-us">OPAI</small></span></a></div></div></header>');
     var pos=old?getComputedStyle(old).position:'';
