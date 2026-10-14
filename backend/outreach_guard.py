@@ -2,8 +2,8 @@
 
 Rules from the OPAI plan:
   * never contact someone on the do-not-contact / bounce list
-  * never re-email the same recipient inside RECONTACT_DAYS
-  * cap manually approved emails per rolling 24h (default 5)
+  * never re-email the same recipient inside RECONTACT_HOURS (default 24h)
+  * no daily cap on how many different professors you can email (set OPAI_OUTREACH_DAILY_CAP to add one)
   * never keep two pending drafts for the same contact
 """
 from __future__ import annotations
@@ -17,14 +17,25 @@ from sqlalchemy.orm import Session
 
 from database import Contact, OutboxItem, OutreachHistory, SuppressedContact
 
-RECONTACT_DAYS = int(os.getenv("OPAI_RECONTACT_DAYS", "30"))
+def _recontact_hours() -> int:
+    try:
+        return max(1, int(os.getenv("OPAI_RECONTACT_HOURS", "24")))
+    except ValueError:
+        return 24
+
+
+UNLIMITED = 10 ** 6
 
 
 def daily_cap() -> int:
+    """Unlimited by default. Gmail's own sending limits still apply and are shown as errors."""
+    raw = os.getenv("OPAI_OUTREACH_DAILY_CAP", "").strip()
+    if not raw or raw == "0":
+        return UNLIMITED
     try:
-        return max(1, int(os.getenv("OPAI_OUTREACH_DAILY_CAP", "5")))
+        return max(1, int(raw))
     except ValueError:
-        return 5
+        return UNLIMITED
 
 
 class Blocked(Exception):
@@ -80,10 +91,11 @@ def check_can_draft(db: Session, uid: str, contact: Contact) -> None:
     if sup:
         raise Blocked(409, "suppressed", f"{contact.email} is on your do-not-contact list ({sup.reason}).")
     last = last_contacted(db, uid, contact.email)
-    if last and datetime.utcnow() - last < timedelta(days=RECONTACT_DAYS):
-        days = (datetime.utcnow() - last).days
+    hrs = _recontact_hours()
+    if last and datetime.utcnow() - last < timedelta(hours=hrs):
+        ago = int((datetime.utcnow() - last).total_seconds() // 3600)
         raise Blocked(409, "recently_contacted",
-                      f"You emailed {contact.email} {days} day(s) ago. Wait {RECONTACT_DAYS} days between emails to the same person.")
+                      f"You emailed {contact.email} {ago} hour(s) ago. Wait {hrs} hours before emailing the same professor again. Other professors are not affected.")
     pending = (db.query(OutboxItem)
                .filter(OutboxItem.user_id == uid, OutboxItem.status == "pending")
                .all())
