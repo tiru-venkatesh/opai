@@ -99,7 +99,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
   /* Render's free tier may be asleep: retry sign-in a few times before giving up */
   async function ensureUser(){
     if(uid)return uid;
-    if(!mail){location.replace('login.html?next=review.html');throw new Error('Please sign in')}
+    if(!mail){location.replace('app.html?next=review.html');throw new Error('Please sign in')}
     var last;
     for(var i=0;i<5;i++){
       if(i>0){var w=$('mine');if(w&&/^(Loading|Waking)/.test(w.textContent))w.textContent='Waking up the server… this can take up to a minute the first time.'}

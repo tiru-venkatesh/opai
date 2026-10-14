@@ -115,7 +115,7 @@ def on_startup():
         import rag_service
         rag_service.warmup()             # embedder loads in the background; requests never wait for it
         import auth_guard
-        if auth_guard.mode() != "off":
+        if auth_guard.mode() != "off" and not auth_guard.local_bypass_enabled():
             auth_guard.warm_keys()
     except Exception:
         pass
@@ -1753,4 +1753,8 @@ def import_courses_csv_confirm(payload: CourseCsvConfirm, db: Session = Depends(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")), reload=os.getenv("RELOAD", "1") == "1" and not os.getenv("PORT"))
+    local_bypass = os.getenv("OPAI_LOCAL_AUTH_BYPASS", "").strip().lower() in ("1", "true", "yes", "on")
+    # Keep the no-login development server on this computer only. Hosted services
+    # set PORT and continue binding publicly with their platform's access controls.
+    host = "127.0.0.1" if local_bypass and not os.getenv("PORT") else "0.0.0.0"
+    uvicorn.run("main:app", host=host, port=int(os.getenv("PORT", "8000")), reload=os.getenv("RELOAD", "1") == "1" and not os.getenv("PORT"))

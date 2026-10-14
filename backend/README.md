@@ -5,12 +5,15 @@ needs to run as a **persistent process** (not a serverless function) —
 see why in the root project's notes on Vercel. Render, Railway, and
 Fly.io all work; so does any VPS.
 
-## Local run (unchanged)
+## Local development run
 ```bash
 pip install -r requirements.txt
 export GROQ_API_KEY="your key"
+export OPAI_LOCAL_AUTH_BYPASS=1
 python main.py
 ```
+
+On Windows PowerShell, set the local-only bypass with `$env:OPAI_LOCAL_AUTH_BYPASS = '1'` before `python main.py`. It accepts unauthenticated requests only from loopback and binds the standalone development server to `127.0.0.1`. Do not set it on a hosted service.
 
 ## Deploying to Render / Railway / Fly.io
 

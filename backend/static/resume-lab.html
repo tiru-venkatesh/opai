@@ -59,7 +59,7 @@ async function api(path,opt){opt=opt||{};var q=path+(path.indexOf('?')<0?'?':'&'
   var r=await fetch(API+q,{method:opt.method||'GET',headers:{'Content-Type':'application/json'},body:opt.body?JSON.stringify(Object.assign({user_id:uid},opt.body)):undefined});
   var d=null;try{d=await r.json()}catch(e){}
   if(!r.ok){var m=d&&d.detail;if(Array.isArray(m))m=m.map(function(x){return x.msg}).join('; ');throw new Error(m||('Request failed ('+r.status+')'))}return d}
-async function ensureUser(){if(uid)return;var e=null;try{e=localStorage.getItem('opai_sc_email')}catch(x){}if(!e){location.replace('login.html');throw new Error('Please sign in')}var r=await fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(e),{method:'POST'});var d=await r.json();uid=d.user_id}
+async function ensureUser(){if(uid)return;var e=null;try{e=localStorage.getItem('opai_sc_email')}catch(x){}if(!e){location.replace('app.html');throw new Error('Please sign in')}var r=await fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(e),{method:'POST'});var d=await r.json();uid=d.user_id}
 function pills(a,cls){return (a&&a.length)?a.map(function(x){return '<span class="pill '+(cls||'')+'">'+esc(x)+'</span>'}).join(''):'<span class="mut">none</span>'}
 function bar(p){return '<div class="bar" role="img" aria-label="'+esc(p)+' percent"><i style="width:'+Math.max(0,Math.min(100,+p||0))+'%"></i></div>'}
 function sel(){return '<label for="opp">Or use a saved opportunity</label><select id="opp"><option value="">None</option></select>'}

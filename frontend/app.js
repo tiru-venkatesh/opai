@@ -13,7 +13,9 @@
    demo rows so the app never breaks.
    ===================================================================== */
 const LS_BASE = 'opa_api_base';
-const DEFAULT_API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8000' : 'https://opa-52ug.onrender.com';
+const LOCAL_DEMO_MODE = location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|::1)$/i.test(location.hostname);
+const LOCAL_DEMO_EMAIL = 'local@opa.local';
+const DEFAULT_API = LOCAL_DEMO_MODE ? 'http://127.0.0.1:8000' : 'https://opa-52ug.onrender.com';
 const getBase = () => (localStorage.getItem(LS_BASE) || DEFAULT_API).replace(/\/+$/, '');
 
 async function api(path, opts = {}) {
@@ -61,8 +63,9 @@ const appToApi = (v) => ({
 async function ensureUser() {
   if (BACKEND.userId) return BACKEND.userId;
   let r;
-  if (AUTH.user && AUTH.user.email) {
-    r = await POST('/v1/auth/dev-login?email=' + encodeURIComponent(AUTH.user.email) + '&name=' + encodeURIComponent(AUTH.user.name || ''));
+  const email = LOCAL_DEMO_MODE ? LOCAL_DEMO_EMAIL : (AUTH.user && AUTH.user.email);
+  if (email) {
+    r = await POST('/v1/auth/dev-login?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(LOCAL_DEMO_MODE ? 'Local User' : (AUTH.user.name || '')));
   } else {
     throw new Error('Not signed in');
   }
@@ -1153,7 +1156,7 @@ function draftProposal(id) {
 /* ---- Outbox ---- */
 function viewOutbox() {
   const h = head('Outbox', 'Every message passes through here. Nothing is delivered without your approval.', '');
-  const info = '<div class="note" style="margin:0 0 18px;max-width:720px">' + (AUTH.user ? 'Approving sends the email from your Gmail (' + esc(AUTH.user.email) + ').' : 'Demo mode: approving only marks a message as approved. Sign in with Google to send real email.') + '</div>';
+  const info = '<div class="note" style="margin:0 0 18px;max-width:720px">' + (AUTH.user ? 'Approving sends the email from your Gmail (' + esc(AUTH.user.email) + ').' : 'Local demo mode: approval only updates this workspace. Email delivery is unavailable while sign-in is paused.') + '</div>';
   if (!S.outbox.length) return h + info + emptyPanel('Your outbox is empty', 'Draft an outreach email or a client proposal and it will wait here for your approval.', '<button class="btn" onclick="switchTab(\'outreach\')">Go to Outreach</button>');
   const order = { pending: 0, approved: 1, rejected: 2 };
   const items = S.outbox.slice().sort((a, b) => order[a.status] - order[b.status]);
@@ -1164,7 +1167,7 @@ function viewOutbox() {
 }
 function approveOutbox(id) {
   const o = byId('outbox', id); if (!o || o.status !== 'pending') return;
-  if (!AUTH.user) { finishApprove(o, 'Not delivered in demo mode'); toast('Approved. Sign in with Google to send real email.'); return; }
+  if (!AUTH.user) { finishApprove(o, 'Not delivered in demo mode'); toast('Approved in this workspace. Email was not sent.'); return; }
   if (SENDING.has(id)) return;
   if (!gmailToken()) { askGmail(id); return; }
   sendViaGmail(id);
@@ -2865,6 +2868,10 @@ function enterUser(u) {
 function renderUser() {
   const c = $('userchip'); if (!c) return;
   c.style.display = '';
+  if (LOCAL_DEMO_MODE) {
+    c.innerHTML = '<div class="av">L</div><div><b>Local workspace</b><span>Sign-in paused</span></div>';
+    return;
+  }
   const u = AUTH.user;
   const nm = u ? (u.name || u.email) : 'User';
   const av = u && u.photo ? '<img src="' + escA(u.photo) + '" alt="" referrerpolicy="no-referrer">' : esc((nm[0] || 'U').toUpperCase());
@@ -2876,13 +2883,13 @@ function signOutNow() {
   AUTH.user = null; GMAIL.token = null; GMAIL.exp = 0;
   try { localStorage.removeItem(LS_SESSION); localStorage.removeItem('opai_sc_email'); localStorage.removeItem('opai_sc_photo'); } catch (e) {}
   $('userchip').style.display = 'none';
-  const done = () => location.replace('login.html');
+  const done = () => location.replace('app.html');
   if (a) a.signOut().then(done, done); else done();
 }
 function accountPanel() {
   const u = AUTH.user;
   const h = '<section class="panel form-panel" style="margin-top:20px"><h3 style="font-family:var(--display);font-size:18px;font-weight:650;margin-bottom:8px">Account</h3>';
-  if (!u) return h + '<p class="row-s" style="margin-bottom:16px">You are not signed in.</p><div class="data-actions"><button class="btn" onclick="signOutNow()">Sign in</button></div></section>';
+  if (!u) return h + '<p class="row-s" style="margin-bottom:16px">Local demo workspace. Sign-in is paused while the account flow is being rebuilt.</p></section>';
   const on = !!gmailToken();
   const until = on ? new Date(GMAIL.exp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
   return h + '<p class="row-s" style="margin-bottom:6px">Signed in as <b>' + esc(u.email) + '</b></p><p class="row-s" style="margin-bottom:16px">Gmail: ' + (on ? 'connected until about ' + until : 'not connected. You will be asked to click OK when you approve a draft.') + '</p><div class="data-actions">' + (on ? '' : '<button class="btn" onclick="askGmail()">Connect Gmail</button>') + '<button class="btn ghost" onclick="signOutNow()">Sign out</button></div></section>';
@@ -2894,12 +2901,36 @@ function accountPanel() {
     const n = location.hash.replace('#/', '');
     cur = VIEWS[n] ? n : 'today';
   } catch (e) { cur = 'today'; }
+  if (LOCAL_DEMO_MODE) {
+    try { localStorage.setItem('opai_sc_email', LOCAL_DEMO_EMAIL); localStorage.setItem('opa_api_base', 'http://127.0.0.1:8000'); } catch (e) {}
+    LS_KEY = wsKey('local-demo');
+    S = load();
+    if (!S.profile.name) S.profile.name = 'Local User';
+    S.profile.email = LOCAL_DEMO_EMAIL;
+    save();
+    renderUser();
+    render(true);
+    syncBackend().then(() => { updateConnBadge(); render(true); });
+    return;
+  }
   const a = fbInit();
-  if (!a) { location.replace('login.html'); return; }
+  if (!a) {
+    LS_KEY = 'opa_ws_offline';
+    S = load();
+    renderUser();
+    render(true);
+    return;
+  }
   let first = true;
   a.onAuthStateChanged((u) => {
     if (u) { if (!AUTH.user || AUTH.user.uid !== u.uid) enterUser(u); }
-    else if (first) location.replace('login.html');
+    else if (first) {
+      /* Keep the workspace usable while sign-in is paused; backend sync stays optional. */
+      LS_KEY = 'opa_ws_offline';
+      S = load();
+      renderUser();
+      render(true);
+    }
     first = false;
   });
 })();
@@ -3088,7 +3119,7 @@ const TIPS = {
   'workspace right now': 'A live count of what is open across all your pages.',
   'recent activity': 'The latest things done in your workspace.',
   'structured memory': 'Facts KARNA remembers about you. Confirm the right ones and delete the wrong ones.',
-  account: 'Who you are signed in as. Sign out here to switch accounts.',
+  account: 'Your workspace profile and local data.',
   'data on this device': 'Backup, restore or delete your data.',
   'connect gmail': 'Lets approved emails be sent from your Gmail. Nothing is sent without your approval.',
   'how the draft reads': 'A preview of how KARNA will sound in the email. Edit anything before approving.',

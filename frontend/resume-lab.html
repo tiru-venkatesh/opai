@@ -34,7 +34,7 @@ ul{margin:4px 0;padding-left:18px}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;display:none;z-index:99}
 @media (prefers-reduced-motion:no-preference){.card{transition:box-shadow .2s ease,border-color .2s ease}.card:hover{box-shadow:0 8px 22px rgba(23,80,74,.10)}}
 </style>
-<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)&&location.protocol!=='file:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 <link rel="stylesheet" href="opai-mobile.css">
 </head>
 <body>
@@ -60,7 +60,7 @@ async function api(path,opt){opt=opt||{};var q=path+(path.indexOf('?')<0?'?':'&'
   var r=await fetch(API+q,{method:opt.method||'GET',headers:{'Content-Type':'application/json'},body:opt.body?JSON.stringify(Object.assign({user_id:uid},opt.body)):undefined});
   var d=null;try{d=await r.json()}catch(e){}
   if(!r.ok){var m=d&&d.detail;if(Array.isArray(m))m=m.map(function(x){return x.msg}).join('; ');throw new Error(m||('Request failed ('+r.status+')'))}return d}
-async function ensureUser(){if(uid)return;var e=null;try{e=localStorage.getItem('opai_sc_email')}catch(x){}if(!e){location.replace('login.html');throw new Error('Please sign in')}var r=await fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(e),{method:'POST'});var d=await r.json();uid=d.user_id}
+async function ensureUser(){if(uid)return;var e=null;try{e=localStorage.getItem('opai_sc_email')}catch(x){}if(!e){location.replace('app.html');throw new Error('Please sign in')}var r=await fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(e),{method:'POST'});var d=await r.json();uid=d.user_id}
 function pills(a,cls){return (a&&a.length)?a.map(function(x){return '<span class="pill '+(cls||'')+'">'+esc(x)+'</span>'}).join(''):'<span class="mut">none</span>'}
 function bar(p){return '<div class="bar" role="img" aria-label="'+esc(p)+' percent"><i style="width:'+Math.max(0,Math.min(100,+p||0))+'%"></i></div>'}
 function sel(){return '<label for="opp">Or use a saved opportunity</label><select id="opp"><option value="">None</option></select>'}

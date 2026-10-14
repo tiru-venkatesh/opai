@@ -142,14 +142,6 @@ details>summary::marker{transition:transform .3s}
 html.o2-embed .o2-top{display:none}
 @media print{.o2-top,.o2-jump{display:none!important}}
 
-/* Page-to-page crossfade between section pages (Chromium; other browsers just navigate) */
-@media(prefers-reduced-motion:no-preference){
-  @view-transition{navigation:auto}
-  ::view-transition-old(root){animation:o2Out .18s ease both}
-  ::view-transition-new(root){animation:o2InV .32s var(--o2-ease) both}
-}
-@keyframes o2Out{to{opacity:0;transform:translateY(-6px)}}
-@keyframes o2InV{from{opacity:0;transform:translateY(10px)}}
 
 /* ================= reduced motion ================= */
 @media(prefers-reduced-motion:reduce){

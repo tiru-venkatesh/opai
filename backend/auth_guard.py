@@ -17,6 +17,7 @@ OPAI_REQUIRE_VERIFIED   default 1: the token's email must be verified (Google si
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import json
 import logging
 import os
@@ -45,6 +46,23 @@ _uid_cache: Dict[str, Tuple[str, float]] = {}
 def mode() -> str:
     m = os.getenv("OPAI_AUTH_MODE", "log").strip().lower()
     return m if m in ("off", "log", "enforce") else "log"
+
+
+def local_bypass_enabled() -> bool:
+    return os.getenv("OPAI_LOCAL_AUTH_BYPASS", "").strip().lower() in ("1", "true", "yes", "on")
+
+
+def _local_dev_bypass(scope) -> bool:
+    """Allow unauthenticated API use only when explicitly enabled and called over loopback."""
+    if not local_bypass_enabled():
+        return False
+    client = scope.get("client")
+    if not client or not client[0]:
+        return False
+    try:
+        return ipaddress.ip_address(client[0]).is_loopback
+    except ValueError:
+        return False
 
 
 def _project() -> str:
@@ -151,7 +169,7 @@ class AuthGuard:
     async def __call__(self, scope, receive, send):
         m = mode()
         path = scope.get("path", "")
-        if scope["type"] != "http" or m == "off" or scope["method"] == "OPTIONS" \
+        if scope["type"] != "http" or _local_dev_bypass(scope) or m == "off" or scope["method"] == "OPTIONS" \
                 or not path.startswith("/v1/") or path.startswith(EXEMPT_PREFIXES):
             return await self.app(scope, receive, send)
 
@@ -223,7 +241,7 @@ class AuthGuard:
 
 def assert_same_user(request, user_id) -> None:
     """For multipart routes (the guard cannot read form fields): the user_id the form names must be the token's user."""
-    if mode() != "enforce":
+    if mode() != "enforce" or _local_dev_bypass(request.scope):
         return
     uid = request.scope.get("opai_uid")
     if uid is None or _norm(user_id) != uid:

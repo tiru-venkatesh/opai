@@ -111,7 +111,7 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
     if (uid) return uid;
     const em = new URLSearchParams(location.search).get('email') || localStorage.getItem('opai_sc_email');
     if (em) { localStorage.setItem('opai_sc_email', em); uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(em), { method: 'POST' })).user_id; return uid; }
-    location.replace('login.html'); throw new Error('Please sign in');
+    location.replace('app.html'); throw new Error('Please sign in');
   }
   const d = new Date(), h = d.getHours();
   const greet = () => $('hi').textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + (name ? ', ' + name : '') + '.';

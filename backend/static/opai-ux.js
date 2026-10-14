@@ -9,16 +9,13 @@
   apply(current());
   mq.addEventListener&&mq.addEventListener('change',function(){if(!saved())apply(current())});
   addEventListener('storage',function(e){if(e.key===KEY)apply(current())});
-  window.OPAI_THEME={get:current,set:function(t){try{localStorage.setItem(KEY,t)}catch(e){}apply(t);sync()},toggle:function(ev){
-    var next=current()==='dark'?'light':'dark',self=this,RMq=matchMedia('(prefers-reduced-motion:reduce)').matches;
-    if(!RMq&&document.startViewTransition&&ev&&ev.clientX!=null){
-      var x=ev.clientX,y=ev.clientY,r=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y));
-      root.classList.add('opai-vt');
-      var vt=document.startViewTransition(function(){self.set(next)});
-      vt.ready.then(function(){root.animate({clipPath:['circle(0px at '+x+'px '+y+'px)','circle('+r+'px at '+x+'px '+y+'px)']},{duration:650,easing:'cubic-bezier(.22,.61,.36,1)',pseudoElement:'::view-transition-new(root)'})}).catch(function(){});
-      vt.finished.finally(function(){root.classList.remove('opai-vt')});return}
-    root.classList.add('opai-swap');clearTimeout(window.__oSw);window.__oSw=setTimeout(function(){root.classList.remove('opai-swap')},500);
-    this.set(next)}};
+  window.OPAI_THEME={get:current,set:function(t){try{localStorage.setItem(KEY,t)}catch(e){}apply(t);sync()},toggle:function(){
+    var next=current()==='dark'?'light':'dark';
+    /* Keep the theme toggle local and lightweight; View Transitions can reject
+       while another navigation is starting (for example during reauth). */
+    root.classList.add('opai-swap');clearTimeout(window.__oSw);
+    this.set(next);
+    window.__oSw=setTimeout(function(){root.classList.remove('opai-swap')},500)}};
 
   var SUN='<svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
       MOON='<svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';

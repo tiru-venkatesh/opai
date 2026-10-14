@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OPAI Internship · OPAI</title>
+<meta name="theme-color" content="#F6F4EE">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
+<style>
+:root{--bg:#F6F4EE;--card:#fff;--ink:#16181A;--mut:#5a6064;--pri:#17504A;--coral:#E8705A;--line:#e3e0d6;--bad:#b3261e;--good:#17704a;--font:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/22px var(--font);min-height:100vh}
+main{max-width:1080px;margin:0 auto;padding:20px 16px 120px}
+h1{font-size:clamp(28px,5vw,40px);line-height:1.1;letter-spacing:-.03em;margin:6px 0 10px;color:var(--pri)}
+h2{font-size:20px;letter-spacing:-.01em;margin:0 0 6px}
+h3{font-size:16px;margin:0}
+.sub{color:var(--mut);margin:0 0 16px;max-width:44em}
+.sec{padding:34px 0 6px;border-top:1px solid var(--line);margin-top:30px}
+.hero{border-top:0;margin-top:0;padding-top:8px}
+.eyebrow{font:600 12px/16px var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--pri)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card p{color:var(--mut);margin:6px 0 0;font-size:14px}
+.grid{display:grid;gap:12px}
+.g4{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font:600 12px/18px var(--font);background:color-mix(in srgb,var(--pri) 12%,transparent);color:var(--pri)}
+.pill.warn{background:color-mix(in srgb,var(--coral) 16%,transparent);color:var(--coral)}
+.mut{color:var(--mut);font-size:13px}
+button.b,a.b{border:1px solid var(--pri);background:var(--pri);color:#fff;border-radius:10px;padding:9px 16px;font:600 14px var(--font);cursor:pointer;text-decoration:none;display:inline-block}
+button.b.alt,a.b.alt{background:transparent;color:var(--pri)}
+button.b.sm,a.b.sm{padding:6px 12px;font-size:13px}
+button:disabled{opacity:.55;cursor:default}
+.trust{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 0;padding:0;list-style:none}
+.trust li{font-size:12.5px;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:3px 11px}
+.role{display:flex;flex-direction:column;transition:transform .18s,box-shadow .18s,border-color .18s}
+.role:hover{transform:translateY(-2px);border-color:var(--pri)}
+.role dl{margin:10px 0 12px;font-size:14px}
+.role dt{font:600 11px/16px var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--pri);margin-top:8px}
+.role dd{margin:0}
+.role .row{margin-top:auto;padding-bottom:12px}
+.role .b{align-self:flex-start}
+.tl{display:grid;grid-template-columns:repeat(4,1fr);list-style:none;padding:0;margin:0;counter-reset:s}
+.tl li{position:relative;padding:34px 16px 0 0;counter-increment:s}
+.tl li:before{content:"";position:absolute;top:11px;left:0;right:0;height:1px;background:var(--line)}
+.tl li:after{content:counter(s);position:absolute;top:0;left:0;width:24px;height:24px;border-radius:50%;background:var(--pri);color:#fff;font:700 12px/24px var(--font);text-align:center}
+.tl b{display:block}.tl span{color:var(--mut);font-size:14px}
+.checks{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:8px 24px}
+.checks li{padding-left:26px;position:relative}
+.checks li:before{content:"✓";position:absolute;left:0;color:var(--pri);font-weight:700}
+.fit ul{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:6px;color:var(--mut);font-size:14px}
+.fit.good li:before{content:"+ ";color:var(--good);font-weight:700}
+.fit.bad li:before{content:"− ";color:var(--bad);font-weight:700}
+.steps{padding-left:20px;margin:0;color:var(--mut);display:grid;gap:6px}
+.apply{display:grid;grid-template-columns:5fr 7fr;gap:28px;align-items:start}
+form{display:grid;gap:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:grid;gap:5px;font-size:12px;font-weight:600;color:var(--mut)}
+.req{color:var(--coral)}
+input,textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:14px var(--font);background:var(--card);color:var(--ink)}
+textarea{min-height:100px;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--pri);outline-offset:0}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.consent{display:flex;gap:8px;align-items:flex-start;font-weight:400;color:var(--mut);font-size:13px}
+.consent input{width:auto;margin-top:3px}
+.status{display:none;border-radius:10px;padding:10px 12px;font-size:14px}
+.status.show{display:block}
+.status.ok{background:color-mix(in srgb,var(--good) 12%,transparent);border:1px solid var(--good)}
+.status.err{background:color-mix(in srgb,var(--bad) 10%,transparent);border:1px solid var(--bad)}
+details{border-top:1px solid var(--line);padding:12px 0}details:last-of-type{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary:after{content:"+";color:var(--pri);font-size:18px;line-height:1}
+details[open] summary:after{content:"−"}
+details p{color:var(--mut);margin:8px 0 0;max-width:46em}
+.final{text-align:center}.final .row{justify-content:center}
+@media(max-width:820px){.apply{grid-template-columns:1fr}.tl{grid-template-columns:1fr}.tl li{padding:0 0 22px 38px}.tl li:before{top:0;bottom:0;left:11px;right:auto;width:1px;height:auto}}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
+<link rel="stylesheet" href="opai-mobile.css">
+</head>
+<body>
+<main id="main">
+
+  <section class="sec hero" id="top">
+    <p class="eyebrow">OPAI Internship</p>
+    <h1>Build real AI products, not slide decks.</h1>
+    <p class="sub">Work on live OPAI projects across AI agents, automation, product design and full-stack development. Own a real feature, ship a demo, build proof.</p>
+    <div class="row"><a class="b" href="#apply">Apply for internship</a><a class="b alt" href="#roles">View open roles</a></div>
+    <div id="applied"></div>
+    <ul class="trust"><li>Remote-friendly</li><li>Flexible hours</li><li>Mentorship</li><li>Real product work</li><li>Portfolio-worthy output</li></ul>
+  </section>
+
+  <section class="sec" id="why">
+    <h2>Why intern with OPAI</h2>
+    <p class="sub">A small team, real users, weekly feedback.</p>
+    <div class="grid g4">
+      <div class="card"><h3>Build real products</h3><p>Features people can actually try, not dummy assignments.</p></div>
+      <div class="card"><h3>Learn AI practically</h3><p>AI agents, prompt design, automation and product workflows.</p></div>
+      <div class="card"><h3>Get mentorship</h3><p>Weekly feedback on product thinking, execution and communication.</p></div>
+      <div class="card"><h3>Create proof of work</h3><p>Leave with a shipped demo, a GitHub contribution or a case study.</p></div>
+    </div>
+  </section>
+
+  <section class="sec" id="roles">
+    <h2>Open roles</h2>
+    <p class="sub">All roles are remote, 4–8 weeks, about 10–15 hours a week. <b>Unpaid for now</b>: a stipend or performance-based reward is not confirmed, and final terms are shared in writing before you start.</p>
+    <div class="grid g3" id="roleGrid"></div>
+  </section>
+
+  <section class="sec" id="timeline">
+    <h2>What you will do</h2>
+    <p class="sub">From first call to portfolio piece in four steps.</p>
+    <ol class="tl">
+      <li><b>Week 1 · Onboard</b><span>Understand OPAI, pick a project, define your goal.</span></li>
+      <li><b>Weeks 2–3 · Build</b><span>Own a small feature, demo or research task.</span></li>
+      <li><b>Weeks 4–5 · Ship</b><span>Test with users, improve, document the results.</span></li>
+      <li><b>Final week · Present</b><span>Submit a demo, a retrospective and a case study.</span></li>
+    </ol>
+  </section>
+
+  <section class="sec" id="get">
+    <h2>What you get</h2>
+    <p class="sub">Concrete outputs, not just a line on a CV.</p>
+    <ul class="checks">
+      <li>Mentorship and weekly feedback</li><li>Real project experience</li>
+      <li>GitHub contribution or project credit</li><li>LinkedIn-ready internship experience</li>
+      <li>Certificate of completion, if you meet the completion criteria</li><li>Priority consideration for future OPAI roles</li>
+      <li>A shipped demo or case study for your portfolio</li>
+    </ul>
+  </section>
+
+  <section class="sec" id="fit">
+    <h2>Who should apply</h2>
+    <p class="sub">Be honest with yourself; it saves everyone time.</p>
+    <div class="grid g2">
+      <div class="card fit good"><h3>Good fit</h3><ul><li>Students or early builders</li><li>Curious about AI, agents and automation</li><li>Can commit 10–15 hours per week</li><li>Comfortable learning in public and asking questions</li><li>Want to build something real</li></ul></div>
+      <div class="card fit bad"><h3>Not a good fit</h3><ul><li>Looking only for a certificate</li><li>Cannot attend weekly check-ins</li><li>Expect a fully structured classroom course</li><li>Not willing to do independent research or execution</li></ul></div>
+    </div>
+  </section>
+
+  <section class="sec" id="apply-sec">
+    <div class="apply">
+      <div>
+        <h2>How to apply</h2>
+        <p class="sub">Under five minutes.</p>
+        <ol class="steps"><li>Fill in the short application form.</li><li>Share your GitHub, portfolio or one project link.</li><li>Short task or intro call.</li><li>Onboarding and project allocation.</li></ol>
+      </div>
+      <form id="apply" class="card" novalidate aria-labelledby="ft">
+        <h3 id="ft">Application</h3>
+        <div class="two">
+          <label><span>Name <span class="req">*</span></span><input name="name" autocomplete="name" required maxlength="120"></label>
+          <label><span>Email <span class="req">*</span></span><input name="email" type="email" autocomplete="email" required maxlength="160"></label>
+        </div>
+        <div class="two">
+          <label><span>College / year <span class="req">*</span></span><input name="college" placeholder="e.g. JNTUK, 2nd year" required maxlength="160"></label>
+          <label><span>Role of interest <span class="req">*</span></span><select name="role" id="roleSel" required><option value="">Select a role</option></select></label>
+        </div>
+        <label><span>GitHub or portfolio link <span class="req">*</span></span><input name="link" type="url" placeholder="https://github.com/you" required maxlength="300"></label>
+        <label><span>What do you want to build? <span class="req">*</span></span><textarea name="build" maxlength="800" placeholder="2–4 sentences. Be specific." required></textarea></label>
+        <label><span>Weekly availability <span class="req">*</span></span>
+          <select name="hours" required><option value="">Select</option><option>Less than 8 hours</option><option>8–10 hours</option><option>10–15 hours</option><option>More than 15 hours</option></select></label>
+        <div class="hp" aria-hidden="true"><label>Leave empty<input name="company" tabindex="-1" autocomplete="off"></label></div>
+        <label class="consent"><input type="checkbox" name="consent" required><span>I agree OPAI may use these details to contact me about this internship, as described in the <a href="/privacy" target="_top">Privacy Policy</a>.</span></label>
+        <button class="b" type="submit" id="submitBtn">Submit application</button>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+  </section>
+
+  <section class="sec" id="faq">
+    <h2>FAQ</h2>
+    <p class="sub">Straight answers.</p>
+    <details><summary>Is it paid?</summary><p>Not at the moment. Internships are unpaid. If a stipend or performance-based reward is added, it will be confirmed in writing before you start.</p></details>
+    <details><summary>Is it remote?</summary><p>Yes. Weekly check-ins are scheduled at a time that works in India Standard Time.</p></details>
+    <details><summary>Do I need prior experience?</summary><p>Not for every role. We look for curiosity and proof that you learn by building, such as a small project or repository.</p></details>
+    <details><summary>Will I get a certificate?</summary><p>Yes, once you meet the completion criteria agreed at onboarding: weekly check-ins attended and a final demo submitted.</p></details>
+    <details><summary>Can this become a full-time role?</summary><p>Strong interns may be considered for future roles. There is no guarantee.</p></details>
+  </section>
+
+  <section class="sec final">
+    <h2>Ready to build with OPAI?</h2>
+    <p class="sub" style="margin-inline:auto">Apply in under five minutes. Tell us what you want to create.</p>
+    <div class="row"><a class="b" href="#apply">Apply now</a></div>
+  </section>
+</main>
+
+<script src="opai-shell.js" defer></script>
+<script src="guide.js" defer></script>
+<script>
+(function(){
+var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
+var uid=null, LS='opai_internship_applied';
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+
+var ROLES=[
+ ['AI Product Intern','User research, product flows, prompts, AI feature specs','Builders interested in AI products'],
+ ['Frontend Intern','Landing pages, dashboards, responsive UI','HTML/CSS/JS or React learners'],
+ ['Full-Stack Intern','APIs, authentication, database, app features','JavaScript/TypeScript learners'],
+ ['Automation Intern','Workflows, integrations, internal tools','No-code plus automation-curious people'],
+ ['Content & Growth Intern','Landing copy, demos, social content, user outreach','Communicators and marketers']
+];
+var grid=$('roleGrid'),sel=$('roleSel');
+ROLES.forEach(function(r){
+  grid.insertAdjacentHTML('beforeend','<article class="card role"><h3>'+esc(r[0])+'</h3><dl><dt>You will work on</dt><dd>'+esc(r[1])+'</dd><dt>Ideal for</dt><dd>'+esc(r[2])+'</dd></dl>'+
+   '<div class="row"><span class="pill">4–8 weeks</span><span class="pill">10–15 hrs/week</span><span class="pill">Remote</span><span class="pill warn">Unpaid</span></div>'+
+   '<a class="b sm" href="#apply" data-role="'+esc(r[0])+'">Apply for this role</a></article>');
+  var o=document.createElement('option');o.textContent=r[0];sel.appendChild(o);
+});
+/* in-page links: scroll inside the frame, no navigation (works embedded and standalone) */
+document.addEventListener('click',function(e){
+  var a=e.target.closest('a[href^="#"]');if(!a)return;
+  e.preventDefault();var id=a.getAttribute('href').slice(1);
+  if(a.dataset.role){sel.value=a.dataset.role}
+  var t=id==='apply'?$('apply-sec'):$(id);if(t)t.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
+  if(id==='apply')setTimeout(function(){document.querySelector('#apply [name='+(sel.value?'name':'role')+']').focus({preventScroll:true})},450);
+});
+
+/* previous application (this browser only) */
+function showApplied(){
+  var a=null;try{a=JSON.parse(lsGet(LS)||'null')}catch(e){}
+  if(a&&a.role)$('applied').innerHTML='<div class="card" style="margin-top:14px"><b>Application sent</b> <span class="mut">· '+esc(a.role)+' · '+esc(a.date)+'</span><p>We will reply by email. You can apply for another role below.</p></div>';
+}
+showApplied();
+var em=lsGet('opai_sc_email');if(em)$('apply').email.value=em;
+
+async function ensureUser(){
+  if(uid)return uid;
+  var e=lsGet('opai_sc_email');
+  if(!e){throw new Error('Please sign in to apply.')}
+  var r=await fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(e),{method:'POST'});
+  var d=await r.json().catch(function(){return null});
+  if(!r.ok||!d||!d.user_id)throw new Error('Could not verify your account. Please sign in again.');
+  uid=d.user_id;return uid;
+}
+var form=$('apply'),st=$('status'),btn=$('submitBtn'),rid=null;
+function show(k,m){st.className='status show '+k;st.textContent=m}
+form.addEventListener('submit',async function(ev){
+  ev.preventDefault();
+  if(form.company.value)return;                                 /* honeypot */
+  if(!form.checkValidity()){form.reportValidity();return}
+  var d={};['name','email','college','role','link','build','hours'].forEach(function(k){d[k]=form[k].value.trim()});
+  if(!/^https?:\/\//i.test(d.link)){show('err','Please enter a link starting with http:// or https://');return}
+  rid=rid||('intern-'+Date.now().toString(36)+Math.random().toString(36).slice(2,8)); /* same id on retry = no duplicate */
+  btn.disabled=true;show('ok','Sending…');
+  try{
+    var u=await ensureUser();
+    var desc='Name: '+d.name+'\nEmail: '+d.email+'\nCollege / year: '+d.college+'\nRole: '+d.role+'\nLink: '+d.link+'\nAvailability: '+d.hours+'\n\nWhat I want to build:\n'+d.build;
+    var r=await fetch(API+'/v1/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      user_id:u,type:'general',title:('Internship application: '+d.role).slice(0,140),description:desc.slice(0,4000),
+      product_area:'Internship application',importance:'medium',page_path:'/internship',request_id:rid,allow_follow_up:true})});
+    var j=await r.json().catch(function(){return null});
+    if(!r.ok){var m=j&&j.detail;if(Array.isArray(m))m=m.map(function(x){return x.msg}).join('; ');throw new Error(m||('Request failed ('+r.status+')'))}
+    lsSet(LS,JSON.stringify({role:d.role,date:new Date().toLocaleDateString()}));
+    form.reset();if(em)form.email.value=em;rid=null;showApplied();
+    show('ok','Thanks, your application is in. We will reply by email.');
+  }catch(err){show('err',(err&&err.message)||'Could not send your application. Please try again in a minute.')}
+  btn.disabled=false;
+});
+})();
+</script>
+<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
+<script src="opai-clarity.js" defer></script>
+</body>
+</html>

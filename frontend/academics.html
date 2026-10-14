@@ -93,7 +93,7 @@ button.go.working::after{content:"";position:absolute;inset:0;background:linear-
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
-<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)&&location.protocol!=='file:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 <link rel="stylesheet" href="opai-mobile.css">
 </head>
 <body>
@@ -141,7 +141,7 @@ button.go.working::after{content:"";position:absolute;inset:0;background:linear-
   async function ensureUser() {
     if (uid) return uid;
     const em = localStorage.getItem('opai_sc_email');
-    if (!em) { location.replace('login.html'); throw new Error('Please sign in'); }
+    if (!em) { location.replace('app.html'); throw new Error('Please sign in'); }
     uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(em), { method: 'POST' })).user_id; return uid;
   }
 

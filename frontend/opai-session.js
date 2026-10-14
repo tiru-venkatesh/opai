@@ -7,6 +7,18 @@
   if (window.__opaiSession) return; window.__opaiSession = 1;
   var baseFetch = window.fetch ? window.fetch.bind(window) : null; if (!baseFetch) return;
 
+  /* Login is paused during local development. Use one isolated local workspace;
+     never reuse a real email or photo saved by an older sign-in session. */
+  var LOCAL_DEMO = location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\]|::1)$/i.test(location.hostname);
+  var LOCAL_EMAIL = 'local@opa.local';
+  if (LOCAL_DEMO) {
+    try {
+      localStorage.setItem('opai_sc_email', LOCAL_EMAIL);
+      localStorage.removeItem('opai_sc_photo');
+      localStorage.setItem('opa_api_base', 'http://127.0.0.1:8000');
+    } catch (e) {}
+  }
+
   /* ---- Firebase ID token: attached to every /v1/ call so the backend knows WHO is asking ---- */
   var FB_CONFIG = { apiKey: "AIzaSyCIXqCDmMDSO8ch451PGCbZjMYCVJLtGNs", authDomain: "opagent-3ef8b.firebaseapp.com", projectId: "opagent-3ef8b", appId: "1:701157045370:web:386c270095d7655d5037c3" };
   var SDK = 'https://www.gstatic.com/firebasejs/10.12.2/', authP = null;
@@ -38,6 +50,7 @@
   function urlOf(input) { return typeof input === 'string' ? input : (input && input.url) || ''; }
   function realFetch(input, init) {
     if (!/\/v1\//.test(urlOf(input))) return baseFetch(input, init);
+    if (LOCAL_DEMO) return baseFetch(input, init); /* avoid loading Firebase just to call the local API */
     return getToken().then(function (tok) {
       if (!tok) return baseFetch(input, init);
       var h = new Headers((init && init.headers) || (input && input.headers) || {});

@@ -17,7 +17,7 @@
     var hd=h('<header class="opai-hd" role="banner"><div class="in"><a class="opai-logo" href="today.html" aria-label="OPAI home">'+LOGO+'<span><b>OPAI</b><small>v8</small></span></a>'+
       '<nav class="opai-pills" aria-label="Pages">'+NAV.map(function(n){return '<a href="'+n[1]+'"'+((n[1]===path||(n[1]==='work.html'&&/^(opportunities|dsa|projects|academics|applications)\.html$/.test(path)))?' aria-current="page"':'')+'>'+n[0]+'</a>'}).join('')+'</nav>'+
       '<div class="opai-right"><button class="opai-k" type="button" id="opai-k" aria-label="Search sections">⌕ Ctrl K</button><span class="opai-st" id="opai-st"><i></i><span>KARNA · checking</span></span>'+
-      '<a class="opai-user" href="login.html" title="Account"><span class="av" id="opai-av">·</span><span><b id="opai-un">Account</b><small id="opai-us">OPAI</small></span></a></div></div></header>');
+      '<a class="opai-user" href="app.html" title="Account"><span class="av" id="opai-av">·</span><span><b id="opai-un">Account</b><small id="opai-us">OPAI</small></span></a></div></div></header>');
     if(isChat)return null;
     var pos=old?getComputedStyle(old).position:'';
     if(old&&(pos==='fixed'||pos==='sticky'||old.parentNode===document.body))old.replaceWith(hd);else document.body.insertBefore(hd,document.body.firstChild);

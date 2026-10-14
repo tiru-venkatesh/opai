@@ -102,7 +102,7 @@ html[data-theme=dark] .pill.Poor,html[data-theme=dark] .pill.bad,html[data-theme
 html[data-theme=dark] .note{background:#2d2616;border-color:#5a4a1f;color:#ebd9a6}
 html[data-theme=dark] .opp-stat{background:color-mix(in srgb,var(--opp-well) 55%,var(--opp-card))}
 </style>
-<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)&&location.protocol!=='file:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 </head>
 <body>
 <main id="main">
@@ -141,7 +141,7 @@ async function api(path,opt){opt=opt||{};var q=path+(path.indexOf('?')<0?'?':'&'
   if(!r.ok){var m=d&&d.detail;if(Array.isArray(m))m=m.map(function(x){return x.msg||x.loc&&x.loc.join('.')||'Invalid field'}).join('; ');throw new Error(typeof m==='string'?m:('Request failed ('+r.status+'). Please try again.'))}return d}
 function post(p,b){return api(p,{method:'POST',body:b||{}})}
 async function ensureUser(){if(uid)return uid;if(userPromise)return userPromise;
-  userPromise=(async function(){var e=storageGet('opai_sc_email');if(!e){location.replace('login.html');throw new Error('Please sign in to open your internship workspace.')}
+  userPromise=(async function(){var e=storageGet('opai_sc_email');if(!e){location.replace('app.html');throw new Error('Please sign in to open your internship workspace.')}
     var r;try{r=await fetch(API+'/v1/auth/dev-login?email='+encodeURIComponent(e.trim()),{method:'POST'})}catch(x){throw new Error('Could not reach OPAI sign-in. Check your connection and try again.')}
     var d=null;try{d=await r.json()}catch(x){}if(!r.ok||!d||!d.user_id)throw new Error((d&&d.detail)||'Your session could not be verified. Please sign in again.');uid=d.user_id;return uid})();
   try{return await userPromise}finally{userPromise=null}}

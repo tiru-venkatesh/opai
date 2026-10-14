@@ -69,7 +69,7 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
 @media(max-width:760px){main{padding:24px 12px calc(150px + env(safe-area-inset-bottom,0px))}.card{padding:18px;border-radius:20px}.card h3{font-size:22px;line-height:28px}.lede{font-size:16px;line-height:25px}.deco{opacity:.3}.ctas{width:100%}.pill{flex:1;justify-content:center}}
 @media(prefers-reduced-motion:no-preference){.card{animation:in .35s ease both}.card:nth-child(2){animation-delay:.06s}.card:nth-child(3){animation-delay:.12s}@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}}
 </style>
-<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)&&location.protocol!=='file:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 <link rel="stylesheet" href="opai-mobile.css">
 </head>
 <body>
@@ -113,7 +113,7 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
     if (uid) return uid;
     const em = new URLSearchParams(location.search).get('email') || localStorage.getItem('opai_sc_email');
     if (em) { localStorage.setItem('opai_sc_email', em); uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(em), { method: 'POST' })).user_id; return uid; }
-    location.replace('login.html'); throw new Error('Please sign in');
+    location.replace('app.html'); throw new Error('Please sign in');
   }
   const d = new Date(), h = d.getHours();
   const greet = () => $('hi').textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + (name ? ', ' + name : '') + '.';

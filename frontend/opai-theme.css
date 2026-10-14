@@ -121,17 +121,6 @@ dialog[open]{animation:oPop .3s var(--o-ease)}
 }
 
 /* ================= MOTION v2 (more of everything) ================= */
-/* page-to-page transitions (Chrome/Edge/Safari 18+; others just navigate normally). Header + dock stay put. */
-@view-transition{navigation:auto}
-.opai-hd{view-transition-name:opai-hd}.opai-dock{view-transition-name:opai-dock}
-::view-transition-old(root){animation:oVtOut .22s var(--o-ease) both}
-::view-transition-new(root){animation:oVtIn .38s var(--o-ease) .06s both}
-@keyframes oVtOut{to{opacity:0;transform:translateY(-8px) scale(.995)}}
-@keyframes oVtIn{from{opacity:0;transform:translateY(14px) scale(.995)}}
-/* theme toggle: circular reveal from the button */
-html.opai-vt::view-transition-old(root),html.opai-vt::view-transition-new(root){animation:none;mix-blend-mode:normal}
-html.opai-vt::view-transition-old(root){z-index:1}html.opai-vt::view-transition-new(root){z-index:2}
-
 /* ambient glow behind everything (very low contrast, never blocks clicks) */
 #o-amb{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;opacity:.55}
 /* PERF: static soft glow. The old version animated three 90px-blurred layers forever, which also forced every
@@ -206,7 +195,6 @@ input:focus,textarea:focus,select:focus{box-shadow:0 0 0 4px rgba(47,143,130,.15
   #o-amb,.o-ind{display:none}
   .o-w>span{animation:none!important;transform:none!important}
   .opai-st i,.opai-timer.on i,.o-in .meter>*::after,.o-in .bar>i::after,.o-shim,[class*=ask-karna],a:focus-visible,button:focus-visible{animation:none!important}
-  ::view-transition-old(root),::view-transition-new(root){animation:none!important}
   .tabs [aria-selected=true],.chip[aria-pressed=true],.seg button.on,.opai-pills a[aria-current=page]{animation:none!important}
 }
 

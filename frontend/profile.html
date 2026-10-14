@@ -108,14 +108,11 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
   </section>
 
   <section class="card" aria-labelledby="so-t">
-    <h2 id="so-t">Session</h2>
-    <p class="hint">Signing out removes your account from this browser. Your data stays safe in your account.</p>
-    <button class="btn danger" id="signout" type="button">Sign out</button>
+    <h2 id="so-t">Local workspace</h2>
+    <p class="hint">Sign-in is paused. This development workspace stays on your computer.</p>
   </section>
 </main>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 (function(){
   var $=function(id){return document.getElementById(id)};
@@ -123,7 +120,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
   var mail=localStorage.getItem('opai_sc_email');
   var uid=null,orig=null;
   var FIELDS=['name','degree','branch','cgpa','github','skills','highlight'];
-  if(!mail){location.replace('login.html');return}
+  if(!mail){location.replace('app.html');return}
 
   function api(path,opts){
     opts=opts||{};
@@ -199,22 +196,6 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
     paintTheme();
   };
   paintTheme();
-
-  /* sign out: clear local identity and the Firebase session so login.html doesn't bounce straight back in */
-  $('signout').onclick=function(){
-    var done=function(){
-      ['opai_sc_email','opai_sc_photo','opa_session'].forEach(function(k){try{localStorage.removeItem(k)}catch(e){}});window.opaiClearSession&&window.opaiClearSession();
-      location.replace('login.html');
-    };
-    $('signout').disabled=true;
-    try{
-      if(window.firebase){
-        if(!firebase.apps.length)firebase.initializeApp({apiKey:"AIzaSyCIXqCDmMDSO8ch451PGCbZjMYCVJLtGNs",authDomain:"opagent-3ef8b.firebaseapp.com",projectId:"opagent-3ef8b",appId:"1:701157045370:web:386c270095d7655d5037c3"});
-        firebase.auth().signOut().then(done,done);return;
-      }
-    }catch(e){}
-    done();
-  };
 
   load();
 })();

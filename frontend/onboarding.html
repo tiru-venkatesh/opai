@@ -67,7 +67,7 @@ input[aria-invalid=true],select[aria-invalid=true]{border-color:var(--bad,#B3382
 .loading{color:var(--ink-3,#6b7271);padding:60px 0;text-align:center}
 @media(prefers-reduced-motion:reduce){.step,.step.back{animation:none}.bar i{transition:none}}
 </style>
-<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)&&location.protocol!=='file:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 <link rel="stylesheet" href="opai-mobile.css">
 </head>
 <body>
@@ -341,7 +341,7 @@ input[aria-invalid=true],select[aria-invalid=true]{border-color:var(--bad,#B3382
     throw last;
   }
   async function boot() {
-    if (!mail) { location.replace('login.html'); return; }
+    if (!mail) { location.replace('app.html'); return; }
     try {
       var d = await withRetry(function () { return api('/v1/auth/dev-login?email=' + encodeURIComponent(mail), { method: 'POST' }); });
       uid = d.user_id;

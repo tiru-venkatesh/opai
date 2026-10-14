@@ -122,7 +122,7 @@ flowchart TD
 opa-main/
 ├── frontend/                  # Multi-page static application and landing page
 │   ├── landing.html           # Public homepage entry
-│   ├── login.html              # Sign-in UI
+│   ├── login.html              # Redirects to the workspace while sign-in is paused
 │   ├── app.html                # Main application shell
 │   ├── today.html              # Daily workspace
 │   ├── academics*.html         # Academic workflows
@@ -198,6 +198,13 @@ GROQ_API_KEY=your_groq_api_key
 Then start the API from the `backend/` directory:
 
 ```bash
+OPAI_LOCAL_AUTH_BYPASS=1 python main.py
+```
+
+On Windows PowerShell, use:
+
+```powershell
+$env:OPAI_LOCAL_AUTH_BYPASS = '1'
 python main.py
 ```
 
@@ -222,7 +229,7 @@ Open **`http://localhost:5500/landing.html`**. This project does not include a `
 
 When both services run locally, the frontend defaults to `http://localhost:8000` for its API base. If you deploy the backend elsewhere, set the frontend's `opa_api_base` browser local-storage key to the backend's base URL on the frontend origin, or update the app's configured default.
 
-> **Tip:** Open the frontend over `http://localhost` or HTTPS rather than opening the HTML file directly. Firebase sign-in and browser APIs may not work from a `file://` URL.
+Local development opens directly into one local demo workspace; the sign-in page is paused. The no-login API bypass works only for requests from this computer and only while `OPAI_LOCAL_AUTH_BYPASS=1` is set for the backend process. Keep it disabled in deployments.
 
 ## Configuration
 
@@ -301,7 +308,7 @@ The backend should run as a persistent Python web service, not as a static site.
 
 The frontend includes Firebase Authentication wiring for Google sign-in and email/password sign-in. Before deploying your own instance:
 
-1. Configure the Firebase web-app settings in the frontend's Firebase configuration blocks (`frontend/app.js` and `frontend/login.html`).
+1. Sign-in is paused in this build. Firebase sign-in can be rebuilt later; the current local workspace does not require Firebase.
 2. Enable the sign-in providers you intend to support in Firebase Authentication.
 3. Add local and deployed frontend hostnames to Firebase's authorized domains.
 4. Test sign-in, sign-out, account separation, and backend synchronization in the deployed environment.
