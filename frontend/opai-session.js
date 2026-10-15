@@ -27,9 +27,10 @@
       if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
       failedUntil = 0;                                                   /* it loaded after all: stop skipping the token */
       return firebase.auth();
-    })().catch(function () { authP = null; failedUntil = Date.now() + 60000; return null; });
+    })().catch(function () { authP = null; failedUntil = Date.now() + 15000; return null; });
     return authP;
   }
+  window.opaiFirebaseAuth = function () { return firebaseAuth(); };   /* app.js waits on this instead of giving up when the SDK is not loaded yet */
   function restoreToken() {
     return firebaseAuth().then(function (a) {
       if (!a) return null;
@@ -47,7 +48,10 @@
   /* A request never waits on Firebase for more than TOKEN_BUDGET. If the token is not ready it goes out without one. */
   function getToken() {
     if (Date.now() < failedUntil) return Promise.resolve(null);
-    return Promise.race([restoreToken(), new Promise(function (ok) { setTimeout(function () { failedUntil = Math.max(failedUntil, Date.now() + 30000); ok(null); }, TOKEN_BUDGET); })]);
+    return new Promise(function (ok) {
+      var t = setTimeout(function () { failedUntil = Math.max(failedUntil, Date.now() + 8000); ok(null); }, TOKEN_BUDGET);   /* only a real timeout marks Firebase slow, and only for 8s */
+      restoreToken().then(function (v) { clearTimeout(t); ok(v); }, function () { clearTimeout(t); ok(null); });
+    });
   }
   function urlOf(input) { return typeof input === 'string' ? input : (input && input.url) || ''; }
   /* ---- slow-server notice: a sleeping free-tier server can take up to a minute to wake ---- */

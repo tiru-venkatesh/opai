@@ -2896,7 +2896,7 @@ function accountPanel() {
 }
  
 /* ================= 11. BOOT ================= */
-(function boot() {
+(async function boot() {
   try {
     const n = location.hash.replace('#/', '');
     cur = VIEWS[n] ? n : 'today';
@@ -2913,7 +2913,11 @@ function accountPanel() {
     syncBackend().then(() => { updateConnBadge(); render(true); });
     return;
   }
-  const a = fbInit();
+  let a = fbInit();
+  if (!a && window.opaiFirebaseAuth) {            /* the SDK loads asynchronously: wait for it (max 6s) before treating the user as signed out */
+    try { await Promise.race([window.opaiFirebaseAuth(), new Promise((r) => setTimeout(r, 6000))]); } catch (e) {}
+    a = fbInit();
+  }
   if (!a) {
     LS_KEY = 'opa_ws_offline';
     S = load();
