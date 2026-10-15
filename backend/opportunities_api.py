@@ -174,9 +174,20 @@ def _skill_pool(db: Session, u: User) -> Dict[str, str]:
     return {k: v for k, v in pool.items() if k}
 
 
+def _norm_skill(x: str) -> str:
+    return re.sub(r"\s+", " ", str(x or "").strip().lower())
+
+
 def _has(pool: Dict[str, str], tag: str) -> Optional[str]:
+    """Evidence for a posting tag in the user's skills. Whole-word matches only, so "java" does not match
+    "javascript" and "react" does match "react native"."""
+    tag = _norm_skill(tag)
+    if not tag:
+        return None
+    rx = re.compile(r"(?<![a-z0-9+#])" + re.escape(tag) + r"(?![a-z0-9+#])")
     for k, src in pool.items():
-        if k == tag or (len(tag) > 3 and tag in k) or (len(k) > 3 and k in tag):
+        k = _norm_skill(k)
+        if k == tag or rx.search(k) or (len(k) > 3 and re.search(r"(?<![a-z0-9+#])" + re.escape(k) + r"(?![a-z0-9+#])", tag)):
             return src
     return None
 
@@ -322,11 +333,16 @@ def _check_requirement(req: str, prof: Dict[str, Any]) -> Dict[str, str]:
     return {"requirement": req, "status": "unknown", "why": "Cannot be checked against your profile. Verify on the posting."}
 
 
-def build_brief(db: Session, u: User, o: Opportunity) -> Dict[str, Any]:
+def brief_context(db: Session, u: User) -> Dict[str, Any]:
+    """Profile view and skill pool, built once per request. Lists of briefs used to rebuild both per row (N+1 queries)."""
+    return {"view": _profile_view(u), "pool": _skill_pool(db, u)}
+
+
+def build_brief(db: Session, u: User, o: Opportunity, ctx: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Opportunity Brief with four kinds of signal kept apart: verified facts, profile match, unknown, AI suggestion."""
-    view = _profile_view(u)
+    ctx = ctx or brief_context(db, u)
+    view, pool = ctx["view"], ctx["pool"]
     prof, confirmed = view["profile"], view["is_confirmed"]
-    pool = _skill_pool(db, u)
     tags = [t.lower() for t in (o.tags or [])]
     matched = [(t, _has(pool, t)) for t in tags if _has(pool, t)]
     gaps = [t for t in tags if not _has(pool, t)]
@@ -363,14 +379,16 @@ def build_brief(db: Session, u: User, o: Opportunity) -> Dict[str, Any]:
     ratio = (len(matched) / len(tags)) if tags else None
     if unmet:
         label = "Poor"
-    elif ratio is None:
-        label = "Unclear"
+    elif len(tags) < 2:
+        label = "Unclear"                  # one skill tag, or none, is too little to call a fit
     elif ratio >= 0.7:
         label = "Strong"
     elif ratio >= 0.4:
         label = "Good"
     else:
         label = "Partial"
+    if label == "Strong" and (not confirmed or len(tags) < 3 or unk):
+        label = "Good"                     # never say Strong on thin, unconfirmed or partly unchecked evidence
 
     days_left = (o.deadline - date.today()).days if o.deadline else None
     urgency = ("none" if days_left is None else "overdue" if days_left < 0 else "critical" if days_left <= 3 else "soon" if days_left <= 7 else "ok")
@@ -430,9 +448,9 @@ _RANK = {"Strong": 0, "Good": 1, "Partial": 2, "Unclear": 3, "Poor": 4}
 @router.get("/saved")
 def saved_opportunities(user_id: str, db: Session = Depends(get_db)):
     u = _user(db, user_id)
-    out = []
+    out, ctx = [], brief_context(db, u)
     for o in _visible_opps(db, u.id):
-        b = build_brief(db, u, o)
+        b = build_brief(db, u, o, ctx)
         out.append({**_opp_out(o), "brief": {k: b[k] for k in ("match", "eligibility", "urgency", "days_left", "estimated_prep_minutes", "recommended_next_step")}})
     out.sort(key=lambda r: (_RANK.get(r["brief"]["match"], 5), r["deadline"] or "9999"))
     return {"items": out, "count": len(out)}
@@ -441,9 +459,9 @@ def saved_opportunities(user_id: str, db: Session = Depends(get_db)):
 @router.get("/today-matches")
 def todays_matches(user_id: str, limit: int = 5, db: Session = Depends(get_db)):
     u = _user(db, user_id)
-    rows = []
+    rows, ctx = [], brief_context(db, u)
     for o in _visible_opps(db, u.id):
-        b = build_brief(db, u, o)
+        b = build_brief(db, u, o, ctx)
         if b["match"] in ("Strong", "Good") and b["urgency"] != "overdue" and b["eligibility"]["summary"] != "Does not appear eligible":
             rows.append((_RANK[b["match"]], o.deadline or date.max, b))
     rows.sort(key=lambda r: (r[0], r[1]))
@@ -610,8 +628,11 @@ def update_prep(application_id: str, p: PrepBody, db: Session = Depends(get_db))
 def delete_application(application_id: str, user_id: str, db: Session = Depends(get_db)):
     u = _user(db, user_id)
     a = _own_app(db, u.id, application_id)
+    opp = db.query(Opportunity).filter(Opportunity.id == a.opportunity_id).first() if a.opportunity_id else None
     db.query(ApplicationEvent).filter(ApplicationEvent.application_id == a.id).delete()
     db.delete(a)
+    if opp and opp.status == "Converted" and (not opp.user_id or opp.user_id == u.id):
+        opp.status = "New"            # track() marked it Converted; without this it could never be tracked again
     db.commit()
     return {"status": "deleted"}
 
@@ -1043,7 +1064,7 @@ def followup_answer(kind: str, item_id: str, p: FollowAnswer, db: Session = Depe
         db.flush()
         it.payload_hash = payload_hash(it)
         db.commit()
-        return {"result": "drafted", "outbox_id": it.id, "note": "Nothing was sent. Review it in Email & Follow-ups."}
+        return {"result": "drafted", "outbox_id": it.id, "note": "Nothing was sent. Review it in Outreach, under Outbox."}
 
     h = db.query(OutreachHistory).filter(OutreachHistory.id == item_id, OutreachHistory.user_id == u.id).first()
     if not h:
@@ -1075,7 +1096,7 @@ def followup_answer(kind: str, item_id: str, p: FollowAnswer, db: Session = Depe
     db.flush()
     it.payload_hash = payload_hash(it)
     db.commit()
-    return {"result": "drafted", "outbox_id": it.id, "note": "Nothing was sent. Review it in Email & Follow-ups."}
+    return {"result": "drafted", "outbox_id": it.id, "note": "Nothing was sent. Review it in Outreach, under Outbox."}
 
 
 # ================================================================ 8. DOCUMENTS, REPORTS, SUMMARY
@@ -1136,11 +1157,13 @@ def summary(user_id: str, db: Session = Depends(get_db)):
     """Powers the 'Your internship search' card and the Today integration."""
     u = _user(db, user_id)
     today = date.today()
-    strong = [o for o in _visible_opps(db, u.id) if build_brief(db, u, o)["match"] == "Strong"]
+    ctx = brief_context(db, u)
+    visible = _visible_opps(db, u.id)
+    strong = [o for o in visible if build_brief(db, u, o, ctx)["match"] == "Strong"]
     apps = db.query(Application).filter(Application.user_id == u.id).all()
     open_apps = [a for a in apps if stage_of(a) not in TERMINAL | {"Applied", "Assessment", "Interview"}]
     week = [a for a in open_apps if a.deadline and 0 <= (a.deadline - today).days <= 7]
-    week_opps = [o for o in _visible_opps(db, u.id) if o.deadline and 0 <= (o.deadline - today).days <= 7]
+    week_opps = [o for o in visible if o.deadline and 0 <= (o.deadline - today).days <= 7]
     waiting = [a for a in open_apps if stage_of(a) in ("Preparing", "Ready to submit")]
     brief_ids = {b.contact_id: b for b in db.query(ResearchBrief).filter(ResearchBrief.user_id == u.id, ResearchBrief.verification.in_(("verified", "partial"))).all()}
     drafts = db.query(OutboxItem).filter(OutboxItem.user_id == u.id, OutboxItem.status == "pending", OutboxItem.channel == "email").count()

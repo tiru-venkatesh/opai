@@ -73,6 +73,7 @@
   function who(){
     var st=document.getElementById('opai-st'),av=document.getElementById('opai-av'),un=document.getElementById('opai-un'),us=document.getElementById('opai-us');if(!st)return;
     fetch(API+'/v1/health').then(function(r){if(!r.ok)throw 0;st.className='opai-st';st.querySelector('span').textContent='Online'}).catch(function(){st.className='opai-st off';st.querySelector('span').textContent='Waking up…'});
+    setTimeout(function(){var sp=st.querySelector('span');if(sp&&sp.textContent==='Connecting…'){st.className='opai-st off';sp.textContent='Waking up…'}},6000);
     if(!mail)return;devLogin(0).then(function(r){return r&&r.ok?r.json():null}).then(function(d){if(!d)return null;uid=d.user_id;if(d.onboarding_required&&!/onboarding\.html/.test(location.pathname)){location.replace('onboarding.html');return null}return fetch(API+'/v1/profile?user_id='+encodeURIComponent(uid))}).then(function(r){return r&&r.ok?r.json():null}).then(function(p){if(!p)return;
       var n=p.name?p.name:(mail?mail.split('@')[0]:'Account');un.textContent=n;paintAv(av,n);us.textContent=[p.branch,p.degree].filter(Boolean).join(' · ')||'Personal workspace'}).catch(function(){});
   }
