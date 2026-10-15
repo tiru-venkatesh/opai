@@ -240,16 +240,15 @@ const SLOW_MS = 75000;                                   // a sleeping free-tier
 let uid = null, userPromise = null, renderVersion = 0, returnFocus = null, askResolve = null;
 const S = { tab: 'discover', filter: null, filterChosen: false, appFilter: 'active', progType: '', facOpen: false, facLimit: 20,
             summary: null, profile: null, scrollTo: null, draft: { url: '', text: '' } };
-const TABS = [['discover', 'Opportunities'], ['applications', 'My Applications'], ['outreach', 'Email Drafts'], ['professors', 'Professors'], ['programs', 'Programs'], ['insights', 'Progress']];
+const TABS = [['discover', 'Opportunities'], ['outreach', 'Email Drafts'], ['professors', 'Professors'], ['programs', 'Programs'], ['insights', 'Progress']];
 const TABHELP = {
-  discover: '<b>Opportunities you saved.</b> Each card shows how well it fits you. Open one to see why, then press <b>Track</b> to start applying. Nothing here is submitted for you.',
-  applications: '<b>Everything you are applying to.</b> Each one has a checklist of what is left. Move it forward only after you really submitted it on the official site.',
+  discover: '<b>All your internships and roles in one place.</b> <b>Your applications</b> come first, then <b>Saved opportunities</b>. Open a saved one to see how well it fits, then press <b>Track</b> to start applying. Move an application forward only after you really submitted it on the official site.',
   outreach: '<b>Emails waiting for you.</b> Drafts appear here for you to read and approve. Replies and follow-ups are listed too. OPAI never sends anything without your approval.',
   professors: '<b>Professors you may write to.</b> Step 1: Find or add a professor. Step 2: press <b>Research first</b> to see their work. Step 3: press <b>Draft email</b>, then approve it under Email Drafts.',
   programs: '<b>Programs and fellowships</b> (like GSoC or summer schools) with their dates. Dates count only after you confirm them on the organizer\'s official page.',
   insights: '<b>Your progress at a glance.</b> See how many you tracked, applied and heard back from, and open Resume Lab for your documents.'
 };
-const ALIAS = { today: ['discover'], saved: ['discover'], discover: ['discover'], apps: ['applications'], applications: ['applications'],
+const ALIAS = { today: ['discover'], saved: ['discover'], discover: ['discover'], apps: ['discover', 'apps-sec'], applications: ['discover', 'apps-sec'],
                 prof: ['professors'], professors: ['professors'], email: ['outreach', 'outbox-sec'], outbox: ['outreach', 'outbox-sec'], outreach: ['outreach'],
                 programs: ['programs'], docs: ['insights'], reports: ['insights'], insights: ['insights'] };
 
@@ -511,16 +510,17 @@ async function oppDetail(id) {
 /* ---------- views ---------- */
 const V = {};
 V.discover = async () => {
-  const r = await api('/v1/opp/saved'), items = r.items || [];
+  const [r, appsHtml] = await Promise.all([api('/v1/opp/saved'), appsSection()]), items = r.items || [];
   const best = items.filter((o) => { const b = o.brief || {}; return (b.match === 'Strong' || b.match === 'Good') && b.urgency !== 'overdue' && !/^Does not/.test((b.eligibility || {}).summary || ''); });
   if (!S.filterChosen) S.filter = best.length ? 'best' : 'all';
   if (S.filter === 'best' && !best.length) S.filter = 'all';
   const shown = S.filter === 'best' ? best : items;
+  if (!items.length && appsHtml) return appsHtml + `<div class="sec" id="saved-sec"><h2>Saved opportunities</h2></div><div class="card empty"><p>Nothing saved right now. Add a role you found and OPAI will check it against your profile.</p><button class="b" type="button" data-act="add">Add an opportunity</button></div>`;
   if (!items.length) {
     return `<div class="card empty"><h2>Start with one opportunity</h2><p>Add a role you found and OPAI will extract the details, check it against your profile and tell you what to do next.</p>
       <ol class="steps"><li>Copy a job link and its text</li><li>Paste them in</li><li>Confirm the details</li></ol><button class="b" type="button" data-act="add">Add your first opportunity</button></div>`;
   }
-  return `<div class="toolbar"><div class="seg" role="group" aria-label="Filter"><button type="button" data-act="filter.discover" data-f="best" aria-pressed="${S.filter === 'best'}">Best matches (${best.length})</button><button type="button" data-act="filter.discover" data-f="all" aria-pressed="${S.filter === 'all'}">All saved (${items.length})</button></div><span class="hint">Sorted by fit, then deadline</span></div>` +
+  return appsHtml + `<div class="sec" id="saved-sec"><h2>Saved opportunities <span class="mut">(${items.length})</span></h2></div><div class="toolbar"><div class="seg" role="group" aria-label="Filter"><button type="button" data-act="filter.discover" data-f="best" aria-pressed="${S.filter === 'best'}">Best matches (${best.length})</button><button type="button" data-act="filter.discover" data-f="all" aria-pressed="${S.filter === 'all'}">All saved (${items.length})</button></div><span class="hint">Sorted by fit, then deadline</span></div>` +
     (shown.length ? shown.map(oppRow).join('') : '<div class="ok-line">Nothing matches this filter.</div>');
 };
 
@@ -535,17 +535,17 @@ function appRow(a) {
       <div class="meta">${submitted ? '' : dueChip(a.deadline)}${a.stage === 'Applied' && a.follow_up_date ? `<span class="chip">Follow up ${esc(fmtDate(a.follow_up_date))}</span>` : ''}<span class="hint">${esc(STAGE_HINT[a.stage] || '')}</span></div></div>
     <div class="opp-act">${next ? `<button class="b" type="button" data-act="app.advance" data-id="${esc(a.id)}" data-to="${esc(next)}">Move to ${esc(next)}</button>` : ''}${a.stage === 'Ready to submit' ? `<button class="b" type="button" data-act="app.open" data-id="${esc(a.id)}" data-focus="applied">I applied</button>` : ''}<button class="b alt" type="button" data-act="app.open" data-id="${esc(a.id)}">Open</button></div></article>`;
 }
-V.applications = async () => {
+async function appsSection() {
   const r = await api('/v1/opp/pipeline'), cols = r.columns || {};
-  if (!r.total) return `<div class="card empty"><h2>No applications yet</h2><p>When you track an opportunity it moves here, with a checklist for what is left before you apply.</p><button class="b" type="button" data-act="go" data-go="discover">Browse your opportunities</button></div>`;
+  if (!r.total) return '';
   const active = ACTIVE.reduce((n, s) => n + (cols[s] || []).length, 0), done = DONE.reduce((n, s) => n + (cols[s] || []).length, 0);
   const stages = ACTIVE.concat(DONE).filter((s) => (cols[s] || []).length);
   if (S.appFilter !== 'active' && S.appFilter !== 'done' && !stages.includes(S.appFilter)) S.appFilter = 'active';
   const chips = [['active', `Active (${active})`]].concat(stages.filter((s) => ACTIVE.includes(s)).map((s) => [s, `${s} (${cols[s].length})`])).concat(done ? [['done', `Finished (${done})`]] : []);
   const showStages = S.appFilter === 'active' ? ACTIVE : S.appFilter === 'done' ? DONE : [S.appFilter];
   const body = showStages.filter((s) => (cols[s] || []).length).map((s) => `<div class="group-h">${esc(s)} <i>${cols[s].length}</i></div>` + cols[s].map(appRow).join('')).join('');
-  return `<div class="toolbar"><div class="seg" role="group" aria-label="Filter">${chips.map((c) => `<button type="button" data-act="filter.apps" data-f="${esc(c[0])}" aria-pressed="${S.appFilter === c[0]}">${esc(c[1])}</button>`).join('')}</div></div>` + (body || '<div class="ok-line">Nothing here.</div>');
-};
+  return `<section id="apps-sec"><div class="sec"><h2>Your applications <span class="mut">(${r.total})</span></h2></div><div class="toolbar"><div class="seg" role="group" aria-label="Filter">${chips.map((c) => `<button type="button" data-act="filter.apps" data-f="${esc(c[0])}" aria-pressed="${S.appFilter === c[0]}">${esc(c[1])}</button>`).join('')}</div></div>` + (body || '<div class="ok-line">Nothing here.</div>') + '</section>';
+}
 
 function contactRow(c) {
   const areas = (c.research_areas || []).slice(0, 3).join(', ');
@@ -756,7 +756,7 @@ const ACTIONS = {
   'filter.discover': (el) => { S.filter = el.dataset.f; S.filterChosen = true; render(); },
   'filter.apps': (el) => { S.appFilter = el.dataset.f; render(); },
   'opp.detail': (el) => oppDetail(el.dataset.id),
-  'opp.track': async (el) => { await post('/v1/opp/opportunities/' + el.dataset.id + '/track'); closeModal(); toast('Tracking started. Find it under Applications.'); S.tab = 'applications'; S.appFilter = 'active'; history.replaceState(null, '', '#applications'); refresh(); },
+  'opp.track': async (el) => { await post('/v1/opp/opportunities/' + el.dataset.id + '/track'); closeModal(); toast('Tracking started. Find it under Your applications.'); S.tab = 'discover'; S.scrollTo = 'apps-sec'; S.appFilter = 'active'; history.replaceState(null, '', '#discover'); refresh(); },
   'opp.dismiss': async (el) => { if (!await ask('Not interested?', 'It disappears from Discover. You can add it again later from the original posting.', 'Remove it', true)) return; await post('/v1/opp/opportunities/' + el.dataset.id + '/dismiss'); closeModal(); toast('Removed from Discover.'); refresh(); },
   'opp.verified': async (el) => { await post('/v1/opp/opportunities/' + el.dataset.id + '/verified'); toast('Marked as re-checked today.'); oppDetail(el.dataset.id); },
   'app.open': (el) => appModal(el.dataset.id, el.dataset.focus),
