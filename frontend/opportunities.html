@@ -77,6 +77,8 @@ label{display:block;margin:0 0 4px;color:var(--opp-muted);font-size:12px;font-we
 .count span{font-size:12px;color:var(--opp-muted);font-weight:600}
 .count.hot strong{color:var(--opp-warn)}
 
+/* ---- embedded inside the Programs page (?only=programs): show just the programs tracker ---- */
+html.only-programs .op-head,html.only-programs #hero,html.only-programs .how,html.only-programs .tabs-wrap,html.only-programs .trust,html.only-programs .tabhelp{display:none}
 /* ---- how-it-works + tab help ---- */
 .how{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px;padding:0;list-style:none;counter-reset:h}
 .how li{flex:1 1 150px;display:flex;gap:8px;align-items:flex-start;padding:9px 11px;border:1px solid var(--opp-line);border-radius:12px;background:var(--opp-card);font-size:12.5px;line-height:1.35;color:var(--opp-muted);counter-increment:h}
@@ -226,6 +228,13 @@ const $ = (id) => document.getElementById(id);
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } } };
 const API = (store.get('opa_api_base') || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8000' : 'https://opa-52ug.onrender.com')).replace(/\/+$/, '');
 if (/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('embed');
+const ONLY_PROGRAMS = /[?&]only=programs(&|$)/.test(location.search);
+if (ONLY_PROGRAMS) {                                       // the Programs page embeds just the programs tracker and needs its height
+  document.documentElement.classList.add('only-programs');
+  const sendH = () => { try { parent.postMessage({ opaiH: document.documentElement.scrollHeight, k: 'programs' }, '*'); } catch (e) {} };
+  addEventListener('load', sendH);
+  if (window.ResizeObserver) new ResizeObserver(sendH).observe(document.body);
+}
 
 const SLOW_MS = 75000;                                   // a sleeping free-tier server can need about a minute to wake
 let uid = null, userPromise = null, renderVersion = 0, returnFocus = null, askResolve = null;
@@ -326,6 +335,7 @@ function goTarget(link) {                                  // links from the bac
   const h = safeHref(link); return h ? { href: h } : null;
 }
 async function loadHero() {
+  if (ONLY_PROGRAMS) return;
   const [s, p] = await Promise.all([api('/v1/opp/summary').catch(() => null), api('/v1/opp/profile').catch(() => null)]);
   S.summary = s; S.profile = p; renderTabs();
   const parts = [];
@@ -810,7 +820,7 @@ $('tabs').addEventListener('keydown', (e) => {
 /* ---------- routing + render ---------- */
 function go(target) { const p = String(target).split('#'); S.scrollTo = p[1] || null; switchTab(p[0]); }
 function switchTab(k) { const a = ALIAS[k]; if (!a) return; if (a[1] && !S.scrollTo) S.scrollTo = a[1]; S.tab = a[0]; history.replaceState(null, '', '#' + a[0]); render(); }
-addEventListener('hashchange', () => { const a = ALIAS[(location.hash || '').slice(1)]; if (a && (a[0] !== S.tab)) { if (a[1]) S.scrollTo = a[1]; S.tab = a[0]; render(); } });
+addEventListener('hashchange', () => { if (ONLY_PROGRAMS) return; const a = ALIAS[(location.hash || '').slice(1)]; if (a && (a[0] !== S.tab)) { if (a[1]) S.scrollTo = a[1]; S.tab = a[0]; render(); } });
 async function render() {
   const version = ++renderVersion, tab = S.tab; renderTabs();
   $('view').setAttribute('aria-busy', 'true'); $('view').innerHTML = '<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
@@ -830,7 +840,8 @@ async function refresh() { await render(); loadHero().catch(() => {}); }
 
 (function init() {
   const a = ALIAS[(location.hash || '').slice(1)];
-  if (a) { S.tab = a[0]; S.scrollTo = a[1] || null; }
+  if (ONLY_PROGRAMS) S.tab = 'programs';
+  else if (a) { S.tab = a[0]; S.scrollTo = a[1] || null; }
   ensureUser().then(() => { render(); loadHero().catch(() => {}); }).catch((e) => { renderTabs(); $('view').innerHTML = `<div class="card empty"><h2>Please sign in</h2><p>${esc(e.message)}</p></div>`; $('view').setAttribute('aria-busy', 'false'); });
 })();
 })();
