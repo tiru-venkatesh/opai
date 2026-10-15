@@ -77,6 +77,14 @@ label{display:block;margin:0 0 4px;color:var(--opp-muted);font-size:12px;font-we
 .count span{font-size:12px;color:var(--opp-muted);font-weight:600}
 .count.hot strong{color:var(--opp-warn)}
 
+/* ---- how-it-works + tab help ---- */
+.how{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px;padding:0;list-style:none;counter-reset:h}
+.how li{flex:1 1 150px;display:flex;gap:8px;align-items:flex-start;padding:9px 11px;border:1px solid var(--opp-line);border-radius:12px;background:var(--opp-card);font-size:12.5px;line-height:1.35;color:var(--opp-muted);counter-increment:h}
+.how li:before{content:counter(h);flex:0 0 20px;height:20px;border-radius:99px;background:var(--opp-primary);color:#fff;font-weight:700;font-size:11px;line-height:20px;text-align:center}
+.how b{display:block;color:var(--opp-ink);font-size:13px}
+.tabhelp{margin:0 0 14px;padding:10px 13px;border-left:3px solid var(--opp-primary);background:var(--opp-well);border-radius:8px;font-size:13.5px;line-height:1.45;color:var(--opp-ink)}
+.tabhelp b{font-weight:700}
+.steps{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.6;color:var(--opp-muted)}
 /* ---- tabs ---- */
 .tabs-wrap{position:sticky;top:58px;z-index:18;padding:6px 0 10px;margin:0 0 12px;background:color-mix(in srgb,var(--opp-bg) 92%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 html.embed .tabs-wrap{top:0}
@@ -190,6 +198,12 @@ html[data-theme=dark] .note,html[data-theme=dark] .banner.warn{background:#2d261
     </div>
   </header>
   <section id="hero" aria-label="Overview"></section>
+  <ol class="how" aria-label="How this page works">
+    <li><span><b>Find</b>Add a role you found, or look up professors.</span></li>
+    <li><span><b>Check fit</b>OPAI compares it with your profile.</span></li>
+    <li><span><b>Apply or email</b>You send it yourself after reviewing.</span></li>
+    <li><span><b>Track</b>Deadlines and replies stay in one place.</span></li>
+  </ol>
   <div class="tabs-wrap"><div class="tabs" role="tablist" aria-label="Internship workspace sections" id="tabs"></div></div>
   <section id="view" aria-live="polite" aria-busy="true"></section>
   <p class="trust">OPAI never sends an email or submits an application for you. You review every message, and you mark every application as submitted yourself.</p>
@@ -203,7 +217,7 @@ html[data-theme=dark] .note,html[data-theme=dark] .banner.warn{background:#2d261
 (function () {
 'use strict';
 /* =====================================================================================
-   Internships workspace. Five sections: Discover, Applications, Outreach, Programs, Insights.
+   Internships workspace. Six sections: Opportunities, My Applications, Email Drafts, Professors, Programs, Progress.
    Old deep links (#today #saved #apps #prof #email #docs #reports) still work (see ALIAS).
    Safety rules kept from the original page: OPAI never sends or submits anything. Emails go out only after the
    user approves the exact text (hash-bound), and "Applied" needs the user to confirm they submitted it themselves.
@@ -217,7 +231,15 @@ const SLOW_MS = 75000;                                   // a sleeping free-tier
 let uid = null, userPromise = null, renderVersion = 0, returnFocus = null, askResolve = null;
 const S = { tab: 'discover', filter: null, filterChosen: false, appFilter: 'active', progType: '', facOpen: false, facLimit: 20,
             summary: null, profile: null, scrollTo: null, draft: { url: '', text: '' } };
-const TABS = [['discover', 'Discover'], ['applications', 'Applications'], ['outreach', 'Outreach'], ['professors', 'Professors'], ['programs', 'Programs'], ['insights', 'Insights']];
+const TABS = [['discover', 'Opportunities'], ['applications', 'My Applications'], ['outreach', 'Email Drafts'], ['professors', 'Professors'], ['programs', 'Programs'], ['insights', 'Progress']];
+const TABHELP = {
+  discover: '<b>Opportunities you saved.</b> Each card shows how well it fits you. Open one to see why, then press <b>Track</b> to start applying. Nothing here is submitted for you.',
+  applications: '<b>Everything you are applying to.</b> Each one has a checklist of what is left. Move it forward only after you really submitted it on the official site.',
+  outreach: '<b>Emails waiting for you.</b> Drafts appear here for you to read and approve. Replies and follow-ups are listed too. OPAI never sends anything without your approval.',
+  professors: '<b>Professors you may write to.</b> Step 1: Find or add a professor. Step 2: press <b>Research first</b> to see their work. Step 3: press <b>Draft email</b>, then approve it under Email Drafts.',
+  programs: '<b>Programs and fellowships</b> (like GSoC or summer schools) with their dates. Dates count only after you confirm them on the organizer\'s official page.',
+  insights: '<b>Your progress at a glance.</b> See how many you tracked, applied and heard back from, and open Resume Lab for your documents.'
+};
 const ALIAS = { today: ['discover'], saved: ['discover'], discover: ['discover'], apps: ['applications'], applications: ['applications'],
                 prof: ['professors'], professors: ['professors'], email: ['outreach', 'outbox-sec'], outbox: ['outreach', 'outbox-sec'], outreach: ['outreach'],
                 programs: ['programs'], docs: ['insights'], reports: ['insights'], insights: ['insights'] };
@@ -530,7 +552,7 @@ V.outreach = async () => {
   pending.forEach((x) => attention.push(`<div class="card"><div class="row sp"><div><b>${esc(x.subject || '(no subject)')}</b><div class="mut">To ${esc(x.to || '?')}</div></div><span class="chip warn">Needs your review</span></div><div class="row" style="margin-top:10px"><button class="b sm" type="button" data-act="ob.review" data-id="${esc(x.id)}">Review and approve</button><button class="b dng sm" type="button" data-act="ob.reject" data-id="${esc(x.id)}">Reject</button></div></div>`));
   approved.forEach((x) => attention.push(`<div class="card"><div class="row sp"><div><b>${esc(x.subject || '(no subject)')}</b><div class="mut">To ${esc(x.to || '?')}</div></div><span class="chip good">Approved, not sent</span></div><div class="row" style="margin-top:10px">${gc.gmail_send_enabled ? `<button class="b sm" type="button" data-act="ob.gsend" data-id="${esc(x.id)}">Send with Gmail</button>` : ''}<button class="b alt sm" type="button" data-act="ob.sent" data-id="${esc(x.id)}">I sent it myself</button></div></div>`));
   (f.items || []).forEach((x) => attention.push(`<div class="card"><b>${esc(x.title)}</b><div class="mut">Due ${esc(fmtDate(x.due))}${x.days_since != null ? ` · ${x.days_since} days since` : ''}</div><p style="margin:8px 0 6px;font-size:14px">Have they replied?</p><div class="row"><button class="b alt sm" type="button" data-act="fu" data-a="yes" data-k="${esc(x.kind)}" data-id="${esc(x.id)}">Yes</button><button class="b sm" type="button" data-act="fu" data-a="not_yet" data-k="${esc(x.kind)}" data-id="${esc(x.id)}">Not yet, draft a follow-up</button><button class="b alt sm" type="button" data-act="fu" data-a="later" data-k="${esc(x.kind)}" data-id="${esc(x.id)}">Remind me later</button></div></div>`));
-  return `<div class="sec" id="outbox-sec"><h2>Needs your attention</h2><span class="hint">OPAI never reads your inbox. You tell it what happened.</span></div>` +
+  return `<div class="sec" id="outbox-sec"><h2>Needs your attention</h2><span class="hint">Review drafts and tell OPAI if someone replied. OPAI never reads your inbox.</span></div>` +
     (attention.length ? attention.join('') : '<div class="ok-line">Nothing waiting. Drafts and follow-ups will show up here.</div>') +
     `<p class="hint" style="margin-top:12px">Looking for professors to write to? Open the <a href="#professors" data-act="tab" data-t="professors">Professors</a> tab.</p>` +
     (past.length ? `<details class="fold" style="margin-top:14px"><summary>Earlier emails <span class="chip">${past.length}</span></summary><div>${past.slice(0, 15).map((x) => `<div class="row sp" style="padding:6px 0;border-bottom:1px solid var(--opp-line)"><span style="font-size:13px">${esc(x.subject || '(no subject)')} <span class="mut">to ${esc(x.to || '?')}</span></span><span class="chip">${esc(x.status)}</span></div>`).join('')}</div></details>` : '');
@@ -540,7 +562,7 @@ V.professors = async () => {
   const pr = await api('/v1/opp/professors'), contacts = pr.items || [];
   return `<div class="sec"><h2>Professors <span class="mut">(${contacts.length})</span></h2><div class="row"><span class="hint">${esc(pr.daily_cap_remaining)} sends left today</span><button class="b alt sm" type="button" data-act="fac.toggle">${S.facOpen ? 'Hide search' : 'Find professors'}</button><button class="b alt sm" type="button" data-act="prof.add">Add manually</button></div></div>` +
     (S.facOpen ? `<div class="card"><div class="row"><input id="fc_q" style="flex:1 1 220px;width:auto" placeholder="Research area, e.g. computer vision, RAG (optional)"><select id="fc_inst" style="width:auto;flex:0 1 200px"><option value="">All IITs</option></select><button class="b" type="button" data-act="fac.search">Search</button></div><p class="hint" style="margin-top:8px">Leave it empty to get matches based on your skills and projects.</p><div id="fc_out" style="margin-top:8px"></div></div>` : '') +
-    (contacts.length ? contacts.map(contactRow).join('') : '<div class="ok-line">No professors yet. Use Find professors to search by research area, then add the ones worth writing to.</div>');
+    (contacts.length ? contacts.map(contactRow).join('') : '<div class="card empty"><h2>No professors added yet</h2><p>Start here:</p><ol class="steps"><li>Press <b>Find professors</b> and search your area, e.g. computer vision.</li><li>Add the ones you like to your list.</li><li>Press <b>Research first</b>, then <b>Draft email</b>.</li></ol><button class="b" type="button" data-act="fac.toggle" style="margin-top:12px">Find professors</button></div>');
 };
 
 const PGCLS = { Open: 'good', Active: 'good', 'Opens soon': 'warn', Upcoming: 'warn', 'Verify current cycle': 'warn', 'Not announced': '', Closed: 'bad', Ended: 'bad' };
@@ -796,7 +818,7 @@ async function render() {
   try {
     await ensureUser(); if (version !== renderVersion) return;
     const html = await V[tab](); if (version !== renderVersion) return;
-    $('view').innerHTML = html;
+    $('view').innerHTML = (TABHELP[tab] ? `<p class="tabhelp">${TABHELP[tab]}</p>` : '') + html;
     if (tab === 'professors' && S.facOpen) facSearch();
     if (S.scrollTo) { const t = $(S.scrollTo); S.scrollTo = null; if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   } catch (e) {
