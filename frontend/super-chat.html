@@ -479,8 +479,14 @@ html[data-theme=dark] .msg.agent .av.av-k{background:#181213;border-color:var(--
 <script>try{if(localStorage.getItem('karna_sugg_seen'))document.documentElement.classList.add('no-sugg');else localStorage.setItem('karna_sugg_seen','1')}catch(e){}</script>
 <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)&&location.protocol!=='file:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 <link rel="stylesheet" href="opai-mobile.css">
+<style id="karna-shader-css">
+body{background:transparent!important}
+#karna-shader{position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;display:block;z-index:-1;pointer-events:none}
+.dock,html[data-theme=dark] .dock{background:transparent!important}
+</style>
 </head>
 <body>
+<canvas id="karna-shader" aria-hidden="true"></canvas>
 <div id="ktools" role="toolbar" aria-label="Chat tools">
   <button class="hbtn" id="b-new" type="button" title="New chat (Ctrl+Shift+O)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>New</span></button>
   <button class="hbtn" id="b-mem" type="button" aria-expanded="false" aria-controls="mem" title="What KARNA remembers about you">Memory</button>
@@ -554,6 +560,146 @@ html[data-theme=dark] .msg.agent .av.av-k{background:#181213;border-color:var(--
 </div>
 <input type="file" id="file" multiple hidden accept="image/*,.pdf,.txt,.md,.csv,.json,.log">
 
+<script>
+/* KARNA background shader: fixed behind the whole chat. Light theme = original palette, dark theme = dark teal variant. */
+(function(){
+  var canvas=document.getElementById('karna-shader'); if(!canvas) return;
+  var gl=canvas.getContext('webgl')||canvas.getContext('experimental-webgl'); if(!gl) return;
+  var SCALE=0.8, FRAME_MS=33;
+  function syncSize(){
+    var w=Math.max(1,Math.round((canvas.clientWidth||innerWidth)*SCALE)), h=Math.max(1,Math.round((canvas.clientHeight||innerHeight)*SCALE));
+    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
+  }
+  addEventListener('resize',syncSize); syncSize();
+  var vs='attribute vec2 a_position;void main(){gl_Position=vec4(a_position,0.0,1.0);}';
+  var fs=`precision highp float;
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+uniform float u_dark;
+
+float sdSphere(vec3 p, float r){ return length(p) - r; }
+float smin(float a, float b, float k){
+  float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+  return mix(b, a, h) - k * h * (1.0 - h);
+}
+float map(vec3 p, float t, vec2 m){
+  vec3 q = p - vec3((m.x - 0.5) * 0.4, (m.y - 0.5) * 0.3, 0.0);
+  vec3 c1 = vec3(-0.9 + sin(t * 0.35) * 0.25, 0.2 + cos(t * 0.28) * 0.2, 0.2 + sin(t * 0.2) * 0.15);
+  float s1 = sdSphere(q - c1, 0.85);
+  vec3 c2 = vec3(1.1 + cos(t * 0.3) * 0.22, 0.6 + sin(t * 0.4) * 0.2, -0.3 + cos(t * 0.25) * 0.2);
+  float s2 = sdSphere(q - c2, 0.65);
+  vec3 c3 = vec3(0.4 + sin(t * 0.25 + 2.0) * 0.3, -0.8 + cos(t * 0.32) * 0.2, -0.1);
+  float s3 = sdSphere(q - c3, 0.55);
+  vec3 c4 = vec3(-0.2 + cos(t * 0.2) * 0.4, 0.8 + sin(t * 0.25) * 0.25, -1.2);
+  float s4 = sdSphere(q - c4, 1.1);
+  float d = smin(s1, s2, 0.45);
+  d = smin(d, s3, 0.4);
+  d = smin(d, s4, 0.6);
+  return d;
+}
+vec3 calcNormal(vec3 p, float t, vec2 m){
+  const float eps = 0.002;
+  vec2 e = vec2(1.0, -1.0) * 0.5773 * eps;
+  return normalize(e.xyy * map(p + e.xyy, t, m) + e.yyx * map(p + e.yyx, t, m) +
+                   e.yxy * map(p + e.yxy, t, m) + e.xxx * map(p + e.xxx, t, m));
+}
+void main(){
+  // palettes: light = original shader, dark = same look on the dark theme
+  vec3 C_BG_TOP     = mix(vec3(0.965,0.972,0.968), vec3(0.028,0.022,0.022), u_dark);
+  vec3 C_BG_BOTTOM  = mix(vec3(0.915,0.932,0.925), vec3(0.060,0.050,0.052), u_dark);
+  vec3 C_SAGE_SOFT  = mix(vec3(0.79,0.85,0.82),    vec3(0.16,0.26,0.26),    u_dark);
+  vec3 C_TEAL_DARK  = vec3(0.06,0.32,0.34);
+  vec3 C_TEAL_LIGHT = mix(vec3(0.24,0.62,0.64),    vec3(0.34,0.62,0.70),    u_dark);
+  vec3 C_WARM_WHITE = mix(vec3(0.99,0.99,0.98),    vec3(0.90,0.95,0.95),    u_dark);
+
+  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+  vec2 p = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+  vec2 m = u_mouse / u_resolution.xy;
+  if (length(u_mouse) < 1.0) m = vec2(0.5);
+  float t = u_time * 0.45;
+
+  vec2 bgShift = vec2(sin(t * 0.2 + uv.y * 2.0) * 0.05, cos(t * 0.18 + uv.x * 2.0) * 0.05);
+  vec3 bgColor = mix(C_BG_TOP, C_BG_BOTTOM, uv.y + bgShift.y);
+  float wave = sin(uv.x * 3.1415 + t * 0.3) * cos(uv.y * 2.5 - t * 0.25);
+  bgColor += mix((C_SAGE_SOFT - 0.8) * 0.25, C_SAGE_SOFT * 0.22, u_dark) * smoothstep(-0.5, 0.8, wave);
+  float tealGlow = 1.0 - length(uv - vec2(0.5 + (m.x - 0.5) * 0.2, 0.45 + (m.y - 0.5) * 0.2));
+  bgColor = mix(bgColor, C_TEAL_DARK, clamp(tealGlow * mix(0.12, 0.14, u_dark), 0.0, 1.0));
+
+  vec3 ro = vec3(0.0, 0.0, 2.5);
+  vec3 rd = normalize(vec3(p, -1.6));
+  float dist = 0.0, hitDist = -1.0, accumDensity = 0.0;
+  for (int i = 0; i < 48; i++){
+    float d = map(ro + rd * dist, t, m);
+    if (d < 0.003){ hitDist = dist; break; }
+    accumDensity += exp(-d * 3.5) * 0.015;
+    dist += max(d * 0.65, 0.02);
+    if (dist > 6.0) break;
+  }
+  vec3 col = mix(bgColor, mix(C_SAGE_SOFT, C_TEAL_LIGHT, 0.35), clamp(accumDensity * 0.85, 0.0, 0.35));
+
+  if (hitDist > 0.0){
+    vec3 norm = calcNormal(ro + rd * hitDist, t, m);
+    vec3 viewDir = -rd;
+    float fresnel = pow(clamp(1.0 - dot(viewDir, norm), 0.0, 1.0), 3.0);
+    vec3 tintL = mix(C_WARM_WHITE, C_TEAL_LIGHT, 0.35);
+    tintL = mix(tintL, C_TEAL_DARK, fresnel * 0.4);
+    vec3 tintD = mix(mix(vec3(0.14,0.22,0.25), C_TEAL_LIGHT, 0.30), C_TEAL_LIGHT, fresnel * 0.5);
+    vec3 glassTint = mix(tintL, tintD, u_dark);
+    vec3 lightDir = normalize(vec3(-0.6, 1.2, 0.8));
+    float spec = pow(max(dot(reflect(-lightDir, norm), viewDir), 0.0), 24.0);
+    vec3 glassRender = mix(bgColor * mix(0.94, 1.1, u_dark), glassTint, mix(0.28 + fresnel * 0.45, 0.35 + fresnel * 0.45, u_dark));
+    glassRender += C_WARM_WHITE * spec * mix(0.45, 0.35, u_dark);
+    glassRender += C_TEAL_LIGHT * fresnel * mix(0.3, 0.25, u_dark);
+    float depthAlpha = smoothstep(5.0, 1.8, hitDist) * mix(0.55, 0.75, u_dark);
+    col = mix(col, glassRender, depthAlpha);
+  }
+
+  vec2 pTile = fract(uv * 12.0 + vec2(t * 0.03, t * 0.05)) - 0.5;
+  float sparkle = smoothstep(0.08, 0.0, length(pTile)) * sin(uv.x * 20.0 + t * 1.5) * 0.08;
+  col += vec3(max(sparkle, 0.0)) * C_TEAL_LIGHT;
+
+  float vignette = 1.0 - smoothstep(0.5, 1.3, length(uv - 0.5));
+  col = mix(col * mix(0.98, 0.75, u_dark), col, vignette);
+  gl_FragColor = vec4(col, 1.0);
+}`;
+  function cs(type,s){var sh=gl.createShader(type);gl.shaderSource(sh,s);gl.compileShader(sh);return sh;}
+  var prog=gl.createProgram();
+  gl.attachShader(prog,cs(gl.VERTEX_SHADER,vs));
+  gl.attachShader(prog,cs(gl.FRAGMENT_SHADER,fs));
+  gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){canvas.style.display='none';return;}
+  gl.useProgram(prog);
+  var buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  var pos=gl.getAttribLocation(prog,'a_position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  var uTime=gl.getUniformLocation(prog,'u_time'),uRes=gl.getUniformLocation(prog,'u_resolution'),uMouse=gl.getUniformLocation(prog,'u_mouse'),uDark=gl.getUniformLocation(prog,'u_dark');
+  var mouse={x:0,y:0}, dark=0;
+  function readTheme(){dark=document.documentElement.getAttribute('data-theme')==='dark'?1:0;}
+  readTheme();
+  new MutationObserver(function(){readTheme();if(reduce)draw(4000);}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  addEventListener('mousemove',function(e){
+    mouse.x=(e.clientX/innerWidth)*canvas.width; mouse.y=(1-e.clientY/innerHeight)*canvas.height;
+  },{passive:true});
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var running=false,last=0;
+  function draw(t){
+    gl.viewport(0,0,canvas.width,canvas.height);
+    gl.uniform1f(uTime,t*0.001);gl.uniform2f(uRes,canvas.width,canvas.height);gl.uniform2f(uMouse,mouse.x,mouse.y);gl.uniform1f(uDark,dark);
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  }
+  function loop(t){
+    if(document.hidden){running=false;return;}
+    if(t-last>=FRAME_MS){last=t;draw(t);}
+    requestAnimationFrame(loop);
+  }
+  function start(){ if(reduce){draw(4000);return;} if(!running){running=true;requestAnimationFrame(loop);} }
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)start();});
+  window.addEventListener('resize',function(){if(reduce)draw(4000);});
+  start();
+})();
+</script>
 <script src="opai-shell.js" defer></script>
 <script src="guide.js"></script>
 <script>
