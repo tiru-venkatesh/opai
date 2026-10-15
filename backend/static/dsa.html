@@ -141,7 +141,7 @@ details.ph>summary::after{content:"+";color:var(--dim);font:16px var(--mono);mar
     const p = s.plan, g = s.progress, m = s.mode, c = s.consistency, pc = s.pace, t = s.today;
     const paceChip = '<span class="chip' + (pc.state === 'behind' ? ' warn' : '') + '" title="' + esc(pc.message) + '">' + (pc.state === 'behind' ? 'Behind' : pc.state === 'ahead' ? 'Ahead' : 'On track') + '</span>';
     const modeChip = m.mode === 'maintenance' ? '<span class="chip warn">DSA mode: Maintenance</span>' : '<span class="chip">DSA mode: Normal</span>';
-    let h = '<section class="card"><div class="row"><h2 style="margin:0">Overview</h2><div class="seg" role="group" aria-label="DSA mode">' +
+    let h = '<section class="card"><div class="row"><div class="seg" role="group" aria-label="DSA mode">' +
       [['auto', 'Auto'], ['normal', 'Normal'], ['maintenance', 'Maintenance']].map(([v, l]) => '<button type="button" data-act="mode" data-v="' + v + '" class="' + (m.override === v ? 'on' : '') + '">' + l + '</button>').join('') + '</div></div>' +
       '<div class="facts" style="margin-top:14px"><div><small>Goal</small><b>' + esc(p.goal) + '</b></div><div><small>Language</small><b>' + esc(p.language) + '</b></div><div><small>Target</small><b>' + esc(p.target) + '</b></div>' +
       '<div><small>Current phase</small><b>' + esc(g.current_phase) + '</b></div><div><small>Progress</small><b>Week ' + g.week + ' of ' + g.weeks + (g.overrun ? ' (past plan)' : '') + '</b></div><div><small>Topics advanced</small><b>' + g.advanced + ' of ' + g.total + '</b></div></div>' +

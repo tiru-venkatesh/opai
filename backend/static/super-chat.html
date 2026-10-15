@@ -336,7 +336,7 @@ nav a[aria-current=page]{background:#fff!important;color:var(--ink)!important;bo
   }
 
   /* ---------- nav ---------- */
-  const NAV = [['Today','today.html'],['Plan','plan.html'],['Applications','applications.html'],['Projects','projects.html'],['Academics','academics.html'],['DSA','dsa.html'],['Overview','app.html']];
+  const NAV = [['Today','today.html'],['Plan','plan.html'],['Applications','applications.html'],['Projects','projects.html'],['Academics','academics.html'],['DSA','dsa.html']];
   const TIP = {}; ((window.OPAI_GUIDE && OPAI_GUIDE.sections) || []).forEach((g) => { TIP[g.h] = g.d; });
   $('nav').innerHTML = NAV.map(([l, h], i) => (i === 1 ? '<a aria-current="page" href="#" title="Chat agent: add things by typing, ask about your data">KARNA</a>' : '') + '<a href="' + h + '" title="' + esc(TIP[h] || l) + '">' + l + '</a>').join('');
 
