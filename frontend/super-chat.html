@@ -488,13 +488,13 @@ body{background:transparent!important}
 /* ===== KARNA "Intelligent Operations Core" look: frosted-glass cards over the shader, teal ink, mono micro-labels ===== */
 :root{
   --g-ink:#13262b;--g-teal:#0f4a4f;--g-teal-2:#17666b;--g-mute:#55696d;--g-faint:#7d9094;
-  --g-card:rgba(255,255,255,.66);--g-card-line:rgba(255,255,255,.85);--g-edge:rgba(19,38,43,.09);
+  --g-card:rgba(255,255,255,.9);--g-card-line:rgba(15,74,79,.22);--g-edge:rgba(19,38,43,.1);
   --g-chip:rgba(255,255,255,.78);--g-tint:rgba(15,74,79,.09);
-  --g-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 18px 44px -22px rgba(19,60,66,.35),0 2px 6px rgba(19,60,66,.05);
+  --g-shadow:0 1px 0 #fff inset,0 24px 50px -20px rgba(19,60,66,.45),0 4px 12px rgba(19,60,66,.1);
 }
 html[data-theme=dark]{
   --g-ink:#e6f0ee;--g-teal:#2f8a90;--g-teal-2:#4aa6ab;--g-mute:#9db5b4;--g-faint:#74888a;
-  --g-card:rgba(22,34,36,.62);--g-card-line:rgba(255,255,255,.09);--g-edge:rgba(255,255,255,.08);
+  --g-card:rgba(22,34,36,.92);--g-card-line:rgba(255,255,255,.18);--g-edge:rgba(255,255,255,.08);
   --g-chip:rgba(30,46,48,.75);--g-tint:rgba(74,166,171,.14);
   --g-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 22px 50px -24px rgba(0,0,0,.7);
 }
@@ -519,19 +519,19 @@ html[data-theme=dark]{
 /* desktop: messages become glass cards */
 @media (min-width:721px){
   main{gap:22px}
-  .msg.user,.msg.agent{gap:14px;padding:18px 22px;border-radius:22px;background:var(--g-card);border:1px solid var(--g-card-line);box-shadow:var(--g-shadow);backdrop-filter:blur(22px) saturate(1.2);-webkit-backdrop-filter:blur(22px) saturate(1.2)}
+  .msg.user,.msg.agent{gap:16px;padding:24px 28px;border-width:1.5px;border-radius:24px;background:var(--g-card);border:1px solid var(--g-card-line);box-shadow:var(--g-shadow);backdrop-filter:blur(22px) saturate(1.2);-webkit-backdrop-filter:blur(22px) saturate(1.2)}
   html body .msg.user,html body .msg.agent{background:var(--g-card);border-color:var(--g-card-line);box-shadow:var(--g-shadow)}
   .msg.user{flex-direction:row;align-self:flex-end;width:min(100%,660px)}
   .msg.agent{width:100%}
   .msg.user .body,.msg.agent .body{flex:1;max-width:none;align-items:stretch;gap:12px}
-  .msg .bubble,.msg.user .bubble,.msg.agent .bubble{background:none!important;border:0!important;box-shadow:none!important;padding:0;border-radius:0;color:var(--g-ink);font-size:15px;line-height:25px}
+  .msg .bubble,.msg.user .bubble,.msg.agent .bubble{background:none!important;border:0!important;box-shadow:none!important;padding:0;border-radius:0;color:var(--g-ink);font-size:15.5px;line-height:26px}
   .msg.err{border-color:rgba(190,80,60,.4)}
   .msg.err .bubble{color:var(--bad)}
   .msg.sys{background:none;border:0;box-shadow:none;padding:0;backdrop-filter:none;align-self:center;width:auto}
   .msg.sys .bubble{background:var(--g-chip)!important;border:1px dashed var(--g-edge)!important;padding:8px 16px;border-radius:999px!important;color:var(--g-mute)}
 
   /* avatars: rounded squares for KARNA, circle with initial for you */
-  .av{width:36px;height:36px}
+  .av{width:40px;height:40px}
   .msg.user .av-u{background:var(--g-teal);color:#fff;border:0;font:600 12px var(--mono);letter-spacing:.04em}
   .msg.agent .av.av-k{border-radius:11px;background:var(--g-chip);border:1px solid var(--g-edge);box-shadow:none;padding:5px}
   .msg.agent .av.av-k img{border-radius:0}
