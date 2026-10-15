@@ -217,9 +217,9 @@ const SLOW_MS = 75000;                                   // a sleeping free-tier
 let uid = null, userPromise = null, renderVersion = 0, returnFocus = null, askResolve = null;
 const S = { tab: 'discover', filter: null, filterChosen: false, appFilter: 'active', progType: '', facOpen: false, facLimit: 20,
             summary: null, profile: null, scrollTo: null, draft: { url: '', text: '' } };
-const TABS = [['discover', 'Discover'], ['applications', 'Applications'], ['outreach', 'Outreach'], ['programs', 'Programs'], ['insights', 'Insights']];
+const TABS = [['discover', 'Discover'], ['applications', 'Applications'], ['outreach', 'Outreach'], ['professors', 'Professors'], ['programs', 'Programs'], ['insights', 'Insights']];
 const ALIAS = { today: ['discover'], saved: ['discover'], discover: ['discover'], apps: ['applications'], applications: ['applications'],
-                prof: ['outreach'], email: ['outreach', 'outbox-sec'], outbox: ['outreach', 'outbox-sec'], outreach: ['outreach'],
+                prof: ['professors'], professors: ['professors'], email: ['outreach', 'outbox-sec'], outbox: ['outreach', 'outbox-sec'], outreach: ['outreach'],
                 programs: ['programs'], docs: ['insights'], reports: ['insights'], insights: ['insights'] };
 
 /* ---------- helpers ---------- */
@@ -524,19 +524,23 @@ function contactRow(c) {
       : `<button class="b" type="button" data-act="prof.brief" data-id="${esc(c.id)}" title="OPAI checks what is known about their work before it drafts anything">Research first</button>`}</div></article>`;
 }
 V.outreach = async () => {
-  const [f, o, pr, gc] = await Promise.all([api('/v1/opp/followups'), api('/v1/opp/outbox'), api('/v1/opp/professors'), gmailCfg()]);
+  const [f, o, gc] = await Promise.all([api('/v1/opp/followups'), api('/v1/opp/outbox'), gmailCfg()]);
   const items = o.items || [], pending = items.filter((x) => x.status === 'pending'), approved = items.filter((x) => x.status === 'approved' && !x.sent_at), past = items.filter((x) => x.status !== 'pending' && !(x.status === 'approved' && !x.sent_at));
   const attention = [];
   pending.forEach((x) => attention.push(`<div class="card"><div class="row sp"><div><b>${esc(x.subject || '(no subject)')}</b><div class="mut">To ${esc(x.to || '?')}</div></div><span class="chip warn">Needs your review</span></div><div class="row" style="margin-top:10px"><button class="b sm" type="button" data-act="ob.review" data-id="${esc(x.id)}">Review and approve</button><button class="b dng sm" type="button" data-act="ob.reject" data-id="${esc(x.id)}">Reject</button></div></div>`));
   approved.forEach((x) => attention.push(`<div class="card"><div class="row sp"><div><b>${esc(x.subject || '(no subject)')}</b><div class="mut">To ${esc(x.to || '?')}</div></div><span class="chip good">Approved, not sent</span></div><div class="row" style="margin-top:10px">${gc.gmail_send_enabled ? `<button class="b sm" type="button" data-act="ob.gsend" data-id="${esc(x.id)}">Send with Gmail</button>` : ''}<button class="b alt sm" type="button" data-act="ob.sent" data-id="${esc(x.id)}">I sent it myself</button></div></div>`));
   (f.items || []).forEach((x) => attention.push(`<div class="card"><b>${esc(x.title)}</b><div class="mut">Due ${esc(fmtDate(x.due))}${x.days_since != null ? ` · ${x.days_since} days since` : ''}</div><p style="margin:8px 0 6px;font-size:14px">Have they replied?</p><div class="row"><button class="b alt sm" type="button" data-act="fu" data-a="yes" data-k="${esc(x.kind)}" data-id="${esc(x.id)}">Yes</button><button class="b sm" type="button" data-act="fu" data-a="not_yet" data-k="${esc(x.kind)}" data-id="${esc(x.id)}">Not yet, draft a follow-up</button><button class="b alt sm" type="button" data-act="fu" data-a="later" data-k="${esc(x.kind)}" data-id="${esc(x.id)}">Remind me later</button></div></div>`));
-  const contacts = pr.items || [];
   return `<div class="sec" id="outbox-sec"><h2>Needs your attention</h2><span class="hint">OPAI never reads your inbox. You tell it what happened.</span></div>` +
     (attention.length ? attention.join('') : '<div class="ok-line">Nothing waiting. Drafts and follow-ups will show up here.</div>') +
-    `<div class="sec"><h2>Professors <span class="mut">(${contacts.length})</span></h2><div class="row"><span class="hint">${esc(pr.daily_cap_remaining)} sends left today</span><button class="b alt sm" type="button" data-act="fac.toggle">${S.facOpen ? 'Hide search' : 'Find professors'}</button><button class="b alt sm" type="button" data-act="prof.add">Add manually</button></div></div>` +
-    (S.facOpen ? `<div class="card"><div class="row"><input id="fc_q" style="flex:1 1 220px;width:auto" placeholder="Research area, e.g. computer vision, RAG (optional)"><select id="fc_inst" style="width:auto;flex:0 1 200px"><option value="">All IITs</option></select><button class="b" type="button" data-act="fac.search">Search</button></div><p class="hint" style="margin-top:8px">Leave it empty to get matches based on your skills and projects.</p><div id="fc_out" style="margin-top:8px"></div></div>` : '') +
-    (contacts.length ? contacts.map(contactRow).join('') : '<div class="ok-line">No professors yet. Use Find professors to search by research area, then add the ones worth writing to.</div>') +
+    `<p class="hint" style="margin-top:12px">Looking for professors to write to? Open the <a href="#professors" data-act="tab" data-t="professors">Professors</a> tab.</p>` +
     (past.length ? `<details class="fold" style="margin-top:14px"><summary>Earlier emails <span class="chip">${past.length}</span></summary><div>${past.slice(0, 15).map((x) => `<div class="row sp" style="padding:6px 0;border-bottom:1px solid var(--opp-line)"><span style="font-size:13px">${esc(x.subject || '(no subject)')} <span class="mut">to ${esc(x.to || '?')}</span></span><span class="chip">${esc(x.status)}</span></div>`).join('')}</div></details>` : '');
+};
+
+V.professors = async () => {
+  const pr = await api('/v1/opp/professors'), contacts = pr.items || [];
+  return `<div class="sec"><h2>Professors <span class="mut">(${contacts.length})</span></h2><div class="row"><span class="hint">${esc(pr.daily_cap_remaining)} sends left today</span><button class="b alt sm" type="button" data-act="fac.toggle">${S.facOpen ? 'Hide search' : 'Find professors'}</button><button class="b alt sm" type="button" data-act="prof.add">Add manually</button></div></div>` +
+    (S.facOpen ? `<div class="card"><div class="row"><input id="fc_q" style="flex:1 1 220px;width:auto" placeholder="Research area, e.g. computer vision, RAG (optional)"><select id="fc_inst" style="width:auto;flex:0 1 200px"><option value="">All IITs</option></select><button class="b" type="button" data-act="fac.search">Search</button></div><p class="hint" style="margin-top:8px">Leave it empty to get matches based on your skills and projects.</p><div id="fc_out" style="margin-top:8px"></div></div>` : '') +
+    (contacts.length ? contacts.map(contactRow).join('') : '<div class="ok-line">No professors yet. Use Find professors to search by research area, then add the ones worth writing to.</div>');
 };
 
 const PGCLS = { Open: 'good', Active: 'good', 'Opens soon': 'warn', Upcoming: 'warn', 'Verify current cycle': 'warn', 'Not announced': '', Closed: 'bad', Ended: 'bad' };
@@ -741,7 +745,7 @@ const ACTIONS = {
   'prof.draft': async (el) => {
     try { await post('/v1/contacts/' + el.dataset.id + '/draft-email'); }
     catch (e) { if (/research brief/i.test(e.message)) { await ACTIONS['prof.brief'](el); return; } throw e; }     // never show the API hint; do the missing step instead
-    closeModal(); toast('Draft created. Nothing was sent. Review it under Needs your attention.'); S.scrollTo = 'outbox-sec'; refresh();
+    closeModal(); toast('Draft created. Nothing was sent. Review it under Needs your attention.'); S.tab = 'outreach'; S.scrollTo = 'outbox-sec'; history.replaceState(null, '', '#outreach'); refresh();
   },
   'prof.add': () => profAddForm(),
   'fac.toggle': () => { S.facOpen = !S.facOpen; render(); },
@@ -793,7 +797,7 @@ async function render() {
     await ensureUser(); if (version !== renderVersion) return;
     const html = await V[tab](); if (version !== renderVersion) return;
     $('view').innerHTML = html;
-    if (tab === 'outreach' && S.facOpen) facSearch();
+    if (tab === 'professors' && S.facOpen) facSearch();
     if (S.scrollTo) { const t = $(S.scrollTo); S.scrollTo = null; if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   } catch (e) {
     if (version !== renderVersion) return;
