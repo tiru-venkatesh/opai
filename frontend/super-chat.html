@@ -484,6 +484,119 @@ body{background:transparent!important}
 #karna-shader{position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;display:block;z-index:-1;pointer-events:none}
 .dock,html[data-theme=dark] .dock{background:transparent!important}
 </style>
+<style id="karna-glass-design">
+/* ===== KARNA "Intelligent Operations Core" look: frosted-glass cards over the shader, teal ink, mono micro-labels ===== */
+:root{
+  --g-ink:#13262b;--g-teal:#0f4a4f;--g-teal-2:#17666b;--g-mute:#55696d;--g-faint:#7d9094;
+  --g-card:rgba(255,255,255,.66);--g-card-line:rgba(255,255,255,.85);--g-edge:rgba(19,38,43,.09);
+  --g-chip:rgba(255,255,255,.78);--g-tint:rgba(15,74,79,.09);
+  --g-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 18px 44px -22px rgba(19,60,66,.35),0 2px 6px rgba(19,60,66,.05);
+}
+html[data-theme=dark]{
+  --g-ink:#e6f0ee;--g-teal:#2f8a90;--g-teal-2:#4aa6ab;--g-mute:#9db5b4;--g-faint:#74888a;
+  --g-card:rgba(22,34,36,.62);--g-card-line:rgba(255,255,255,.09);--g-edge:rgba(255,255,255,.08);
+  --g-chip:rgba(30,46,48,.75);--g-tint:rgba(74,166,171,.14);
+  --g-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 22px 50px -24px rgba(0,0,0,.7);
+}
+
+/* hero */
+.empty .eyebrow{display:inline-flex;align-items:center;gap:8px;margin:0 0 22px;padding:7px 16px;border-radius:999px;background:var(--g-chip);border:1px solid var(--g-card-line);box-shadow:var(--g-shadow);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);font:600 11px/14px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--g-ink)}
+.empty .eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--g-teal);box-shadow:0 0 0 3px var(--g-tint)}
+.empty h1{color:var(--g-ink);font-weight:700;letter-spacing:-.035em}
+.empty p{color:var(--g-mute);max-width:52ch}
+.empty .hstat{margin-top:18px;font:11px/16px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--g-faint)}
+.empty .hstat b{font-weight:500;color:var(--g-mute)}
+
+/* shared glass bits */
+.chip,.hbtn,.src,.fchip,.act,.sugg button,.scope{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.chip,.hbtn{background:var(--g-chip);border-color:var(--g-edge);color:var(--g-mute)}
+.hbtn:hover{background:var(--g-tint);color:var(--g-ink)}
+.pill{font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;font-size:10px}
+.src{background:var(--g-chip);border-color:var(--g-edge)}
+.fchip{background:var(--g-chip);border-color:var(--g-edge);color:var(--g-mute)}
+.btn.primary,.seg button.on{background:var(--g-teal);border-color:var(--g-teal);color:#fff}
+
+/* desktop: messages become glass cards */
+@media (min-width:721px){
+  main{gap:22px}
+  .msg.user,.msg.agent{gap:14px;padding:18px 22px;border-radius:22px;background:var(--g-card);border:1px solid var(--g-card-line);box-shadow:var(--g-shadow);backdrop-filter:blur(22px) saturate(1.2);-webkit-backdrop-filter:blur(22px) saturate(1.2)}
+  html body .msg.user,html body .msg.agent{background:var(--g-card);border-color:var(--g-card-line);box-shadow:var(--g-shadow)}
+  .msg.user{flex-direction:row;align-self:flex-end;width:min(100%,660px)}
+  .msg.agent{width:100%}
+  .msg.user .body,.msg.agent .body{flex:1;max-width:none;align-items:stretch;gap:12px}
+  .msg .bubble,.msg.user .bubble,.msg.agent .bubble{background:none!important;border:0!important;box-shadow:none!important;padding:0;border-radius:0;color:var(--g-ink);font-size:15px;line-height:25px}
+  .msg.err{border-color:rgba(190,80,60,.4)}
+  .msg.err .bubble{color:var(--bad)}
+  .msg.sys{background:none;border:0;box-shadow:none;padding:0;backdrop-filter:none;align-self:center;width:auto}
+  .msg.sys .bubble{background:var(--g-chip)!important;border:1px dashed var(--g-edge)!important;padding:8px 16px;border-radius:999px!important;color:var(--g-mute)}
+
+  /* avatars: rounded squares for KARNA, circle with initial for you */
+  .av{width:36px;height:36px}
+  .msg.user .av-u{background:var(--g-teal);color:#fff;border:0;font:600 12px var(--mono);letter-spacing:.04em}
+  .msg.agent .av.av-k{border-radius:11px;background:var(--g-chip);border:1px solid var(--g-edge);box-shadow:none;padding:5px}
+  .msg.agent .av.av-k img{border-radius:0}
+
+  /* header line: name · label ........ time */
+  .meta{gap:10px;font:11px/16px var(--mono);letter-spacing:.06em;color:var(--g-faint);align-items:center}
+  .meta b{font:600 14px/18px var(--sans);letter-spacing:-.01em;color:var(--g-ink)}
+  .msg.user .meta>span:last-child{margin-left:auto;text-transform:uppercase}
+  .msg.agent .meta .pill,.msg.agent .meta span:nth-of-type(3){display:inline-flex}
+  .msg.agent .meta .pill{background:var(--g-tint);color:var(--g-teal);border:1px solid var(--g-edge);padding:2px 9px;border-radius:999px}
+  .msg.agent .meta>span:nth-of-type(2){margin-left:auto}
+  .msg.agent .meta>span:nth-of-type(3){align-items:center;gap:6px;padding:4px 12px;border-radius:999px;background:var(--g-chip);border:1px solid var(--g-edge);color:var(--g-mute)}
+  .msg.agent .meta>span:nth-of-type(3)::before{content:"Thought for";color:var(--g-faint)}
+
+  /* reasoning trace + sources + extras */
+  details.trace,details.data{background:var(--g-chip);border:1px solid var(--g-edge);border-radius:14px;padding:4px 14px;box-shadow:none}
+  details.trace>summary,details.data>summary{text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--g-mute)}
+  details.trace>summary::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--g-teal);flex:none}
+  details.trace[open]>summary::before{content:""}
+  .step{background:var(--g-tint)}
+  .bubble code,.bubble pre{background:rgba(19,38,43,.06);border-color:var(--g-edge)}
+  .bubble th{background:var(--g-tint)}
+  .bubble th,.bubble td,.bubble hr{border-color:var(--g-edge)}
+  .bubble a{color:var(--g-teal-2)}
+  .gate,.card,.fbcard,.snip{background:var(--g-card);border-color:var(--g-card-line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  .acts .act{background:none}
+
+  /* composer: one big frosted card; input first, chips underneath */
+  .dock{padding:0 20px calc(18px + env(safe-area-inset-bottom,0px));background:none!important}
+  .composer{max-width:780px;padding:12px 14px 10px;gap:10px;border-radius:26px;background:var(--g-card)!important;border:1px solid var(--g-card-line)!important;box-shadow:var(--g-shadow),0 30px 60px -30px rgba(19,60,66,.35);backdrop-filter:blur(26px) saturate(1.25);-webkit-backdrop-filter:blur(26px) saturate(1.25)}
+  .composer.drag{border-color:var(--g-teal)!important;box-shadow:0 0 0 4px var(--g-tint),var(--g-shadow)}
+  .composer .files{order:0}
+  .composer .input{order:1;padding:2px 2px;background:none;border:0;border-radius:0;gap:6px}
+  .composer .input:focus-within{border-color:transparent;box-shadow:none}
+  .input textarea{color:var(--g-ink);font-size:15px;padding:8px 6px}
+  .input textarea::placeholder{color:var(--g-faint)}
+  .composer .modebar{order:2;padding-top:8px;border-top:1px solid var(--g-edge)}
+  .composer .hint{order:3}
+  .input .icon{color:var(--g-mute);border-radius:50%}
+  .input .icon:hover{background:var(--g-tint);color:var(--g-ink)}
+  .seg{background:none;border:0;padding:0;gap:6px}
+  .seg button{padding:5px 14px;border-radius:999px;border:1px solid var(--g-edge);background:var(--g-chip);color:var(--g-mute);font-weight:500}
+  .seg button.on{background:var(--g-tint);border-color:rgba(15,74,79,.28);color:var(--g-teal);font-weight:600}
+  html[data-theme=dark] .seg button.on{color:#bfe7e8}
+  #lang.hbtn{border-radius:999px;padding:5px 12px}
+  #send{order:9;display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:999px;background:var(--g-teal);border-color:var(--g-teal);color:#fff;font-weight:600;box-shadow:0 8px 18px -8px rgba(15,74,79,.7)}
+  #send::after{content:"\2191";font-weight:700}
+  #send:hover{background:var(--g-teal-2)}
+  #send:disabled{opacity:.45;box-shadow:none}
+  #stop{border-radius:999px}
+  /* suggestion chips float above the card on the welcome screen */
+  body.k-empty .sugg{display:flex!important}
+}
+
+/* phones: keep the ChatGPT-style layout, restyle only the colours */
+@media (max-width:720px){
+  .empty .eyebrow{margin-bottom:16px;font-size:10px;padding:6px 12px}
+  .empty .hstat{display:none}
+  .input{background:var(--g-card);border-color:var(--g-card-line);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  #send{background:var(--g-teal);color:#fff}
+  .msg.user .bubble{background:linear-gradient(160deg,var(--g-teal),var(--g-teal-2))!important}
+  .msg.agent .bubble{background:var(--g-card)!important;border-color:var(--g-card-line)!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  .msg.agent .meta .pill{background:var(--g-tint);color:var(--g-teal)}
+}
+</style>
 </head>
 <body>
 <canvas id="karna-shader" aria-hidden="true"></canvas>
@@ -943,10 +1056,12 @@ void main(){
     if (has) { if (e) e.remove(); return; }
     if (e) e.remove();
     const d = document.createElement('section'); d.className = 'empty'; d.id = 'empty';
+    const eyebrow = '<span class="eyebrow"><i></i>Intelligent operations core</span>';
     d.innerHTML = store.mode === 'ws'
-      ? '<h1>Ask KARNA to run your day.</h1><p>Workspace mode answers from your uploaded documents and your own applications, tasks, projects and exams, with citations. You can also add things by chat: \u201cadd a project\u2026\u201d, \u201cadd an exam\u2026\u201d, \u201cadd an application\u2026\u201d, \u201cadd an internship\u2026\u201d, \u201cadd a task\u2026\u201d, and draft outreach. Drafts wait for your approval below; nothing is sent automatically.</p>'
-      : '<h1>Ask KARNA anything.</h1><p>General mode is open-ended chat for explaining, writing and studying. It does not read your workspace or documents. Switch to Workspace for questions about your own data.</p>';
+      ? eyebrow + '<h1>Ask KARNA to run your day</h1><p>Answers from your documents, applications, tasks, projects and exams, with citations. Add things by chat (\u201cadd a project\u2026\u201d, \u201cadd an exam\u2026\u201d) and draft outreach; drafts wait for your approval, nothing is sent automatically.</p><div class="hstat" id="hstat"></div>'
+      : eyebrow + '<h1>Ask KARNA anything</h1><p>General mode is open-ended chat for explaining, writing and studying. It does not read your workspace or documents. Switch to Workspace for questions about your own data.</p><div class="hstat" id="hstat"></div>';
     thread.insertBefore(d, thread.firstChild);
+    setHstat();
   }
   function stepHTML(tc) {
     const r = tc.result || {};
@@ -1045,7 +1160,15 @@ void main(){
     if (open) { closeHist(); $('mem').classList.remove('open'); refreshDocs(); }
   }
   $('b-know').addEventListener('click', () => toggleKnow(!$('know').classList.contains('open')));
+  function setHstat() {
+    const h = $('hstat'); if (!h) return;
+    const n = $('kcount') ? $('kcount').textContent : '0';
+    h.innerHTML = store.mode === 'ws'
+      ? 'Mode: <b>Workspace</b> &nbsp;·&nbsp; Docs indexed: <b>' + esc(n) + '</b> &nbsp;·&nbsp; Drafts: <b>need approval</b>'
+      : 'Mode: <b>General</b> &nbsp;·&nbsp; Workspace data: <b>not read</b>';
+  }
   function renderCtx() {
+    setHstat();
     const t = (x) => '<span class="tag">' + esc(x) + '</span>';
     $('ctxbar').innerHTML = '<span>Context:</span>' + t(store.mode === 'ws' ? 'Workspace' : 'General') +
       (store.mode === 'ws' ? t(docs.length + ' doc' + (docs.length === 1 ? '' : 's') + ' indexed') + (scopeDoc ? t('only ' + scopeDoc.filename) : t('all sources')) : t('your profile + memory'));
