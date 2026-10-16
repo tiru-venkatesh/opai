@@ -1319,231 +1319,6 @@ function addMemoryItem() {
   });
 }
  
-/* ---- Resume Lab (backend) + Quick check (local) ---- */
-let resumeText = '';
-let resumeTab = null;                       // 'lab' | 'quick'; null = pick a default
-const RLAB = { list: null, loading: false, error: null, openId: null, busy: '', ask: {} };
-
-function rlTab() { return resumeTab || (BACKEND.ready ? 'lab' : 'quick'); }
-function setResumeTab(t) { resumeTab = t; render(); }
-
-function viewResume() {
-  const t = rlTab();
-  const tabs = '<div class="rtabs" role="tablist">' +
-    '<button role="tab" aria-selected="' + (t === 'lab') + '" class="' + (t === 'lab' ? 'on' : '') + '" onclick="setResumeTab(\'lab\')">Resume Lab</button>' +
-    '<button role="tab" aria-selected="' + (t === 'quick') + '" class="' + (t === 'quick' ? 'on' : '') + '" onclick="setResumeTab(\'quick\')">Quick check</button></div>';
-  const sub = t === 'lab'
-    ? 'Keep up to ten resume versions. Each one is scored by AI, gets suggested bullets, and can be questioned on its own.'
-    : 'Paste a resume or project summary. OPAI finds the skills it recognizes so you can add them to your matching profile.';
-  const action = (t === 'lab' && BACKEND.ready) ? addBtn('Add version', 'addResumeVersion()') : '';
-  return head('Resume Lab', sub, action) + tabs +
-    (t === 'lab' ? '<div id="rl-body">' + rlBodyHTML() + '</div>' : quickCheckHTML());
-}
-function resumeAfterRender() { if (rlTab() === 'lab' && BACKEND.ready && RLAB.list === null) loadResumeLab(); }
-
-/* ---- Lab: data ---- */
-async function loadResumeLab(force) {
-  if (RLAB.loading) return;
-  if (!force && RLAB.list !== null) return;
-  RLAB.loading = true; RLAB.error = null;
-  const el0 = $('rl-body'); if (el0) el0.innerHTML = rlBodyHTML();
-  try {
-    const uid = await ensureUser();
-    RLAB.list = await GET('/v1/resumes?user_id=' + uid);
-  } catch (e) { RLAB.error = e.message || 'Request failed'; RLAB.list = null; }
-  finally { RLAB.loading = false; }
-  const el = $('rl-body'); if (el) el.innerHTML = rlBodyHTML();
-}
-function rlReset() { RLAB.list = null; RLAB.openId = null; RLAB.error = null; RLAB.ask = {}; RLAB.busy = ''; }
-function rlCur() { return (RLAB.list || []).find(r => r.id === RLAB.openId) || null; }
-function rlRefresh() { const el = $('rl-body'); if (el) el.innerHTML = rlBodyHTML(); }
-function rlBusy(msg) { RLAB.busy = msg || ''; rlRefresh(); }
-
-/* ---- Lab: rendering ---- */
-function rlTone(n) { return n >= 8 ? 'good' : n >= 5 ? 'warn' : 'bad'; }
-function rlPill(sc) {
-  if (!sc || sc.overall == null) return '<span class="pill">Not scored</span>';
-  return '<span class="pill ' + rlTone(sc.overall) + '">' + sc.overall + '/10</span>';
-}
-function rlBodyHTML() {
-  if (!BACKEND.ready) return emptyPanel('Resume Lab needs the backend', 'Scoring, suggested bullets and \u201cask this resume\u201d run on your FastAPI server, which could not be reached. The Quick check tab works offline.', '<button class="btn" onclick="setResumeTab(\'quick\')">Open Quick check</button>');
-  if (RLAB.error) return emptyPanel('Could not load your resumes', esc(RLAB.error), '<button class="btn" onclick="loadResumeLab(true)">Retry</button>');
-  if (RLAB.list === null) return '<div class="empty plain"><h3>Loading\u2026</h3><p>Fetching your resume versions.</p></div>';
-  const busy = RLAB.busy ? '<div class="panel rl-busy" role="status">' + esc(RLAB.busy) + '</div>' : '';
-  const r = rlCur();
-  if (r) return busy + rlDetailHTML(r);
-  if (!RLAB.list.length) return busy + emptyPanel('No resume versions yet', 'Add your first version, for example \u201cSDE Intern v1\u201d, and OPAI will score it and suggest stronger bullets.', addBtn('Add version', 'addResumeVersion()'));
-  return busy + '<div class="panel rows">' + RLAB.list.map(x => {
-    const id = escA(JSON.stringify(x.id));
-    return '<div class="row noicon"><div><div class="row-t">' + esc(x.label) + '</div>' +
-      '<div class="row-s">' + (x.target_role ? 'Target: ' + esc(x.target_role) : 'No target role set') + '</div>' +
-      '<div class="row-m">' + rlPill(x.score) + '<span class="chip">' + (x.skills || []).length + ' skills</span>' +
-      (x.created_at ? '<span class="chip">' + esc(new Date(x.created_at).toLocaleDateString()) + '</span>' : '') + '</div></div>' +
-      '<div class="row-a"><button class="btn sm" onclick="openResume(' + id + ')">Open</button>' +
-      '<button class="btn ghost sm" onclick="deleteResumeVersion(' + id + ')">Delete</button></div></div>';
-  }).join('') + '</div>' + (RLAB.list.length >= 10 ? '<div class="row-s" style="margin-top:10px">You have reached about ten versions. Delete one to keep things tidy.</div>' : '');
-}
-function rlDetailHTML(r) {
-  const sc = r.score || {};
-  const cells = [['Overall', 'overall'], ['Clarity', 'clarity'], ['Impact', 'impact'], ['Keywords', 'keyword_match'], ['Structure', 'structure']];
-  const grid = '<div class="score-grid">' + cells.map(c => {
-    const v = sc[c[1]];
-    return '<div class="score-cell ' + (v == null ? '' : rlTone(v)) + '"><b>' + (v == null ? '\u2014' : v) + '</b><span>' + c[0] + '</span></div>';
-  }).join('') + '</div>';
-  const have = splitList(S.profile.skills).map(x => x.toLowerCase());
-  const skills = (r.skills || []).length
-    ? r.skills.map((s, i) => have.includes(String(s).toLowerCase())
-        ? '<span class="skill added">' + icon('check', 13) + esc(s) + '</span>'
-        : '<button class="skill" onclick="addSkill(' + escA(JSON.stringify(s)) + ')">' + icon('plus', 13) + esc(s) + '</button>').join('') + '<div class="row-s" style="margin-top:6px">Select a skill to add it to your profile.</div>'
-    : '<div class="row-s">No skills were extracted from this version.</div>';
-  const bullets = (r.suggested_bullets || []).length
-    ? '<ul class="rl-bullets">' + r.suggested_bullets.map((b, i) => '<li><span>' + esc(b) + '</span><button class="btn ghost sm" onclick="copyResumeBullet(' + i + ')">Copy</button></li>').join('') + '</ul>'
-    : '<div class="row-s">No suggestions for this version.</div>';
-  const idq = escA(JSON.stringify(r.id));
-  const askState = RLAB.ask[r.id] || {};
-  const h3 = 'style="font-family:var(--display);font-size:17px;margin-bottom:10px"';
-  return '<div style="max-width:820px">' +
-    '<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px">' +
-      '<button class="btn ghost sm" onclick="closeResume()">\u2190 All versions</button>' +
-      '<div class="row-a"><button class="btn sm" onclick="editResumeVersion(' + idq + ')">Edit</button><button class="btn ghost sm" onclick="reanalyzeResume(' + idq + ')">Reanalyze</button><button class="btn ghost sm" onclick="deleteResumeVersion(' + idq + ')">Delete</button></div></div>' +
-    '<section class="panel" style="padding:20px;margin-bottom:14px"><h3 style="font-family:var(--display);font-size:20px;margin-bottom:2px">' + esc(r.label) + '</h3>' +
-      '<div class="row-s" style="margin-bottom:14px">' + (r.target_role ? 'Scored against: ' + esc(r.target_role) : 'No target role set') + '</div>' + grid +
-      (sc.notes ? '<div class="rl-next"><b>Next change to make</b><p>' + esc(sc.notes) + '</p></div>' : '') + '</section>' +
-    (r.summary ? '<section class="panel" style="padding:20px;margin-bottom:14px"><h3 ' + h3 + '>Summary</h3><p style="margin:0;color:var(--ink-2)">' + esc(r.summary) + '</p></section>' : '') +
-    '<section class="panel" style="padding:20px;margin-bottom:14px"><h3 ' + h3 + '>Skills (' + (r.skills || []).length + ')</h3>' + skills + '</section>' +
-    '<section class="panel" style="padding:20px;margin-bottom:14px"><h3 ' + h3 + '>Suggested bullets</h3>' + bullets + '</section>' +
-    '<section class="panel" style="padding:20px"><h3 style="font-family:var(--display);font-size:17px;margin-bottom:4px">Ask this resume</h3>' +
-      '<div class="row-s" style="margin-bottom:10px">Answers come only from this version\u2019s text.</div>' +
-      '<div class="field"><textarea id="rl-q" rows="2" placeholder="e.g. Which project best shows backend experience?"></textarea></div>' +
-      '<div style="margin-top:10px"><button class="btn" id="rl-ask-btn" onclick="askResume(' + idq + ')"' + (askState.loading ? ' disabled' : '') + '>' + (askState.loading ? 'Thinking\u2026' : 'Ask') + '</button></div>' +
-      '<div id="rl-a" aria-live="polite" style="margin-top:14px">' + (askState.answer ? rlAnswerHTML(askState) : '') + '</div></section></div>';
-}
-function rlAnswerHTML(a) {
-  return '<div class="rl-answer"><div class="row-s" style="margin-bottom:4px">' + esc(a.q) + '</div><div style="white-space:pre-wrap">' + esc(a.answer) + '</div>' +
-    '<div class="row-s" style="margin-top:8px">Based on ' + a.used + ' passage' + (a.used === 1 ? '' : 's') + ' from this version.</div></div>';
-}
-
-/* ---- Lab: actions ---- */
-function openResume(id) { RLAB.openId = id; rlRefresh(); window.scrollTo(0, 0); }
-function closeResume() { RLAB.openId = null; rlRefresh(); }
-function addResumeVersion() {
-  if (!BACKEND.ready) { toast('Resume Lab needs the backend', true); return; }
-  openForm({
-    title: 'Add resume version', saveLabel: 'Add and score',
-    fields: [
-      { k: 'label', l: 'Version name', req: true, half: true, ph: 'e.g. SDE Intern v1' },
-      { k: 'target_role', l: 'Target role (optional)', half: true, ph: 'e.g. Backend intern' },
-      { k: 'text', l: 'Resume text', t: 'textarea', rows: 10, req: true, ph: 'Paste the full resume text', hint: 'Scoring takes a few seconds.' },
-    ],
-    onSave: async (v) => {
-      closeModal(); rlBusy('Scoring your resume\u2026');
-      try {
-        const uid = await ensureUser();
-        const row = await POST('/v1/resumes', { user_id: uid, label: v.label, target_role: v.target_role || null, text: v.text });
-        RLAB.list = [row].concat(RLAB.list || []); RLAB.openId = row.id;
-        log('Added resume version: ' + v.label); toast('Resume scored');
-      } catch (e) { toast('Could not add resume: ' + e.message, true); }
-      rlBusy('');
-    }
-  });
-}
-function editResumeVersion(id) {
-  const r = (RLAB.list || []).find(x => x.id === id); if (!r) return;
-  if (r.raw_text == null) { toast('Editing needs the updated backend (resume text was not returned)', true); return; }
-  openForm({
-    title: 'Edit \u201c' + r.label + '\u201d', saveLabel: 'Save and re-score',
-    values: { label: r.label, target_role: r.target_role || '', text: r.raw_text },
-    fields: [
-      { k: 'label', l: 'Version name', req: true, half: true },
-      { k: 'target_role', l: 'Target role', half: true, ph: 'e.g. Backend intern' },
-      { k: 'text', l: 'Resume text', t: 'textarea', rows: 12, req: true, hint: 'Changing the text or role re-scores this version. Renaming alone does not.' },
-    ],
-    onSave: async (v) => {
-      closeModal(); rlBusy('Saving\u2026');
-      try {
-        const row = await PATCH('/v1/resumes/' + id, { label: v.label, target_role: v.target_role, text: v.text });
-        RLAB.list = RLAB.list.map(x => x.id === id ? row : x);
-        delete RLAB.ask[id];
-        log('Edited resume version: ' + row.label); toast('Saved');
-      } catch (e) { toast('Could not save: ' + e.message, true); }
-      rlBusy('');
-    }
-  });
-}
-function reanalyzeResume(id) {
-  const r = (RLAB.list || []).find(x => x.id === id); if (!r) return;
-  openForm({
-    title: 'Reanalyze \u201c' + r.label + '\u201d', saveLabel: 'Reanalyze',
-    values: { target_role: r.target_role || '' },
-    fields: [{ k: 'target_role', l: 'Target role', ph: 'e.g. Data analyst intern', hint: 'Re-scores the saved text against this role.' }],
-    onSave: async (v) => {
-      closeModal(); rlBusy('Re-scoring\u2026');
-      try {
-        const row = await POST('/v1/resumes/' + id + '/reanalyze', { target_role: v.target_role || null });
-        RLAB.list = RLAB.list.map(x => x.id === id ? row : x);
-        toast('Resume re-scored');
-      } catch (e) { toast('Could not reanalyze: ' + e.message, true); }
-      rlBusy('');
-    }
-  });
-}
-function deleteResumeVersion(id) {
-  const r = (RLAB.list || []).find(x => x.id === id); if (!r) return;
-  confirmBox('Delete \u201c' + r.label + '\u201d?', 'Delete', async () => {
-    try {
-      await DEL('/v1/resumes/' + id);
-      RLAB.list = RLAB.list.filter(x => x.id !== id); delete RLAB.ask[id];
-      if (RLAB.openId === id) RLAB.openId = null;
-      log('Deleted resume version: ' + r.label); rlRefresh(); toast('Deleted');
-    } catch (e) { toast('Could not delete: ' + e.message, true); }
-  });
-}
-function copyResumeBullet(i) {
-  const r = rlCur(); if (!r || !r.suggested_bullets[i]) return;
-  const done = () => toast('Copied');
-  try { navigator.clipboard.writeText(r.suggested_bullets[i]).then(done, () => toast('Could not copy', true)); }
-  catch (e) { toast('Could not copy', true); }
-}
-async function askResume(id) {
-  const q = ($('rl-q').value || '').trim();
-  if (!q) { toast('Type a question first', true); return; }
-  RLAB.ask[id] = { loading: true, q };
-  const btn = $('rl-ask-btn'); if (btn) { btn.disabled = true; btn.textContent = 'Thinking\u2026'; }
-  try {
-    const uid = await ensureUser();
-    const res = await POST('/v1/resumes/' + id + '/ask', { user_id: uid, question: q });
-    RLAB.ask[id] = { q, answer: res.answer, used: res.used_chunks };
-  } catch (e) { delete RLAB.ask[id]; toast('Could not get an answer: ' + e.message, true); }
-  if (RLAB.openId === id) { const keep = $('rl-q') ? $('rl-q').value : ''; rlRefresh(); if ($('rl-q')) $('rl-q').value = keep; }
-}
-
-/* ---- Quick check (local, no backend) ---- */
-function quickCheckHTML() {
-  return '<div style="max-width:720px"><div class="field"><label for="resume-text">Resume or project text</label><textarea class="resume-box" id="resume-text" placeholder="Paste resume text, a GitHub README, or a project summary" oninput="resumeText=this.value">' + esc(resumeText) + '</textarea></div><div style="display:flex;gap:10px;margin-top:14px"><button class="btn" onclick="analyzeResume()">Analyze</button><button class="btn ghost" onclick="clearResume()">Clear</button></div><div id="resume-results" style="margin-top:22px"></div></div>';
-}
-function analyzeResume() {
-  const text = $('resume-text').value; resumeText = text;
-  const el = $('resume-results');
-  if (!text.trim()) { el.innerHTML = '<div class="empty plain" style="padding:30px"><p style="margin:0">Paste some text first.</p></div>'; return; }
-  const lower = text.toLowerCase();
-  const found = MASTER_SKILLS.filter(s => { const k = s.toLowerCase(); const i = lower.indexOf(k); if (i < 0) return false; if (k.length <= 3) { const re = new RegExp('(^|[^a-z0-9+#])' + k.replace(/[.+*?^${}()|[\]\\]/g, '\\$&') + '($|[^a-z0-9+#])', 'i'); return re.test(text); } return true; });
-  const words = (text.match(/\S+/g) || []).length;
-  const bullets = text.split('\n').filter(l => /^\s*[-•*–]\s+/.test(l)).length;
-  const numbers = (text.match(/\d+%?/g) || []).length;
-  const links = /(https?:\/\/|github\.com|linkedin\.com)/i.test(text);
-  const notes = [];
-  if (words < 120) notes.push('This is short (' + words + ' words). A full resume usually runs 250 words or more.');
-  if (bullets < 3) notes.push('Use bullet points for accomplishments so they are easy to scan.');
-  if (numbers < 3) notes.push('Add measurable results, such as users, percentages, or time saved.');
-  if (!links) notes.push('Add a GitHub or portfolio link so reviewers can see your work.');
-  const have = splitList(S.profile.skills).map(x => x.toLowerCase());
-  el.innerHTML = '<section class="panel" style="padding:20px;margin-bottom:14px"><h3 style="font-family:var(--display);font-size:17px;margin-bottom:12px">Skills recognized (' + found.length + ')</h3>' +
-    (found.length ? found.map(s => have.includes(s.toLowerCase()) ? '<span class="skill added">' + icon('check', 13) + esc(s) + '</span>' : '<button class="skill" onclick="addSkill(\'' + escA(s) + '\')">' + icon('plus', 13) + esc(s) + '</button>').join('') + '<div class="row-s" style="margin-top:6px">Select a skill to add it to your profile.</div>' : '<div class="row-s">Nothing matched the known skill list.</div>') + '</section>' +
-    '<section class="panel" style="padding:20px"><h3 style="font-family:var(--display);font-size:17px;margin-bottom:4px">How the draft reads</h3><div class="row-s">' + words + ' words, ' + bullets + ' bullet lines, ' + numbers + ' numbers</div><ul class="notes">' + (notes.length ? notes : ['The structure looks solid: length, bullets, numbers, and links are all present.']).map(n => '<li>' + esc(n) + '</li>').join('') + '</ul></section>';
-}
-function addSkill(s) { const list = splitList(S.profile.skills); if (!list.some(x => x.toLowerCase() === s.toLowerCase())) list.push(s); S.profile.skills = list.join(', '); log('Added skill: ' + s); save(); if (rlTab() === 'quick') analyzeResume(); else rlRefresh(); renderNav(); toast(s + ' added to your profile'); }
-function clearResume() { resumeText = ''; $('resume-text').value = ''; $('resume-results').innerHTML = ''; }
- 
 /* ---- History ---- */
 function viewHistory() {
   const h = head('History', 'A log of everything you complete, draft, and approve.', '');
@@ -2455,13 +2230,13 @@ const NAV = [
   { id:'sems', l:'Exams & Courses', i:'grad' },
   { id:'requests', l:'Requests', i:'chat' },
   { id:'outbox', l:'Outbox', i:'send', g:'Tools' },
-  { id:'resume', l:'Resume Lab', i:'file' },
+  { id:'resume', l:'Resume Lab', i:'file', href:'resume-lab.html' },
   { id:'agent', l:'Agent Console', i:'shield', g:'Safety' },
   { id:'history', l:'History', i:'clock' },
   { id:'review', l:'Review', i:'star' },
   { id:'profile', l:'Profile', i:'user' }
 ];
-const VIEWS = { review: viewReview, jarvis: viewJarvis, today: viewToday, applications: viewApps, opportunities: viewOpps, outreach: viewOutreach, projects: viewProjects, academics: viewAcads, sems: viewSems, requests: viewReqs, outbox: viewOutbox, resume: viewResume, agent: viewAgent, history: viewHistory, profile: viewProfile };
+const VIEWS = { review: viewReview, jarvis: viewJarvis, today: viewToday, applications: viewApps, opportunities: viewOpps, outreach: viewOutreach, projects: viewProjects, academics: viewAcads, sems: viewSems, requests: viewReqs, outbox: viewOutbox, agent: viewAgent, history: viewHistory, profile: viewProfile };
 let cur = 'today';
  
 function badge(id) {
@@ -2487,7 +2262,6 @@ function render(fromNav) {
   if (cur === 'jarvis') { refreshCtx(); wireJarvis(); }
   if (cur === 'agent') { loadAgentConsole(); }
   if (cur === 'sems') { loadSems(); }
-  if (cur === 'resume') { resumeAfterRender(); }
   if (!fromNav) window.scrollTo(0, y);
 }
 function wireJarvis() {
@@ -2798,7 +2572,7 @@ async function connectGmail() {
  
 function wsKey(uid) { return 'opa_ws_' + uid; }
 function enterUser(u) {
-  BACKEND.userId = null; rlReset(); semsReset();
+  BACKEND.userId = null; semsReset();
   AUTH.user = { uid: u.uid, email: u.email || '', name: u.displayName || '', photo: u.photoURL || '' };
   try { localStorage.setItem(LS_SESSION, 'google'); if (u.email) localStorage.setItem('opai_sc_email', u.email); localStorage.setItem('opai_sc_photo', u.photoURL || ''); } catch (e) {}
   LS_KEY = wsKey(u.uid);
@@ -2826,7 +2600,7 @@ function renderUser() {
   c.innerHTML = '<div class="av">' + av + '</div><div><b>' + esc(nm) + '</b><span>' + (u ? esc(u.email) : '') + '</span></div><button class="icon-btn" onclick="signOutNow()" aria-label="Sign out" title="Sign out">' + icon('x', 15) + '</button>';
 }
 function signOutNow() {
-  BACKEND.userId = null; rlReset(); semsReset();
+  BACKEND.userId = null; semsReset();
   const a = FB;
   AUTH.user = null; GMAIL.token = null; GMAIL.exp = 0;
   try { localStorage.removeItem(LS_SESSION); localStorage.removeItem('opai_sc_email'); localStorage.removeItem('opai_sc_photo'); } catch (e) {}
@@ -3025,12 +2799,6 @@ Object.assign(TUTORIALS, {
     ['Why it exists', 'KARNA never sends anything by itself. Drafts wait here for you.'],
     ['Approve or reject', 'Read the draft, edit if needed, then approve to send or reject to discard.'],
     ['After sending', 'Sent emails get follow-up reminders on the related contact or application.'] ] },
-  resume: { title: 'Resume Lab', steps: [
-    ['Add a version', 'Paste a resume and name it, for example \u201cSDE Intern v1\u201d. Add a target role so it is scored against the right job.'],
-    ['Read the scores', 'You get overall, clarity, impact, keyword and structure scores, plus the single next change worth making.'],
-    ['Edit in place', 'Use Edit to fix the text, rename it or change the role. Changing text or role re-scores that version.'],
-    ['Use the extras', 'Copy suggested bullets, add recognised skills to your profile, or ask questions answered only from that version.'],
-    ['Quick check', 'The Quick check tab is the offline skill scanner. It works without the backend.'] ] },
   agent: { title: 'Agent console', steps: [
     ['Permissions', 'Shows whether the agent is active. The emergency stop pauses every action.'],
     ['Activity', 'Every action KARNA actually took is logged here with a reason.'],
@@ -3101,7 +2869,6 @@ const KP_SEC = {
   sems:          { kw: 'exam study',        chips: ['Which exam is most at risk?'] },
   requests:      { kw: 'client request',    chips: ['Which client requests are open?', 'Add request from Ravi: needs a portfolio website'] },
   outbox:        { kw: 'email',             chips: ['What is waiting for my approval?'] },
-  resume:        { kw: 'project',           chips: ['Which projects should go on my resume?'] },
   agent:         { kw: '',                  chips: ['What did KARNA do recently?'] },
   history:       { kw: '',                  chips: ['What did I finish this week?'] },
   profile:       { kw: '',                  chips: ['What is missing in my profile?'] }

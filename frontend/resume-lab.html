@@ -40,7 +40,7 @@ ul{margin:4px 0;padding-left:18px}
 <body>
 <main>
   <h1>Resume Lab</h1>
-  <p class="sub">Your own resume versions, searchable. OPAI selects from what you wrote and flags gaps; it never invents experience.</p>
+  <p class="sub">One place to score, compare and train your resumes. OPAI learns from your best resume, reuses your own wording and flags gaps; it never invents experience.</p>
   <div class="tabs" id="tabs" role="tablist"></div>
   <div id="view" aria-live="polite"></div>
 </main>
@@ -50,9 +50,9 @@ ul{margin:4px 0;padding-left:18px}
 (function(){
 var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
 var uid=null;
-var TABS=[['lib','Library'],['match','Match a posting'],['build','Tailor & export'],['review','ATS review'],['coach','Bullet coach'],['compare','Compare'],['find','Find a bullet'],['ins','Insights']];
-var tab=(location.hash||'#lib').slice(1);if(!TABS.some(function(t){return t[0]===tab}))tab='lib';
-var state={lastMatch:null,excl:[],extras:[],base:''};
+var TABS=[['train','Score & train'],['lib','Library'],['match','Match a posting'],['build','Tailor & export'],['review','ATS review'],['coach','Bullet coach'],['compare','Compare'],['find','Find a bullet'],['ins','Insights']];
+var tab=(location.hash||'#train').slice(1);if(!TABS.some(function(t){return t[0]===tab}))tab='lib';
+var state={lastMatch:null,excl:[],extras:[],base:'',preset:null,coachBullet:''};
 function $(i){return document.getElementById(i)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function toast(m){var t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){t.style.display='none'},3500)}
@@ -69,12 +69,12 @@ function renderTabs(){$('tabs').innerHTML=TABS.map(function(t){return '<button r
 $('tabs').addEventListener('click',function(e){var b=e.target.closest('button[data-k]');if(!b)return;tab=b.dataset.k;history.replaceState(null,'','#'+tab);go()});
 
 async function go(){renderTabs();var v=$('view');v.textContent='Loading…';
-  try{await ensureUser();await ({lib:vLib,match:vMatch,build:vBuild,review:vReview,coach:vCoach,compare:vCompare,find:vFind,ins:vIns})[tab](v)}
+  try{await ensureUser();await ({train:vTrain,lib:vLib,match:vMatch,build:vBuild,review:vReview,coach:vCoach,compare:vCompare,find:vFind,ins:vIns})[tab](v)}
   catch(e){v.innerHTML='<div class="card">Could not load: '+esc(e.message)+' <button class="b alt" id="retry">Retry</button></div>';$('retry').onclick=go}}
 
 async function vLib(v){
   var d=await api('/v1/resume-lab/library');
-  var h='<div class="row sp"><h2>Your versions ('+esc(d.count)+' of '+esc(d.limit)+')</h2><a class="b alt" href="app.html?embed=1#/resume-lab" target="_top">Classic Resume Lab</a></div>';
+  var h='<div class="row sp"><h2>Your versions ('+esc(d.count)+' of '+esc(d.limit)+')</h2></div>';
   if(!d.versions.length)h+='<div class="card">No resumes yet. Paste them below, one at a time. Up to '+esc(d.limit)+' versions.</div>';
   h+='<div class="grid">'+d.versions.map(function(r){
     return '<div class="card"><div class="row sp"><b>'+esc(r.label)+'</b><span class="pill '+(r.overall_score>=7?'good':r.overall_score>=5?'warn':'bad')+'">'+esc(r.overall_score==null?'–':r.overall_score)+'/10</span></div>'
@@ -121,13 +121,61 @@ async function vMatch(v){
         +'</div><div class="card"><h2>Not in any resume</h2>'+pills(r.gaps,'bad')+'<div class="note">'+esc(r.note)+'</div></div>'}catch(e){toast(e.message)}}}
 
 /* ---------- shared helpers for the newer tabs ---------- */
+function bestOf(vs){var sc=vs.filter(function(r){return r.overall_score!=null});if(!sc.length)return null;
+  sc.sort(function(a,b){return (b.overall_score-a.overall_score)||(b.metric_ratio-a.metric_ratio)});return sc[0]}
+function goTab(t){tab=t;history.replaceState(null,'','#'+t);go()}
 async function versionsSelect(id,label){var d=await api('/v1/resume-lab/library');
   if(!d.versions.length)return {html:'<div class="card">Add at least one resume in the Library tab first.</div>',n:0};
-  return {n:d.versions.length,html:'<label for="'+id+'">'+esc(label)+'</label><select id="'+id+'">'+d.versions.map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.label)+'</option>'}).join('')+'</select>'}}
+  var best=bestOf(d.versions);
+  return {n:d.versions.length,best:best&&best.id,html:'<label for="'+id+'">'+esc(label)+'</label><select id="'+id+'">'+d.versions.map(function(r){var bb=best&&r.id===best.id;return '<option value="'+esc(r.id)+'"'+(bb?' selected':'')+'>'+esc(r.label)+(bb?' ★ best':'')+'</option>'}).join('')+'</select>'}}
 function jobBox(){return '<label for="job">Posting text (optional)</label><textarea id="job" style="min-height:90px" placeholder="Paste a posting to check keywords against"></textarea>'+sel()}
 function jobOpt(){var t=($('job')||{}).value,o=($('opp')||{}).value;t=(t||'').trim();return t?{job_text:t}:(o?{opportunity_id:o}:{})}
 function sev(s){return s==='ok'?'good':s==='warn'?'warn':'bad'}
 function btnBusy(b,on){b.disabled=on}
+
+/* ---------- Score & train: score every resume, then learn from the best one ---------- */
+async function vTrain(v){
+  var d=await api('/v1/resume-lab/library'),vs=d.versions;
+  if(!vs.length){v.innerHTML='<div class="card"><h2>Start here</h2>Upload your resumes in the <b>Library</b> tab (up to '+esc(d.limit)+'). They are scored and ranked here, and your best one becomes the reference.<div class="row" style="margin-top:8px"><button class="b" id="tolib">Open Library</button></div></div>';$('tolib').onclick=function(){goTab('lib')};return}
+  var best=bestOf(vs)||vs[0],tone=function(n){return n>=7?'good':n>=5?'warn':'bad'};
+  var ranked=vs.slice().sort(function(a,b){return (b.overall_score==null?-1:b.overall_score)-(a.overall_score==null?-1:a.overall_score)});
+  var h='<div class="card"><h2>1. Score your resumes</h2><p class="mut">Ranked best first. The top one is your reference for training.</p>'
+    +ranked.map(function(r){var sc=r.overall_score;return '<div style="margin:10px 0"><div class="row sp"><b>'+(r.id===best.id?'★ ':'')+esc(r.label)+'</b><span><span class="pill" data-ats="'+esc(r.id)+'">ATS …</span><span class="pill '+(sc==null?'':tone(sc))+'">'+esc(sc==null?'–':sc)+'/10</span></span></div>'
+      +bar(sc==null?0:sc*10)+'<div class="mut">'+esc(r.target_role||'No target role')+' · numbers in '+Math.round(100*r.metric_ratio)+'% of bullets · action verbs in '+Math.round(100*r.verb_ratio)+'%</div></div>'}).join('')+'</div>';
+  var others=vs.filter(function(r){return r.id!==best.id});
+  if(!others.length){h+='<div class="card"><h2>2. Train with your best</h2>Add one more resume version in the Library tab. Training compares a version with your best and finds what to fix.</div>'}
+  else{
+    var weakest=others.slice().sort(function(a,b){return (a.overall_score==null?99:a.overall_score)-(b.overall_score==null?99:b.overall_score)})[0];
+    h+='<div class="card"><h2>2. Train a version with your best</h2><p class="mut">Reference: <b>★ '+esc(best.label)+'</b>. OPAI compares it with the version you pick, shows what your best does better, and checks the weak bullets. Only your own wording is used; nothing is invented.</p>'
+      +'<label for="tv">Version to train</label><select id="tv">'+others.map(function(r){return '<option value="'+esc(r.id)+'"'+(r.id===weakest.id?' selected':'')+'>'+esc(r.label)+'</option>'}).join('')+'</select>'+jobBox()
+      +'<div class="row" style="margin-top:8px"><button class="b" id="tr">Train</button><button class="b alt" id="fb">Tailor a new resume from my best</button></div></div><div id="out"></div>'}
+  v.innerHTML=h;loadOpps();
+  vs.forEach(function(r){api('/v1/resume-lab/review',{method:'POST',body:{resume_id:r.id}}).then(function(x){var el=document.querySelector('[data-ats="'+r.id+'"]');if(el){el.textContent='ATS '+x.score+'/100';el.className='pill '+(x.score>=85?'good':x.score>=65?'warn':'bad')}}).catch(function(){var el=document.querySelector('[data-ats="'+r.id+'"]');if(el)el.remove()})});
+  if(!others.length)return;
+  $('fb').onclick=function(){state.preset={base:best.id,extras:[]};goTab('build')};
+  $('tr').onclick=async function(){var b=this;btnBusy(b,true);$('out').innerHTML='<div class="card mut">Comparing with your best…</div>';
+    try{var tid=$('tv').value,jo=jobOpt();
+      var res=await Promise.all([api('/v1/resume-lab/compare',{method:'POST',body:Object.assign({a_id:best.id,b_id:tid},jo)}),api('/v1/resume-lab/review',{method:'POST',body:Object.assign({resume_id:tid},jo)})]);
+      var c=res[0],rv=res[1],sa=c.stats.a,sb=c.stats.b,pc=function(x){return Math.round(100*x)+'%'};
+      var cand=c.only_in_b.slice(0,8);
+      var coached=await Promise.all(cand.map(function(t){return api('/v1/resume-lab/coach',{method:'POST',body:Object.assign({bullet:t,use_ai:false},jo)}).then(function(x){return {t:t,c:x}}).catch(function(){return null})}));
+      var weak=coached.filter(function(x){return x&&x.c&&!x.c.ok}).slice(0,6);
+      var fails=rv.checks.filter(function(x){return x.status!=='ok'}).slice(0,4);
+      var o='<div class="card"><div class="row sp"><h2>★ '+esc(c.a.label)+' vs '+esc(c.b.label)+'</h2><span class="pill '+(rv.score>=85?'good':rv.score>=65?'warn':'bad')+'">ATS '+esc(rv.score)+'/100</span></div><div class="grid">'
+        +'<div><b>Numbers in bullets</b><div>Best '+pc(sa.metric_ratio)+' · this '+pc(sb.metric_ratio)+'</div></div>'
+        +'<div><b>Action verbs</b><div>Best '+pc(sa.verb_ratio)+' · this '+pc(sb.verb_ratio)+'</div></div>'
+        +'<div><b>Bullets</b><div>Best '+esc(sa.bullets)+' · this '+esc(sb.bullets)+'</div></div>'
+        +(c.posting?'<div><b>Posting coverage</b><div>Best '+pc(c.posting.a.coverage)+' · this '+pc(c.posting.b.coverage)+'</div></div>':'')+'</div></div>';
+      if(fails.length)o+='<div class="card"><h2>Fix first (ATS)</h2>'+fails.map(function(x){return '<div style="margin:6px 0"><span class="pill '+sev(x.status)+'">'+(x.status==='warn'?'Check':'Fix')+'</span><b>'+esc(x.label)+'</b><div class="mut">'+esc(x.detail)+'</div></div>'}).join('')+'</div>';
+      o+='<div class="card"><h2>Weak bullets in '+esc(c.b.label)+'</h2>'+(weak.length?weak.map(function(w,i){return '<div class="bul">'+esc(w.t)+'<div class="mut">'+w.c.issues.slice(0,3).map(function(x){return esc(x.message)}).join(' ')+'</div><div style="margin-top:6px"><button class="b alt" data-coach="'+i+'">Coach this bullet</button></div></div>'}).join(''):'<div class="mut">No weak bullets found among the bullets that differ from your best.</div>')+'</div>';
+      o+='<div class="card"><h2>Bullets from your best resume</h2><p class="mut">Your own wording. Tick the ones that are also true for this version and tailor with them.</p>'
+        +(c.only_in_a.length?c.only_in_a.slice(0,10).map(function(t){return '<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;color:var(--ink);font-size:14px;margin:4px 0"><input type="checkbox" data-k="tr" style="width:auto;margin-top:5px" data-t="'+esc(t)+'"><span class="bul" style="margin:0;flex:1">'+esc(t)+'</span></label>'}).join('')+'<div class="row" style="margin-top:8px"><button class="b" id="use">Tailor '+esc(c.b.label)+' with selected</button></div>':'<div class="mut">Nothing extra: this version already has the bullets from your best.</div>')+'</div>';
+      if(c.reworded.length)o+='<div class="card"><h2>How your best words it</h2>'+c.reworded.slice(0,5).map(function(x){return '<div class="bul"><b>Best:</b> '+esc(x.a)+'<br><b>This:</b> '+esc(x.b)+'</div>'}).join('')+'</div>';
+      if(c.skills.only_in_a.length)o+='<div class="card"><h2>Skills your best lists</h2><div>'+pills(c.skills.only_in_a,'warn')+'</div><div class="note">Add a skill only if you really have it.</div></div>';
+      $('out').innerHTML=o;
+      [].forEach.call(document.querySelectorAll('button[data-coach]'),function(bn){bn.onclick=function(){state.coachBullet=weak[+bn.dataset.coach].t;goTab('coach')}});
+      var use=$('use');if(use)use.onclick=function(){var ex=[].slice.call(document.querySelectorAll('input[data-k=tr]')).filter(function(x){return x.checked}).map(function(x){return x.dataset.t});state.preset={base:tid,extras:ex};goTab('build')}
+    }catch(e){$('out').innerHTML='';toast(e.message)}btnBusy(b,false)}}
 
 async function vReview(v){
   var s=await versionsSelect('rv','Which version?');if(!s.n){v.innerHTML=s.html;return}
@@ -146,6 +194,7 @@ async function vCoach(v){
     +'<label for="facts">True extra details (optional)</label><input id="facts" maxlength="600" placeholder="e.g. used by 200 students; built with Flask">'+jobBox()
     +'<div class="row" style="margin-top:8px"><button class="b" id="run">Coach me</button><span class="mut">Only add numbers that are true.</span></div></div><div id="out"></div>';
   loadOpps();
+  if(state.coachBullet){$('bl').value=state.coachBullet;state.coachBullet=''}
   $('run').onclick=async function(){var b=this,t=$('bl').value.trim();if(t.length<3)return toast('Paste a bullet first');btnBusy(b,true);
     try{var r=await api('/v1/resume-lab/coach',{method:'POST',body:Object.assign({bullet:t,facts:$('facts').value.trim()},jobOpt())});
       $('out').innerHTML='<div class="card"><div class="row sp"><h2>Diagnosis</h2><span class="pill '+(r.ok?'good':'warn')+'">'+(r.ok?'Looks solid':'Can be stronger')+'</span></div>'
@@ -161,10 +210,11 @@ async function vCoach(v){
 async function vCompare(v){
   var d=await api('/v1/resume-lab/library');
   if(d.versions.length<2){v.innerHTML='<div class="card">Add at least 2 versions to compare.</div>';return}
-  var opts=d.versions.map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.label)+'</option>'}).join('');
+  var bestC=bestOf(d.versions);
+  var opts=d.versions.map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.label)+(bestC&&r.id===bestC.id?' ★ best':'')+'</option>'}).join('');
   v.innerHTML='<div class="card"><h2>Compare two versions</h2><div class="grid"><div><label for="ca">Version A</label><select id="ca">'+opts+'</select></div><div><label for="cb">Version B</label><select id="cb">'+opts+'</select></div></div>'+jobBox()
     +'<div class="row" style="margin-top:8px"><button class="b" id="run">Compare</button></div></div><div id="out"></div>';
-  $('cb').selectedIndex=1;loadOpps();
+  if(bestC){$('ca').value=bestC.id;var oi=d.versions.findIndex(function(r){return r.id!==bestC.id});$('cb').selectedIndex=oi<0?1:oi}else{$('cb').selectedIndex=1}loadOpps();
   var list=function(a){return a.length?a.map(function(x){return '<div class="bul">'+esc(x)+'</div>'}).join(''):'<div class="mut">None</div>'};
   $('run').onclick=async function(){var b=this;if($('ca').value===$('cb').value)return toast('Pick two different versions');btnBusy(b,true);
     try{var r=await api('/v1/resume-lab/compare',{method:'POST',body:Object.assign({a_id:$('ca').value,b_id:$('cb').value},jobOpt())});
@@ -179,7 +229,7 @@ async function vCompare(v){
 
 async function vBuild(v){
   var s=await versionsSelect('bv','Start from which version?');if(!s.n){v.innerHTML=s.html;return}
-  state.excl=[];state.extras=[];
+  state.excl=[];state.extras=[];var pre=state.preset;state.preset=null;
   v.innerHTML='<div class="card"><h2>Tailor a resume for a posting</h2><div class="note">Your wording stays exactly as you wrote it. You choose which of your own bullets stay, and can add bullets from your other versions.</div>'+s.html+jobBox()
     +'<div class="row" style="margin-top:8px"><button class="b" id="pv">Preview</button><button class="b alt" id="sg">Suggest bullets from my other versions</button></div></div><div id="sug"></div><div id="out"></div>';
   loadOpps();
@@ -216,7 +266,11 @@ async function vBuild(v){
     try{var r=await api('/v1/resume-lab/tailor',{method:'POST',body:Object.assign({resume_id:$('bv').value},jb)});
       $('sug').innerHTML='<div class="card"><h2>From your other versions</h2>'+(r.consider_from_other_versions.length?r.consider_from_other_versions.map(function(x){
         return '<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;color:var(--ink);font-size:14px;margin:4px 0"><input type="checkbox" data-k="ex" style="width:auto;margin-top:5px" data-t="'+esc(x.bullet)+'"><span class="bul" style="margin:0;flex:1">'+esc(x.bullet)+'<div class="mut">from '+esc(x.from)+'</div></span></label>'}).join('')+'<div class="mut">Tick the ones to add, then press Preview or Update preview.</div>':'<div class="mut">Nothing relevant in your other versions.</div>')+'</div>'}
-    catch(e){toast(e.message)}btnBusy(b,false)}}
+    catch(e){toast(e.message)}btnBusy(b,false)}
+  if(pre){$('bv').value=pre.base;
+    if(pre.extras&&pre.extras.length)$('sug').innerHTML='<div class="card"><h2>From your best resume</h2>'+pre.extras.map(function(t){
+      return '<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;color:var(--ink);font-size:14px;margin:4px 0"><input type="checkbox" data-k="ex" checked style="width:auto;margin-top:5px" data-t="'+esc(t)+'"><span class="bul" style="margin:0;flex:1">'+esc(t)+'</span></label>'}).join('')+'<div class="mut">Untick any you do not want, then press Update preview.</div></div>';
+    $('pv').click()}}
 
 async function vFind(v){
   v.innerHTML='<div class="card"><h2>Search your own bullets</h2><div class="row"><input id="q" placeholder="e.g. deployed an API, improved accuracy" style="flex:1"><button class="b" id="s">Search</button></div></div><div id="out"></div>';
