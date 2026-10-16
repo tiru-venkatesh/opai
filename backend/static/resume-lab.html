@@ -4,95 +4,84 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Resume Lab · OPAI</title>
-<meta name="theme-color" content="#f6f8f7">
+<meta name="theme-color" content="#F0F4F3">
 <link rel="manifest" href="manifest.json">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
 <style>
-:root{--bg:#f6f8f7;--card:#fff;--ink:#142123;--mut:#566864;--faint:#829590;--pri:#0f5257;--pri-d:#0d464a;--sage:#e3ece8;--sub:#f1f4f3;--line:rgba(15,82,87,.12);--line2:rgba(15,82,87,.22);--warn:#b95f0a;--bad:#c2410c;--good:#16a34a;--font:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;--disp:'Space Grotesk',var(--font);--mono:'JetBrains Mono',ui-monospace,monospace;--sh:0 4px 20px -2px rgba(15,82,87,.05),0 2px 6px -1px rgba(15,82,87,.03)}
+:root{--bg:#F0F4F3;--card:#fff;--ink:#1B1516;--mut:#5C5F63;--pri:#1A404D;--line:#D7E2DF;--warn:#B95F0A;--bad:#C3650E;--good:#245363;--font:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif}
 *{box-sizing:border-box}html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:14px/21px var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
-main{max-width:1400px;margin:0 auto;padding:20px 16px 120px}
-h1{font:700 28px/1.15 var(--disp);letter-spacing:-.02em;margin:0;color:var(--ink)} h2{font:700 15px/1.3 var(--disp);margin:0 0 8px;color:var(--ink)} h3{font:700 13px var(--disp);margin:0}
-.sub,.mut{color:var(--mut)} .mut{font-size:13px} .sub{margin:6px 0 0;max-width:640px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:14px;box-shadow:var(--sh)}
+body{background:var(--bg);color:var(--ink);font:15px/22px var(--font);min-height:100vh}
+main{max-width:1000px;margin:0 auto;padding:20px 16px 120px}
+h1{font-size:26px;letter-spacing:-.03em;margin:4px 0 2px;color:var(--pri)} h2{font-size:17px;margin:0 0 8px}
+.sub,.mut{color:var(--mut)} .mut{font-size:13px} .sub{margin:0 0 14px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:none;padding:8px 12px;border-radius:999px;font:500 14px var(--font);color:var(--mut);cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected=true]{background:var(--pri);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.sp{justify-content:space-between}
 .grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
-.pill{display:inline-block;padding:2px 10px;border-radius:999px;font:600 11px/18px var(--font);background:var(--sage);color:var(--pri);margin:2px 4px 2px 0;border:1px solid var(--line)}
-.pill.good{background:rgba(22,163,74,.12);color:#15803d;border-color:rgba(22,163,74,.25)}.pill.warn{background:#fdf0e3;color:var(--warn);border-color:rgba(185,95,10,.22)}.pill.bad{background:#fde9e0;color:var(--bad);border-color:rgba(194,65,12,.22)}
-button.b,a.b{border:1px solid var(--pri);background:var(--pri);color:#fff;border-radius:10px;padding:7px 14px;font:600 12.5px var(--font);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:background .15s}
-button.b:hover{background:var(--pri-d)}
-button.b.alt,a.b.alt{background:#fff;color:var(--ink);border-color:var(--line2)} button.b.alt:hover{background:var(--bg)} button:disabled{opacity:.5;cursor:default}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.vi:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
-input,textarea,select{width:100%;border:1px solid var(--line2);border-radius:10px;padding:8px 10px;font:14px var(--font);background:#fff;color:var(--ink)}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font:600 12px/18px var(--font);background:#EEF2F1;color:var(--pri);margin:2px 4px 2px 0}
+.pill.good{background:#E5EDEB;color:var(--good)}.pill.warn{background:#E8EEED;color:var(--warn)}.pill.bad{background:#E9EFEE;color:var(--bad)}
+button.b,a.b{border:1px solid var(--pri);background:var(--pri);color:#fff;border-radius:10px;padding:7px 12px;font:600 13px var(--font);cursor:pointer;text-decoration:none;display:inline-block}
+button.b.alt,a.b.alt{background:#fff;color:var(--pri)} button:disabled{opacity:.5;cursor:default}
+input,textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:14px var(--font);background:#fff;color:var(--ink)}
 textarea{min-height:140px;resize:vertical} label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin:8px 0 3px}
-.bar{height:8px;border-radius:99px;background:var(--sage);overflow:hidden}.bar i{display:block;height:100%;background:var(--pri);border-radius:99px}
-.note{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}
-.bul{border-left:3px solid var(--pri);padding:4px 10px;margin:6px 0;background:#f6f9f8;border-radius:0 8px 8px 0}
+.bar{height:8px;border-radius:99px;background:#E3EBE9;overflow:hidden}.bar i{display:block;height:100%;background:var(--pri)}
+.note{background:#F0F4F3;border:1px solid #DACFBB;border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}
+.bul{border-left:3px solid var(--pri);padding:4px 10px;margin:6px 0;background:#F6F9F8;border-radius:0 8px 8px 0}
 ul{margin:4px 0;padding-left:18px}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;display:none;z-index:99}
-/* hero + steps */
-.hero{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px 22px;margin-bottom:14px;box-shadow:var(--sh)}
-.hero .ttl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.tag{padding:2px 10px;border-radius:999px;font:600 11px/18px var(--font);background:var(--sage);color:var(--pri);border:1px solid var(--line)}
-.steps{display:flex;flex-wrap:wrap;gap:4px;padding:5px;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
-.steps button{display:flex;align-items:center;gap:8px;border:0;background:none;padding:7px 12px;border-radius:9px;font:500 12px var(--font);color:var(--mut);cursor:pointer}
-.steps button:hover{background:#fff;color:var(--ink)} .steps button.on{background:var(--pri);color:#fff;font-weight:600}
-.steps i{font:700 10px/16px var(--font);font-style:normal;width:16px;height:16px;border-radius:50%;text-align:center;background:rgba(15,82,87,.1);color:var(--pri)} .steps .on i{background:rgba(255,255,255,.22);color:#fff}
-/* tab bar */
-.tabbar{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 10px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
-.tabbar::-webkit-scrollbar{display:none}
-.tabs{display:flex;gap:4px}
-.tabs button{border:0;background:none;padding:7px 12px;border-radius:9px;font:500 12px var(--font);color:var(--mut);cursor:pointer;white-space:nowrap}
-.tabs button:hover{background:var(--sub);color:var(--ink)}
-.tabs button[aria-selected=true]{background:var(--pri);color:#fff;font-weight:600}
-.stored{font:500 11px var(--mono);color:var(--mut);white-space:nowrap;padding-left:12px;border-left:1px solid var(--line)}
-/* library workspace */
+@media (prefers-reduced-motion:no-preference){.card{transition:box-shadow .2s ease,border-color .2s ease}.card:hover{box-shadow:0 8px 22px rgba(26,64,77,.10)}}
+.lib{--pri:#0f5257;--pri-d:#0d464a;--sage:#e3ece8;--sub:#f1f4f3;--faint:#829590;--line:rgba(15,82,87,.12);--line2:rgba(15,82,87,.22);--disp:'Space Grotesk',var(--font);--mono:'JetBrains Mono',ui-monospace,monospace;font-family:'Inter',var(--font)}
+.lib button.b{background:#0f5257;border-color:#0f5257}.lib button.b.alt{background:#fff;color:#142123;border-color:rgba(15,82,87,.22)}.lib .bar i{background:#0f5257}.lib .pill{background:#e3ece8;color:#0f5257}.lib .pill.good{background:rgba(22,163,74,.12);color:#15803d}.lib .pill.warn{background:#fdf0e3;color:#b95f0a}.lib .pill.bad{background:#fde9e0;color:#c2410c}
+.lib .ring svg{width:76px;height:76px;transform:rotate(-90deg)}
+.lib /* library workspace */
 .ws{display:grid;gap:16px;grid-template-columns:minmax(0,4fr) minmax(0,8fr);align-items:start}
-@media(max-width:900px){.ws{grid-template-columns:1fr}}
-.side{padding:16px}
-.vlist{display:flex;flex-direction:column;gap:8px;max-height:560px;overflow-y:auto;margin-top:10px;padding-right:2px}
-.vi{position:relative;display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;text-align:left;width:100%;font:inherit;color:inherit}
-.vi:hover{background:var(--bg);border-color:var(--line2)}
-.vi.sel{background:var(--sub);border-color:var(--line2)} .vi.sel:before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:4px;border-radius:0 4px 4px 0;background:var(--pri)}
-.vi .ic{width:32px;height:32px;border-radius:9px;background:var(--sage);color:var(--pri);display:flex;align-items:center;justify-content:center;flex:none;font:700 13px var(--disp)} .vi.sel .ic{background:var(--pri);color:#fff}
-.vi b{font-size:12.5px;display:block;word-break:break-word} .vi small{display:block;color:var(--mut);font-size:11px}
-.mono{font-family:var(--mono)}
-.detail-h{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line)}
-.split{display:grid;gap:16px;grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
-@media(max-width:760px){.split{grid-template-columns:1fr}}
-.paper{border:1px solid var(--line);border-radius:12px;background:#fff;padding:16px;max-height:420px;overflow:auto;font:12px/1.55 var(--mono);color:var(--ink);white-space:pre-wrap;word-break:break-word}
-.diag{background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:16px}
-.ringbox{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0 14px}
-.ring{position:relative;width:76px;height:76px;flex:none}.ring svg{width:76px;height:76px;transform:rotate(-90deg)}
-.ring div{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 20px/1 var(--disp)}.ring small{font:400 9px var(--mono);color:var(--mut)}
-.met{margin:10px 0}.met .row{font-size:12px;font-weight:600}.met .mono{color:var(--pri);font-weight:700}
-.two{display:grid;gap:14px;grid-template-columns:1fr 1fr}@media(max-width:760px){.two{grid-template-columns:1fr}}
-.qa{display:grid;gap:10px;grid-template-columns:1fr 1fr;margin-top:10px}
-.qa button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font:inherit;color:inherit}
-.qa button:hover{background:#fff;border-color:var(--line2);box-shadow:0 10px 25px -4px rgba(15,82,87,.1)}
-.qa b{display:block;font-size:12.5px}.qa small{color:var(--mut);font-size:11px;line-height:1.3;display:block}
-.ir{padding:9px 12px;border:1px solid var(--line);border-radius:12px;margin-top:8px}.ir b{font-size:12.5px;display:block}.ir span{font-size:12px;color:var(--mut)}
-@media (prefers-reduced-motion:no-preference){.card{transition:box-shadow .2s ease,border-color .2s ease}.card:hover{box-shadow:0 10px 25px -4px rgba(15,82,87,.1)}}
+@media(max-width:900px){.lib .ws{grid-template-columns:1fr}}
+.lib .side{padding:16px}
+.lib .vlist{display:flex;flex-direction:column;gap:8px;max-height:560px;overflow-y:auto;margin-top:10px;padding-right:2px}
+.lib .vi{position:relative;display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;text-align:left;width:100%;font:inherit;color:inherit}
+.lib .vi:hover{background:var(--bg);border-color:var(--line2)}
+.lib .vi.sel{background:var(--sub);border-color:var(--line2)}
+.lib .vi.sel:before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:4px;border-radius:0 4px 4px 0;background:var(--pri)}
+.lib .vi .ic{width:32px;height:32px;border-radius:9px;background:var(--sage);color:var(--pri);display:flex;align-items:center;justify-content:center;flex:none;font:700 13px var(--disp)}
+.lib .vi.sel .ic{background:var(--pri);color:#fff}
+.lib .vi b{font-size:12.5px;display:block;word-break:break-word}
+.lib .vi small{display:block;color:var(--mut);font-size:11px}
+.lib .lib .mono{font-family:var(--mono)}
+.lib .detail-h{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.lib .split{display:grid;gap:16px;grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
+@media(max-width:760px){.lib .split{grid-template-columns:1fr}}
+.lib .paper{border:1px solid var(--line);border-radius:12px;background:#fff;padding:16px;max-height:420px;overflow:auto;font:12px/1.55 var(--mono);color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.lib .diag{background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:16px}
+.lib .ringbox{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0 14px}
+.lib .ring{position:relative;width:76px;height:76px;flex:none}
+.lib .ring svg{width:76px;height:76px;transform:rotate(-90deg)}
+.lib .ring div{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 20px/1 var(--disp)}
+.lib .ring small{font:400 9px var(--mono);color:var(--mut)}
+.lib .met{margin:10px 0}
+.lib .met .row{font-size:12px;font-weight:600;flex-wrap:nowrap;gap:12px}
+.lib .met .mono{color:var(--pri);font-weight:700}
+.lib .two{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+@media(max-width:760px){.lib .two{grid-template-columns:1fr}}
+.lib .qa{display:grid;gap:10px;grid-template-columns:1fr 1fr;margin-top:10px}
+.lib .qa button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font:inherit;color:inherit}
+.lib .qa button:hover{background:#fff;border-color:var(--line2);box-shadow:0 10px 25px -4px rgba(15,82,87,.1)}
+.lib .qa b{display:block;font-size:12.5px}
+.lib .qa small{color:var(--mut);font-size:11px;line-height:1.3;display:block}
+.lib .ir{padding:9px 12px;border:1px solid var(--line);border-radius:12px;margin-top:8px}
+.lib .ir b{font-size:12.5px;display:block}
+.lib .ir span{font-size:12px;color:var(--mut)}
 </style>
 <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)&&location.protocol!=='file:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 <link rel="stylesheet" href="opai-mobile.css">
 </head>
 <body>
 <main>
-  <section class="hero">
-    <div>
-      <div class="ttl"><h1>Resume Lab</h1><span class="tag">Production Workspace</span></div>
-      <p class="sub">One place to score, compare and train your resumes. OPAI learns from your best resume, reuses your own wording and flags gaps; it never invents experience.</p>
-    </div>
-    <div class="steps" id="steps" role="group" aria-label="Quick steps">
-      <button type="button" data-s="ver" class="on"><i>1</i>Your versions</button>
-      <button type="button" data-s="upl"><i>2</i>Upload your resumes</button>
-      <button type="button" data-s="add"><i>3</i>Add a version</button>
-    </div>
-  </section>
-  <div class="tabbar"><div class="tabs" id="tabs" role="tablist"></div><span class="stored" id="stored" aria-live="polite"></span></div>
+  <h1>Resume Lab</h1>
+  <p class="sub">One place to score, compare and train your resumes. OPAI learns from your best resume, reuses your own wording and flags gaps; it never invents experience.</p>
+  <div class="tabs" id="tabs" role="tablist"></div>
   <div id="view" aria-live="polite"></div>
 </main>
 <div class="toast" id="toast"></div>
@@ -116,13 +105,10 @@ function pills(a,cls){return (a&&a.length)?a.map(function(x){return '<span class
 function bar(p){return '<div class="bar" role="img" aria-label="'+esc(p)+' percent"><i style="width:'+Math.max(0,Math.min(100,+p||0))+'%"></i></div>'}
 function sel(){return '<label for="opp">Or use a saved opportunity</label><select id="opp"><option value="">None</option></select>'}
 
-$('steps').addEventListener('click',function(e){var b=e.target.closest('button[data-s]');if(!b)return;var k=b.dataset.s;
-  var run=function(){if(k==='ver')window.scrollTo({top:0,behavior:'smooth'});else scrollTo(k==='upl'?'upc':'addc')};
-  if(tab!=='lib'){goTab('lib');setTimeout(run,600)}else run()});
 function renderTabs(){$('tabs').innerHTML=TABS.map(function(t){return '<button role="tab" aria-selected="'+(t[0]===tab)+'" data-k="'+t[0]+'">'+esc(t[1])+'</button>'}).join('')}
 $('tabs').addEventListener('click',function(e){var b=e.target.closest('button[data-k]');if(!b)return;tab=b.dataset.k;history.replaceState(null,'','#'+tab);go()});
 
-async function go(){renderTabs();var v=$('view');v.textContent='Loading…';$('stored').textContent='';
+async function go(){renderTabs();var v=$('view');v.textContent='Loading…';
   try{await ensureUser();await ({train:vTrain,lib:vLib,match:vMatch,build:vBuild,review:vReview,coach:vCoach,compare:vCompare,find:vFind,ins:vIns})[tab](v)}
   catch(e){v.innerHTML='<div class="card">Could not load: '+esc(e.message)+' <button class="b alt" id="retry">Retry</button></div>';$('retry').onclick=go}}
 
@@ -131,7 +117,6 @@ function met(label,val,txt){return '<div class="met"><div class="row sp"><span>'
 function scrollTo(id){var e=$(id);if(e){e.scrollIntoView({behavior:'smooth',block:'start'});var f=e.querySelector('input,textarea');if(f)setTimeout(function(){f.focus({preventScroll:true})},350)}}
 async function vLib(v){
   var d=await api('/v1/resume-lab/library'),vs=d.versions;
-  $('stored').textContent=d.count+' of '+d.limit+' resumes stored';
   var best=bestOf(vs),q='';
   if(!state.sel||!vs.some(function(r){return r.id===state.sel}))state.sel=(best||vs[0]||{}).id;
   var ranked=vs.slice().sort(function(a,b){return (b.overall_score==null?-1:b.overall_score)-(a.overall_score==null?-1:a.overall_score)});
@@ -142,10 +127,10 @@ async function vLib(v){
     +'<label for="role">Target role (optional)</label><input id="role" maxlength="120" placeholder="e.g. ML intern">'
     +'<label for="txt">Resume text</label><textarea id="txt" style="min-height:90px" placeholder="Paste the full text of one resume"></textarea>'
     +'<div class="row" style="margin-top:8px"><button class="b" id="add">Add to library</button><span class="mut">Duplicates are skipped, never overwritten.</span></div></div></div>';
-  var h='<div class="ws"><aside class="card side"><div class="row sp"><h2 style="margin:0">Your versions <span class="pill mono">'+esc(d.count)+'</span></h2><button class="b" id="newv">+ Add version</button></div>'
+  var h='<div class="lib"><div class="ws"><aside class="card side"><div class="row sp"><h2 style="margin:0">Your versions <span class="pill mono">'+esc(d.count)+'</span></h2><button class="b" id="newv">+ Add version</button></div>'
     +'<p class="mut" style="margin:4px 0 8px">Up to '+esc(d.limit)+' versions. Pick one to see its details.</p>'
     +(vs.length?'<input id="vq" type="search" placeholder="Filter versions by label or role" aria-label="Filter versions"><div class="vlist" id="vl"></div>':'<div class="note">No resumes yet. Upload files or paste one below.</div>')
-    +'</aside><section id="det" aria-live="polite"></section></div>'+forms;
+    +'</aside><section id="det" aria-live="polite"></section></div>'+forms+'</div>';
   v.innerHTML=h;
   function list(){var f=(($('vq')||{}).value||'').toLowerCase();
     $('vl').innerHTML=ranked.filter(function(r){return !f||(r.label+' '+(r.target_role||'')).toLowerCase().indexOf(f)>=0}).map(function(r){var sc=r.overall_score;
