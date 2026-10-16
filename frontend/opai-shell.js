@@ -12,9 +12,23 @@
   function h(s){var d=document.createElement('div');d.innerHTML=s.trim();return d.firstChild}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   var LOGO='<img class="opai-mark" src="assets/opai-logo-96.png" width="30" height="30" alt="" decoding="async">';
+
+  if(isChat&&!document.getElementById('opai-karna-css')){var st=document.createElement('style');st.id='opai-karna-css';st.textContent=
+   '.opai-karna{display:inline-flex;align-items:center;gap:8px;margin-left:2px;padding:6px 14px 6px 12px;border-radius:999px;text-decoration:none;flex:none;position:relative;'+
+   'background:linear-gradient(135deg,rgba(15,82,87,.10),rgba(36,94,99,.04));border:1px solid rgba(15,82,87,.22);box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 6px 18px -8px rgba(15,82,87,.45);transition:transform .2s,box-shadow .2s}'+
+   '.opai-karna:before{content:"";position:absolute;left:-12px;top:50%;width:1px;height:22px;transform:translateY(-50%);background:linear-gradient(transparent,rgba(15,82,87,.35),transparent)}'+
+   '.opai-karna b{font:700 13px/1 "Space Grotesk",Inter,system-ui,sans-serif;letter-spacing:.24em;text-indent:.24em;margin-right:-.24em;background:linear-gradient(90deg,#0f5257,#2f8a90 60%,#4aa6ab);-webkit-background-clip:text;background-clip:text;color:transparent}'+
+   '.opai-karna .dot{width:7px;height:7px;border-radius:50%;background:#2f8a90;box-shadow:0 0 0 0 rgba(47,138,144,.55);animation:opaiKp 2.4s ease-out infinite}'+
+   '@keyframes opaiKp{0%{box-shadow:0 0 0 0 rgba(47,138,144,.55)}70%,100%{box-shadow:0 0 0 8px rgba(47,138,144,0)}}'+
+   '.opai-karna:hover{transform:translateY(-1px);box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 10px 22px -8px rgba(15,82,87,.55)}'+
+   'html[data-theme=dark] .opai-karna{background:linear-gradient(135deg,rgba(74,166,171,.18),rgba(74,166,171,.06));border-color:rgba(126,224,230,.28);box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 8px 20px -10px rgba(0,0,0,.8)}'+
+   'html[data-theme=dark] .opai-karna b{background:linear-gradient(90deg,#9be7ec,#5fc0c6 60%,#3aa0a6);-webkit-background-clip:text;background-clip:text}'+
+   'html[data-theme=dark] .opai-karna:before{background:linear-gradient(transparent,rgba(126,224,230,.4),transparent)}'+
+   '@media(max-width:1000px){.opai-karna{display:none}}@media(prefers-reduced-motion:reduce){.opai-karna .dot{animation:none}}';
+   document.head.appendChild(st)}
   function header(){
     var old=document.querySelector('body > header, body > .app > header, header');
-    var hd=h('<header class="opai-hd" role="banner"><div class="in"><a class="opai-logo" href="today.html" aria-label="OPAI home">'+LOGO+'<span><b>OPAI</b><small>v8</small></span></a>'+
+    var hd=h('<header class="opai-hd" role="banner"><div class="in"><a class="opai-logo" href="today.html" aria-label="OPAI home">'+LOGO+'<span><b>OPAI</b><small>v8</small></span></a>'+(isChat?'<a class="opai-karna" href="super-chat.html" aria-label="KARNA"><i class="dot"></i><b>KARNA</b></a>':'')+
       '<nav class="opai-pills" aria-label="Pages">'+NAV.map(function(n){return '<a href="'+n[1]+'"'+((n[1]===path||(n[1]==='work.html'&&/^(opportunities|dsa|projects|academics|applications)\.html$/.test(path)))?' aria-current="page"':'')+'>'+n[0]+'</a>'}).join('')+'</nav>'+
       '<div class="opai-right"><button class="opai-k" type="button" id="opai-k" aria-label="Search sections">Search <kbd>Ctrl K</kbd></button><span class="opai-st" id="opai-st"><i></i><span>Connecting…</span></span>'+
       (isChat?'':'<button class="opai-ib" type="button" id="hd-guide" title="Guide: which section does what" aria-label="Open the guide">'+icons().guide+'</button><button class="opai-ib" type="button" id="hd-install" title="Install OPAI as an app" aria-label="Install OPAI as an app">'+icons().dl+'</button>')+'<a class="opai-user" href="profile.html" title="Profile" aria-label="Open your profile"'+(path==='profile.html'?' aria-current="page"':'')+'><span class="av" id="opai-av">·</span><span><b id="opai-un">Account</b><small id="opai-us">OPAI</small></span></a></div></div></header>');
