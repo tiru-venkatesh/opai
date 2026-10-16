@@ -2441,62 +2441,10 @@ function jarvisReply(text) {
   return 'I can help with your plan, applications, projects, outreach, client requests, and study tasks. Try "What should I focus on today?" or "Help me plan the next 3 hours."';
 }
  
-/* ---- Overview (everything, one page) ---- */
-function ovHead(title, count, tab) {
-  return '<div class="panel-h"><h3>' + title + '</h3><button class="tip-btn" data-tip="' + title + '" onclick="showTip(this.dataset.tip)" aria-label="About this section">?</button><span style="display:flex;align-items:center;gap:10px;margin-left:auto">' + (count != null ? count : '') + '<button class="btn ghost sm" onclick="switchTab(\'' + tab + '\')">See all</button></span></div>';
-}
-function viewOverview() {
-  const apps = S.applications.slice(0, 4);
-  const opps = S.opportunities.filter(o => o.status === 'New').slice(0, 3);
-  const contacts = S.contacts.slice(0, 4);
-  const projs = S.projects.slice(0, 3);
-  const acads = S.academics.filter(a => !a.done).slice(0, 4);
-  const reqs = S.requests.filter(r => r.status === 'New' || r.status === 'Scoped').slice(0, 3);
-  const outboxPending = S.outbox.filter(o => o.status === 'pending').slice(0, 3);
-  const hist = S.history.slice(0, 5);
- 
-  const appsRows = apps.length ? apps.map(a => '<div class="row noicon"><div><div class="row-t">' + esc(a.company) + '</div><div class="row-s">' + esc(a.role) + '</div></div><div class="row-a">' + pill(a.status) + (a.deadline ? '<span class="chip ' + dueTone(a.deadline, a.status) + '">' + fmtDue(a.deadline) + '</span>' : '') + '</div></div>').join('') : '<div class="empty" style="padding:22px"><p style="margin:0">No applications yet.</p></div>';
- 
-  const oppsRows = opps.length ? opps.map(o => '<div class="row noicon"><div><div class="row-t">' + esc(o.title) + '</div><div class="row-s">' + esc(o.org) + '</div></div><div class="row-a">' + (o.deadline ? '<span class="chip">' + fmtDue(o.deadline).replace('Due', 'Closes') + '</span>' : '') + '</div></div>').join('') : '<div class="empty" style="padding:22px"><p style="margin:0">Nothing new on the radar.</p></div>';
- 
-  const contactRows = contacts.length ? contacts.map(c => '<div class="row noicon"><div><div class="row-t">' + esc(c.name) + '</div><div class="row-s">' + esc(c.institute) + '</div></div><div class="row-a">' + pill(c.status) + '</div></div>').join('') : '<div class="empty" style="padding:22px"><p style="margin:0">No contacts yet.</p></div>';
- 
-  const projRows = projs.length ? projs.map(p => { const done = p.tasks.filter(t => t.done).length, total = p.tasks.length; return '<div class="row noicon"><div style="width:100%"><div class="row-t">' + esc(p.name) + '</div><div class="prog" style="margin:8px 0 4px"><i style="width:' + (total ? Math.round(done/total*100) : 0) + '%"></i></div><div class="prog-l" style="margin:0">' + done + ' of ' + total + ' tasks done</div></div></div>'; }).join('') : '<div class="empty" style="padding:22px"><p style="margin:0">No projects yet.</p></div>';
- 
-  const acadRows = acads.length ? acads.map(a => '<div class="row noicon"><div><div class="row-t">' + esc(a.subject) + '</div><div class="row-s">' + esc(a.task) + '</div></div><div class="row-a">' + (a.exam_date ? '<span class="chip">' + fmtDate(a.exam_date) + '</span>' : '') + '</div></div>').join('') : '<div class="empty" style="padding:22px"><p style="margin:0">Nothing to study.</p></div>';
- 
-  const reqRows = reqs.length ? reqs.map(r => '<div class="row noicon"><div><div class="row-t">' + esc(r.client) + '</div><div class="row-s">' + esc(r.ask) + '</div></div><div class="row-a">' + pill(r.status) + '</div></div>').join('') : '<div class="empty" style="padding:22px"><p style="margin:0">No open requests.</p></div>';
- 
-  const outboxRows = outboxPending.length ? outboxPending.map(o => '<div class="row noicon"><div><div class="row-t">' + esc(o.payload.subject || '(no subject)') + '</div><div class="row-s">To ' + esc(o.payload.to || 'no address') + '</div></div><div class="row-a">' + pill(o.status) + '</div></div>').join('') : '<div class="empty" style="padding:22px"><p style="margin:0">Outbox is clear.</p></div>';
- 
-  const histRows = hist.length ? hist.map(e => '<div class="tl-e" style="padding:9px 20px"><time>' + new Date(e.at).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }) + '</time><span>' + esc(e.text) + '</span></div>').join('') : '<div class="empty" style="padding:22px"><p style="margin:0">Nothing logged yet.</p></div>';
- 
-  const skillChips = splitList(S.profile.skills).slice(0, 8).map(s => '<span class="chip">' + esc(s) + '</span>').join('');
- 
-  return head('Overview', 'Everything across OPAI, on one page. Tap "See all" to open a section in full.', '') + karnaHero() +
-    '<div class="grid2">' +
-      '<section class="panel">' + ovHead('Applications', S.applications.length, 'applications') + '<div class="rows">' + appsRows + '</div></section>' +
-      '<section class="panel">' + ovHead('Opportunities', S.opportunities.length, 'opportunities') + '<div class="rows">' + oppsRows + '</div></section>' +
-      '<section class="panel">' + ovHead('Internships', S.contacts.length, 'outreach') + '<div class="rows">' + contactRows + '</div></section>' +
-      '<section class="panel">' + ovHead('Projects', S.projects.length, 'projects') + '<div class="rows">' + projRows + '</div></section>' +
-      '<section class="panel">' + ovHead('Academics', S.academics.length, 'academics') + '<div class="rows">' + acadRows + '</div></section>' +
-      '<section class="panel">' + ovHead('Client requests', S.requests.length, 'requests') + '<div class="rows">' + reqRows + '</div></section>' +
-      '<section class="panel">' + ovHead('Outbox', S.outbox.filter(o=>o.status==='pending').length, 'outbox') + '<div class="rows">' + outboxRows + '</div></section>' +
-      '<section class="panel">' + ovHead('History', null, 'history') + '<div>' + histRows + '</div></section>' +
-    '</div>' +
-    '<section class="panel form-panel" style="margin-top:16px;max-width:none">' +
-      '<div class="panel-h" style="padding:0 0 14px;border:0"><h3>Profile</h3><button class="btn ghost sm" onclick="switchTab(\'profile\')">Edit</button></div>' +
-      '<div class="row-t" style="margin-bottom:4px">' + esc(S.profile.name || 'Unnamed') + '</div>' +
-      '<div class="row-s" style="margin-bottom:10px">' + esc(S.profile.track || '') + '</div>' +
-      '<div class="row-m">' + (skillChips || '<span class="row-s">No skills added yet.</span>') + '</div>' +
-    '</section>';
-}
- 
 /* ================= 7. NAVIGATION & RENDER ================= */
 const NAV = [
   { id:'jarvis', l:'KARNA', i:'spark', g:'Assistant' },
   { id:'superchat', l:'Super Chat', i:'spark', href:'super-chat.html' },
-  { id:'overview', l:'Overview', i:'layers' },
   { id:'today', l:'Today', i:'sun', g:'Plan' },
   { id:'applications', l:'Applications', i:'brief' },
   { id:'opportunities', l:'Opportunities', i:'target' },
@@ -2513,7 +2461,7 @@ const NAV = [
   { id:'review', l:'Review', i:'star' },
   { id:'profile', l:'Profile', i:'user' }
 ];
-const VIEWS = { review: viewReview, jarvis: viewJarvis, overview: viewOverview, today: viewToday, applications: viewApps, opportunities: viewOpps, outreach: viewOutreach, projects: viewProjects, academics: viewAcads, sems: viewSems, requests: viewReqs, outbox: viewOutbox, resume: viewResume, agent: viewAgent, history: viewHistory, profile: viewProfile };
+const VIEWS = { review: viewReview, jarvis: viewJarvis, today: viewToday, applications: viewApps, opportunities: viewOpps, outreach: viewOutreach, projects: viewProjects, academics: viewAcads, sems: viewSems, requests: viewReqs, outbox: viewOutbox, resume: viewResume, agent: viewAgent, history: viewHistory, profile: viewProfile };
 let cur = 'today';
  
 function badge(id) {
@@ -2984,7 +2932,7 @@ function accountPanel() {
 const TUTORIALS = {
   welcome: { title: 'Welcome to OPAI', steps: [
     ['What is this?', 'OPAI is your personal operating desk: one place for job and hackathon applications, professor outreach, projects, exams and client requests.'],
-    ['Start small', 'Add just one thing: an application with a deadline, or an exam date. Everything else (Today, Overview, the calendar) builds itself from what you add.'],
+    ['Start small', 'Add just one thing: an application with a deadline, or an exam date. Everything else (Today, the calendar) builds itself from what you add.'],
     ['Today tab', 'Shows what to do right now, ordered by deadline. Tick items as you finish them.'],
     ['Ask KARNA', 'Open the KARNA chat tab (or press Ctrl+J) and type things like "Add an internship at Acme due Friday" or "Plan my next 3 hours". It creates real records for you.'],
     ['Need help later?', 'Every page has a "? How to use" button in the top right. It opens a short guide for that page.'] ] },
@@ -3025,7 +2973,7 @@ const TUTORIALS = {
     ['Your data', 'It is saved to the backend under your account. "Delete all my data" wipes it.'] ] },
   _default: { title: 'How this page works', steps: [
     ['Getting around', 'Use the left menu to switch pages. Ctrl+K searches everything, Ctrl+J opens KARNA.'],
-    ['Need more?', 'Open the "Overview" or "Today" page for the big picture, or ask KARNA in chat.'] ] }
+    ['Need more?', 'Open the "Today" page for the big picture, or ask KARNA in chat.'] ] }
 };
 let TUT = { key: 'welcome', i: 0 };
 function showTutorial(key, i) {
@@ -3039,7 +2987,7 @@ function showTutorial(key, i) {
 }
 function closeTutorial() { if (TUT.key === 'welcome') { S.profile.tutorialSeen = true; save(); } closeModal(); }
 
-/* ================= KARNA HOME (Overview) ================= */
+/* ================= KARNA SETUP ================= */
 const SETUP_STEPS = [
   { l: 'Fill your profile (name, skills, highlight)', tab: 'profile', hint: 'Open Profile and add your name, skills and one highlight line.', done: () => !!(S.profile.name && S.profile.skills) },
   { l: 'Add your first application', tab: 'applications', hint: 'Open Applications and add a job, internship or hackathon with its deadline.', done: () => S.applications.length > 0 },
@@ -3050,24 +2998,6 @@ const SETUP_STEPS = [
 ];
 const KARNA_CAN = ['Plan the next 3 hours', 'What is due this week?', 'Draft an email to a professor', 'Add an internship at Acme due Friday', 'Which projects need attention?', 'Help me prepare for my exam'];
 function karnaGo(t) { switchTab('jarvis'); setTimeout(() => jarvisSend(t), 120); }
-function karnaAsk() { const i = $('kh-input'); const t = i && i.value.trim(); if (t) karnaGo(t); }
-function karnaHero() {
-  const soon = (d) => d && (new Date(d) - new Date()) / 864e5 <= 7;
-  const due = S.applications.filter(a => soon(a.deadline) && a.status === 'Not started').length + S.academics.filter(a => !a.done && soon(a.exam_date)).length;
-  const pend = (S.outbox || []).filter(o => o.status === 'pending').length;
-  const open = S.projects.reduce((n, p) => n + p.tasks.filter(t => !t.done).length, 0);
-  const done = SETUP_STEPS.filter(x => x.done()).length, pct = Math.round(done / SETUP_STEPS.length * 100);
-  const name = (S.profile.name || '').split(' ')[0];
-  return '<section class="kh"><h2>Hi' + (name ? ' ' + esc(name) : '') + ', I am KARNA</h2>' +
-    '<p>Your operating agent. I read your applications, exams, projects and contacts, then tell you what to do next and do the busywork for you.</p>' +
-    '<div class="kh-stats"><span><b>' + due + '</b> due in 7 days</span><span><b>' + open + '</b> open project tasks</span><span><b>' + pend + '</b> waiting for your approval</span><span>' + (BACKEND.ready ? 'Backend connected' : 'Offline mode') + '</span></div>' +
-    '<div class="kh-ask"><input id="kh-input" placeholder="Ask KARNA anything, e.g. what should I do today?" onkeydown="if(event.key===\'Enter\')karnaAsk()"><button class="btn" onclick="karnaAsk()">Ask</button></div>' +
-    '<div class="kh-cols"><div><h4>Setup · ' + done + ' of ' + SETUP_STEPS.length + ' done</h4><div class="kh-bar"><b style="width:' + pct + '%"></b></div>' +
-    SETUP_STEPS.map(x => '<div class="kh-step ' + (x.done() ? 'done' : '') + '"><i>' + (x.done() ? '✓' : '') + '</i><span>' + esc(x.l) + '</span>' + (x.done() ? '' : '<button class="btn ghost sm" onclick="switchTab(\'' + x.tab + '\')">Go</button>') + '</div>').join('') +
-    '<div style="margin-top:12px"><button class="btn" onclick="karnaGo(\'Set up my whole OPAI app\')">Start chat: set up my whole OPAI app</button></div></div>' +
-    '<div><h4>Try asking me</h4><div class="kh-can">' + KARNA_CAN.map(q => '<button onclick="karnaGo(this.textContent)">' + esc(q) + '</button>').join('') + '</div>' +
-    '<h4 style="margin-top:16px">What I can do</h4><p style="margin:0;font-size:14px">Plan your day, add records from plain sentences, draft outreach and proposals, score opportunities, and remember your preferences. Anything that sends email waits for your approval.</p></div></div></section>';
-}
 (function () {
   const _js = jarvisSend;
   jarvisSend = function (text) {
@@ -3091,10 +3021,6 @@ function setupChat(t) {
 
 /* ================= MORE TUTORIALS + SECTION TIPS ================= */
 Object.assign(TUTORIALS, {
-  overview: { title: 'Overview (home)', steps: [
-    ['Meet KARNA', 'The card at the top is your agent. It shows what is due, what needs approval and your setup progress.'],
-    ['Setup checklist', 'Tick off the six setup steps. Each "Go" button opens the right page. Or tap "Start chat" and KARNA walks you through it.'],
-    ['Sections below', 'Each panel is a summary of one page. Press "See all" to open the full page, or "?" for what the section does.'] ] },
   outbox: { title: 'Outbox (approvals)', steps: [
     ['Why it exists', 'KARNA never sends anything by itself. Drafts wait here for you.'],
     ['Approve or reject', 'Read the draft, edit if needed, then approve to send or reject to discard.'],
@@ -3160,7 +3086,7 @@ function addTips() {
 })();
 
 /* ================= KARNA SECTION PANEL =================
-   Every section is linked to KARNA. "Ask KARNA" (page header / Overview cards)
+   Every section is linked to KARNA. "Ask KARNA" (page header)
    opens a side panel with a thread for THAT section. When KARNA is about to add
    something (from the panel or the main KARNA chat) it never writes silently:
    it asks "Can I add this in the <Section> section?" as a card in this panel,
@@ -3178,8 +3104,7 @@ const KP_SEC = {
   resume:        { kw: 'project',           chips: ['Which projects should go on my resume?'] },
   agent:         { kw: '',                  chips: ['What did KARNA do recently?'] },
   history:       { kw: '',                  chips: ['What did I finish this week?'] },
-  profile:       { kw: '',                  chips: ['What is missing in my profile?'] },
-  overview:      { kw: 'focus today',       chips: ['What should I do today?', 'Add project called my new idea'] }
+  profile:       { kw: '',                  chips: ['What is missing in my profile?'] }
 };
 const KP_SEC_OF = { application: 'applications', task: 'projects', project: 'projects', study: 'academics', request: 'requests', contact: 'outreach', mail: 'outbox' };
 const KP = { open: false, sec: 'today', msgs: {}, props: {}, direct: false, busy: false, auto: false, dock: false, wide: false };
@@ -3320,14 +3245,6 @@ function kpDecorate() {
     const b = document.createElement('button'); b.className = 'btn soft kp-ask'; b.title = 'Ask KARNA about this section';
     b.innerHTML = icon('spark', 15) + ' Ask KARNA'; b.onclick = () => kpOpen(cur); hd.insertBefore(b, hd.firstChild);
   }
-  if (cur === 'overview') v.querySelectorAll('.panel-h').forEach(ph => {
-    if (ph.querySelector('.kp-ask-s')) return;
-    const h = ph.querySelector('h3'); if (!h) return;
-    const n = NAV.find(x => x.l.toLowerCase() === h.textContent.trim().toLowerCase());
-    if (!n || n.id === 'overview' || n.id === 'jarvis') return;
-    const b = document.createElement('button'); b.className = 'kp-ask-s'; b.title = 'Ask KARNA about ' + n.l; b.setAttribute('aria-label', 'Ask KARNA about ' + n.l);
-    b.innerHTML = icon('spark', 13); b.onclick = () => kpOpen(n.id); h.insertAdjacentElement('afterend', b);
-  });
 }
 (function () {
   const _r = render; render = function (f) { _r(f); try { kpDecorate(); } catch (e) {} };
@@ -3438,7 +3355,7 @@ function viewReview() {
     revShape() +
     '<section class="panel rv-form"><h3>Rate OPAI' + (avg ? ' <span class="pill good">' + avg + ' / 5 avg</span>' : '') + '</h3><div class="rv-stars" id="rv-stars">' + stars(REV_STARS, true) + '</div>' +
     '<div class="field"><label for="rv-text">What works, what should change?</label><textarea id="rv-text" rows="3" placeholder="Your feedback on OPAI"></textarea></div>' +
-    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn" onclick="revSubmit()">Save review</button><a class="btn ghost" href="feedback.html?area=Overview&from=app.html">Open Feedback &amp; Ideas</a></div></section>' +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn" onclick="revSubmit()">Save review</button><a class="btn ghost" href="feedback.html?area=Other&from=app.html">Open Feedback &amp; Ideas</a></div></section>' +
     (S.reviews.length ? '<section class="panel"><h3>Your reviews</h3>' + S.reviews.slice().reverse().map(r => '<div class="rv-item"><div class="rv-stars sm">' + stars(r.stars, false) + '<time>' + new Date(r.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</time></div>' + (r.text ? '<p>' + esc(r.text) + '</p>' : '') + '</div>').join('') + '</section>' : '');
 }
 function revStar(k) {
@@ -3451,13 +3368,13 @@ function revSubmit() {
   S.reviews = S.reviews || []; S.reviews.push({ stars: REV_STARS, text: t.trim(), at: new Date().toISOString() });
   const stars = REV_STARS;
   REV_STARS = 0; save(); render(true); toast('Review saved');
-  revSend('general', 'Rating: ' + stars + ' / 5', t.trim() || 'Rated OPAI ' + stars + ' out of 5.', 'Overview');
+  revSend('general', 'Rating: ' + stars + ' / 5', t.trim() || 'Rated OPAI ' + stars + ' out of 5.', 'Other');
 }
 /* Also send ratings and suggestions to the backend feedback inbox, so they are not only stored in this browser. */
 async function revSend(type, title, description, area) {
   try {
     const uid = await ensureUser();
-    await api('/v1/feedback', { method: 'POST', body: JSON.stringify({ user_id: uid, type, title: title.slice(0, 140), description: description.slice(0, 4000), product_area: area || 'Overview', importance: 'medium', app_version: 'v8', page_path: 'app.html' }) });
+    await api('/v1/feedback', { method: 'POST', body: JSON.stringify({ user_id: uid, type, title: title.slice(0, 140), description: description.slice(0, 4000), product_area: area || 'Other', importance: 'medium', app_version: 'v8', page_path: 'app.html' }) });
   } catch (e) { /* local copy is already saved; the full Feedback page shows server errors */ }
 }
 

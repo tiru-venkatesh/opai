@@ -5,7 +5,7 @@
   if(EMBED){window.OPAI_KARNA_POPUP=1;var st=document.createElement('style');st.textContent='body>header,header.opai-hd,.opai-dock{display:none!important}body{padding-top:0!important}';document.head.appendChild(st);return}
   var path=(location.pathname.split('/').pop()||'today.html').replace(/\/$/,'')||'today.html';
   if(path==='super-chat'||path==='')path='super-chat.html';
-  var NAV=[['Today','today.html'],['KARNA','super-chat.html'],['Plan','plan.html'],['Work','work.html'],['Overview','app.html'],['Review','review.html']];
+  var NAV=[['Today','today.html'],['KARNA','super-chat.html'],['Plan','plan.html'],['Work','work.html'],['Review','review.html']];
   var isChat=/super-chat/.test(path);
   var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
   var uid=null,mail=((localStorage.getItem('opai_sc_email')||'').trim().toLowerCase())||null;

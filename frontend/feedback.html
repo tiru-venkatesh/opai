@@ -129,7 +129,7 @@ textarea{min-height:110px;resize:vertical}input:focus,textarea:focus,select:focu
   const LS_BASE = 'opa_api_base';
   const DEFAULT_API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8000' : 'https://opa-52ug.onrender.com';
   const base = () => (localStorage.getItem(LS_BASE) || DEFAULT_API).replace(/\/+$/, '');
-  const AREAS = ['Today','KARNA','Plan','Work','Opportunities','Reminders','Overview','Login & account','Other'];
+  const AREAS = ['Today','KARNA','Plan','Work','Opportunities','Reminders','Login & account','Other'];
   const STEPS = ['Submitted','Reviewing','Planned','In progress','Released'];
   const TYPE_LABEL = { idea: 'Suggestion', bug: 'Problem report', general: 'General feedback' };
   const q = new URLSearchParams(location.search);

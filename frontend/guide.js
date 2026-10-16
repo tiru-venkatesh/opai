@@ -1,7 +1,6 @@
 /* OPAI Guide: section map + keyword navigation (English / Hinglish / Tenglish). Exposes window.OPAI_GUIDE. */
 (function(){
   var S=[
-   {id:'overview',t:'Overview',h:'app.html',d:'Whole-workspace summary: counts, deadlines, status of everything.',k:'overview home dashboard summary status mukhya home dikhao'},
    {id:'today',t:'Today',h:'today.html',d:'What to do today: tasks, classes, deadlines due now.',k:'today aaj ivala eroju tasks todo kaam pani deadline schedule'},
    {id:'plan',t:'Plan',h:'plan.html',d:'Weekly plan and study blocks. Build or change your schedule here.',k:'plan planner schedule timetable study blocks week yojana'},
    {id:'applications',t:'Opportunities',h:'opportunities.html',d:'Find, evaluate and track internships and research roles; professor outreach; approved emails and follow-ups.',k:'applications application apply internship job intern status kahan ekkada undi'},

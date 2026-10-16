@@ -87,7 +87,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
 <script>
 (function(){
   var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
-  var AREAS=['Any page','Today','KARNA','Plan','Work','Opportunities','Resume Lab','Academics','Overview','Login & account','Other'];
+  var AREAS=['Any page','Today','KARNA','Plan','Work','Opportunities','Resume Lab','Academics','Login & account','Other'];
   function $(i){return document.getElementById(i)}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   var mail=((localStorage.getItem('opai_sc_email')||'').trim().toLowerCase())||null, uid=null, stars=0;
@@ -128,7 +128,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
   $('r-send').onclick=function(){
     if(!stars){$('r-msg').className='msg err';$('r-msg').textContent='Pick a star rating first.';return}
     var t=$('r-text').value.trim();
-    post('general','Rating: '+stars+' / 5',t||('Rated OPAI '+stars+' out of 5.'),'Overview',$('r-msg'),$('r-send'),function(){stars=0;paintStars();$('r-text').value=''});
+    post('general','Rating: '+stars+' / 5',t||('Rated OPAI '+stars+' out of 5.'),'Other',$('r-msg'),$('r-send'),function(){stars=0;paintStars();$('r-text').value=''});
   };
   $('s-send').onclick=function(){
     var ti=$('s-title').value.trim(),de=$('s-desc').value.trim();

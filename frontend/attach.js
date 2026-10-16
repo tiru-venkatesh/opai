@@ -6,7 +6,7 @@
   function camHTML() { try { return window.matchMedia('(pointer: coarse)').matches ? ' <button type="button" class="btn ghost" onclick="attPick(true)">Take photo</button>' : ''; } catch (e) { return ''; } }
   var ACCEPT = 'image/*,application/pdf,.pdf,.txt,.md,.csv,.json,.docx';
   function st(k) { return ST[k] || (ST[k] = { files: [], q: '', result: '', busy: false, open: false, err: '' }); }
-  function sec() { return typeof cur !== 'undefined' ? cur : 'overview'; }
+  function sec() { return typeof cur !== 'undefined' ? cur : 'today'; }
   function b64(f) { return new Promise(function (ok, no) { var r = new FileReader(); r.onload = function () { ok(String(r.result).split(',')[1]); }; r.onerror = no; r.readAsDataURL(f); }); }
   function size(n) { return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
 
