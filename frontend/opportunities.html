@@ -78,6 +78,7 @@ label{display:block;margin:0 0 4px;color:var(--opp-muted);font-size:12px;font-we
 .count.hot strong{color:var(--opp-warn)}
 
 /* ---- embedded inside the Programs page (?only=programs): show just the programs tracker ---- */
+html.only-programs body{min-height:0}
 html.only-programs .op-head,html.only-programs #hero,html.only-programs .how,html.only-programs .tabs-wrap,html.only-programs .trust,html.only-programs .tabhelp{display:none}
 /* ---- how-it-works + tab help ---- */
 .how{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px;padding:0;list-style:none;counter-reset:h}
@@ -231,7 +232,7 @@ if (/[?&]embed=1/.test(location.search)) document.documentElement.classList.add(
 const ONLY_PROGRAMS = /[?&]only=programs(&|$)/.test(location.search);
 if (ONLY_PROGRAMS) {                                       // the Programs page embeds just the programs tracker and needs its height
   document.documentElement.classList.add('only-programs');
-  const sendH = () => { try { parent.postMessage({ opaiH: document.documentElement.scrollHeight, k: 'programs' }, '*'); } catch (e) {} };
+  const sendH = () => { try { parent.postMessage({ opaiH: Math.ceil(document.body.getBoundingClientRect().height), k: 'programs' }, '*'); } catch (e) {} };
   addEventListener('load', sendH);
   if (window.ResizeObserver) new ResizeObserver(sendH).observe(document.body);
 }
@@ -842,6 +843,7 @@ async function refresh() { await render(); loadHero().catch(() => {}); }
   const a = ALIAS[(location.hash || '').slice(1)];
   if (ONLY_PROGRAMS) S.tab = 'programs';
   else if (a) { S.tab = a[0]; S.scrollTo = a[1] || null; }
+  $('view').setAttribute('aria-busy', 'true'); $('view').innerHTML = '<div class="skel"></div><div class="skel"></div><p class="mut" style="text-align:center">Loading… the server may take a few seconds to wake up.</p>';
   ensureUser().then(() => { render(); loadHero().catch(() => {}); }).catch((e) => { renderTabs(); $('view').innerHTML = `<div class="card empty"><h2>Please sign in</h2><p>${esc(e.message)}</p></div>`; $('view').setAttribute('aria-busy', 'false'); });
 })();
 })();
