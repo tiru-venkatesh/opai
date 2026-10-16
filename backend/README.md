@@ -1,151 +1,28 @@
-# OPA Agent Backend — deploy notes
+# backend_patch: drop-in files (paths relative to backend/)
 
-This is the FastAPI + Groq backend, split out to deploy on its own. It
-needs to run as a **persistent process** (not a serverless function) —
-see why in the root project's notes on Vercel. Render, Railway, and
-Fly.io all work; so does any VPS.
+    agent/orchestrator.py            (replaces agent/orchestrator.py)
+    agent/noise.py                   (was sitting at backend/noise.py; agent/orchestrator imports `from . import noise`)
+    tests/test_noise_guard.py        (was at backend/test_noise_guard.py; it loads agent/noise.py)
+    tests/test_orchestrator_hardening.py   (new, 5 tests)
+    orchestrator.diff                (diff vs the agent/orchestrator.py in your zip)
 
-## Local development run
-```bash
-pip install -r requirements.txt
-export GROQ_API_KEY="your key"
-export OPAI_LOCAL_AUTH_BYPASS=1
-python main.py
-```
+Then delete the stray backend/orchestrator.py, backend/noise.py, backend/test_noise_guard.py.
 
-On Windows PowerShell, set the local-only bypass with `$env:OPAI_LOCAL_AUTH_BYPASS = '1'` before `python main.py`. It accepts unauthenticated requests only from loopback and binds the standalone development server to `127.0.0.1`. Do not set it on a hosted service.
+## What changed in agent/orchestrator.py
+- Base is your newer top-level orchestrator.py (noise guard + plain-language clarify, no reason_code leak).
+- `_try()`: every optional step (identity, reminder, brief, direct_db, capture) now logs the traceback
+  and rolls the session back. Before, identity/direct_db/capture swallowed errors with no rollback and no log.
+- `_grounded_chat`: general_answer failure is logged + rolled back instead of `pass`.
+- Dates: "today/tomorrow" use Asia/Kolkata, not the server clock (UTC host was off by one day for IST evenings).
+- `estimated_minutes` parsed to int (handles "30 min"), clamped 5..600.
+- reschedule_session no longer replies "I generated the study plan".
+- Removed unused imports/constants; one `import re` instead of three.
 
-## Deploying to Render / Railway / Fly.io
+## Verified
+Full suite before: 473 passed, 12 failed, 16 errors. After: 481 passed, same 28 failures, 0 new.
+The 28 are pre-existing and unrelated: frontend/*.html/js files not in the zip, and test_opportunities_api KeyError.
 
-General shape, same on all three:
-1. Push this folder to its own git repo.
-2. Create a new **Web Service** (Render/Railway) or `fly launch` (Fly.io)
-   pointing at that repo.
-3. Build command: `pip install -r requirements.txt`
-4. Start command: `python main.py` (or `uvicorn main:app --host 0.0.0.0 --port $PORT`
-   — check which port env var your host expects and adjust `main.py`'s
-   `uvicorn.run(..., port=8000)` line, or read `PORT` from the environment)
-5. Set the `GROQ_API_KEY` environment variable in the host's dashboard.
-6. Once deployed, copy the public URL — that's what you paste into the
-   frontend's **Backend URL** field.
-
-## Important: SQLite persistence isn't automatic
-
-`database.py` defaults to a local SQLite file (`./opa.db`). That file
-only survives as long as the *same disk* sticks around. On most hosts'
-**free tiers**, redeploys or restarts can wipe local files unless you
-explicitly attach a persistent volume/disk — check your host's docs for
-"persistent disk" or "volume" before you rely on this for real data.
-
-Two ways to get real persistence:
-- **Attach a persistent volume/disk** on whichever host you pick, and
-  point `DATABASE_URL` nowhere (keep the SQLite default) — the file then
-  lives on that volume.
-- **Use a hosted Postgres instead** (Neon, Supabase, or the host's own
-  managed Postgres all have free tiers) — set `DATABASE_URL` to that
-  instance's connection string. No code changes needed; `database.py`
-  already works against Postgres, and no pgvector extension is required
-  (similarity search runs in Python).
-
-## The other real constraint: the embedding model
-
-`fastembed` downloads the `BAAI/bge-small-en-v1.5` model (a few hundred
-MB) the first time it's used. On a host with a small disk/memory
-allowance or a strict cold-start timeout, this can be slow or fail. If
-that happens, the fix is usually either upgrading the plan's resources
-or swapping `get_embedding()` in `agent_service.py` for a call to a
-hosted embeddings API instead of the local model — ask if you want that
-version.
-
-
-## RAG (retrieval-augmented generation)
-
-RAG here means *index your data, retrieve it at prompt time* - nothing is fine-tuned.
-`rag_service.py` chunks + embeds your resume, projects, weak areas, daily reflections,
-sent emails and cover letters into `document_chunks`. Every write endpoint re-indexes
-automatically, and each workflow retrieves what it needs:
-
-| Workflow | Retrieves |
-|---|---|
-| Daily plan | past reflections, weak areas, project notes |
-| Opportunity matching | per-opening resume/project evidence + past cover letters |
-| Professor outreach | best-matching projects for that lab + a past email that got a reply |
-| JARVIS chat | top chunks across everything, answer grounded in them (sources returned in `payload`) |
-
-Endpoints: `POST /v1/rag/reindex`, `GET /v1/rag/search?user_id=&q=`, `GET /v1/rag/stats`.
-Embedder: fastembed `bge-small-en-v1.5`; falls back to a hashed bag-of-words embedder if the
-model can't load (`RAG_EMBEDDER=hash|fastembed|auto`). After changing embedders, call `/v1/rag/reindex`.
-## KARNA knowledge workspace (uploads + cited answers)
-
-Open `/super-chat` (or `/karna`). **Knowledge** lets you upload PDF/DOCX/TXT/MD/CSV or paste notes; each file is
-parsed (PDFs page by page), chunked, embedded and stored per user in `document_chunks`. Re-uploading a file with the
-same name replaces it. **Workspace** mode answers from your uploads *and* your OPAI data (projects, tasks, applications,
-courses...) with `[n]` citations and per-source snippets; follow-up questions use the conversation history, and
-"Ask only this doc" restricts retrieval to one document. **General** mode is a plain assistant with no data access.
-Without a Groq key (or if the LLM call fails) Workspace falls back to quoting the best matching sentences.
-
-| Endpoint | Purpose |
-|---|---|
-| `POST /v1/rag/docs` (multipart `user_id`, `files`) | upload + index, per-file ok/error |
-| `GET /v1/rag/docs?user_id=` / `DELETE /v1/rag/docs/{id}?user_id=` | list / delete |
-| `POST /v1/rag/notes` | index pasted text |
-| `POST /v1/rag/ask` | `{user_id, question, history?, doc_ids?}` -> `{answer, mode, sources[]}` |
-| `POST /v1/jarvis/chat` | unified agent; now also accepts `history` and `doc_ids` |
-| `POST /v1/rag/reindex-docs` | rebuild workspace sources and re-embed everything |
-
-Tests: `pip install pytest reportlab && python -m pytest tests -q`.
-
-## Database maintenance
-
-The backend uses SQLAlchemy with SQLite for local development and PostgreSQL when `DATABASE_URL` is provided. SQLite connections enable foreign-key enforcement, WAL mode, a busy timeout, and indexed user/date/status lookups.
-
-Audit the local database:
-
-```bash
-python db_maintenance.py audit
-```
-
-The repair utility is intentionally conservative and is for cleaning development/test contamination without inventing workspace records:
-
-```bash
-python db_maintenance.py repair --email "you@example.com" --name "Your Name"
-```
-
-For production, set `DATABASE_URL` to managed PostgreSQL so application data survives redeploys independently of the application filesystem.
-
-## Agent architecture
-
-The request path is now:
-
-```text
-Jev typed router
-   ↓
-Groq structured fallback
-   ↓
-deterministic fallback
-   ↓
-validated workflow/tool
-   ↓
-approval/outbox for high-impact actions
-   ↓
-audit log
-```
-
-Set the routing variables in `.env`:
-
-```env
-JEV_ENABLED=false
-JEV_API_URL=
-JEV_API_KEY=
-JEV_MODEL=
-JEV_TIMEOUT_SECONDS=8
-GROQ_ROUTER_MODEL=openai/gpt-oss-20b
-GROQ_AGENT_MODEL=openai/gpt-oss-120b
-ENABLE_DEV_SEED=false
-```
-
-`JEV_ENABLED=false` is the safe default until the production Jev endpoint and
-schema are configured. The exact Jev transport remains provider-agnostic.
-
-`POST /v1/seed` is disabled by default and only exists for explicit local testing
-when `ENABLE_DEV_SEED=true`.
+## Deliberately NOT applied
+- pending.py / pending_actions table: your backend already has confirm-first profile memory (agent/learn.py,
+  MemoryItem unconfirmed -> active, history-based "yes") and an ActionRecord approval system (action_service.py).
+  A second pending table would duplicate both.
