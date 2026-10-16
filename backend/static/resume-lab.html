@@ -4,43 +4,95 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Resume Lab · OPAI</title>
-<meta name="theme-color" content="#F6F4EE">
+<meta name="theme-color" content="#f6f8f7">
 <link rel="manifest" href="manifest.json">
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="opai-shared.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
 <style>
-:root{--bg:#F6F4EE;--card:#fff;--ink:#16181A;--mut:#5a6064;--pri:#17504A;--line:#e3e0d6;--warn:#b4580f;--bad:#b3261e;--good:#17704a;--font:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif}
+:root{--bg:#f6f8f7;--card:#fff;--ink:#142123;--mut:#566864;--faint:#829590;--pri:#0f5257;--pri-d:#0d464a;--sage:#e3ece8;--sub:#f1f4f3;--line:rgba(15,82,87,.12);--line2:rgba(15,82,87,.22);--warn:#b95f0a;--bad:#c2410c;--good:#16a34a;--font:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;--disp:'Space Grotesk',var(--font);--mono:'JetBrains Mono',ui-monospace,monospace;--sh:0 4px 20px -2px rgba(15,82,87,.05),0 2px 6px -1px rgba(15,82,87,.03)}
 *{box-sizing:border-box}html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/22px var(--font);min-height:100vh}
-main{max-width:1000px;margin:0 auto;padding:20px 16px 120px}
-h1{font-size:26px;letter-spacing:-.03em;margin:4px 0 2px;color:var(--pri)} h2{font-size:17px;margin:0 0 8px}
-.sub,.mut{color:var(--mut)} .mut{font-size:13px} .sub{margin:0 0 14px}
-.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;border-bottom:1px solid var(--line)}
-.tabs button{border:0;background:none;padding:8px 12px;border-radius:999px;font:500 14px var(--font);color:var(--mut);cursor:pointer;white-space:nowrap}
-.tabs button[aria-selected=true]{background:var(--pri);color:#fff}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+body{background:var(--bg);color:var(--ink);font:14px/21px var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
+main{max-width:1400px;margin:0 auto;padding:20px 16px 120px}
+h1{font:700 28px/1.15 var(--disp);letter-spacing:-.02em;margin:0;color:var(--ink)} h2{font:700 15px/1.3 var(--disp);margin:0 0 8px;color:var(--ink)} h3{font:700 13px var(--disp);margin:0}
+.sub,.mut{color:var(--mut)} .mut{font-size:13px} .sub{margin:6px 0 0;max-width:640px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:14px;box-shadow:var(--sh)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.sp{justify-content:space-between}
 .grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
-.pill{display:inline-block;padding:2px 10px;border-radius:999px;font:600 12px/18px var(--font);background:#eef2f0;color:var(--pri);margin:2px 4px 2px 0}
-.pill.good{background:#dff3e8;color:var(--good)}.pill.warn{background:#fdecd9;color:var(--warn)}.pill.bad{background:#fbe0dd;color:var(--bad)}
-button.b,a.b{border:1px solid var(--pri);background:var(--pri);color:#fff;border-radius:10px;padding:7px 12px;font:600 13px var(--font);cursor:pointer;text-decoration:none;display:inline-block}
-button.b.alt,a.b.alt{background:#fff;color:var(--pri)} button:disabled{opacity:.5;cursor:default}
-input,textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:14px var(--font);background:#fff;color:var(--ink)}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font:600 11px/18px var(--font);background:var(--sage);color:var(--pri);margin:2px 4px 2px 0;border:1px solid var(--line)}
+.pill.good{background:rgba(22,163,74,.12);color:#15803d;border-color:rgba(22,163,74,.25)}.pill.warn{background:#fdf0e3;color:var(--warn);border-color:rgba(185,95,10,.22)}.pill.bad{background:#fde9e0;color:var(--bad);border-color:rgba(194,65,12,.22)}
+button.b,a.b{border:1px solid var(--pri);background:var(--pri);color:#fff;border-radius:10px;padding:7px 14px;font:600 12.5px var(--font);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:background .15s}
+button.b:hover{background:var(--pri-d)}
+button.b.alt,a.b.alt{background:#fff;color:var(--ink);border-color:var(--line2)} button.b.alt:hover{background:var(--bg)} button:disabled{opacity:.5;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.vi:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+input,textarea,select{width:100%;border:1px solid var(--line2);border-radius:10px;padding:8px 10px;font:14px var(--font);background:#fff;color:var(--ink)}
 textarea{min-height:140px;resize:vertical} label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin:8px 0 3px}
-.bar{height:8px;border-radius:99px;background:#eceae2;overflow:hidden}.bar i{display:block;height:100%;background:var(--pri)}
-.note{background:#fff7e6;border:1px solid #f1d9a6;border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}
-.bul{border-left:3px solid var(--pri);padding:4px 10px;margin:6px 0;background:#faf9f5;border-radius:0 8px 8px 0}
+.bar{height:8px;border-radius:99px;background:var(--sage);overflow:hidden}.bar i{display:block;height:100%;background:var(--pri);border-radius:99px}
+.note{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}
+.bul{border-left:3px solid var(--pri);padding:4px 10px;margin:6px 0;background:#f6f9f8;border-radius:0 8px 8px 0}
 ul{margin:4px 0;padding-left:18px}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;display:none;z-index:99}
-@media (prefers-reduced-motion:no-preference){.card{transition:box-shadow .2s ease,border-color .2s ease}.card:hover{box-shadow:0 8px 22px rgba(23,80,74,.10)}}
+/* hero + steps */
+.hero{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px 22px;margin-bottom:14px;box-shadow:var(--sh)}
+.hero .ttl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tag{padding:2px 10px;border-radius:999px;font:600 11px/18px var(--font);background:var(--sage);color:var(--pri);border:1px solid var(--line)}
+.steps{display:flex;flex-wrap:wrap;gap:4px;padding:5px;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
+.steps button{display:flex;align-items:center;gap:8px;border:0;background:none;padding:7px 12px;border-radius:9px;font:500 12px var(--font);color:var(--mut);cursor:pointer}
+.steps button:hover{background:#fff;color:var(--ink)} .steps button.on{background:var(--pri);color:#fff;font-weight:600}
+.steps i{font:700 10px/16px var(--font);font-style:normal;width:16px;height:16px;border-radius:50%;text-align:center;background:rgba(15,82,87,.1);color:var(--pri)} .steps .on i{background:rgba(255,255,255,.22);color:#fff}
+/* tab bar */
+.tabbar{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 10px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
+.tabbar::-webkit-scrollbar{display:none}
+.tabs{display:flex;gap:4px}
+.tabs button{border:0;background:none;padding:7px 12px;border-radius:9px;font:500 12px var(--font);color:var(--mut);cursor:pointer;white-space:nowrap}
+.tabs button:hover{background:var(--sub);color:var(--ink)}
+.tabs button[aria-selected=true]{background:var(--pri);color:#fff;font-weight:600}
+.stored{font:500 11px var(--mono);color:var(--mut);white-space:nowrap;padding-left:12px;border-left:1px solid var(--line)}
+/* library workspace */
+.ws{display:grid;gap:16px;grid-template-columns:minmax(0,4fr) minmax(0,8fr);align-items:start}
+@media(max-width:900px){.ws{grid-template-columns:1fr}}
+.side{padding:16px}
+.vlist{display:flex;flex-direction:column;gap:8px;max-height:560px;overflow-y:auto;margin-top:10px;padding-right:2px}
+.vi{position:relative;display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;text-align:left;width:100%;font:inherit;color:inherit}
+.vi:hover{background:var(--bg);border-color:var(--line2)}
+.vi.sel{background:var(--sub);border-color:var(--line2)} .vi.sel:before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:4px;border-radius:0 4px 4px 0;background:var(--pri)}
+.vi .ic{width:32px;height:32px;border-radius:9px;background:var(--sage);color:var(--pri);display:flex;align-items:center;justify-content:center;flex:none;font:700 13px var(--disp)} .vi.sel .ic{background:var(--pri);color:#fff}
+.vi b{font-size:12.5px;display:block;word-break:break-word} .vi small{display:block;color:var(--mut);font-size:11px}
+.mono{font-family:var(--mono)}
+.detail-h{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.split{display:grid;gap:16px;grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
+@media(max-width:760px){.split{grid-template-columns:1fr}}
+.paper{border:1px solid var(--line);border-radius:12px;background:#fff;padding:16px;max-height:420px;overflow:auto;font:12px/1.55 var(--mono);color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.diag{background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:16px}
+.ringbox{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0 14px}
+.ring{position:relative;width:76px;height:76px;flex:none}.ring svg{width:76px;height:76px;transform:rotate(-90deg)}
+.ring div{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 20px/1 var(--disp)}.ring small{font:400 9px var(--mono);color:var(--mut)}
+.met{margin:10px 0}.met .row{font-size:12px;font-weight:600}.met .mono{color:var(--pri);font-weight:700}
+.two{display:grid;gap:14px;grid-template-columns:1fr 1fr}@media(max-width:760px){.two{grid-template-columns:1fr}}
+.qa{display:grid;gap:10px;grid-template-columns:1fr 1fr;margin-top:10px}
+.qa button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font:inherit;color:inherit}
+.qa button:hover{background:#fff;border-color:var(--line2);box-shadow:0 10px 25px -4px rgba(15,82,87,.1)}
+.qa b{display:block;font-size:12.5px}.qa small{color:var(--mut);font-size:11px;line-height:1.3;display:block}
+.ir{padding:9px 12px;border:1px solid var(--line);border-radius:12px;margin-top:8px}.ir b{font-size:12.5px;display:block}.ir span{font-size:12px;color:var(--mut)}
+@media (prefers-reduced-motion:no-preference){.card{transition:box-shadow .2s ease,border-color .2s ease}.card:hover{box-shadow:0 10px 25px -4px rgba(15,82,87,.1)}}
 </style>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)&&location.protocol!=='file:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 <link rel="stylesheet" href="opai-mobile.css">
 </head>
 <body>
 <main>
-  <h1>Resume Lab</h1>
-  <p class="sub">Your own resume versions, searchable. OPAI selects from what you wrote and flags gaps; it never invents experience.</p>
-  <div class="tabs" id="tabs" role="tablist"></div>
+  <section class="hero">
+    <div>
+      <div class="ttl"><h1>Resume Lab</h1><span class="tag">Production Workspace</span></div>
+      <p class="sub">One place to score, compare and train your resumes. OPAI learns from your best resume, reuses your own wording and flags gaps; it never invents experience.</p>
+    </div>
+    <div class="steps" id="steps" role="group" aria-label="Quick steps">
+      <button type="button" data-s="ver" class="on"><i>1</i>Your versions</button>
+      <button type="button" data-s="upl"><i>2</i>Upload your resumes</button>
+      <button type="button" data-s="add"><i>3</i>Add a version</button>
+    </div>
+  </section>
+  <div class="tabbar"><div class="tabs" id="tabs" role="tablist"></div><span class="stored" id="stored" aria-live="polite"></span></div>
   <div id="view" aria-live="polite"></div>
 </main>
 <div class="toast" id="toast"></div>
@@ -49,9 +101,9 @@ ul{margin:4px 0;padding-left:18px}
 (function(){
 var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
 var uid=null;
-var TABS=[['lib','Library'],['match','Match a posting'],['build','Tailor & export'],['review','ATS review'],['coach','Bullet coach'],['compare','Compare'],['find','Find a bullet'],['ins','Insights']];
-var tab=(location.hash||'#lib').slice(1);if(!TABS.some(function(t){return t[0]===tab}))tab='lib';
-var state={lastMatch:null,excl:[],extras:[],base:''};
+var TABS=[['train','Score & train'],['lib','Library'],['match','Match a posting'],['build','Tailor & export'],['review','ATS review'],['coach','Bullet coach'],['compare','Compare'],['find','Find a bullet'],['ins','Insights']];
+var tab=(location.hash||'#train').slice(1);if(!TABS.some(function(t){return t[0]===tab}))tab='lib';
+var state={sel:null,pick:null,lastMatch:null,excl:[],extras:[],base:'',preset:null,coachBullet:''};
 function $(i){return document.getElementById(i)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function toast(m){var t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){t.style.display='none'},3500)}
@@ -64,34 +116,86 @@ function pills(a,cls){return (a&&a.length)?a.map(function(x){return '<span class
 function bar(p){return '<div class="bar" role="img" aria-label="'+esc(p)+' percent"><i style="width:'+Math.max(0,Math.min(100,+p||0))+'%"></i></div>'}
 function sel(){return '<label for="opp">Or use a saved opportunity</label><select id="opp"><option value="">None</option></select>'}
 
+$('steps').addEventListener('click',function(e){var b=e.target.closest('button[data-s]');if(!b)return;var k=b.dataset.s;
+  var run=function(){if(k==='ver')window.scrollTo({top:0,behavior:'smooth'});else scrollTo(k==='upl'?'upc':'addc')};
+  if(tab!=='lib'){goTab('lib');setTimeout(run,600)}else run()});
 function renderTabs(){$('tabs').innerHTML=TABS.map(function(t){return '<button role="tab" aria-selected="'+(t[0]===tab)+'" data-k="'+t[0]+'">'+esc(t[1])+'</button>'}).join('')}
 $('tabs').addEventListener('click',function(e){var b=e.target.closest('button[data-k]');if(!b)return;tab=b.dataset.k;history.replaceState(null,'','#'+tab);go()});
 
-async function go(){renderTabs();var v=$('view');v.textContent='Loading…';
-  try{await ensureUser();await ({lib:vLib,match:vMatch,build:vBuild,review:vReview,coach:vCoach,compare:vCompare,find:vFind,ins:vIns})[tab](v)}
+async function go(){renderTabs();var v=$('view');v.textContent='Loading…';$('stored').textContent='';
+  try{await ensureUser();await ({train:vTrain,lib:vLib,match:vMatch,build:vBuild,review:vReview,coach:vCoach,compare:vCompare,find:vFind,ins:vIns})[tab](v)}
   catch(e){v.innerHTML='<div class="card">Could not load: '+esc(e.message)+' <button class="b alt" id="retry">Retry</button></div>';$('retry').onclick=go}}
 
+function ring(p,tone,txt){var c=tone||'#0f5257';return '<div class="ring"><svg viewBox="0 0 36 36"><path stroke="#e3ece8" stroke-width="3.5" fill="none" d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831a15.9155 15.9155 0 0 1 0-31.831"/><path stroke="'+c+'" stroke-width="3.5" stroke-linecap="round" fill="none" stroke-dasharray="'+Math.max(0,Math.min(100,p))+', 100" d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831a15.9155 15.9155 0 0 1 0-31.831"/></svg><div>'+txt+'</div></div>'}
+function met(label,val,txt){return '<div class="met"><div class="row sp"><span>'+esc(label)+'</span><span class="mono">'+esc(txt)+'</span></div>'+bar(val)+'</div>'}
+function scrollTo(id){var e=$(id);if(e){e.scrollIntoView({behavior:'smooth',block:'start'});var f=e.querySelector('input,textarea');if(f)setTimeout(function(){f.focus({preventScroll:true})},350)}}
 async function vLib(v){
-  var d=await api('/v1/resume-lab/library');
-  var h='<div class="row sp"><h2>Your versions ('+esc(d.count)+' of '+esc(d.limit)+')</h2><a class="b alt" href="app.html?embed=1#/resume-lab" target="_top">Classic Resume Lab</a></div>';
-  if(!d.versions.length)h+='<div class="card">No resumes yet. Paste them below, one at a time. Up to '+esc(d.limit)+' versions.</div>';
-  h+='<div class="grid">'+d.versions.map(function(r){
-    return '<div class="card"><div class="row sp"><b>'+esc(r.label)+'</b><span class="pill '+(r.overall_score>=7?'good':r.overall_score>=5?'warn':'bad')+'">'+esc(r.overall_score==null?'–':r.overall_score)+'/10</span></div>'
-    +'<div class="mut">'+esc(r.target_role||'No target role')+' · '+esc(r.words)+' words · '+esc(r.bullets)+' bullets</div>'
-    +'<div class="mut">Bullets with numbers: '+Math.round(100*r.metric_ratio)+'%</div>'+bar(100*r.metric_ratio)
-    +'<div style="margin-top:6px">'+pills((r.skills||[]).slice(0,8))+'</div></div>'}).join('')+'</div>';
-  h+='<div class="card"><h2>Add a version</h2><label for="lbl">Label</label><input id="lbl" maxlength="80" placeholder="e.g. ML Research v2">'
+  var d=await api('/v1/resume-lab/library'),vs=d.versions;
+  $('stored').textContent=d.count+' of '+d.limit+' resumes stored';
+  var best=bestOf(vs),q='';
+  if(!state.sel||!vs.some(function(r){return r.id===state.sel}))state.sel=(best||vs[0]||{}).id;
+  var ranked=vs.slice().sort(function(a,b){return (b.overall_score==null?-1:b.overall_score)-(a.overall_score==null?-1:a.overall_score)});
+  var forms='<div class="two"><div class="card" id="upc"><h2>Upload your resumes</h2><p class="mut">Select up to 10 PDF, DOCX or TXT files at once. Each bullet is indexed so Match and Tailor can reuse your best lines.</p>'
+    +'<label for="files">Resume files</label><input id="files" type="file" multiple accept=".pdf,.docx,.txt,.md"><label for="frole">Target role for all (optional)</label><input id="frole" maxlength="120" placeholder="e.g. ML intern">'
+    +'<div class="row" style="margin-top:8px"><button class="b" id="upl">Upload and index</button><span class="mut" id="upmsg"></span></div></div>'
+    +'<div class="card" id="addc"><h2>Add a version</h2><label for="lbl">Label</label><input id="lbl" maxlength="80" placeholder="e.g. ML Research v2">'
     +'<label for="role">Target role (optional)</label><input id="role" maxlength="120" placeholder="e.g. ML intern">'
-    +'<label for="txt">Resume text</label><textarea id="txt" placeholder="Paste the full text of one resume"></textarea>'
-    +'<div class="row" style="margin-top:8px"><button class="b" id="add">Add to library</button><span class="mut">Duplicates are skipped, never overwritten.</span></div></div>';
+    +'<label for="txt">Resume text</label><textarea id="txt" style="min-height:90px" placeholder="Paste the full text of one resume"></textarea>'
+    +'<div class="row" style="margin-top:8px"><button class="b" id="add">Add to library</button><span class="mut">Duplicates are skipped, never overwritten.</span></div></div></div>';
+  var h='<div class="ws"><aside class="card side"><div class="row sp"><h2 style="margin:0">Your versions <span class="pill mono">'+esc(d.count)+'</span></h2><button class="b" id="newv">+ Add version</button></div>'
+    +'<p class="mut" style="margin:4px 0 8px">Up to '+esc(d.limit)+' versions. Pick one to see its details.</p>'
+    +(vs.length?'<input id="vq" type="search" placeholder="Filter versions by label or role" aria-label="Filter versions"><div class="vlist" id="vl"></div>':'<div class="note">No resumes yet. Upload files or paste one below.</div>')
+    +'</aside><section id="det" aria-live="polite"></section></div>'+forms;
   v.innerHTML=h;
+  function list(){var f=(($('vq')||{}).value||'').toLowerCase();
+    $('vl').innerHTML=ranked.filter(function(r){return !f||(r.label+' '+(r.target_role||'')).toLowerCase().indexOf(f)>=0}).map(function(r){var sc=r.overall_score;
+      return '<button type="button" class="vi'+(r.id===state.sel?' sel':'')+'" data-id="'+esc(r.id)+'"><span class="ic">'+esc((r.label||'?').charAt(0).toUpperCase())+'</span><span style="flex:1;min-width:0"><b>'+esc(r.label)+(best&&r.id===best.id?' <span class="pill good">★ best</span>':'')+'</b><small>'+esc(r.target_role||'No target role')+'</small><small class="mono">'+esc(r.words)+' words · '+esc(r.bullets)+' bullets</small></span><span class="pill '+(sc==null?'':sc>=7?'good':sc>=5?'warn':'bad')+'">'+esc(sc==null?'–':sc)+'/10</span></button>'}).join('')||'<div class="mut">No match.</div>'}
+  async function detail(){
+    var r=vs.filter(function(x){return x.id===state.sel})[0],el=$('det');if(!r){el.innerHTML='<div class="card"><h2>Nothing selected</h2><p class="mut">Add a resume to see its score, text and insights here.</p></div>';return}
+    var sc=r.overall_score,tone=sc==null?'#829590':sc>=7?'#16a34a':sc>=5?'#b95f0a':'#c2410c',rank=ranked.indexOf(r)+1;
+    el.innerHTML='<div class="card"><div class="detail-h"><div><div class="row"><h2 style="margin:0;font-size:18px">'+esc(r.label)+'</h2>'+(best&&r.id===best.id?'<span class="pill good">Best version</span>':'')+'</div>'
+      +'<div class="mut mono" style="margin-top:4px">'+esc(r.words)+' words · '+esc(r.bullets)+' bullets · '+esc((r.sections||[]).length)+' sections'+(r.target_role?' · <span style="font-family:var(--font);font-weight:600;color:var(--pri)">'+esc(r.target_role)+'</span>':'')+'</div></div>'
+      +'<div class="row"><button class="b alt" id="d-rv">ATS review</button><button class="b" id="d-tl">Tailor &amp; export</button></div></div>'
+      +'<div class="split"><div><div class="mut" style="font-weight:600;margin-bottom:6px">Resume text</div><div class="paper" id="paper" tabindex="0">Loading…</div></div>'
+      +'<div class="diag"><div class="row sp"><b style="font-size:11px;letter-spacing:.06em;text-transform:uppercase">Score &amp; diagnostics</b></div>'
+      +'<div class="ringbox">'+ring(sc==null?0:sc*10,tone,(sc==null?'–':esc(sc))+'<small>/10</small>')+'<div><b style="font-size:13px">Overall score: '+(sc==null?'not scored yet':esc(sc)+'/10')+'</b><div class="mut">Ranked #'+rank+' of '+vs.length+' in your library.</div></div></div>'
+      +met('ATS readiness',0,'checking…').replace('class="met"','class="met" id="m-ats"')
+      +met('Bullets with numbers',100*r.metric_ratio,Math.round(100*r.metric_ratio)+'%')+met('Bullets starting with action verbs',100*r.verb_ratio,Math.round(100*r.verb_ratio)+'%')
+      +(r.weak&&r.weak.length?'<div class="mut" style="margin-top:8px">Weak phrases: '+pills(r.weak.slice(0,5),'warn')+'</div>':'')
+      +'<div style="margin-top:8px">'+pills((r.skills||[]).slice(0,8))+'</div></div></div></div>'
+      +'<div class="two"><div class="card"><h2>Quick actions</h2><div class="qa"><button type="button" data-q="up"><b>Upload resume</b><small>PDF, DOCX or TXT</small></button><button type="button" data-q="new"><b>Add a version</b><small>Paste text</small></button><button type="button" data-q="match"><b>Match a posting</b><small>Rank versions for a job</small></button><button type="button" data-q="fb"><b>Get feedback</b><small>Coach a weak bullet</small></button></div></div>'
+      +'<div class="card" id="insc"><h2>Resume insights</h2><div class="mut">Loading…</div></div></div>';
+    $('d-rv').onclick=function(){state.pick=r.id;goTab('review')};$('d-tl').onclick=function(){state.preset={base:r.id,extras:[]};goTab('build')};
+    [].forEach.call(el.querySelectorAll('[data-q]'),function(b){b.onclick=function(){var k=b.dataset.q;if(k==='up')scrollTo('upc');else if(k==='new')scrollTo('addc');else if(k==='match')goTab('match');else goTab('coach')}});
+    var sid=state.sel;
+    fetch(API+'/v1/resumes/'+encodeURIComponent(r.id)).then(function(x){return x.json()}).then(function(x){if(sid===state.sel&&$('paper'))$('paper').textContent=x.raw_text||'No text stored.'}).catch(function(){if($('paper'))$('paper').textContent='Could not load the resume text.'});
+    api('/v1/resume-lab/review',{method:'POST',body:{resume_id:r.id}}).then(function(x){if(sid!==state.sel||!$('m-ats'))return;$('m-ats').outerHTML=met('ATS readiness',x.score,x.score+'/100').replace('class="met"','class="met" id="m-ats"')}).catch(function(){if($('m-ats'))$('m-ats').remove()});
+    api('/v1/resume-lab/insights').then(function(i){if(!$('insc'))return;
+      if(!i.ready){$('insc').innerHTML='<h2>Resume insights</h2><div class="mut">'+esc(i.note)+'</div>';return}
+      var pc=function(x){return x==null?'–':Math.round(100*x)+'%'},t=i.traits;
+      $('insc').innerHTML='<div class="row sp"><h2 style="margin:0">Resume insights</h2><button class="b alt" id="i-all">View all</button></div>'
+        +'<div class="ir"><b>Strongest versions</b><span>'+esc(i.best_versions.join(', ')||'–')+' · numbers in '+pc(t.metric_ratio.best)+' of bullets vs '+pc(t.metric_ratio.others)+' elsewhere</span></div>'
+        +'<div class="ir"><b>Gaps to improve</b><span>'+(i.tips.length?esc(i.tips[0])+(i.tips.length>1?' (+'+(i.tips.length-1)+' more)':''):'Nothing stands out.')+'</span></div>'
+        +'<div class="ir"><b>Skills</b><span>'+esc((i.common_skills||[]).slice(0,5).join(', ')||'–')+(i.skills_in_only_one_version.length?' · '+i.skills_in_only_one_version.length+' appear in only one version':'')+'</span></div>';
+      $('i-all').onclick=function(){goTab('ins')}}).catch(function(){if($('insc'))$('insc').remove()})}
+  if(vs.length){list();detail();$('vq').oninput=list;
+    $('vl').onclick=function(e){var b=e.target.closest('.vi');if(!b)return;state.sel=b.dataset.id;list();detail()}}
+  else detail();
+  $('newv').onclick=function(){scrollTo('addc')};
+  $('upl').onclick=async function(){var b=this,fs=$('files').files;if(!fs.length){toast('Choose at least one file');return}
+    b.disabled=true;$('upmsg').textContent='Uploading…';
+    try{var fd=new FormData();fd.append('user_id',uid);if($('frole').value.trim())fd.append('target_role',$('frole').value.trim());for(var i=0;i<fs.length;i++)fd.append('files',fs[i]);
+      var res=await fetch(API+'/v1/resume-lab/import-files',{method:'POST',body:fd});var r=await res.json();
+      if(!res.ok)throw new Error(typeof r.detail==='string'?r.detail:'Upload failed');
+      toast(r.created.length+' added'+(r.skipped.length?', '+r.skipped.length+' skipped: '+r.skipped.map(function(x){return x.label+' ('+x.reason+')'}).join('; '):''));go()}
+    catch(e){toast(e.message);b.disabled=false;$('upmsg').textContent=''}};
   $('add').onclick=async function(){var b=this;b.disabled=true;
     try{var r=await api('/v1/resume-lab/import',{method:'POST',body:{resumes:[{label:$('lbl').value.trim(),target_role:$('role').value.trim()||null,text:$('txt').value}]}});
       toast(r.created.length?'Added':'Skipped: '+(r.skipped[0]&&r.skipped[0].reason));go()}
     catch(e){toast(e.message);b.disabled=false}}}
 
-async function loadOpps(){try{var o=await api('/v1/opp/opportunities');var s=$('opp');if(!s)return;
-  o.forEach(function(x){var op=document.createElement('option');op.value=x.id;op.textContent=x.title+' · '+x.organization;s.appendChild(op)})}catch(e){}}
+async function loadOpps(){try{var o=(await api('/v1/opp/saved')).items||[];var s=$('opp');if(!s)return;
+  o.forEach(function(x){var op=document.createElement('option');op.value=x.id;op.textContent=x.title+' · '+(x.organization||x.company||'');s.appendChild(op)})}catch(e){}}
 function jobBody(){var t=$('job').value.trim(),o=$('opp').value;return t?{job_text:t}:(o?{opportunity_id:o}:null)}
 
 async function vMatch(v){
@@ -110,13 +214,61 @@ async function vMatch(v){
         +'</div><div class="card"><h2>Not in any resume</h2>'+pills(r.gaps,'bad')+'<div class="note">'+esc(r.note)+'</div></div>'}catch(e){toast(e.message)}}}
 
 /* ---------- shared helpers for the newer tabs ---------- */
+function bestOf(vs){var sc=vs.filter(function(r){return r.overall_score!=null});if(!sc.length)return null;
+  sc.sort(function(a,b){return (b.overall_score-a.overall_score)||(b.metric_ratio-a.metric_ratio)});return sc[0]}
+function goTab(t){tab=t;history.replaceState(null,'','#'+t);go()}
 async function versionsSelect(id,label){var d=await api('/v1/resume-lab/library');
   if(!d.versions.length)return {html:'<div class="card">Add at least one resume in the Library tab first.</div>',n:0};
-  return {n:d.versions.length,html:'<label for="'+id+'">'+esc(label)+'</label><select id="'+id+'">'+d.versions.map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.label)+'</option>'}).join('')+'</select>'}}
+  var best=bestOf(d.versions);
+  var pk=state.pick;state.pick=null;return {n:d.versions.length,best:best&&best.id,html:'<label for="'+id+'">'+esc(label)+'</label><select id="'+id+'">'+d.versions.map(function(r){var bb=best&&r.id===best.id,pp=pk?r.id===pk:bb;return '<option value="'+esc(r.id)+'"'+(pp?' selected':'')+'>'+esc(r.label)+(bb?' ★ best':'')+'</option>'}).join('')+'</select>'}}
 function jobBox(){return '<label for="job">Posting text (optional)</label><textarea id="job" style="min-height:90px" placeholder="Paste a posting to check keywords against"></textarea>'+sel()}
 function jobOpt(){var t=($('job')||{}).value,o=($('opp')||{}).value;t=(t||'').trim();return t?{job_text:t}:(o?{opportunity_id:o}:{})}
 function sev(s){return s==='ok'?'good':s==='warn'?'warn':'bad'}
 function btnBusy(b,on){b.disabled=on}
+
+/* ---------- Score & train: score every resume, then learn from the best one ---------- */
+async function vTrain(v){
+  var d=await api('/v1/resume-lab/library'),vs=d.versions;
+  if(!vs.length){v.innerHTML='<div class="card"><h2>Start here</h2>Upload your resumes in the <b>Library</b> tab (up to '+esc(d.limit)+'). They are scored and ranked here, and your best one becomes the reference.<div class="row" style="margin-top:8px"><button class="b" id="tolib">Open Library</button></div></div>';$('tolib').onclick=function(){goTab('lib')};return}
+  var best=bestOf(vs)||vs[0],tone=function(n){return n>=7?'good':n>=5?'warn':'bad'};
+  var ranked=vs.slice().sort(function(a,b){return (b.overall_score==null?-1:b.overall_score)-(a.overall_score==null?-1:a.overall_score)});
+  var h='<div class="card"><h2>1. Score your resumes</h2><p class="mut">Ranked best first. The top one is your reference for training.</p>'
+    +ranked.map(function(r){var sc=r.overall_score;return '<div style="margin:10px 0"><div class="row sp"><b>'+(r.id===best.id?'★ ':'')+esc(r.label)+'</b><span><span class="pill" data-ats="'+esc(r.id)+'">ATS …</span><span class="pill '+(sc==null?'':tone(sc))+'">'+esc(sc==null?'–':sc)+'/10</span></span></div>'
+      +bar(sc==null?0:sc*10)+'<div class="mut">'+esc(r.target_role||'No target role')+' · numbers in '+Math.round(100*r.metric_ratio)+'% of bullets · action verbs in '+Math.round(100*r.verb_ratio)+'%</div></div>'}).join('')+'</div>';
+  var others=vs.filter(function(r){return r.id!==best.id});
+  if(!others.length){h+='<div class="card"><h2>2. Train with your best</h2>Add one more resume version in the Library tab. Training compares a version with your best and finds what to fix.</div>'}
+  else{
+    var weakest=others.slice().sort(function(a,b){return (a.overall_score==null?99:a.overall_score)-(b.overall_score==null?99:b.overall_score)})[0];
+    h+='<div class="card"><h2>2. Train a version with your best</h2><p class="mut">Reference: <b>★ '+esc(best.label)+'</b>. OPAI compares it with the version you pick, shows what your best does better, and checks the weak bullets. Only your own wording is used; nothing is invented.</p>'
+      +'<label for="tv">Version to train</label><select id="tv">'+others.map(function(r){return '<option value="'+esc(r.id)+'"'+(r.id===weakest.id?' selected':'')+'>'+esc(r.label)+'</option>'}).join('')+'</select>'+jobBox()
+      +'<div class="row" style="margin-top:8px"><button class="b" id="tr">Train</button><button class="b alt" id="fb">Tailor a new resume from my best</button></div></div><div id="out"></div>'}
+  v.innerHTML=h;loadOpps();
+  vs.forEach(function(r){api('/v1/resume-lab/review',{method:'POST',body:{resume_id:r.id}}).then(function(x){var el=document.querySelector('[data-ats="'+r.id+'"]');if(el){el.textContent='ATS '+x.score+'/100';el.className='pill '+(x.score>=85?'good':x.score>=65?'warn':'bad')}}).catch(function(){var el=document.querySelector('[data-ats="'+r.id+'"]');if(el)el.remove()})});
+  if(!others.length)return;
+  $('fb').onclick=function(){state.preset={base:best.id,extras:[]};goTab('build')};
+  $('tr').onclick=async function(){var b=this;btnBusy(b,true);$('out').innerHTML='<div class="card mut">Comparing with your best…</div>';
+    try{var tid=$('tv').value,jo=jobOpt();
+      var res=await Promise.all([api('/v1/resume-lab/compare',{method:'POST',body:Object.assign({a_id:best.id,b_id:tid},jo)}),api('/v1/resume-lab/review',{method:'POST',body:Object.assign({resume_id:tid},jo)})]);
+      var c=res[0],rv=res[1],sa=c.stats.a,sb=c.stats.b,pc=function(x){return Math.round(100*x)+'%'};
+      var cand=c.only_in_b.slice(0,8);
+      var coached=await Promise.all(cand.map(function(t){return api('/v1/resume-lab/coach',{method:'POST',body:Object.assign({bullet:t,use_ai:false},jo)}).then(function(x){return {t:t,c:x}}).catch(function(){return null})}));
+      var weak=coached.filter(function(x){return x&&x.c&&!x.c.ok}).slice(0,6);
+      var fails=rv.checks.filter(function(x){return x.status!=='ok'}).slice(0,4);
+      var o='<div class="card"><div class="row sp"><h2>★ '+esc(c.a.label)+' vs '+esc(c.b.label)+'</h2><span class="pill '+(rv.score>=85?'good':rv.score>=65?'warn':'bad')+'">ATS '+esc(rv.score)+'/100</span></div><div class="grid">'
+        +'<div><b>Numbers in bullets</b><div>Best '+pc(sa.metric_ratio)+' · this '+pc(sb.metric_ratio)+'</div></div>'
+        +'<div><b>Action verbs</b><div>Best '+pc(sa.verb_ratio)+' · this '+pc(sb.verb_ratio)+'</div></div>'
+        +'<div><b>Bullets</b><div>Best '+esc(sa.bullets)+' · this '+esc(sb.bullets)+'</div></div>'
+        +(c.posting?'<div><b>Posting coverage</b><div>Best '+pc(c.posting.a.coverage)+' · this '+pc(c.posting.b.coverage)+'</div></div>':'')+'</div></div>';
+      if(fails.length)o+='<div class="card"><h2>Fix first (ATS)</h2>'+fails.map(function(x){return '<div style="margin:6px 0"><span class="pill '+sev(x.status)+'">'+(x.status==='warn'?'Check':'Fix')+'</span><b>'+esc(x.label)+'</b><div class="mut">'+esc(x.detail)+'</div></div>'}).join('')+'</div>';
+      o+='<div class="card"><h2>Weak bullets in '+esc(c.b.label)+'</h2>'+(weak.length?weak.map(function(w,i){return '<div class="bul">'+esc(w.t)+'<div class="mut">'+w.c.issues.slice(0,3).map(function(x){return esc(x.message)}).join(' ')+'</div><div style="margin-top:6px"><button class="b alt" data-coach="'+i+'">Coach this bullet</button></div></div>'}).join(''):'<div class="mut">No weak bullets found among the bullets that differ from your best.</div>')+'</div>';
+      o+='<div class="card"><h2>Bullets from your best resume</h2><p class="mut">Your own wording. Tick the ones that are also true for this version and tailor with them.</p>'
+        +(c.only_in_a.length?c.only_in_a.slice(0,10).map(function(t){return '<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;color:var(--ink);font-size:14px;margin:4px 0"><input type="checkbox" data-k="tr" style="width:auto;margin-top:5px" data-t="'+esc(t)+'"><span class="bul" style="margin:0;flex:1">'+esc(t)+'</span></label>'}).join('')+'<div class="row" style="margin-top:8px"><button class="b" id="use">Tailor '+esc(c.b.label)+' with selected</button></div>':'<div class="mut">Nothing extra: this version already has the bullets from your best.</div>')+'</div>';
+      if(c.reworded.length)o+='<div class="card"><h2>How your best words it</h2>'+c.reworded.slice(0,5).map(function(x){return '<div class="bul"><b>Best:</b> '+esc(x.a)+'<br><b>This:</b> '+esc(x.b)+'</div>'}).join('')+'</div>';
+      if(c.skills.only_in_a.length)o+='<div class="card"><h2>Skills your best lists</h2><div>'+pills(c.skills.only_in_a,'warn')+'</div><div class="note">Add a skill only if you really have it.</div></div>';
+      $('out').innerHTML=o;
+      [].forEach.call(document.querySelectorAll('button[data-coach]'),function(bn){bn.onclick=function(){state.coachBullet=weak[+bn.dataset.coach].t;goTab('coach')}});
+      var use=$('use');if(use)use.onclick=function(){var ex=[].slice.call(document.querySelectorAll('input[data-k=tr]')).filter(function(x){return x.checked}).map(function(x){return x.dataset.t});state.preset={base:tid,extras:ex};goTab('build')}
+    }catch(e){$('out').innerHTML='';toast(e.message)}btnBusy(b,false)}}
 
 async function vReview(v){
   var s=await versionsSelect('rv','Which version?');if(!s.n){v.innerHTML=s.html;return}
@@ -135,6 +287,7 @@ async function vCoach(v){
     +'<label for="facts">True extra details (optional)</label><input id="facts" maxlength="600" placeholder="e.g. used by 200 students; built with Flask">'+jobBox()
     +'<div class="row" style="margin-top:8px"><button class="b" id="run">Coach me</button><span class="mut">Only add numbers that are true.</span></div></div><div id="out"></div>';
   loadOpps();
+  if(state.coachBullet){$('bl').value=state.coachBullet;state.coachBullet=''}
   $('run').onclick=async function(){var b=this,t=$('bl').value.trim();if(t.length<3)return toast('Paste a bullet first');btnBusy(b,true);
     try{var r=await api('/v1/resume-lab/coach',{method:'POST',body:Object.assign({bullet:t,facts:$('facts').value.trim()},jobOpt())});
       $('out').innerHTML='<div class="card"><div class="row sp"><h2>Diagnosis</h2><span class="pill '+(r.ok?'good':'warn')+'">'+(r.ok?'Looks solid':'Can be stronger')+'</span></div>'
@@ -150,10 +303,11 @@ async function vCoach(v){
 async function vCompare(v){
   var d=await api('/v1/resume-lab/library');
   if(d.versions.length<2){v.innerHTML='<div class="card">Add at least 2 versions to compare.</div>';return}
-  var opts=d.versions.map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.label)+'</option>'}).join('');
+  var bestC=bestOf(d.versions);
+  var opts=d.versions.map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.label)+(bestC&&r.id===bestC.id?' ★ best':'')+'</option>'}).join('');
   v.innerHTML='<div class="card"><h2>Compare two versions</h2><div class="grid"><div><label for="ca">Version A</label><select id="ca">'+opts+'</select></div><div><label for="cb">Version B</label><select id="cb">'+opts+'</select></div></div>'+jobBox()
     +'<div class="row" style="margin-top:8px"><button class="b" id="run">Compare</button></div></div><div id="out"></div>';
-  $('cb').selectedIndex=1;loadOpps();
+  if(bestC){$('ca').value=bestC.id;var oi=d.versions.findIndex(function(r){return r.id!==bestC.id});$('cb').selectedIndex=oi<0?1:oi}else{$('cb').selectedIndex=1}loadOpps();
   var list=function(a){return a.length?a.map(function(x){return '<div class="bul">'+esc(x)+'</div>'}).join(''):'<div class="mut">None</div>'};
   $('run').onclick=async function(){var b=this;if($('ca').value===$('cb').value)return toast('Pick two different versions');btnBusy(b,true);
     try{var r=await api('/v1/resume-lab/compare',{method:'POST',body:Object.assign({a_id:$('ca').value,b_id:$('cb').value},jobOpt())});
@@ -168,7 +322,7 @@ async function vCompare(v){
 
 async function vBuild(v){
   var s=await versionsSelect('bv','Start from which version?');if(!s.n){v.innerHTML=s.html;return}
-  state.excl=[];state.extras=[];
+  state.excl=[];state.extras=[];var pre=state.preset;state.preset=null;
   v.innerHTML='<div class="card"><h2>Tailor a resume for a posting</h2><div class="note">Your wording stays exactly as you wrote it. You choose which of your own bullets stay, and can add bullets from your other versions.</div>'+s.html+jobBox()
     +'<div class="row" style="margin-top:8px"><button class="b" id="pv">Preview</button><button class="b alt" id="sg">Suggest bullets from my other versions</button></div></div><div id="sug"></div><div id="out"></div>';
   loadOpps();
@@ -205,7 +359,11 @@ async function vBuild(v){
     try{var r=await api('/v1/resume-lab/tailor',{method:'POST',body:Object.assign({resume_id:$('bv').value},jb)});
       $('sug').innerHTML='<div class="card"><h2>From your other versions</h2>'+(r.consider_from_other_versions.length?r.consider_from_other_versions.map(function(x){
         return '<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;color:var(--ink);font-size:14px;margin:4px 0"><input type="checkbox" data-k="ex" style="width:auto;margin-top:5px" data-t="'+esc(x.bullet)+'"><span class="bul" style="margin:0;flex:1">'+esc(x.bullet)+'<div class="mut">from '+esc(x.from)+'</div></span></label>'}).join('')+'<div class="mut">Tick the ones to add, then press Preview or Update preview.</div>':'<div class="mut">Nothing relevant in your other versions.</div>')+'</div>'}
-    catch(e){toast(e.message)}btnBusy(b,false)}}
+    catch(e){toast(e.message)}btnBusy(b,false)}
+  if(pre){$('bv').value=pre.base;
+    if(pre.extras&&pre.extras.length)$('sug').innerHTML='<div class="card"><h2>From your best resume</h2>'+pre.extras.map(function(t){
+      return '<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;color:var(--ink);font-size:14px;margin:4px 0"><input type="checkbox" data-k="ex" checked style="width:auto;margin-top:5px" data-t="'+esc(t)+'"><span class="bul" style="margin:0;flex:1">'+esc(t)+'</span></label>'}).join('')+'<div class="mut">Untick any you do not want, then press Update preview.</div></div>';
+    $('pv').click()}}
 
 async function vFind(v){
   v.innerHTML='<div class="card"><h2>Search your own bullets</h2><div class="row"><input id="q" placeholder="e.g. deployed an API, improved accuracy" style="flex:1"><button class="b" id="s">Search</button></div></div><div id="out"></div>';
@@ -227,5 +385,6 @@ async function vIns(v){
 go();
 })();
 </script>
+<script src="opai-clarity.js" defer></script>
 </body>
 </html>
