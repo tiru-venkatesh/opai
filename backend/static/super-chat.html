@@ -1040,9 +1040,54 @@ void main(){
   /* ---------- rendering ---------- */
   const thread = $('thread');
   const gate = document.createElement('section'); gate.id = 'gate'; gate.className = 'gate'; gate.hidden = true;
+  /* "Lets learn Java" sample: answered instantly on the page (no server wait), same format as a coach reply */
+  const LEARN_JAVA_RE = /^\s*let'?s\s+learn\s+java\W*$/i;
+  function learnJavaReply() {
+    const f = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    const a = new Date(), b = new Date(a.getTime() + 29 * 864e5);
+    return [
+      "Let's build your **OPAI 30-Day Java + Pro DSA Roadmap**: master Java for coding interviews, solve advanced LeetCode problems and build strong problem-solving skills.",
+      "If you already code comfortably, this is an intensive sprint. If you are starting from zero, you will need more time.",
+      "# OPAI · Java & DSA Sprint",
+      f(a) + ' – ' + f(b) + ' · 30 days',
+      "- **30 days:** structured learning",
+      "- **4 hrs/day:** focused practice",
+      "- **80–100:** curated problems target",
+      "- **Interview-ready:** target outcome",
+      "# 1. Your 30-day roadmap",
+      "**Week 1 · Java foundations (Days 1–7)**",
+      "- **Day 1:** Java syntax, variables, data types, operators, loops, conditions and methods.",
+      "- **Day 2:** Arrays, Strings, StringBuilder, character operations and basic problem-solving.",
+      "- **Day 3:** OOP: classes, objects, constructors, inheritance, polymorphism and interfaces.",
+      "- **Day 4:** Collections, generics, HashMap, HashSet, ArrayList, ArrayDeque, PriorityQueue and Comparator.",
+      "- **Day 5:** Time and space complexity, Big-O, array traversal, prefix sums and difference arrays.",
+      "- **Day 6:** Two pointers, fast/slow pointers and in-place array techniques.",
+      "- **Day 7:** Sliding window, variable-size windows and Week 1 assessment.",
+      "**Week 2 · Core DSA patterns (Days 8–14)**",
+      "**Week 3 · Trees, heaps and graphs (Days 15–21)**",
+      "**Week 4 · Advanced DSA (Days 22–30)**",
+      "# 2. Daily schedule",
+      "Follow the same workflow every day rather than watching tutorials for hours.",
+      "- **30 min, Learn:** understand the concept, algorithm intuition and Java implementation.",
+      "- **45 min, Pattern practice:** trace examples on paper. Find the brute force, optimize it and calculate complexity.",
+      "- **2 hours, LeetCode:** solve 2–4 quality problems, from easy to medium and an occasional hard.",
+      "- **45 min, Revision:** review mistakes, re-solve one old problem and note its key pattern and complexity.",
+      "# 3. The rules for becoming strong at DSA",
+      "- **Attempt before viewing solutions.** Struggle productively for 20–30 minutes, then take a small hint if needed.",
+      "- **Write the complexity.** Every accepted solution gets its time and space complexity.",
+      "- **Keep an error log.** Record whether each failure was logic, edge cases, Java syntax or the wrong pattern.",
+      "- **Use spaced revision.** Revisit hard problems after 1, 3 and 7 days.",
+      "- **Measure independent solving.** An accepted answer copied from an explanation does not count as mastered.",
+      "Your 30-day output: about 80–100 attempted problems, a meaningful subset solved independently, a reusable Java template collection, and clear evidence of which patterns you can use without help.",
+      "# 4. Use KARNA as your DSA coach",
+      "Copy this prompt to turn the roadmap into a daily workflow.",
+      "```\nMission: Help me build strong Java fundamentals and advanced DSA problem-solving skills in 30 days.\n1. Follow the 30-day Java + DSA roadmap; the current day's topic is the main focus.\n2. Start each session with a 5-question recall quiz.\n3. Teach intuition, brute force, optimization, proof of correctness, and time/space complexity.\n4. Use Java for every implementation; explain collections, comparators, integer overflow, recursion stack and edge cases.\n5. Give me 2-4 progressively harder problems per day.\n6. Give hints progressively; reveal a full solution only after I attempt it or ask.\n7. Track each problem: Not Started, Attempted, Solved Independently, Solved With Hints, Needs Revision.\n8. Schedule revision of difficult problems after 1, 3 and 7 days.\n9. Run a weekly timed assessment and update next week's priorities.\n10. End each session with a progress report, mistakes, concepts mastered and tomorrow's tasks.\n```",
+      "**Your first action today:** begin Day 1 with Java fundamentals and a diagnostic coding test. Protect your daily practice time and prioritize solving independently over chasing a problem count."
+    ].join('\n\n');
+  }
   const SUGG = {
-    ws: ['/guide','What is on my plan today?', 'Summarise my uploaded documents', 'Show my upcoming deadlines', 'Add a project called My App using React', 'Add an exam for Operating Systems on 20 Nov', 'Add an application as ML Intern at Acme deadline 30 Oct'],
-    gen: ['Explain RAG like I am new to AI', 'Help me write a cold email to a professor', 'Quiz me on database normalization']
+    ws: ['Lets learn Java', '/guide','What is on my plan today?', 'Summarise my uploaded documents', 'Show my upcoming deadlines', 'Add a project called My App using React', 'Add an exam for Operating Systems on 20 Nov', 'Add an application as ML Intern at Acme deadline 30 Oct'],
+    gen: ['Lets learn Java', 'Explain RAG like I am new to AI', 'Help me write a cold email to a professor', 'Quiz me on database normalization']
   };
   function applyMode() {
     $('m-ws').classList.toggle('on', store.mode === 'ws'); $('m-gen').classList.toggle('on', store.mode === 'gen');
@@ -1329,6 +1374,10 @@ void main(){
     if (!opts.regen && !opts.retry && !files.length && window.OPAI_GUIDE && OPAI_GUIDE.isGuideQuery(text)) {
       const gm = { role: 'agent', action: 'general', mode: 'smalltalk', text: OPAI_GUIDE.answer(text, getLang()), ts: Date.now() };
       c.msgs.push(gm); addMsg(gm, true); c.ts = Date.now(); save(); return;
+    }
+    if (!opts.regen && !opts.retry && !files.length && LEARN_JAVA_RE.test(text)) {
+      const jm = { role: 'agent', action: 'general', mode: 'smalltalk', text: learnJavaReply(), ts: Date.now() };
+      c.msgs.push(jm); addMsg(jm, true); c.ts = Date.now(); save(); return;
     }
     if (!opts.regen && !opts.retry && !files.length && FB_RE.test(text)) { feedbackDraft(text); c.ts = Date.now(); save(); return; }
     c.ts = Date.now(); save(); setBusy(true);
