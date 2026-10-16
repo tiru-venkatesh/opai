@@ -335,7 +335,8 @@ def sync_from_record(db: Session, uid: str, rec: Dict[str, Any]) -> None:
 
 # ------------------------------------------------------------------ language layer (Groq may only reword finished facts)
 def narrate(doc: Dict[str, Any]) -> Optional[str]:
-    if not os.getenv("GROQ_API_KEY"):
+    from agent import llm as _llm
+    if not _llm.enabled():
         return None
     try:
         from agent_service import call_groq_json

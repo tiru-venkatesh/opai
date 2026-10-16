@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from fastapi import FastAPI, Depends, HTTPException, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 
@@ -139,11 +139,13 @@ def _friendly_error(exc: Exception):
     """Map provider/DB failures to (status, message, retry_after); None for genuine bugs.
     Raw Groq/SQLAlchemy text can leak hosts and usernames, so it is never echoed."""
     name, mod = type(exc).__name__, (type(exc).__module__ or "")
-    if mod.startswith("groq"):
+    if mod.startswith(("groq", "anthropic")):
         if name == "RateLimitError":
             return 429, "The AI service is rate-limited right now. Wait a minute and try again.", 30
         if name in ("AuthenticationError", "PermissionDeniedError"):
-            return 502, "The AI service rejected the server's API key. Check GROQ_API_KEY on the backend.", None
+            return 502, "The AI service rejected the server's API key. Check ANTHROPIC_API_KEY (or GROQ_API_KEY) on the backend.", None
+        if name == "OverloadedError" or getattr(exc, "status_code", None) == 529:
+            return 503, "The AI service is busy right now. Try again in a few seconds.", 5
         if name in ("APIConnectionError", "APITimeoutError"):
             return 503, "Could not reach the AI service. Try again shortly.", 5
         return 502, "The AI service returned an error. Try again.", 5
@@ -179,7 +181,8 @@ def health(db: Session = Depends(get_db)):
         "ok": True,
         "db": dialect,
         "db_persistent": dialect != "sqlite",
-        "groq_key_set": bool(os.getenv("GROQ_API_KEY", "").strip()),
+        "groq_key_set": bool(os.getenv("GROQ_API_KEY", "").strip() or os.getenv("ANTHROPIC_API_KEY", "").strip()),   # page banner: "an AI key is set"
+        "llm": __import__("agent.llm", fromlist=["status"]).status(),
         "tables": {},
     }
     if dialect == "sqlite":
@@ -1322,12 +1325,22 @@ GENERAL_GUARD = (
 )
 
 
-@app.post("/v1/chat/general")
-def general_chat(req: GeneralChatRequest, request: Request, db: Session = Depends(get_db)):
+def _general_prepare(req, request: Request, db: Session):
+    """Everything before the model call. Returns ("done", response_dict) for local answers, or ("llm", msgs, saved, ctx)."""
     from agent import groq_client, learn
     _general_rate_limit(request.client.host if request.client else "unknown")
     last_user = next((m.content for m in reversed(req.messages) if m.role == "user"), "")
     uid = str(req.user_id) if req.user_id else None
+    from agent import conversation          # greetings / "what can you do" / help: local reply, no DB-heavy memory pass, no LLM
+    if conversation.answer(last_user) is not None:
+        first = None
+        if uid:
+            try:
+                row = db.query(User.name).filter(User.id == uid).first()
+                first = (row[0] or "").split(" ")[0] if row else None
+            except Exception:
+                db.rollback()
+        return ("done", {"reply": conversation.answer(last_user, first)["reply"], "source": "conversation"})
     saved = []
     if uid:
         try:
@@ -1338,14 +1351,14 @@ def general_chat(req: GeneralChatRequest, request: Request, db: Session = Depend
         saved = res["saved"] or res["pending"]
         msg = learn.ack_pending(res)
         if msg and len((last_user or "").split()) <= 14:
-            return {"reply": msg, "source": "memory", "memory": res}
+            return ("done", {"reply": msg, "source": "memory", "memory": res})
         try:
             from agent.identity import answer as identity_answer
             ident = identity_answer(db, uid, last_user)               # exact answers from the user's own rows, no LLM
         except Exception:
             ident = None
         if ident:
-            return {"reply": ident["reply"], "source": "profile"}
+            return ("done", {"reply": ident["reply"], "source": "profile"})
     ctx = {"text": "", "hits": [], "empty": True}
     if uid:
         try:
@@ -1357,11 +1370,11 @@ def general_chat(req: GeneralChatRequest, request: Request, db: Session = Depend
         if personal_q and ctx["hits"]:
             from rag_api import extractive_answer, build_sources
             src = build_sources(ctx["hits"])
-            return {"reply": extractive_answer(src, ctx["hits"], last_user), "source": "workspace", "sources": src}
-        raise HTTPException(503, "GROQ_API_KEY is not configured on the backend")
+            return ("done", {"reply": extractive_answer(src, ctx["hits"], last_user), "source": "workspace", "sources": src})
+        raise HTTPException(503, "No AI key is configured on the backend (set GROQ_API_KEY or ANTHROPIC_API_KEY)")
     if personal_q and ctx["empty"]:
-        return {"reply": "I don't have anything about that in your OPAI data yet. Add it in Plan/Work, or tell me here "
-                         "(for example \"I study at ...\" or \"my goal is ...\") and I'll remember it."}
+        return ("done", {"reply": "I don't have anything about that in your OPAI data yet. Add it in Plan/Work, or tell me here "
+                                  "(for example \"I study at ...\" or \"my goal is ...\") and I'll remember it."})
     # Client system prompt is only used for style (language); the honesty rules always come first.
     style = (req.system or "")[:600]
     system = GENERAL_GUARD + ("\nStyle hint from app: " + style if style else "")
@@ -1376,14 +1389,58 @@ def general_chat(req: GeneralChatRequest, request: Request, db: Session = Depend
     for m in req.messages[-12:]:
         if m.role in ("user", "assistant"):
             msgs.append({"role": m.role, "content": m.content[:6000]})
+    return ("llm", msgs, saved, ctx)
+
+
+@app.post("/v1/chat/general")
+def general_chat(req: GeneralChatRequest, request: Request, db: Session = Depends(get_db)):
+    from agent import groq_client, learn
+    prep = _general_prepare(req, request, db)
+    if prep[0] == "done":
+        return prep[1]
+    _, msgs, saved, ctx = prep
     try:
         out = groq_client.get_client().chat.completions.create(
             model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), messages=msgs,
-            temperature=float(os.getenv("GENERAL_TEMPERATURE", "0.2")), max_tokens=1500,
+            temperature=float(os.getenv("GENERAL_TEMPERATURE", "0.2")), max_tokens=int(os.getenv("GENERAL_MAX_TOKENS", "2500")),
         ).choices[0].message.content or ""
     except Exception as e:
-        raise HTTPException(502, f"AI chat failed: {e}")
+        raise HTTPException(502, f"AI chat failed: {type(e).__name__}")
     return {"reply": learn.strip_false_claim(out, saved), "personalised": not ctx["empty"]}
+
+
+@app.post("/v1/chat/general/stream")
+def general_chat_stream(req: GeneralChatRequest, request: Request, db: Session = Depends(get_db)):
+    """Server-Sent Events version of /v1/chat/general: `data: {"delta": "..."}` chunks, then `data: {"done": true, "reply": "..."}`.
+    Local answers (greeting, memory, profile) arrive as a single chunk. The final `reply` has the same false-claim stripping as the
+    non-streaming route, so the client should replace its buffer with it."""
+    import json as _json
+    from agent import learn, llm
+    prep = _general_prepare(req, request, db)
+
+    def sse(obj):
+        return "data: " + _json.dumps(obj, ensure_ascii=False) + "\n\n"
+
+    def gen():
+        if prep[0] == "done":
+            yield sse({"delta": prep[1]["reply"]})
+            yield sse({"done": True, **prep[1]})
+            return
+        _, msgs, saved, ctx = prep
+        buf = []
+        try:
+            for piece in llm.stream_chat(msgs, tier="balanced", max_tokens=int(os.getenv("GENERAL_MAX_TOKENS", "2500")),
+                                         temperature=float(os.getenv("GENERAL_TEMPERATURE", "0.2"))):
+                buf.append(piece)
+                yield sse({"delta": piece})
+            yield sse({"done": True, "reply": learn.strip_false_claim("".join(buf), saved), "personalised": not ctx["empty"]})
+        except Exception as e:
+            import logging
+            logging.getLogger("opa").exception("stream failed")
+            yield sse({"error": "AI chat failed. Try again.", "done": True})
+
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 # ================= HISTORY (READ-ONLY ROLLUP) =================

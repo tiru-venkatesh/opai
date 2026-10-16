@@ -7,16 +7,38 @@ layer -> approval -> audit.
 """
 from __future__ import annotations
 
-import json
+import logging
+import re
+import time
 from typing import Any, Dict
 from uuid import UUID
+from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 
 from .router import classify
-from .approval_engine import requires_approval, approval_message
-from .decision import ActionResult
-from .fallback import local_response_for_intent
-from .idempotency import IDEMPOTENT_TOOLS, make_key, recent_success
+from .approval_engine import approval_message
+
+log = logging.getLogger("opa.orchestrator")
+
+# Server clock is UTC on most hosts; "today"/"tomorrow" must follow the user's calendar day.
+_IST = ZoneInfo("Asia/Kolkata")
+
+
+def _try(db: Session, label: str, fn):
+    """Run one optional pipeline step. On failure: log the traceback, roll the session back
+    (an aborted transaction would otherwise fail every later query in this request), return None."""
+    t0 = time.perf_counter()
+    try:
+        out = fn()
+        log.info("step=%s ms=%.0f hit=%s", label, (time.perf_counter() - t0) * 1000, bool(out))
+        return out
+    except Exception:
+        log.exception("orchestrator step failed: %s", label)
+        try:
+            db.rollback()
+        except Exception:
+            log.exception("rollback failed after step: %s", label)
+        return None
 
 
 def _extractive_reply(hits, limit: int = 4, max_chars: int = 260) -> str:
@@ -56,15 +78,13 @@ def _grounded_chat(user_id: UUID, message: str, db: Session, history=None, doc_i
             if text:
                 return JarvisChatResponse(action="chat", reply=text, payload={"answer_mode": "general"})
         except Exception:
-            pass
+            log.exception("general_answer failed; falling back to grounded reply")
+            db.rollback()
     return JarvisChatResponse(
         action="chat",
         reply=res["answer"],
         payload={"sources": res["sources"], "answer_mode": res["mode"]} if res["sources"] else {"answer_mode": res["mode"]},
     )
-
-
-_TASK_LEAD = None
 
 
 def extract_task_title(message: str) -> str:
@@ -84,85 +104,89 @@ def extract_task_title(message: str) -> str:
 
 def extract_due_date(message: str):
     import re as _re
-    from datetime import date as _d, timedelta as _td
+    from datetime import datetime as _dt, timedelta as _td
     m = (message or "").lower()
+    today = _dt.now(_IST).date()
     if _re.search(r"\b(tomorrow|tmrw)\b", m):
-        return (_d.today() + _td(days=1)).isoformat()
+        return (today + _td(days=1)).isoformat()
     if _re.search(r"\b(today|tonight)\b", m):
-        return _d.today().isoformat()
+        return today.isoformat()
     return None
 
 
 def _clarify(decision, message):
+    """Unclear request: plain-language reply only. No internal reason codes or routing debug data go to the user."""
     from schemas import JarvisChatResponse
-    reason = decision.reason_code or "low_confidence_intent"
     return JarvisChatResponse(
         action="chat",
         reply=(
-            f"I’m not confident enough to act on that yet ({reason}). "
-            "Tell me the specific course, task, application, contact, or action you mean."
+            "I’m not sure what you need yet. Could you say a little more? For example, "
+            "“plan my day”, “add a task…”, or ask a question about your notes."
         ),
-        payload={"routing": decision.model_dump()},
+        payload={"answer_mode": "clarify"},
     )
 
 
 def handle_message(user_id: UUID, message: str, db: Session, history=None, doc_ids=None):
     from schemas import JarvisChatResponse
-    from agent_service import run_jarvis_agent, summarize_recent_activity, _tool_search_opportunities, _tool_draft_outreach
+    from agent_service import run_jarvis_agent, summarize_recent_activity, _tool_search_opportunities
     from .tool_registry import execute as execute_tool
+
+    # Greetings, thanks, "what can you do" / "help": answered locally, before any DB lookup or LLM call.
+    if not doc_ids:
+        from . import conversation
+        from database import User
+        t0 = time.perf_counter()
+        if conversation.answer(message) is not None:        # pure match first; only then pay for the name lookup
+            row = _try(db, "user_name", lambda: db.query(User.name).filter(User.id == str(user_id)).first())
+            conv = conversation.answer(message, (row[0] or "").split(" ")[0] if row else None)
+            log.info("handler=conversation mode=%s ms=%.0f", conv["payload"]["answer_mode"], (time.perf_counter() - t0) * 1000)
+            return JarvisChatResponse(action="chat", reply=conv["reply"], payload=conv["payload"])
+
+    # Meaningless input never reaches an LLM (saves quota/latency, avoids confident replies to nonsense).
+    if not doc_ids:
+        from . import noise
+        from rag_api import _SMALLTALK
+        if noise.is_noise(message):
+            return JarvisChatResponse(action="chat", reply=noise.NOISE_REPLY, payload={"answer_mode": "noise"})
+        if noise.is_short_unknown(message) and not _SMALLTALK.match(message or ""):
+            return JarvisChatResponse(action="chat", reply=noise.short_unknown_reply(message),
+                                      payload={"answer_mode": "clarify"})
 
     # Questions about the user's OWN profile (name, college, year, skills, ...): answered from their rows, no LLM.
     if not doc_ids:
-        try:
-            from .identity import answer as identity_answer
-            ident = identity_answer(db, str(user_id), message)
-        except Exception:
-            ident = None
+        from .identity import answer as identity_answer
+        ident = _try(db, "identity", lambda: identity_answer(db, str(user_id), message))
         if ident:
             return JarvisChatResponse(action="chat", reply=ident["reply"], payload=ident["payload"])
 
     # Reminders ("remind me at 5pm ...", daily-plan nudges) and brief requests ("what should I do today", "I only have 1 hour")
     # are typed flows: they run before the free-form router and produce the same brief/action objects every surface renders.
     if not doc_ids:
-        try:
-            from . import reminder_chat
-            rem = reminder_chat.handle(user_id, message, db)
-        except Exception:
-            db.rollback()
-            rem = None
+        from . import reminder_chat
+        rem = _try(db, "reminder", lambda: reminder_chat.handle(user_id, message, db))
         if rem:
             return rem
-        try:
-            from briefs import jarvis as brief_jarvis
-            brief_resp = brief_jarvis.respond(db, str(user_id), message)
-        except Exception:
-            db.rollback()
-            brief_resp = None
+        from briefs import jarvis as brief_jarvis
+        brief_resp = _try(db, "brief", lambda: brief_jarvis.respond(db, str(user_id), message))
         if brief_resp:
             return brief_resp
 
     # Read-only lookups (lists / counts / deadlines / profile) are answered straight from the
     # user's own DB rows: exact, no LLM, no router. Anything that looks like an action falls through.
-    try:
-        from .direct_db import answer as direct_db_answer
-        direct = None if doc_ids else direct_db_answer(db, str(user_id), message)
-    except Exception:
-        direct = None
+    from .direct_db import answer as direct_db_answer
+    direct = None if doc_ids else _try(db, "direct_db", lambda: direct_db_answer(db, str(user_id), message))
     if direct:
         return JarvisChatResponse(action="chat", reply=direct["reply"], payload=direct["payload"])
 
     if not doc_ids:  # "add a project / exam / application ..." writes to the matching section
-        try:
-            from .capture import handle as capture_handle
-            captured = capture_handle(user_id, message, db)
-        except Exception:
-            captured = None
+        from .capture import handle as capture_handle
+        captured = _try(db, "capture", lambda: capture_handle(user_id, message, db))
         if captured:
             return captured
 
-    import re as _re0
-    if not doc_ids and _re0.search(r"\b(uploaded|documents?|docs?|pdfs?|files?)\b", (message or "").lower()) \
-            and not _re0.search(r"\b(task|todo|remind|outreach|email)\b", (message or "").lower()):
+    if not doc_ids and re.search(r"\b(uploaded|documents?|docs?|pdfs?|files?)\b", (message or "").lower()) \
+            and not re.search(r"\b(task|todo|remind|outreach|email)\b", (message or "").lower()):
         return _grounded_chat(user_id, message, db, history)  # questions about the user's documents are RAG, not workspace-summary
 
     if doc_ids:  # "Ask only this doc": skip routing and answer strictly from the selected documents
@@ -172,6 +196,15 @@ def handle_message(user_id: UUID, message: str, db: Session, history=None, doc_i
 
     # Confidence policy from the architecture spec.
     if decision.confidence < 0.55:
+        # Unclear intent. With an LLM configured, answer conversationally (documents -> general knowledge) instead of
+        # dead-ending; chat replies can never write data, so this stays inside the safety boundary.
+        from . import llm
+        if llm.enabled():
+            try:
+                return _grounded_chat(user_id, message, db, history)
+            except Exception:
+                log.exception("conversational fallback failed; asking for clarification")
+                db.rollback()
         return _clarify(decision, message)
 
     if decision.requires_confirmation and decision.intent in {"delete_record", "approve_action", "update_application"}:
@@ -195,17 +228,21 @@ def handle_message(user_id: UUID, message: str, db: Session, history=None, doc_i
         return JarvisChatResponse(action="chat", reply=text, payload={"answer_mode": "workspace_summary"})
 
     if decision.intent == "create_task":
-        import re as _re
         # Guard: the classifier sometimes maps "write/create a prompt/email/code" to create_task.
-        if not _re.search(r"\b(tasks?|todos?|to-do|reminders?|remind me|deadline)\b", message.lower()):
+        if not re.search(r"\b(tasks?|todos?|to-do|reminders?|remind me|deadline)\b", message.lower()):
             return _grounded_chat(user_id, message, db, history)
         _due = entities.get("due_date")
-        if not (isinstance(_due, str) and _re.fullmatch(r"\d{4}-\d{2}-\d{2}", _due)):
+        if not (isinstance(_due, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", _due)):
             _due = extract_due_date(message)
+        _mins = entities.get("duration_min") or entities.get("estimated_minutes")
+        try:
+            _mins = int(re.match(r"\s*(\d+)", str(_mins)).group(1)) if _mins else 45
+        except (AttributeError, ValueError):
+            _mins = 45
         tool_args = {
             "title": entities.get("task_title") or entities.get("title") or extract_task_title(message),
             "due_date": _due,
-            "estimated_minutes": entities.get("duration_min") or entities.get("estimated_minutes") or 45,
+            "estimated_minutes": max(5, min(_mins, 600)),
         }
         executed = execute_tool(str(user_id), "create_task", tool_args, db)
         result = executed.get("result", executed)
@@ -228,8 +265,9 @@ def handle_message(user_id: UUID, message: str, db: Session, history=None, doc_i
         return JarvisChatResponse(
             action="plan",
             reply=(
-                "I generated the deterministic SEMS study plan. "
-                "The planner owns durations/conflicts; the language model only explains it."
+                ("I rebuilt your study plan around the time you have. " if decision.intent == "reschedule_session"
+                 else "I generated your study plan. ")
+                + "The planner sets durations and conflicts; the language model only explains it."
             ) if executed.get("ok") else executed.get("error", "I couldn't generate the study plan."),
             payload=result,
         )

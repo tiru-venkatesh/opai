@@ -54,7 +54,7 @@ def _pdf_text(raw: bytes) -> str:
 @router.post("/analyze")
 def analyze(req: AttachRequest):
     if not groq_client.groq_enabled():
-        raise HTTPException(503, "GROQ_API_KEY is not configured on the backend")
+        raise HTTPException(503, "No AI key is configured on the backend (set GROQ_API_KEY or ANTHROPIC_API_KEY)")
     if not req.files or len(req.files) > MAX_FILES:
         raise HTTPException(400, f"Attach 1 to {MAX_FILES} files")
     texts, images = [], []

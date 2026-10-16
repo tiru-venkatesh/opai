@@ -272,7 +272,8 @@ def narrate(plan: Dict[str, Any]) -> str:
     base += f" You have {cap['planned_min']} of {cap['available_min']} minutes planned, with {cap['buffer_min']} as buffer."
     try:
         import os
-        if not os.getenv("GROQ_API_KEY"):
+        from agent import llm as _llm
+        if not _llm.enabled():
             return base
         from agent_service import call_groq_json
         import json

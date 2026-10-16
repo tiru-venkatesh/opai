@@ -7,7 +7,6 @@ import io
 from uuid import UUID
 from datetime import date, datetime, time as dtime, timedelta
 from typing import List, Optional
-from groq import Groq
 from sqlalchemy.orm import Session
 from agent import karna_prompt, reply_guard
 
@@ -24,27 +23,11 @@ from schemas import (
     ReflectionResponse, MemorySummarizeResponse
 )
 
-_groq_client = None
-
-
-def get_groq_client() -> Groq:
-    """
-    Lazily construct the Groq client on first real use, instead of at
-    import time. This means the server actually starts (and endpoints
-    that don't need Groq still work) even if GROQ_API_KEY isn't set yet -
-    you only get an error the moment something tries to call the model,
-    with a clear message instead of a startup crash.
-    """
-    global _groq_client
-    if _groq_client is None:
-        api_key = os.environ.get("GROQ_API_KEY")
-        if not api_key:
-            raise RuntimeError(
-                "GROQ_API_KEY is not set. Set it before calling anything that "
-                "uses the LLM (plan generation, matching, outreach drafts, KARNA)."
-            )
-        _groq_client = Groq(api_key=api_key)
-    return _groq_client
+def get_groq_client():
+    """Historical name. Returns the LLM client (Claude when ANTHROPIC_API_KEY is set, else Groq).
+    Raises RuntimeError with a clear message when no key is configured, instead of crashing at import."""
+    from agent import llm
+    return llm.get_client()
 
 # Embeddings + similarity now live in rag_service (lazy model load, hashed fallback).
 get_embedding = rag.embed_one
