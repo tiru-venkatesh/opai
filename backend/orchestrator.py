@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 from typing import Any, Dict
 from uuid import UUID
 from zoneinfo import ZoneInfo
@@ -26,8 +27,11 @@ _IST = ZoneInfo("Asia/Kolkata")
 def _try(db: Session, label: str, fn):
     """Run one optional pipeline step. On failure: log the traceback, roll the session back
     (an aborted transaction would otherwise fail every later query in this request), return None."""
+    t0 = time.perf_counter()
     try:
-        return fn()
+        out = fn()
+        log.info("step=%s ms=%.0f hit=%s", label, (time.perf_counter() - t0) * 1000, bool(out))
+        return out
     except Exception:
         log.exception("orchestrator step failed: %s", label)
         try:
@@ -116,8 +120,8 @@ def _clarify(decision, message):
     return JarvisChatResponse(
         action="chat",
         reply=(
-            "I didn’t understand that. Tell me what you want to do, for example "
-            "“add an exam…”, “add a task…”, or ask a question about your notes."
+            "I’m not sure what you need yet. Could you say a little more? For example, "
+            "“plan my day”, “add a task…”, or ask a question about your notes."
         ),
         payload={"answer_mode": "clarify"},
     )
@@ -127,6 +131,17 @@ def handle_message(user_id: UUID, message: str, db: Session, history=None, doc_i
     from schemas import JarvisChatResponse
     from agent_service import run_jarvis_agent, summarize_recent_activity, _tool_search_opportunities
     from .tool_registry import execute as execute_tool
+
+    # Greetings, thanks, "what can you do" / "help": answered locally, before any DB lookup or LLM call.
+    if not doc_ids:
+        from . import conversation
+        from database import User
+        t0 = time.perf_counter()
+        if conversation.answer(message) is not None:        # pure match first; only then pay for the name lookup
+            row = _try(db, "user_name", lambda: db.query(User.name).filter(User.id == str(user_id)).first())
+            conv = conversation.answer(message, (row[0] or "").split(" ")[0] if row else None)
+            log.info("handler=conversation mode=%s ms=%.0f", conv["payload"]["answer_mode"], (time.perf_counter() - t0) * 1000)
+            return JarvisChatResponse(action="chat", reply=conv["reply"], payload=conv["payload"])
 
     # Meaningless input never reaches an LLM (saves quota/latency, avoids confident replies to nonsense).
     if not doc_ids:
