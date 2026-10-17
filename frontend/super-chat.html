@@ -63,6 +63,10 @@ button,select,input,textarea{font:inherit;color:inherit}button{cursor:pointer}[h
 .bubble h4{margin:12px 0 6px;font:600 15px/22px var(--head)}.bubble hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 .bubble a{color:var(--pri);text-decoration:underline;text-underline-offset:2px}
 .bubble code{font:500 12.5px/1.5 var(--mono);background:var(--tint);color:var(--pri2);padding:1px 6px;border-radius:5px}
+.codebox{margin:10px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#f8faf9}.codebox .codebar{display:flex;justify-content:space-between;align-items:center;padding:4px 8px 4px 12px;background:var(--tint3);border-bottom:1px solid var(--line);font:500 11px/16px var(--mono);color:var(--ink2)}.ccopy{height:24px;padding:0 10px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink2);font:500 11px/1 var(--head)}.ccopy:hover{color:var(--pri);border-color:var(--pri)}.codebox pre{margin:0!important;border:0!important;border-radius:0!important}
+#jump{position:fixed;right:18px;bottom:178px;z-index:20;width:40px;height:40px;border-radius:50%;border:1px solid var(--line2);background:#fff;color:var(--pri);box-shadow:0 8px 24px rgba(15,82,87,.18);font-size:18px;line-height:1}#jump:hover{background:var(--tint)}
+.msg.live .bubble::after{content:"";display:inline-block;width:7px;height:14px;margin-left:3px;vertical-align:-2px;border-radius:2px;background:var(--pri);opacity:.6;animation:blink 1s steps(2) infinite}@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.msg.live .bubble::after{animation:none}}
 .bubble pre{margin:10px 0;border:1px solid var(--line);border-radius:12px;background:#f8faf9;padding:12px 14px;overflow-x:auto}.bubble pre code{background:none;padding:0;color:var(--ink);font-size:12px}
 .tbl{overflow-x:auto;margin:10px 0;border:1px solid var(--line);border-radius:12px;background:#fff}.tbl table{border-collapse:collapse;width:100%;font-size:13px}
 .tbl th,.tbl td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line)}.tbl th{background:var(--tint3);font:600 11px/16px var(--head);text-transform:uppercase;letter-spacing:.06em;color:var(--ink2)}.tbl tr:last-child td{border:0}
@@ -181,6 +185,7 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
 <div id="mscrim" aria-hidden="true"></div>
 
 <div id="ctxbar" aria-label="Session context"></div>
+<button id="jump" type="button" aria-label="Jump to latest message" title="Jump to latest" hidden>&#8595;</button>
 <main id="thread" aria-live="polite" aria-relevant="additions"></main>
 
 <div class="dock">
@@ -257,7 +262,7 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
   /* ---------- tiny safe markdown (escape first, then format) ---------- */
   function md(src) {
     const blocks = [];
-    let s = esc(src).replace(/```[\w-]*\n?([\s\S]*?)```/g, (_, c) => { blocks.push('<pre><code>' + c.replace(/\n$/, '') + '</code></pre>'); return '\u0000' + (blocks.length - 1) + '\u0000'; });
+    let s = esc(src).replace(/```([\w-]*)\n?([\s\S]*?)```/g, (_, lang, c) => { blocks.push('<div class="codebox"><div class="codebar"><span>' + (lang || 'code') + '</span><button type="button" class="ccopy">copy</button></div><pre><code>' + c.replace(/\n$/, '') + '</code></pre></div>'); return '\u0000' + (blocks.length - 1) + '\u0000'; });
     s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>')
          .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
          .replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, '$1<em>$2</em>')
@@ -665,6 +670,35 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
     return c.msgs.slice(0, li < 0 ? 0 : li).filter((m) => m.role === 'user' || m.role === 'agent').slice(-8)
       .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: String(m.text || '').slice(0, 1500) }));
   }
+  /* near-bottom check: only auto-follow streamed text if the reader hasn't scrolled up */
+  const nearEnd = () => document.documentElement.scrollHeight - (window.scrollY + window.innerHeight) < 220;
+  const jump = $('jump');
+  window.addEventListener('scroll', () => { jump.hidden = $('empty') ? true : nearEnd(); }, { passive: true });
+  jump.addEventListener('click', () => { window.scrollTo({ top: document.body.scrollHeight, behavior: reduce() ? 'auto' : 'smooth' }); });
+  /* General mode: server-sent events, so text appears as it is written. Throws with .status for HTTP errors. */
+  async function streamGeneral(body, signal, onText) {
+    const res = await fetch(base() + '/v1/chat/general/stream', { method: 'POST', signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok || !res.body) {
+      let d = ''; try { d = (await res.json()).detail || ''; } catch (e) {}
+      const err = new Error(d || (res.status + ' ' + res.statusText)); err.status = res.status; throw err;
+    }
+    const rd = res.body.getReader(), dec = new TextDecoder(); let buf = '', text = '', fin = null;
+    for (;;) {
+      const { value, done } = await rd.read(); if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i; while ((i = buf.indexOf('\n\n')) >= 0) {
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 2);
+        if (!line.startsWith('data:')) continue;
+        let ev; try { ev = JSON.parse(line.slice(5)); } catch (e) { continue; }
+        if (ev.error) { const err = new Error(ev.error); err.status = 502; throw err; }
+        if (ev.delta) { text += ev.delta; onText(text); }
+        if (ev.done) fin = ev;
+      }
+    }
+    if (!fin) { const err = new Error('The reply was cut off. Try again.'); err.status = 502; throw err; }
+    return fin;
+  }
+
   async function send(text, opts = {}) {
     if (busy) return;
     text = (text != null ? text : $('q').value).trim();
@@ -687,6 +721,7 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
     if (!opts.regen && !opts.retry && !files.length && FB_RE.test(text)) { feedbackDraft(text); c.ts = Date.now(); save(); return; }
     c.ts = Date.now(); save(); setBusy(true);
     const t = typingEl(), t0 = performance.now(); ctrl = new AbortController();
+    let live = null;
     try {
       let am;
       if (files.length) {
@@ -695,7 +730,19 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
         am = { role: 'agent', action: 'attachment', text: r.analysis || 'No analysis returned.' };
       } else if (store.mode === 'gen') {
         const hist = c.msgs.filter((m) => m.role === 'user' || m.role === 'agent').slice(-12).map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text || '' }));
-        const r = await api('/v1/chat/general', { method: 'POST', signal: ctrl.signal, body: JSON.stringify({ system: SYSTEM_GEN(), messages: hist, user_id: await ensureUser(), ...modelBody() }) });
+        const gbody = { system: SYSTEM_GEN(), messages: hist, user_id: await ensureUser(), ...modelBody() };
+        let r;
+        try {
+          r = await streamGeneral(gbody, ctrl.signal, (txt) => {
+            const follow = nearEnd();
+            if (!live) { clearInterval(t._iv); t.remove(); live = addMsg({ role: 'agent', action: 'general', text: txt, ts: Date.now() }); live.classList.add('live'); }
+            else live.querySelector('.bubble').innerHTML = md(txt);
+            if (follow) window.scrollTo(0, document.body.scrollHeight);
+          });
+        } catch (se) {
+          if (live || se.name === 'AbortError' || se.status) throw se;      // real error, or already showing text: surface it
+          r = await api('/v1/chat/general', { method: 'POST', signal: ctrl.signal, body: JSON.stringify(gbody) });   // stream unsupported: plain request
+        }
         am = { role: 'agent', action: 'general', text: r.reply || '', memory: r.memory || null, model: r.model || null };
       } else {
         const body = { user_id: await ensureUser(), message: text, history: historyFor(c), ...modelBody() };
@@ -708,10 +755,11 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
         if (r.action === 'task') refreshDocs();
       }
       am.ts = Date.now(); am.ms = performance.now() - t0; c.msgs.push(am); c.msgs = c.msgs.slice(-200);
-      clearInterval(t._iv); irisOut(t, () => { t.remove(); addMsg(am, true); });
+      clearInterval(t._iv);
+      if (live) { live.replaceWith(buildMsg(am)); t.remove(); scrollEnd(); } else irisOut(t, () => { t.remove(); addMsg(am, true); });
       if (store.mode === 'ws') refreshGate();
     } catch (e) {
-      clearInterval(t._iv); t.remove();
+      clearInterval(t._iv); t.remove(); if (live) live.remove();
       const why = explain(e);
       if (why === null) addMsg({ role: 'sys', text: 'Stopped.', ts: Date.now() });
       else { const em = { role: 'err', text: why, ts: Date.now() }; c.msgs.push(em); addMsg(em); }
@@ -773,6 +821,8 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
 
   /* message actions: copy / regenerate / retry, plus citation chips */
   thread.addEventListener('click', async (e) => {
+    const cc = e.target.closest('.ccopy');
+    if (cc) { const code = cc.closest('.codebox').querySelector('code'); try { await navigator.clipboard.writeText(code.textContent); cc.textContent = 'copied'; } catch (x) { cc.textContent = 'failed'; } setTimeout(() => (cc.textContent = 'copy'), 1400); return; }
     const cs = e.target.closest('.cite,.src');
     if (cs) {
       const row = cs.closest('.msg'), n = +cs.dataset.n, s = ((row._m && row._m.sources) || []).find((x) => x.n === n), slot = row.querySelector('.snip-slot');

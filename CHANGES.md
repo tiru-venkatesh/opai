@@ -1,3 +1,11 @@
+# Chat UX pass
+
+- General mode streams the reply live (uses `/v1/chat/general/stream`, falls back to the plain route if streaming is unavailable).
+  A small cursor shows while text arrives; the final message replaces it with badges and actions.
+- Code blocks show their language and have a one-click copy button.
+- "Jump to latest" button appears when you scroll up in a long chat; streamed text only auto-follows if you are already at the bottom.
+- Files: `backend/static/super-chat.html` and `frontend/super-chat.html` (HTML only, no backend change).
+
 # Model picker (multi-model chat)
 
 - `backend/agent/model_catalog.py` (new): server-side catalog (Claude fast/balanced/deep, Groq, optional Hugging Face), per-mode rules
