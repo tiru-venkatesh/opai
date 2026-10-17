@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Internships · OPAI</title>
+<meta name="theme-color" content="#F6F4EE">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><link rel="stylesheet" href="opai-mobile.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
+<style>
+:root{
+  --opp-bg:var(--paper,#F6F4EE);--opp-card:var(--card,#fff);--opp-ink:var(--ink,#16181A);
+  --opp-muted:var(--mut,#5a6064);--opp-primary:var(--pri,#17504A);--opp-line:var(--line,var(--hair,#e3e0d6));
+  --opp-well:var(--well,#efede5);--opp-coral:var(--coral,#E8705A);--opp-good:var(--good,#17704a);
+  --opp-warn:var(--warn,#b4580f);--opp-bad:var(--bad,#b3261e);--opp-field:var(--card-2,#fff);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--opp-bg);color:var(--opp-ink);font:15px/1.55 'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;min-height:100vh}
+#main{position:relative;z-index:2;width:min(100%,980px);margin:0 auto;padding:26px 20px 120px}
+html.embed #main{padding-top:14px}
+h1,h2,h3,p{margin:0}
+.mut{color:var(--opp-muted);font-size:13px;line-height:1.55}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.sp{justify-content:space-between}
+[hidden]{display:none!important}
+
+/* ---- header ---- */
+.op-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:0 0 18px}
+.op-head h1{font-size:clamp(26px,3vw,32px);line-height:1.15;letter-spacing:-.04em;font-weight:750}
+.op-head .sub{margin-top:6px;color:var(--opp-muted);font-size:14px;max-width:560px}
+html.embed .op-head h1,html.embed .op-head .sub{display:none}
+html.embed .op-head{justify-content:flex-end;margin-bottom:12px}
+.op-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ---- buttons / fields ---- */
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--opp-coral) 65%,transparent);outline-offset:2px}
+button.b,a.b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;border:1px solid var(--opp-primary);border-radius:10px;background:var(--opp-primary);color:#fff;padding:8px 14px;font:650 13px/1.2 'Geist',system-ui,sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;transition:background .15s,box-shadow .15s,transform .15s}
+button.b:hover:not(:disabled),a.b:hover{box-shadow:0 4px 12px rgba(23,80,74,.18);transform:translateY(-1px)}
+button.b.alt,a.b.alt{background:var(--opp-card);color:var(--opp-primary)}
+button.b.dng{background:var(--opp-card);color:var(--opp-bad);border-color:color-mix(in srgb,var(--opp-bad) 50%,var(--opp-line))}
+button.b.sm,a.b.sm{min-height:30px;padding:5px 11px;font-size:12px}
+button:disabled{opacity:.55;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+button.linkbtn{all:unset;cursor:pointer;color:inherit;font:inherit;font-weight:650;border-radius:4px}
+button.linkbtn:hover{text-decoration:underline;text-underline-offset:3px}
+button.linkbtn:focus-visible{outline:3px solid color-mix(in srgb,var(--opp-coral) 65%,transparent);outline-offset:2px}
+input,textarea,select{display:block;max-width:100%;min-width:0;width:100%;border:1px solid var(--opp-line);border-radius:10px;padding:9px 11px;background:var(--opp-field);color:var(--opp-ink);font:14px/1.4 'Geist',system-ui,sans-serif}
+input:focus,textarea:focus,select:focus{outline:0;border-color:var(--opp-primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--opp-primary) 13%,transparent)}
+input[type=checkbox],input[type=radio]{width:auto;display:inline-block;accent-color:var(--opp-primary)}
+textarea{min-height:96px;resize:vertical}
+label{display:block;margin:0 0 4px;color:var(--opp-muted);font-size:12px;font-weight:650}
+.fld{margin:0 0 12px}.fld>label{margin-bottom:4px}
+.fld .hint{margin-top:4px;color:var(--opp-muted);font-size:12px}
+.grid{display:grid;gap:0 14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:8px 0;color:var(--opp-ink);font-size:13px;font-weight:500;cursor:pointer}
+.chk input{margin-top:3px}
+
+/* ---- chips / pills ---- */
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;background:var(--opp-well);color:var(--opp-muted);font-size:12px;font-weight:600;line-height:1.4;white-space:nowrap}
+.chip.good{background:#dff3e8;color:var(--opp-good)}.chip.warn{background:#fdecd9;color:var(--opp-warn)}.chip.bad{background:#fbe0dd;color:var(--opp-bad)}
+.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;background:var(--opp-well);color:var(--opp-primary);font-size:12px;font-weight:700;line-height:1.4}
+.pill.good,.pill.Strong{background:#dff3e8;color:var(--opp-good)}.pill.Good{background:#e8f3df;color:#3c6b17}.pill.warn,.pill.Partial{background:#fdecd9;color:var(--opp-warn)}.pill.bad,.pill.Poor{background:#fbe0dd;color:var(--opp-bad)}
+
+/* ---- overview ---- */
+#hero{margin:0 0 16px;display:grid;gap:10px}
+.banner{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border-radius:14px;border:1px solid var(--opp-line);background:var(--opp-card)}
+.banner p{font-size:14px;line-height:1.5}.banner b{font-weight:700}
+.banner.next{border-color:color-mix(in srgb,var(--opp-primary) 25%,var(--opp-line));background:color-mix(in srgb,var(--opp-primary) 6%,var(--opp-card))}
+.banner.warn{border-color:#f1d9a6;background:#fff7e6}.banner.warn p{color:#654b13}
+.eyebrow{display:block;margin-bottom:2px;color:var(--opp-primary);font-size:11px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
+.counts{display:flex;gap:8px;flex-wrap:wrap}
+.count{display:inline-flex;align-items:baseline;gap:7px;padding:8px 13px;border:1px solid var(--opp-line);border-radius:12px;background:var(--opp-card);color:var(--opp-ink);font:inherit;cursor:pointer;text-align:left}
+.count:hover{border-color:color-mix(in srgb,var(--opp-primary) 35%,var(--opp-line))}
+.count strong{font-size:20px;line-height:1;font-weight:750;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.count span{font-size:12px;color:var(--opp-muted);font-weight:600}
+.count.hot strong{color:var(--opp-warn)}
+
+/* ---- embedded inside the Programs page (?only=programs): show just the programs tracker ---- */
+html.only-programs body{min-height:0}
+html.only-programs .op-head,html.only-programs #hero,html.only-programs .how,html.only-programs .tabs-wrap,html.only-programs .trust,html.only-programs .tabhelp{display:none}
+/* ---- how-it-works + tab help ---- */
+.how{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px;padding:0;list-style:none;counter-reset:h}
+.how li{flex:1 1 150px;display:flex;gap:8px;align-items:flex-start;padding:9px 11px;border:1px solid var(--opp-line);border-radius:12px;background:var(--opp-card);font-size:12.5px;line-height:1.35;color:var(--opp-muted);counter-increment:h}
+.how li:before{content:counter(h);flex:0 0 20px;height:20px;border-radius:99px;background:var(--opp-primary);color:#fff;font-weight:700;font-size:11px;line-height:20px;text-align:center}
+.how b{display:block;color:var(--opp-ink);font-size:13px}
+.tabhelp{margin:0 0 14px;padding:10px 13px;border-left:3px solid var(--opp-primary);background:var(--opp-well);border-radius:8px;font-size:13.5px;line-height:1.45;color:var(--opp-ink)}
+.tabhelp b{font-weight:700}
+.steps{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.6;color:var(--opp-muted)}
+/* ---- tabs ---- */
+.tabs-wrap{position:sticky;top:58px;z-index:18;padding:6px 0 10px;margin:0 0 12px;background:color-mix(in srgb,var(--opp-bg) 92%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+html.embed .tabs-wrap{top:0}
+.tabs{display:flex;gap:4px;overflow-x:auto;padding:4px;border:1px solid var(--opp-line);border-radius:14px;background:var(--opp-card);scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:1 0 auto;border:0;background:transparent;color:var(--opp-muted);padding:9px 16px;border-radius:10px;font:650 13px/1.3 'Geist',system-ui,sans-serif;cursor:pointer;white-space:nowrap;display:inline-flex;gap:7px;align-items:center;justify-content:center}
+.tabs button:hover{color:var(--opp-ink);background:var(--opp-well)}
+.tabs button[aria-selected=true]{background:var(--opp-primary);color:#fff}
+.tabs .dot{min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--opp-coral);color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center}
+
+/* ---- lists ---- */
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.seg{display:inline-flex;gap:4px;padding:3px;border:1px solid var(--opp-line);border-radius:11px;background:var(--opp-card);flex-wrap:wrap}
+.seg button{border:0;background:transparent;color:var(--opp-muted);padding:6px 12px;border-radius:8px;font:650 12px/1.3 'Geist',system-ui,sans-serif;cursor:pointer}
+.seg button:hover{color:var(--opp-ink)}
+.seg button[aria-pressed=true]{background:var(--opp-well);color:var(--opp-ink)}
+.sec{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:22px 0 10px}
+.sec:first-child{margin-top:0}
+.sec h2{font-size:17px;letter-spacing:-.02em}
+.card{background:var(--opp-card);color:var(--opp-ink);border:1px solid var(--opp-line);border-radius:16px;padding:16px;margin:0 0 10px}
+.opp{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px 16px;margin:0 0 10px;background:var(--opp-card);border:1px solid var(--opp-line);border-radius:16px;transition:border-color .15s,box-shadow .15s}
+.opp:hover{border-color:color-mix(in srgb,var(--opp-primary) 30%,var(--opp-line));box-shadow:0 6px 18px rgba(24,32,28,.06)}
+.opp h3{font-size:15px;line-height:1.35;letter-spacing:-.01em}
+.opp .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.opp-main{min-width:0}.opp-main .mut{overflow-wrap:anywhere}
+.opp-act{display:flex;gap:8px;align-items:center}
+.hint{color:var(--opp-muted);font-size:12px}
+.fit{display:flex;flex-direction:column;align-items:center;justify-content:center;width:62px;height:62px;border-radius:14px;background:var(--opp-well);color:var(--opp-muted);text-align:center}
+.fit b{font-size:13px;line-height:1.1}.fit small{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+.fit.Strong{background:#dff3e8;color:var(--opp-good)}.fit.Good{background:#e8f3df;color:#3c6b17}.fit.Partial{background:#fdecd9;color:var(--opp-warn)}.fit.Poor{background:#fbe0dd;color:var(--opp-bad)}
+.stage-dot{width:12px;height:12px;border-radius:50%;background:var(--opp-line);margin:0 4px}
+.stage-dot.s-applied,.stage-dot.s-assessment,.stage-dot.s-interview{background:var(--opp-primary)}.stage-dot.s-offer{background:var(--opp-good)}
+.stage-dot.s-preparing,.stage-dot.s-ready-to-submit{background:var(--opp-warn)}.stage-dot.s-rejected,.stage-dot.s-withdrawn{background:var(--opp-bad);opacity:.6}
+.group-h{display:flex;align-items:center;gap:8px;margin:18px 0 8px;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--opp-muted)}
+.group-h:first-child{margin-top:0}
+.group-h i{font-style:normal;padding:1px 8px;border-radius:99px;background:var(--opp-well);font-size:11px}
+.empty{text-align:center;padding:30px 18px}
+.empty h2{font-size:19px;margin-bottom:6px}.empty p{max-width:460px;margin:0 auto 14px;color:var(--opp-muted);font-size:14px}
+.steps{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:0 0 16px;padding:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;display:flex;gap:8px;align-items:center;padding:8px 12px;border-radius:12px;background:var(--opp-well);font-size:13px;text-align:left}
+.steps li:before{content:counter(s);display:grid;place-items:center;flex:none;width:22px;height:22px;border-radius:50%;background:var(--opp-primary);color:#fff;font-size:12px;font-weight:700}
+.note{background:#fff7e6;border:1px solid #f1d9a6;border-radius:11px;padding:10px 13px;font-size:13px;line-height:1.55;margin:10px 0;color:#654b13}
+.ok-line{display:flex;gap:8px;align-items:center;padding:12px 14px;border:1px dashed var(--opp-line);border-radius:12px;color:var(--opp-muted);font-size:13px}
+details.fold{border:1px solid var(--opp-line);border-radius:12px;background:var(--opp-card);margin:0 0 8px}
+details.fold>summary{cursor:pointer;list-style:none;padding:11px 14px;font-weight:650;font-size:13px;display:flex;justify-content:space-between;gap:10px}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary:after{content:"+";color:var(--opp-muted);font-weight:500}
+details.fold[open]>summary:after{content:"–"}
+details.fold>div{padding:0 14px 12px}
+ul.tidy{margin:6px 0 0;padding-left:18px}ul.tidy li{margin:4px 0;font-size:13px}
+ul.checks{list-style:none;margin:6px 0 0;padding:0}ul.checks li{display:flex;gap:8px;margin:6px 0;font-size:13px}
+ul.checks i{font-style:normal;flex:none;width:18px;text-align:center;font-weight:700}
+ul.checks .met i{color:var(--opp-good)}ul.checks .unmet i{color:var(--opp-bad)}ul.checks .unknown i{color:var(--opp-muted)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px}.kv dt{color:var(--opp-muted)}.kv dd{margin:0;overflow-wrap:anywhere}
+.prog{display:grid;gap:10px}
+.prog h3{font-size:15px}
+.funnel{display:grid;gap:7px}
+.bar{display:grid;grid-template-columns:120px 1fr 28px;gap:10px;align-items:center;font-size:13px}
+.bar i{display:block;height:8px;border-radius:99px;background:var(--opp-well);overflow:hidden}.bar i b{display:block;height:100%;border-radius:99px;background:var(--opp-primary)}
+.stats{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:0 0 12px}
+.stat{padding:14px;border:1px solid var(--opp-line);border-radius:14px;background:var(--opp-card)}.stat strong{display:block;font-size:24px;letter-spacing:-.03em;line-height:1.1}.stat span{font-size:12px;color:var(--opp-muted);font-weight:600}
+.trust{margin:26px 0 0;text-align:center;color:var(--opp-muted);font-size:12px;line-height:1.6}
+.skel{height:86px;border-radius:16px;margin-bottom:10px;background:linear-gradient(90deg,color-mix(in srgb,var(--opp-well) 85%,var(--opp-card)),var(--opp-card),color-mix(in srgb,var(--opp-well) 85%,var(--opp-card)));background-size:800px 100%;animation:oppShimmer 1.25s linear infinite}
+@keyframes oppShimmer{to{background-position:800px 0}}
+pre.mail{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.65 'Geist',system-ui,sans-serif;background:var(--opp-well);border:1px solid var(--opp-line);border-radius:11px;padding:12px;margin:0}
+.stepper{display:flex;gap:4px;margin:12px 0 4px;padding:0;list-style:none}
+.stepper li{flex:1;text-align:center;font-size:11px;font-weight:650;color:var(--opp-muted);padding-top:9px;position:relative}
+.stepper li:before{content:"";position:absolute;left:0;right:0;top:0;height:4px;border-radius:99px;background:var(--opp-well)}
+.stepper li.done:before,.stepper li.now:before{background:var(--opp-primary)}.stepper li.now{color:var(--opp-ink)}
+
+/* ---- modal / toast ---- */
+.modal{position:fixed;inset:0;z-index:100;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;overscroll-behavior:contain;padding:clamp(12px,4vh,32px) 12px;background:rgba(7,13,11,.48);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.modal.on{display:flex}#ask{z-index:110}
+.modal>div{width:min(100%,640px);padding:22px;background:var(--opp-card);color:var(--opp-ink);border:1px solid var(--opp-line);border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.2)}
+.modal h2{font-size:19px;letter-spacing:-.02em;margin:0 0 4px}.modal .lead{margin:0 0 14px}
+.modal fieldset{border:0;margin:0 0 6px;padding:0}.modal legend{padding:0;margin:8px 0 10px;font-size:12px;font-weight:750;letter-spacing:.07em;text-transform:uppercase;color:var(--opp-primary)}
+.modal .foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--opp-line)}
+.modal .foot .grow{flex:1}
+.optset{display:flex;gap:6px;flex-wrap:wrap}
+.opt{display:inline-flex;gap:6px;align-items:center;padding:6px 11px;border:1px solid var(--opp-line);border-radius:99px;font-size:13px;font-weight:600;color:var(--opp-ink);cursor:pointer;background:var(--opp-field)}
+.opt:has(input:checked){border-color:var(--opp-primary);background:color-mix(in srgb,var(--opp-primary) 9%,var(--opp-card))}
+.toast{position:fixed;z-index:120;left:50%;bottom:clamp(76px,8vh,100px);transform:translateX(-50%);max-width:calc(100vw - 28px);width:max-content;background:var(--opp-ink);color:var(--opp-bg);padding:11px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.17);font-size:13px;line-height:1.4;display:none;text-align:center}
+
+@media(max-width:700px){
+  #main{padding:18px 13px 112px}.op-head{flex-direction:column;gap:12px}.op-actions{width:100%}.op-actions .b{flex:1}
+  .opp{grid-template-columns:auto 1fr;padding:13px}.opp-act{grid-column:1/-1;justify-content:stretch}.opp-act .b{flex:1}
+  .fit{width:54px;height:54px}.tabs-wrap{top:54px}html.embed .tabs-wrap{top:0}
+  .banner{flex-direction:column;align-items:stretch}.banner .b{width:100%}
+  input,textarea,select{font-size:16px}.bar{grid-template-columns:96px 1fr 24px}
+  .modal{padding:10px 8px}.modal>div{padding:16px;border-radius:15px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+html[data-theme=dark] .chip.good,html[data-theme=dark] .pill.good,html[data-theme=dark] .pill.Strong,html[data-theme=dark] .fit.Strong{background:#173a2b;color:#8fe0b5}
+html[data-theme=dark] .pill.Good,html[data-theme=dark] .fit.Good{background:#263723;color:#b8dc97}
+html[data-theme=dark] .chip.warn,html[data-theme=dark] .pill.warn,html[data-theme=dark] .pill.Partial,html[data-theme=dark] .fit.Partial{background:#3a2f14;color:#f0cb7a}
+html[data-theme=dark] .chip.bad,html[data-theme=dark] .pill.bad,html[data-theme=dark] .pill.Poor,html[data-theme=dark] .fit.Poor{background:#3a1f1b;color:#f5a396}
+html[data-theme=dark] .note,html[data-theme=dark] .banner.warn{background:#2d2616;border-color:#5a4a1f}html[data-theme=dark] .note,html[data-theme=dark] .banner.warn p{color:#ebd9a6}
+</style>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
+</head>
+<body>
+<main id="main">
+  <header class="op-head">
+    <div>
+      <h1>Internships</h1>
+      <p class="sub">Find roles, check your fit, prepare, apply and follow up, all in one place.</p>
+    </div>
+    <div class="op-actions">
+      <button class="b alt" id="profBtn" type="button" data-act="profile">Profile</button>
+      <button class="b" id="addBtn" type="button" data-act="add">+ Add opportunity</button>
+    </div>
+  </header>
+  <section id="hero" aria-label="Overview"></section>
+  <ol class="how" aria-label="How this page works">
+    <li><span><b>Find</b>Add a role you found, or look up professors.</span></li>
+    <li><span><b>Check fit</b>OPAI compares it with your profile.</span></li>
+    <li><span><b>Apply or email</b>You send it yourself after reviewing.</span></li>
+    <li><span><b>Track</b>Deadlines and replies stay in one place.</span></li>
+  </ol>
+  <div class="tabs-wrap"><div class="tabs" role="tablist" aria-label="Internship workspace sections" id="tabs"></div></div>
+  <section id="view" aria-live="polite" aria-busy="true"></section>
+  <p class="trust">OPAI never sends an email or submits an application for you. You review every message, and you mark every application as submitted yourself.</p>
+</main>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Details"><div id="mbody"></div></div>
+<div class="modal" id="ask" role="alertdialog" aria-modal="true" aria-label="Please confirm"><div id="askbody"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="opai-shell.js" defer></script>
+<script src="guide.js" defer></script>
+<script>
+(function () {
+'use strict';
+/* =====================================================================================
+   Internships workspace. Six sections: Opportunities, My Applications, Email Drafts, Professors, Programs, Progress.
+   Old deep links (#today #saved #apps #prof #email #docs #reports) still work (see ALIAS).
+   Safety rules kept from the original page: OPAI never sends or submits anything. Emails go out only after the
+   user approves the exact text (hash-bound), and "Applied" needs the user to confirm they submitted it themselves.
+   ===================================================================================== */
+const $ = (id) => document.getElementById(id);
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } } };
+const API = (store.get('opa_api_base') || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8000' : 'https://opa-52ug.onrender.com')).replace(/\/+$/, '');
+if (/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('embed');
+const ONLY_PROGRAMS = /[?&]only=programs(&|$)/.test(location.search);
+if (ONLY_PROGRAMS) {                                       // the Programs page embeds just the programs tracker and needs its height
+  document.documentElement.classList.add('only-programs');
+  const sendH = () => { try { parent.postMessage({ opaiH: Math.ceil(document.body.getBoundingClientRect().height), k: 'programs' }, '*'); } catch (e) {} };
+  addEventListener('load', sendH);
+  if (window.ResizeObserver) new ResizeObserver(sendH).observe(document.body);
+}
+
+const SLOW_MS = 75000;                                   // a sleeping free-tier server can need about a minute to wake
+let uid = null, userPromise = null, renderVersion = 0, returnFocus = null, askResolve = null;
+const S = { tab: 'discover', filter: null, filterChosen: false, appFilter: 'active', progType: '', facOpen: false, facLimit: 20,
+            summary: null, profile: null, scrollTo: null, draft: { url: '', text: '' } };
+const TABS = [['discover', 'Opportunities'], ['outreach', 'Email Drafts'], ['professors', 'Professors'], ['programs', 'Programs'], ['insights', 'Progress']];
+const TABHELP = {
+  discover: '<b>All your internships and roles in one place.</b> <b>Your applications</b> come first, then <b>Saved opportunities</b>. Open a saved one to see how well it fits, then press <b>Track</b> to start applying. Move an application forward only after you really submitted it on the official site.',
+  outreach: '<b>Emails waiting for you.</b> Drafts appear here for you to read and approve. Replies and follow-ups are listed too. OPAI never sends anything without your approval.',
+  professors: '<b>Professors you may write to.</b> Step 1: Find or add a professor. Step 2: press <b>Research first</b> to see their work. Step 3: press <b>Draft email</b>, then approve it under Email Drafts.',
+  programs: '<b>Programs and fellowships</b> (like GSoC or summer schools) with their dates. Dates count only after you confirm them on the organizer\'s official page.',
+  insights: '<b>Your progress at a glance.</b> See how many you tracked, applied and heard back from, and open Resume Lab for your documents.'
+};
+const ALIAS = { today: ['discover'], saved: ['discover'], discover: ['discover'], apps: ['discover', 'apps-sec'], applications: ['discover', 'apps-sec'],
+                prof: ['professors'], professors: ['professors'], email: ['outreach', 'outbox-sec'], outbox: ['outreach', 'outbox-sec'], outreach: ['outreach'],
+                programs: ['programs'], docs: ['insights'], reports: ['insights'], insights: ['insights'] };
+
+/* ---------- helpers ---------- */
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function safeHref(v) { const raw = String(v == null ? '' : v).trim(); if (!raw) return ''; try { const u = new URL(raw, location.href); return (u.protocol === 'http:' || u.protocol === 'https:') ? esc(u.href) : ''; } catch (e) { return ''; } }
+function hostLabel(v) { try { return esc(new URL(v).hostname.replace(/^www\./i, '')); } catch (e) { return 'Official page'; } }
+function toast(m) { const t = $('toast'); t.textContent = String(m || 'Something went wrong.'); t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => { t.style.display = 'none'; }, 4200); }
+function parseDate(iso) { if (!iso) return null; const d = new Date(String(iso).slice(0, 10) + 'T00:00:00'); return isNaN(d) ? null : d; }
+function fmtDate(iso) { const d = parseDate(iso); return d ? d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: d.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined }) : ''; }
+function daysUntil(iso) { const d = parseDate(iso); if (!d) return null; const t = new Date(); t.setHours(0, 0, 0, 0); return Math.round((d - t) / 864e5); }
+function dueChip(deadline, daysLeft) {
+  if (!deadline) return '<span class="chip">No deadline</span>';
+  const n = daysLeft != null ? daysLeft : daysUntil(deadline);
+  if (n < 0) return `<span class="chip bad">Closed ${esc(fmtDate(deadline))}</span>`;
+  if (n === 0) return '<span class="chip bad">Closes today</span>';
+  if (n === 1) return '<span class="chip bad">Closes tomorrow</span>';
+  if (n <= 7) return `<span class="chip warn">Closes in ${n} days</span>`;
+  return `<span class="chip">Closes ${esc(fmtDate(deadline))}</span>`;
+}
+const slug = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+const list = (a) => (a && a.length) ? '<ul class="tidy">' + a.map((x) => `<li>${esc(x)}</li>`).join('') + '</ul>' : '<p class="mut">Nothing here.</p>';
+
+async function api(path, opt) {
+  opt = opt || {};
+  const q = path + (path.indexOf('?') < 0 ? '?' : '&') + 'user_id=' + encodeURIComponent(uid);
+  let r, d = null; const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), SLOW_MS);
+  try {
+    r = await fetch(API + q, { method: opt.method || 'GET', headers: Object.assign({ 'Content-Type': 'application/json' }, opt.headers || {}), signal: ctl.signal,
+                               body: opt.body ? JSON.stringify(Object.assign({ user_id: uid }, opt.body)) : undefined });
+    try { d = await r.json(); } catch (e) {}
+  } catch (e) { throw new Error(e && e.name === 'AbortError' ? 'The server is taking too long to respond. Please try again in a minute.' : 'Could not reach OPAI. Check your connection and try again.'); }
+  finally { clearTimeout(timer); }
+  if (!r.ok) {
+    let m = d && d.detail;
+    if (Array.isArray(m)) m = m.map((x) => x.msg || 'Invalid field').join('; ');
+    const err = new Error(typeof m === 'string' ? m : `Request failed (${r.status}). Please try again.`); err.status = r.status; throw err;
+  }
+  return d;
+}
+const post = (p, b) => api(p, { method: 'POST', body: b || {} });
+async function ensureUser() {
+  if (uid) return uid;
+  if (userPromise) return userPromise;
+  userPromise = (async () => {
+    const e = store.get('opai_sc_email');
+    if (!e) { location.replace('login.html'); throw new Error('Please sign in to open your internship workspace.'); }
+    let r, d = null; const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), SLOW_MS);
+    try { r = await fetch(API + '/v1/auth/dev-login?email=' + encodeURIComponent(e.trim()), { method: 'POST', signal: ctl.signal }); try { d = await r.json(); } catch (x) {} }
+    catch (x) { throw new Error(x && x.name === 'AbortError' ? 'The server is taking too long to wake up. Please try again in a minute.' : 'Could not reach OPAI sign-in. Check your connection and try again.'); }
+    finally { clearTimeout(timer); }
+    if (!r.ok || !d || !d.user_id) throw new Error((d && d.detail) || 'Your session could not be verified. Please sign in again.');
+    uid = d.user_id; return uid;
+  })();
+  try { return await userPromise; } finally { userPromise = null; }
+}
+
+/* ---------- modal + confirm ---------- */
+function modal(html) {
+  if (!$('modal').classList.contains('on')) returnFocus = document.activeElement;
+  $('mbody').innerHTML = html; $('modal').classList.add('on');
+  const h = $('mbody').querySelector('h2'); if (h) { h.id = 'opp-modal-h'; $('modal').setAttribute('aria-labelledby', 'opp-modal-h'); }
+  const f = $('mbody').querySelector('[autofocus],input:not([type=hidden]):not([type=checkbox]),textarea,select'); if (f) setTimeout(() => { try { f.focus({ preventScroll: true }); } catch (e) {} }, 0);
+}
+function closeModal() { $('modal').classList.remove('on'); if (returnFocus && returnFocus.isConnected) { try { returnFocus.focus({ preventScroll: true }); } catch (e) {} } returnFocus = null; }
+function ask(title, message, okLabel, danger) {
+  return new Promise((res) => {
+    askResolve = res;
+    $('askbody').innerHTML = `<h2>${esc(title)}</h2><p class="mut lead">${esc(message)}</p><div class="foot"><button class="b ${danger ? 'dng' : ''}" id="ask_ok" type="button">${esc(okLabel || 'Confirm')}</button><button class="b alt" id="ask_no" type="button">Cancel</button></div>`;
+    $('ask').classList.add('on');
+    $('ask_no').onclick = () => closeAsk(false); $('ask_ok').onclick = () => closeAsk(true); $('ask_no').focus();
+  });
+}
+function closeAsk(v) { $('ask').classList.remove('on'); const r = askResolve; askResolve = null; if (r) r(v); }
+$('modal').addEventListener('click', (e) => { if (e.target === $('modal')) closeModal(); });
+$('ask').addEventListener('click', (e) => { if (e.target === $('ask')) closeAsk(false); });
+document.addEventListener('keydown', (e) => { if (e.key !== 'Escape') return; if ($('ask').classList.contains('on')) { e.preventDefault(); closeAsk(false); } else if ($('modal').classList.contains('on')) { e.preventDefault(); closeModal(); } });
+
+/* ---------- overview (next step, counters, profile nudge) ---------- */
+function goTarget(link) {                                  // links from the backend may point back into this page
+  const m = String(link || '').match(/^opportunities\.html(?:#(.+))?$/);
+  if (m) return { internal: m[1] || 'discover' };
+  const h = safeHref(link); return h ? { href: h } : null;
+}
+async function loadHero() {
+  if (ONLY_PROGRAMS) return;
+  const [s, p] = await Promise.all([api('/v1/opp/summary').catch(() => null), api('/v1/opp/profile').catch(() => null)]);
+  S.summary = s; S.profile = p; renderTabs();
+  const parts = [];
+  if (p && !p.is_confirmed) parts.push(`<div class="banner warn"><p><b>Confirm your profile</b> so matches are accurate. Until then every match is provisional.</p><button class="b" type="button" data-act="profile">Confirm profile</button></div>`);
+  if (s) {
+    const n = s.recommended_next_action, t = n && goTarget(n.link);
+    parts.push(`<div class="banner next"><div><span class="eyebrow">Next step</span><p>${n ? esc(n.text) : 'You are all caught up. Add an opportunity to keep your search moving.'}</p></div>` +
+      (t && t.internal ? `<button class="b alt" type="button" data-act="go" data-go="${esc(t.internal)}">Open</button>` : t && t.href ? `<a class="b alt" href="${t.href}">Open</a>` : (!n ? '<button class="b alt" type="button" data-act="add">Add opportunity</button>' : '')) + '</div>');
+    const c = [['strong_to_review', 'matches to review', 'discover', 0], ['deadlines_this_week', 'deadlines this week', 'applications', 1], ['applications_waiting_for_you', 'in preparation', 'applications', 0],
+               ['drafts_awaiting_approval', 'drafts to approve', 'outreach#outbox-sec', 1], ['followups_due', 'follow-ups due', 'outreach#outbox-sec', 1], ['programs_live', 'programs live', 'programs', 0], ['programs_to_verify', 'programs to verify', 'programs', 1]]
+      .filter((x) => Number(s[x[0]]) > 0).map((x) => `<button class="count ${x[3] ? 'hot' : ''}" type="button" data-act="go" data-go="${x[2]}"><strong>${Number(s[x[0]])}</strong><span>${x[1]}</span></button>`);
+    if (c.length) parts.push(`<div class="counts">${c.join('')}</div>`);
+  }
+  $('hero').innerHTML = parts.join('');
+}
+function renderTabs() {
+  const s = S.summary || {}, badge = { discover: Number(s.strong_to_review) || 0, outreach: (Number(s.drafts_awaiting_approval) || 0) + (Number(s.followups_due) || 0) };
+  $('tabs').innerHTML = TABS.map((t) => { const on = t[0] === S.tab; return `<button type="button" role="tab" id="opp-tab-${t[0]}" aria-controls="view" aria-selected="${on}" tabindex="${on ? 0 : -1}" data-act="tab" data-t="${t[0]}">${esc(t[1])}${badge[t[0]] ? `<span class="dot" aria-label="${badge[t[0]]} need attention">${badge[t[0]]}</span>` : ''}</button>`; }).join('');
+}
+
+/* ---------- profile ---------- */
+const ROLE_OPTS = ['internship', 'research', 'part-time', 'full-time'], MODE_OPTS = ['remote', 'hybrid', 'onsite'];
+function optset(name, opts, sel) {
+  sel = sel || []; const all = opts.slice(); sel.forEach((v) => { if (all.indexOf(v) < 0) all.push(v); });
+  return `<div class="optset" data-set="${name}">` + all.map((o) => `<label class="opt"><input type="checkbox" value="${esc(o)}" ${sel.indexOf(o) >= 0 ? 'checked' : ''}> ${esc(o)}</label>`).join('') + '</div>';
+}
+async function profileModal() {
+  const v = await api('/v1/opp/profile'), p = v.profile;
+  const txt = (k, l, o) => { o = o || {}; return `<div class="fld"><label for="pf_${k}">${l}</label><input id="pf_${k}" type="${o.type || 'text'}" ${o.attrs || ''} value="${esc(Array.isArray(p[k]) ? p[k].join(', ') : (p[k] == null ? '' : p[k]))}" placeholder="${esc(o.ph || '')}">${o.hint ? `<div class="hint">${o.hint}</div>` : ''}</div>`; };
+  const yr = [1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}" ${Number(p.year) === n ? 'selected' : ''}>Year ${n}</option>`).join('');
+  modal(`<h2>Your profile</h2><p class="mut lead">Matching uses only what you confirm here. OPAI never guesses eligibility details such as work authorization.</p>
+    ${v.is_confirmed ? '<span class="pill good">Confirmed</span>' : '<div class="note">Not confirmed yet, so matches are provisional.</div>'}
+    <fieldset><legend>About you</legend><div class="grid">
+      ${txt('degree', 'Degree', { ph: 'B.Tech' })}
+      <div class="fld"><label for="pf_year">Year of study</label><select id="pf_year"><option value="">Select</option>${yr}</select></div>
+      ${txt('branch', 'Branch', { ph: 'CSE' })}${txt('college', 'College')}
+      ${txt('graduation_date', 'Graduation month', { type: 'month' })}${txt('cgpa', 'CGPA', { type: 'number', attrs: 'min="0" max="10" step="0.01"' })}</div></fieldset>
+    <fieldset><legend>What you are looking for</legend>
+      <div class="fld"><label>Type of role</label>${optset('role_types', ROLE_OPTS, p.role_types)}</div>
+      <div class="fld"><label>Work mode</label>${optset('work_modes', MODE_OPTS, p.work_modes)}</div>
+      <div class="grid">${txt('locations', 'Locations', { ph: 'Hyderabad, Remote', hint: 'Separate with commas' })}${txt('available_from', 'Available from', { type: 'date' })}${txt('available_to', 'Available until', { type: 'date' })}</div></fieldset>
+    <fieldset><legend>Skills and links</legend>
+      ${txt('skills', 'Skills', { ph: 'Python, PyTorch, RAG', hint: 'Separate with commas. Postings are matched against these.' })}
+      <div class="grid">${txt('resume_url', 'Resume link', { type: 'url' })}${txt('portfolio_url', 'Portfolio link', { type: 'url' })}${txt('github_url', 'GitHub link', { type: 'url' })}</div></fieldset>
+    <fieldset><legend>Anything else</legend>${txt('eligibility_notes', 'Eligibility limits a posting might ask about')}${txt('communication_style', 'How you like to write to people')}</fieldset>
+    <div class="foot"><button class="b" id="pfsave" type="button">Save and confirm</button><button class="b alt" id="pfx" type="button">Cancel</button></div>`);
+  $('pfx').onclick = closeModal;
+  $('pfsave').onclick = async () => {
+    const val = (k) => $('pf_' + k).value.trim(), csv = (k) => val(k) ? val(k).split(',').map((s) => s.trim()).filter(Boolean) : [];
+    const picked = (n) => Array.from(document.querySelectorAll(`[data-set="${n}"] input:checked`)).map((i) => i.value);
+    const body = { confirm: true, degree: val('degree') || null, year: val('year') ? Number(val('year')) : null, branch: val('branch') || null, college: val('college') || null,
+      graduation_date: val('graduation_date') || null, cgpa: val('cgpa') ? Number(val('cgpa')) : null, skills: csv('skills'), role_types: picked('role_types'), work_modes: picked('work_modes'),
+      locations: csv('locations'), available_from: val('available_from') || null, available_to: val('available_to') || null, eligibility_notes: val('eligibility_notes') || null, communication_style: val('communication_style') || null };
+    for (const k of ['resume_url', 'portfolio_url', 'github_url']) { if (val(k) && !safeHref(val(k))) { toast('Check the ' + k.replace('_url', '') + ' link. It should start with https://'); return; } body[k] = val(k) || null; }
+    const b = $('pfsave'); b.disabled = true;
+    try { await api('/v1/opp/profile', { method: 'PUT', body }); closeModal(); toast('Profile saved and confirmed.'); refresh(); } catch (e) { b.disabled = false; toast(e.message); }
+  };
+}
+
+/* ---------- add opportunity (paste a posting, or a job-alert email) ---------- */
+function addModal(mode) {
+  mode = mode || 'post';
+  modal(`<h2>Add an opportunity</h2><p class="mut lead">OPAI reads only what you paste here. It never opens, scrapes or applies to pages for you.</p>
+    <div class="seg" role="group" aria-label="Where is it from"><button type="button" data-act="add.mode" data-mode="post" aria-pressed="${mode === 'post'}">Paste a posting</button><button type="button" data-act="add.mode" data-mode="email" aria-pressed="${mode === 'email'}">From a job-alert email</button></div>
+    <div id="addBody" style="margin-top:14px"></div>`);
+  addBody(mode);
+}
+function addBody(mode) {
+  document.querySelectorAll('[data-act="add.mode"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+  if (mode === 'email') {
+    $('addBody').innerHTML = `<div class="fld"><label for="em_text">Email text</label><textarea id="em_text" style="min-height:150px" placeholder="Paste the LinkedIn job-alert email, including the job links"></textarea></div>
+      <div class="row"><button class="b" id="em_go" type="button" data-act="add.email">Find roles</button><button class="b alt" type="button" data-act="close">Cancel</button></div><div id="em_out" style="margin-top:12px"></div>`;
+  } else {
+    $('addBody').innerHTML = `<div class="fld"><label for="in_url">Job link <span class="mut">(optional)</span></label><input id="in_url" type="url" placeholder="https://www.linkedin.com/jobs/view/..." value="${esc(S.draft.url)}"></div>
+      <div class="fld"><label for="in_text">Posting text</label><textarea id="in_text" style="min-height:150px" placeholder="Paste the job description here">${esc(S.draft.text)}</textarea><div class="hint">Tip: the text is what lets OPAI find the deadline, skills and requirements.</div></div>
+      <div class="row"><button class="b" id="in_go" type="button" data-act="add.extract">Extract details</button><button class="b alt" type="button" data-act="close">Cancel</button></div>`;
+  }
+}
+const WORK_MODES = ['remote', 'hybrid', 'onsite'], ROLE_TYPES = ['internship', 'research', 'part-time', 'full-time'];
+async function intakeReview() {
+  const url = $('in_url').value.trim(), text = $('in_text').value.trim(); S.draft = { url, text };
+  if (!url && !text) { toast('Paste a job link, the posting text, or both.'); return; }
+  const pv = await post('/v1/opp/intake/preview', { url: url || null, text: text || null }), f = pv.fields || {};
+  const val = (k) => { let v = (f[k] || {}).value; if (Array.isArray(v)) v = v.join(', '); return v == null ? '' : v; };
+  const flag = (k) => { const c = (f[k] || {}).confidence; return val(k) && c !== 'stated' ? '<span class="chip warn">check</span>' : ''; };
+  const sel = (k, opts, cur) => `<select id="cf_${k}"><option value="">Not sure</option>${opts.concat(cur && opts.indexOf(cur) < 0 ? [cur] : []).map((o) => `<option ${o === cur ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+  const dups = Array.isArray(pv.possible_duplicates) ? pv.possible_duplicates : [], src = safeHref(pv.source_url);
+  modal(`<h2>Check the details</h2><p class="mut lead">${esc(pv.message || 'Check each field before saving.')}${src ? ` <a target="_blank" rel="noopener noreferrer" href="${src}">Open source ↗</a>` : ''}</p>
+    ${dups.length ? `<div class="note">You may already track <b>${esc(dups[0].title || 'this role')}</b>${dups[0].company ? ' at ' + esc(dups[0].company) : ''}.</div>` : ''}
+    <div class="grid">
+      <div class="fld"><label for="cf_title">Role title ${flag('title')}</label><input id="cf_title" value="${esc(val('title'))}" placeholder="Machine Learning Intern"></div>
+      <div class="fld"><label for="cf_company">Company ${flag('company')}</label><input id="cf_company" value="${esc(val('company'))}" placeholder="Example AI"></div>
+      <div class="fld"><label for="cf_location">Location ${flag('location')}</label><input id="cf_location" value="${esc(val('location'))}" placeholder="Bengaluru"></div>
+      <div class="fld"><label for="cf_work_mode">Work mode ${flag('work_mode')}</label>${sel('work_mode', WORK_MODES, String(val('work_mode')).toLowerCase())}</div>
+      <div class="fld"><label for="cf_deadline">Deadline ${flag('deadline')}</label><input id="cf_deadline" type="date" value="${esc(val('deadline'))}"></div>
+      <div class="fld"><label for="cf_role_type">Type</label>${sel('role_type', ROLE_TYPES, String(val('role_type') || 'internship').toLowerCase())}</div></div>
+    <div class="fld"><label for="cf_tags">Skills mentioned</label><input id="cf_tags" value="${esc(val('tags'))}" placeholder="Python, RAG, FastAPI"><div class="hint">At least two skills give a more reliable fit score.</div></div>
+    <div class="fld"><label for="cf_req">Requirements <span class="mut">(one per line)</span></label><textarea id="cf_req">${esc((((f.requirements || {}).value) || []).join('\n'))}</textarea></div>
+    <div class="foot"><button class="b" id="cf_ok" type="button">Confirm and save</button><button class="b alt" id="cf_back" type="button">Back</button></div>`);
+  $('cf_back').onclick = () => addModal('post');
+  $('cf_ok').onclick = async () => {
+    const g = (k) => ($('cf_' + k) ? $('cf_' + k).value.trim() : ''), btn = $('cf_ok');
+    if (!g('title') || !g('company')) { toast('Add both a role title and a company before saving.'); return; }
+    const reqs = $('cf_req').value.split('\n').map((x) => x.trim()).filter(Boolean), tags = g('tags').split(',').map((x) => x.trim()).filter(Boolean);
+    const extracted = Object.keys(f).filter((k) => { const v = (f[k] || {}).value; return v != null && v !== '' && (!Array.isArray(v) || v.length); });
+    const confirmed = ['title', 'company', 'location', 'work_mode', 'deadline', 'role_type'].filter((k) => g(k)); if (reqs.length) confirmed.push('requirements'); if (tags.length) confirmed.push('tags');
+    const body = { title: g('title'), company: g('company'), location: g('location') || null, work_mode: g('work_mode') || null, deadline: g('deadline') || null, role_type: g('role_type') || 'internship',
+      source_url: pv.source_url, source_type: pv.source_type, description_text: pv.description_text, requirements: reqs, tags, confirmed_fields: confirmed, extracted_fields: extracted };
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const save = async (dup) => post('/v1/opp/intake/confirm', Object.assign({ allow_duplicate: !!dup }, body));
+    try {
+      let r;
+      try { r = await save(false); } catch (e) {
+        if (e.status === 409 && await ask('Possible duplicate', e.message.replace(/ Pass allow_duplicate.*$/, ''), 'Add it anyway')) r = await save(true); else throw e;
+      }
+      S.draft = { url: '', text: '' }; closeModal(); toast('Saved. Fit: ' + ((r.brief && r.brief.match) || 'review it next') + '.'); S.tab = 'discover'; S.filterChosen = true; S.filter = 'all'; history.replaceState(null, '', '#discover'); refresh();
+    } catch (e) { btn.disabled = false; btn.textContent = 'Confirm and save'; if (e.status !== 409) toast(e.message); }
+  };
+}
+async function emailFind() {
+  const btn = $('em_go'); if (!$('em_text').value.trim()) { toast('Paste the job-alert email text first.'); return; }
+  btn.disabled = true; btn.textContent = 'Finding roles…';
+  try {
+    const r = await post('/v1/opp/intake/email-preview', { text: $('em_text').value }), cands = Array.isArray(r.candidates) ? r.candidates : [];
+    $('em_out').innerHTML = cands.length ? cands.map((c, i) => `<div class="card" data-ei="${i}"><div class="row sp"><div><b>${esc(c.title || 'Title needs review')}</b><div class="mut">${esc(c.company || 'Company needs review')}${c.location ? ' · ' + esc(c.location) : ''}</div></div><span class="chip warn">Needs review</span></div>
+        ${(c.possible_duplicates || []).length ? `<div class="note">Possible duplicate: ${esc(c.possible_duplicates[0].title || 'an existing role')}.</div>` : ''}
+        <div class="row" style="margin-top:10px">${safeHref(c.source_url) ? `<a class="b alt sm" target="_blank" rel="noopener noreferrer" href="${safeHref(c.source_url)}">Open on LinkedIn</a>` : ''}<button class="b sm" type="button" data-ei-open="${i}">Review and track</button></div>
+        <div id="ei_ed_${i}" hidden style="margin-top:12px"><div class="grid"><div class="fld"><label>Role title</label><input id="ei_t_${i}" value="${esc(c.title || '')}"></div><div class="fld"><label>Company</label><input id="ei_c_${i}" value="${esc(c.company || '')}"></div><div class="fld"><label>Location</label><input id="ei_l_${i}" value="${esc(c.location || '')}"></div></div>
+        <div class="row"><button class="b sm" type="button" data-ei-save="${i}">Confirm and save</button><button class="b alt sm" type="button" data-ei-cancel="${i}">Cancel</button></div></div></div>`).join('') : '<div class="note">No LinkedIn job links found. Paste the email body including its job links, then try again.</div>';
+    $('em_out').onclick = async (e) => {
+      const o = e.target.closest('[data-ei-open]'), c = e.target.closest('[data-ei-cancel]'), sv = e.target.closest('[data-ei-save]');
+      if (o) { $('ei_ed_' + o.dataset.eiOpen).hidden = false; o.hidden = true; $('ei_t_' + o.dataset.eiOpen).focus(); }
+      if (c) { $('ei_ed_' + c.dataset.eiCancel).hidden = true; const op = $('em_out').querySelector(`[data-ei-open="${c.dataset.eiCancel}"]`); if (op) op.hidden = false; }
+      if (sv) {
+        const i = sv.dataset.eiSave, t = $('ei_t_' + i).value.trim(), co = $('ei_c_' + i).value.trim(), l = $('ei_l_' + i).value.trim();
+        if (!t || !co) { toast('Enter both the role title and the company.'); return; }
+        sv.disabled = true; sv.textContent = 'Saving…';
+        try { await post('/v1/opp/intake/confirm', { title: t, company: co, source_url: cands[+i].source_url, source_type: 'email_alert', location: l || null, extracted_fields: ['title', 'company'], confirmed_fields: ['title', 'company'].concat(l ? ['location'] : []) });
+          sv.textContent = 'Saved'; sv.classList.add('alt'); const chip = $('em_out').querySelector(`[data-ei="${i}"] .chip`); if (chip) { chip.textContent = 'Saved'; chip.className = 'chip good'; } toast('Saved. You can review another role.'); S.filterChosen = true; S.filter = 'all';
+        } catch (err) { sv.disabled = false; sv.textContent = 'Confirm and save'; toast(err.message); }
+      }
+    };
+  } catch (e) { toast(e.message); } finally { btn.disabled = false; btn.textContent = 'Find roles'; }
+}
+
+/* ---------- opportunities (Discover) ---------- */
+const eligShort = (t) => { t = String(t || ''); if (/^Does not/.test(t)) return ['May not be eligible', 'bad']; if (/^Appears eligible so far/.test(t)) return ['Eligible so far', 'warn']; if (/^Appears eligible/.test(t)) return ['Eligible', 'good']; return ['No rules listed', '']; };
+function oppRow(o) {
+  const b = o.brief || {}, el = eligShort((b.eligibility || {}).summary), where = [o.location, o.work_mode].filter(Boolean).join(' · ');
+  return `<article class="opp" data-card="opp" data-id="${esc(o.id)}">
+    <div class="fit ${esc(b.match)}" title="How well your confirmed skills match this role"><b>${esc(b.match || '–')}</b><small>fit</small></div>
+    <div class="opp-main"><h3><button class="linkbtn" type="button" data-act="opp.detail" data-id="${esc(o.id)}">${esc(o.title)}</button></h3>
+      <div class="mut">${esc(o.organization)}${where ? ' · ' + esc(where) : ''}</div>
+      <div class="meta">${dueChip(o.deadline, b.days_left)}<span class="chip ${el[1]}">${esc(el[0])}</span><span class="chip">Prep ~${esc(b.estimated_prep_minutes || 45)} min</span></div></div>
+    <div class="opp-act"><button class="b" type="button" data-act="opp.track" data-id="${esc(o.id)}">Track</button><button class="b alt" type="button" data-act="opp.detail" data-id="${esc(o.id)}">Details</button></div></article>`;
+}
+async function oppDetail(id) {
+  const b = await api('/v1/opp/opportunities/' + id + '/brief'), sg = b.signals || {}, md = b.match_detail || {}, el = b.eligibility || {}, src = safeHref((b.source || {}).url);
+  const checks = (el.checks || []).map((c) => `<li class="${esc(c.status)}"><i>${c.status === 'met' ? '✓' : c.status === 'unmet' ? '✕' : '?'}</i><span>${esc(c.requirement)}<br><span class="mut">${esc(c.why)}</span></span></li>`).join('');
+  modal(`<h2>${esc(b.title)}</h2><p class="mut">${esc(b.organization)}</p>
+    <div class="row" style="margin:12px 0"><span class="pill ${esc(b.match)}">${esc(b.match)} fit</span>${dueChip(b.deadline, b.days_left)}<span class="chip">Prep ~${esc(b.estimated_prep_minutes)} min</span></div>
+    <div class="banner next" style="margin-bottom:14px"><div><span class="eyebrow">Next step</span><p>${esc(b.recommended_next_step)}</p></div></div>
+    <div class="sec" style="margin-top:6px"><h2 style="font-size:15px">Eligibility</h2></div><p style="font-size:14px">${esc(el.summary)}</p>${checks ? `<ul class="checks">${checks}</ul>` : ''}
+    <div class="sec"><h2 style="font-size:15px">Why it fits</h2></div>${list((sg.profile_match || []))}
+    ${(md.gaps || []).length ? `<div class="sec"><h2 style="font-size:15px">Skills not in your profile</h2></div>${list(md.gaps)}` : ''}
+    <details class="fold" style="margin-top:14px"><summary>Still to check yourself <span class="chip">${(sg.unknown || []).length}</span></summary><div>${list(sg.unknown)}</div></details>
+    <details class="fold"><summary>Facts you confirmed</summary><div>${list((sg.verified_facts || []).map((x) => `${x.field}: ${x.value} (${x.basis})`))}</div></details>
+    <details class="fold"><summary>AI suggestions <span class="chip">not facts</span></summary><div>${list(sg.ai_suggestions)}</div></details>
+    <p class="mut" style="margin-top:12px">Source: ${src ? `<a target="_blank" rel="noopener noreferrer" href="${src}">${hostLabel((b.source || {}).url)}</a>` : 'none'} · last checked ${esc(fmtDate((b.source || {}).last_verified_at) || 'never')} ${(b.source || {}).stale ? '<span class="chip warn">may be out of date</span>' : ''}</p>
+    <div class="foot"><button class="b" type="button" data-act="opp.track" data-id="${esc(b.opportunity_id)}">Track this</button>${src ? `<a class="b alt" target="_blank" rel="noopener noreferrer" href="${src}">Open posting</a>` : ''}<button class="b alt" type="button" data-act="opp.verified" data-id="${esc(b.opportunity_id)}">I re-checked the source</button><span class="grow"></span><button class="b dng" type="button" data-act="opp.dismiss" data-id="${esc(b.opportunity_id)}">Not interested</button></div>`);
+}
+
+/* ---------- views ---------- */
+const V = {};
+V.discover = async () => {
+  const [r, appsHtml] = await Promise.all([api('/v1/opp/saved'), appsSection()]), items = r.items || [];
+  const best = items.filter((o) => { const b = o.brief || {}; return (b.match === 'Strong' || b.match === 'Good') && b.urgency !== 'overdue' && !/^Does not/.test((b.eligibility || {}).summary || ''); });
+  if (!S.filterChosen) S.filter = best.length ? 'best' : 'all';
+  if (S.filter === 'best' && !best.length) S.filter = 'all';
+  const shown = S.filter === 'best' ? best : items;
+  if (!items.length && appsHtml) return appsHtml + `<div class="sec" id="saved-sec"><h2>Saved opportunities</h2></div><div class="card empty"><p>Nothing saved right now. Add a role you found and OPAI will check it against your profile.</p><button class="b" type="button" data-act="add">Add an opportunity</button></div>`;
+  if (!items.length) {
+    return `<div class="card empty"><h2>Start with one opportunity</h2><p>Add a role you found and OPAI will extract the details, check it against your profile and tell you what to do next.</p>
+      <ol class="steps"><li>Copy a job link and its text</li><li>Paste them in</li><li>Confirm the details</li></ol><button class="b" type="button" data-act="add">Add your first opportunity</button></div>`;
+  }
+  return appsHtml + `<div class="sec" id="saved-sec"><h2>Saved opportunities <span class="mut">(${items.length})</span></h2></div><div class="toolbar"><div class="seg" role="group" aria-label="Filter"><button type="button" data-act="filter.discover" data-f="best" aria-pressed="${S.filter === 'best'}">Best matches (${best.length})</button><button type="button" data-act="filter.discover" data-f="all" aria-pressed="${S.filter === 'all'}">All saved (${items.length})</button></div><span class="hint">Sorted by fit, then deadline</span></div>` +
+    (shown.length ? shown.map(oppRow).join('') : '<div class="ok-line">Nothing matches this filter.</div>');
+};
+
+const STAGE_NEXT = { Saved: 'Reviewing', Reviewing: 'Preparing', Preparing: 'Ready to submit' };
+const STAGE_HINT = { Saved: 'Check requirements on the original posting', Reviewing: 'Decide if it is worth applying', Preparing: 'Tailor your resume and answers', 'Ready to submit': 'Submit on the original site, then mark it applied',
+  Applied: 'Wait for a reply, then follow up politely', Assessment: 'Prepare for the assessment', Interview: 'Prepare, and note the questions afterwards', Offer: 'Compare and reply before the deadline', Rejected: 'Note what you learned', Withdrawn: 'Closed' };
+const ACTIVE = ['Saved', 'Reviewing', 'Preparing', 'Ready to submit', 'Applied', 'Assessment', 'Interview'], DONE = ['Offer', 'Rejected', 'Withdrawn'];
+function appRow(a) {
+  const next = STAGE_NEXT[a.stage], submitted = ['Applied', 'Assessment', 'Interview', 'Offer', 'Rejected', 'Withdrawn'].indexOf(a.stage) >= 0;
+  return `<article class="opp" data-card="app" data-id="${esc(a.id)}"><span class="stage-dot s-${slug(a.stage)}" title="${esc(a.stage)}"></span>
+    <div class="opp-main"><h3><button class="linkbtn" type="button" data-act="app.open" data-id="${esc(a.id)}">${esc(a.role)}</button></h3><div class="mut">${esc(a.company)} · ${esc(a.stage)}</div>
+      <div class="meta">${submitted ? '' : dueChip(a.deadline)}${a.stage === 'Applied' && a.follow_up_date ? `<span class="chip">Follow up ${esc(fmtDate(a.follow_up_date))}</span>` : ''}<span class="hint">${esc(STAGE_HINT[a.stage] || '')}</span></div></div>
+    <div class="opp-act">${next ? `<button class="b" type="button" data-act="app.advance" data-id="${esc(a.id)}" data-to="${esc(next)}">Move to ${esc(next)}</button>` : ''}${a.stage === 'Ready to submit' ? `<button class="b" type="button" data-act="app.open" data-id="${esc(a.id)}" data-focus="applied">I applied</button>` : ''}<button class="b alt" type="button" data-act="app.open" data-id="${esc(a.id)}">Open</button></div></article>`;
+}
+async function appsSection() {
+  const r = await api('/v1/opp/pipeline'), cols = r.columns || {};
+  if (!r.total) return '';
+  const active = ACTIVE.reduce((n, s) => n + (cols[s] || []).length, 0), done = DONE.reduce((n, s) => n + (cols[s] || []).length, 0);
+  const stages = ACTIVE.concat(DONE).filter((s) => (cols[s] || []).length);
+  if (S.appFilter !== 'active' && S.appFilter !== 'done' && !stages.includes(S.appFilter)) S.appFilter = 'active';
+  const chips = [['active', `Active (${active})`]].concat(stages.filter((s) => ACTIVE.includes(s)).map((s) => [s, `${s} (${cols[s].length})`])).concat(done ? [['done', `Finished (${done})`]] : []);
+  const showStages = S.appFilter === 'active' ? ACTIVE : S.appFilter === 'done' ? DONE : [S.appFilter];
+  const body = showStages.filter((s) => (cols[s] || []).length).map((s) => `<div class="group-h">${esc(s)} <i>${cols[s].length}</i></div>` + cols[s].map(appRow).join('')).join('');
+  return `<section id="apps-sec"><div class="sec"><h2>Your applications <span class="mut">(${r.total})</span></h2></div><div class="toolbar"><div class="seg" role="group" aria-label="Filter">${chips.map((c) => `<button type="button" data-act="filter.apps" data-f="${esc(c[0])}" aria-pressed="${S.appFilter === c[0]}">${esc(c[1])}</button>`).join('')}</div></div>` + (body || '<div class="ok-line">Nothing here.</div>') + '</section>';
+}
+
+function contactRow(c) {
+  const areas = (c.research_areas || []).slice(0, 3).join(', ');
+  return `<article class="opp" data-card="none"><div class="fit"><b>${esc((c.name || '?').replace(/^(Prof\.?|Dr\.?)\s+/i, '').charAt(0).toUpperCase())}</b></div>
+    <div class="opp-main"><h3>${esc(c.name)}</h3><div class="mut">${esc(c.institute)}${areas ? ' · ' + esc(areas) : ''}</div>
+      <div class="meta"><span class="chip">${esc(c.outreach_status)}</span><span class="chip ${c.email_verification === 'unverified' ? 'warn' : ''}">${c.email ? esc(String(c.email_verification).replace(/_/g, ' ')) : 'No email'}</span>${c.suppressed ? '<span class="chip bad">Do not contact</span>' : ''}${safeHref(c.source_url) ? `<a class="hint" target="_blank" rel="noopener noreferrer" href="${safeHref(c.source_url)}">Official page ↗</a>` : ''}</div></div>
+    <div class="opp-act">${c.brief ? `<button class="b alt" type="button" data-act="prof.brief" data-id="${esc(c.id)}">View brief</button><button class="b" type="button" data-act="prof.draft" data-id="${esc(c.id)}">Draft email</button>`
+      : `<button class="b" type="button" data-act="prof.brief" data-id="${esc(c.id)}" title="OPAI checks what is known about their work before it drafts anything">Research first</button>`}</div></article>`;
+}
+V.outreach = async () => {
+  const [f, o, gc] = await Promise.all([api('/v1/opp/followups'), api('/v1/opp/outbox'), gmailCfg()]);
+  const items = o.items || [], pending = items.filter((x) => x.status === 'pending'), approved = items.filter((x) => x.status === 'approved' && !x.sent_at), past = items.filter((x) => x.status !== 'pending' && !(x.status === 'approved' && !x.sent_at));
+  const attention = [];
+  pending.forEach((x) => attention.push(`<div class="card"><div class="row sp"><div><b>${esc(x.subject || '(no subject)')}</b><div class="mut">To ${esc(x.to || '?')}</div></div><span class="chip warn">Needs your review</span></div><div class="row" style="margin-top:10px"><button class="b sm" type="button" data-act="ob.review" data-id="${esc(x.id)}">Review and approve</button><button class="b dng sm" type="button" data-act="ob.reject" data-id="${esc(x.id)}">Reject</button></div></div>`));
+  approved.forEach((x) => attention.push(`<div class="card"><div class="row sp"><div><b>${esc(x.subject || '(no subject)')}</b><div class="mut">To ${esc(x.to || '?')}</div></div><span class="chip good">Approved, not sent</span></div><div class="row" style="margin-top:10px">${gc.gmail_send_enabled ? `<button class="b sm" type="button" data-act="ob.gsend" data-id="${esc(x.id)}">Send with Gmail</button>` : ''}<button class="b alt sm" type="button" data-act="ob.sent" data-id="${esc(x.id)}">I sent it myself</button></div></div>`));
+  (f.items || []).forEach((x) => attention.push(`<div class="card"><b>${esc(x.title)}</b><div class="mut">Due ${esc(fmtDate(x.due))}${x.days_since != null ? ` · ${x.days_since} days since` : ''}</div><p style="margin:8px 0 6px;font-size:14px">Have they replied?</p><div class="row"><button class="b alt sm" type="button" data-act="fu" data-a="yes" data-k="${esc(x.kind)}" data-id="${esc(x.id)}">Yes</button><button class="b sm" type="button" data-act="fu" data-a="not_yet" data-k="${esc(x.kind)}" data-id="${esc(x.id)}">Not yet, draft a follow-up</button><button class="b alt sm" type="button" data-act="fu" data-a="later" data-k="${esc(x.kind)}" data-id="${esc(x.id)}">Remind me later</button></div></div>`));
+  return `<div class="sec" id="outbox-sec"><h2>Needs your attention</h2><span class="hint">Review drafts and tell OPAI if someone replied. OPAI never reads your inbox.</span></div>` +
+    (attention.length ? attention.join('') : '<div class="ok-line">Nothing waiting. Drafts and follow-ups will show up here.</div>') +
+    `<p class="hint" style="margin-top:12px">Looking for professors to write to? Open the <a href="#professors" data-act="tab" data-t="professors">Professors</a> tab.</p>` +
+    (past.length ? `<details class="fold" style="margin-top:14px"><summary>Earlier emails <span class="chip">${past.length}</span></summary><div>${past.slice(0, 15).map((x) => `<div class="row sp" style="padding:6px 0;border-bottom:1px solid var(--opp-line)"><span style="font-size:13px">${esc(x.subject || '(no subject)')} <span class="mut">to ${esc(x.to || '?')}</span></span><span class="chip">${esc(x.status)}</span></div>`).join('')}</div></details>` : '');
+};
+
+V.professors = async () => {
+  const pr = await api('/v1/opp/professors'), contacts = pr.items || [];
+  return `<div class="sec"><h2>Professors <span class="mut">(${contacts.length})</span></h2><div class="row"><span class="hint">${esc(pr.daily_cap_remaining)} sends left today</span><button class="b alt sm" type="button" data-act="fac.toggle">${S.facOpen ? 'Hide search' : 'Find professors'}</button><button class="b alt sm" type="button" data-act="prof.add">Add manually</button></div></div>` +
+    (S.facOpen ? `<div class="card"><div class="row"><input id="fc_q" style="flex:1 1 220px;width:auto" placeholder="Research area, e.g. computer vision, RAG (optional)"><select id="fc_inst" style="width:auto;flex:0 1 200px"><option value="">All IITs</option></select><button class="b" type="button" data-act="fac.search">Search</button></div><p class="hint" style="margin-top:8px">Leave it empty to get matches based on your skills and projects.</p><div id="fc_out" style="margin-top:8px"></div></div>` : '') +
+    (contacts.length ? contacts.map(contactRow).join('') : '<div class="card empty"><h2>No professors added yet</h2><p>Start here:</p><ol class="steps"><li>Press <b>Find professors</b> and search your area, e.g. computer vision.</li><li>Add the ones you like to your list.</li><li>Press <b>Research first</b>, then <b>Draft email</b>.</li></ol><button class="b" type="button" data-act="fac.toggle" style="margin-top:12px">Find professors</button></div>');
+};
+
+const PGCLS = { Open: 'good', Active: 'good', 'Opens soon': 'warn', Upcoming: 'warn', 'Verify current cycle': 'warn', 'Not announced': '', Closed: 'bad', Ended: 'bad' };
+function pgCard(p) {
+  const c = p.cycle, src = c.source || {}, closed = c.status === 'Closed' || c.status === 'Ended';
+  const dates = [c.applications_open ? 'Opens ' + fmtDate(c.applications_open) : '', c.deadline ? 'Deadline ' + fmtDate(c.deadline) : '', c.event_start ? 'Runs ' + fmtDate(c.event_start) + (c.event_end ? ' to ' + fmtDate(c.event_end) : '') : ''].filter(Boolean).join(' · ');
+  const primary = closed ? (p.next_cycle ? `<button class="b sm" type="button" data-act="pg.nextcycle" data-id="${esc(p.id)}">Add next cycle</button>` : '')
+    : c.confirmed ? `<button class="b sm" type="button" data-act="pg.plan" data-id="${esc(c.id)}">Add to my plan</button><button class="b alt sm" type="button" data-act="pg.confirm" data-id="${esc(c.id)}">Edit dates</button>`
+    : `<button class="b sm" type="button" data-act="pg.confirm" data-id="${esc(c.id)}">Confirm dates</button><button class="b alt sm" type="button" data-act="pg.plan" data-id="${esc(c.id)}">Add to my plan</button>`;
+  return `<div class="card prog"><div class="row sp"><div><h3>${esc(p.name)} <span class="mut">· ${esc(c.label)}</span></h3><div class="mut">${esc(p.type_label)}${p.organizer ? ' · ' + esc(p.organizer) : ''}</div></div><span class="pill ${PGCLS[c.status] || ''}">${esc(c.status)}</span></div>
+    ${dates && c.confirmed ? `<div style="font-size:13px">${esc(dates)}</div>` : ''}<div style="font-size:13px"><b>Next:</b> ${esc(p.next_step)}</div>
+    <details class="fold"><summary>Eligibility and source</summary><div><dl class="kv"><dt>Eligibility</dt><dd>${esc(c.eligibility)}</dd>${p.fit && p.fit.level !== 'unknown' ? `<dt>Why it may fit</dt><dd>${esc(p.fit.why)}</dd>` : ''}<dt>Status</dt><dd>${esc(c.status_why)}</dd><dt>Source</dt><dd>${safeHref(p.official_url) ? `<a target="_blank" rel="noopener noreferrer" href="${safeHref(p.official_url)}">${hostLabel(p.official_url)}</a>` : 'Not provided'} · checked ${esc(src.last_checked || 'never')} ${c.needs_reverify ? '<span class="chip warn">re-check</span>' : ''}</dd></dl>${p.next_cycle ? `<div class="note"><b>Next announced cycle:</b> ${esc(p.next_cycle.status)}. ${esc(p.next_cycle.next_step)}</div>` : ''}</div></details>
+    <div class="row">${primary}<button class="b alt sm" type="button" data-act="pg.track" data-id="${esc(c.id)}" data-cur="${esc(c.participation)}">Participation: ${esc(c.participation)}</button><span style="flex:1"></span><button class="b dng sm" type="button" data-act="pg.remove" data-id="${esc(p.id)}">Remove</button></div></div>`;
+}
+V.programs = async () => {
+  const [r, cat, ty] = await Promise.all([api('/v1/opp/programs' + (S.progType ? '?type=' + encodeURIComponent(S.progType) : '')), api('/v1/opp/programs/catalog'), api('/v1/opp/programs/types')]);
+  const sel = `<select id="pg_type" aria-label="Filter by type" style="width:auto;min-width:170px"><option value="">All types</option>${ty.types.map((t) => `<option value="${esc(t.key)}" ${S.progType === t.key ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</select>`;
+  const more = (cat.items || []).filter((c) => !c.already_added);
+  return `<div class="sec"><h2>Programs you track</h2><div class="row">${sel}<button class="b alt sm" type="button" data-act="pg.addform">Add a program</button></div></div>
+    <p class="hint" style="margin:-4px 0 12px">Dates count as confirmed only after you check the organizer's own page. OPAI never registers or submits for you.</p>` +
+    (r.items.length ? r.items.map(pgCard).join('') : '<div class="ok-line">You are not tracking any program yet. Pick one from the list below.</div>') +
+    `<details class="fold" style="margin-top:14px" ${r.items.length ? '' : 'open'}><summary>Browse more programs <span class="chip">${more.length}</span></summary><div>${more.length ? more.map((c) => `<div style="padding:10px 0;border-bottom:1px solid var(--opp-line)"><div class="row sp"><b style="font-size:14px">${esc(c.name)}</b><span class="chip">${esc(c.type_label)}</span></div><div class="mut">${esc(c.organizer)}. ${esc(c.blurb)}</div><div class="row" style="margin-top:8px">${safeHref(c.official_url) ? `<a class="b alt sm" target="_blank" rel="noopener noreferrer" href="${safeHref(c.official_url)}">Official page</a>` : ''}<button class="b sm" type="button" data-act="pg.addcat" data-id="${esc(c.id)}">Track this</button></div></div>`).join('') : '<p class="mut">You are tracking everything on the starter list.</p>'}</div></details>`;
+};
+async function pgAddForm() {
+  const ty = await api('/v1/opp/programs/types');
+  modal(`<h2>Add a program</h2><p class="mut lead">A third-party listing can help you find a program, but its dates only count once you confirm them on the organizer's own page.</p>
+    <div class="grid"><div class="fld"><label for="pg_name">Program name</label><input id="pg_name" placeholder="e.g. Google Summer of Code"></div><div class="fld"><label for="pg_ptype">Type</label><select id="pg_ptype">${ty.types.map((t) => `<option value="${esc(t.key)}">${esc(t.label)}</option>`).join('')}</select></div>
+    <div class="fld"><label for="pg_url">Official page</label><input id="pg_url" type="url" placeholder="https://..."></div><div class="fld"><label for="pg_org">Organizer <span class="mut">(optional)</span></label><input id="pg_org"></div></div>
+    <div class="foot"><button class="b" id="pg_add" type="button">Add program</button><button class="b alt" type="button" data-act="close">Cancel</button></div>`);
+  $('pg_add').onclick = async () => { const b = $('pg_add'); b.disabled = true; try { const o = await post('/v1/opp/programs', { name: $('pg_name').value, program_type: $('pg_ptype').value, official_url: $('pg_url').value, organizer: $('pg_org').value || null }); closeModal(); toast(o.name + ' added.'); render(); } catch (e) { b.disabled = false; toast(e.message); } };
+}
+async function pgConfirmModal(cid) {
+  const r = await api('/v1/opp/programs'), p = r.items.find((x) => x.cycle.id === cid); if (!p) return; const c = p.cycle;
+  const dt = (id, l, v) => `<div class="fld"><label for="${id}">${l}</label><input type="date" id="${id}" value="${esc(v || '')}"></div>`;
+  modal(`<h2>Confirm ${esc(p.name)} · ${esc(c.label)}</h2><p class="mut lead">Open the organizer's official page and enter what it says. Dates are trusted only when you tick the box below.</p>
+    <div class="fld"><label for="pc_text">Paste text from the official page <span class="mut">(optional)</span></label><textarea id="pc_text" style="min-height:80px" placeholder="Paste the dates or eligibility section"></textarea><div class="row" style="margin-top:6px"><button class="b alt sm" id="pc_read" type="button">Read it</button></div><div id="pc_flags"></div></div>
+    <div class="fld"><label for="pc_src">Page you read this on</label><input id="pc_src" value="${esc(src0(p))}"></div>
+    <div class="grid">${dt('pc_ao', 'Applications open', c.applications_open)}${dt('pc_dl', 'Deadline', c.deadline)}${dt('pc_es', 'Event starts', c.event_start)}${dt('pc_ee', 'Event ends', c.event_end)}</div>
+    <div class="fld"><label for="pc_el">Eligibility, as written on the page</label><textarea id="pc_el" style="min-height:60px">${esc(c.eligibility_known ? c.eligibility : '')}</textarea></div>
+    <div class="grid"><div class="fld"><label for="pc_rw">Stipend or prize <span class="mut">(only if officially stated)</span></label><input id="pc_rw" value="${esc(c.reward || '')}"></div><div class="fld"><label for="pc_tc">Time commitment</label><input id="pc_tc" value="${esc(c.time_commitment || '')}"></div></div>
+    <label class="chk"><input type="checkbox" id="pc_ok"> I read these details on the organizer's official page</label><label class="chk"><input type="checkbox" id="pc_na"> The organizer has not announced this cycle yet</label>
+    <div class="foot"><button class="b" id="pc_save" type="button">Save</button><button class="b alt" type="button" data-act="close">Close</button></div>`);
+  $('pc_read').onclick = async () => { const t = $('pc_text').value; if (t.length < 10) { toast('Paste some text first.'); return; }
+    try { const q = await post('/v1/opp/programs/parse', { text: t }), f = q.fields; const set = (id, v) => { if (v && $(id)) $(id).value = v; };
+      set('pc_ao', f.applications_open.value); set('pc_dl', f.deadline.value); set('pc_es', f.event_start.value); set('pc_ee', f.event_end.value); set('pc_el', f.eligibility.value); set('pc_rw', f.reward.value); set('pc_tc', f.time_commitment.value);
+      $('pc_flags').innerHTML = `<div class="note">${esc(q.note)}${q.needs_review.length ? ' Check these yourself: ' + esc(q.needs_review.join(', ')) + '.' : ''}</div>`; } catch (e) { toast(e.message); } };
+  $('pc_save').onclick = async () => {
+    const b = { source_url: $('pc_src').value || null, checked_official_page: $('pc_ok').checked, announced: $('pc_na').checked ? false : null, eligibility: $('pc_el').value || null, reward: $('pc_rw').value || null, time_commitment: $('pc_tc').value || null,
+      applications_open: $('pc_ao').value || null, deadline: $('pc_dl').value || null, event_start: $('pc_es').value || null, event_end: $('pc_ee').value || null };
+    if (b.announced == null) delete b.announced;
+    try { const o = await api('/v1/opp/programs/cycles/' + cid, { method: 'PUT', body: b }); toast(o.note || ('Saved. Status: ' + o.status)); closeModal(); refresh(); } catch (e) { toast(e.message); }
+  };
+}
+const src0 = (p) => (p.cycle.source && p.cycle.source.url) || p.official_url || '';
+function pgTrackModal(cid, cur) {
+  const opts = ['Interested', 'Planned', 'Preparing', 'Submitted', 'Participating', 'Selected', 'Not selected', 'Completed', 'Withdrawn'];
+  modal(`<h2>Your participation</h2><p class="mut lead">You register and submit on the official site yourself. Record what happened here.</p>
+    <div class="fld"><label for="pt_s">Status</label><select id="pt_s">${opts.map((o) => `<option ${o === cur ? 'selected' : ''}>${o}</option>`).join('')}</select></div><div class="fld"><label for="pt_n">Note <span class="mut">(optional)</span></label><input id="pt_n"></div>
+    <label class="chk"><input type="checkbox" id="pt_c"> I registered or submitted this myself (needed for Submitted and Participating)</label>
+    <div class="foot"><button class="b" id="pt_ok" type="button">Save</button><button class="b alt" type="button" data-act="close">Close</button></div>`);
+  $('pt_ok').onclick = async () => { try { await post('/v1/opp/programs/cycles/' + cid + '/participation', { status: $('pt_s').value, note: $('pt_n').value || null, user_confirms_submitted: $('pt_c').checked }); toast('Saved.'); closeModal(); render(); } catch (e) { toast(e.message); } };
+}
+
+V.insights = async () => {
+  const [r, d] = await Promise.all([api('/v1/opp/reports'), api('/v1/opp/documents')]), by = r.by_stage || {}, max = Math.max(1, ...Object.values(by));
+  const rows = ACTIVE.concat(DONE).filter((s) => by[s]).map((s) => `<div class="bar"><span>${esc(s)}</span><i><b style="width:${Math.round(100 * by[s] / max)}%"></b></i><span>${by[s]}</span></div>`).join('');
+  const links = d.links || {}, lk = (k, l) => safeHref(links[k]) ? `<a class="b alt sm" target="_blank" rel="noopener noreferrer" href="${safeHref(links[k])}">${l}</a>` : '';
+  return `<div class="stats"><div class="stat"><strong>${r.applications_total || 0}</strong><span>Tracked</span></div><div class="stat"><strong>${r.applied || 0}</strong><span>Applied</span></div><div class="stat"><strong>${r.response_rate == null ? 'n/a' : Math.round(r.response_rate * 100) + '%'}</strong><span>Response rate</span></div><div class="stat"><strong>${(r.outreach || {}).sent || 0} / ${(r.outreach || {}).replied || 0}</strong><span>Emails sent / replied</span></div></div>
+    <div class="card"><h2 style="font-size:16px;margin-bottom:10px">Your pipeline</h2>${rows ? `<div class="funnel">${rows}</div>` : '<p class="mut">Track an opportunity to see your pipeline.</p>'}</div>
+    ${(r.bottlenecks || []).length ? `<div class="card"><h2 style="font-size:16px">Worth a look</h2>${list(r.bottlenecks)}</div>` : ''}
+    <p class="hint" style="margin:0 0 14px">${esc(r.note || '')}</p>
+    ${Object.keys(r.by_source || {}).length ? `<details class="fold"><summary>Where your roles come from</summary><div>${Object.keys(r.by_source).map((k) => { const x = r.by_source[k]; return `<div class="row sp" style="padding:6px 0;border-bottom:1px solid var(--opp-line);font-size:13px"><span>${esc(k.replace(/_/g, ' '))}</span><span class="mut">${x.tracked} tracked · ${x.applied} applied · ${x.responses} replies</span></div>`; }).join('')}</div></details>` : ''}
+    <div class="sec"><h2>Documents</h2><a class="b alt sm" href="resume-lab.html">Open Resume Lab</a></div>
+    ${(d.resumes || []).length ? d.resumes.map((x) => `<div class="card"><b>${esc(x.label)}</b> <span class="mut">${esc(x.target_role || '')}</span><div class="mut">Used for: ${esc((x.used_for || []).join('; ') || 'nothing yet')}</div></div>`).join('') : '<div class="ok-line">No resume versions yet. Create one in Resume Lab.</div>'}
+    <details class="fold" style="margin-top:8px"><summary>Project evidence <span class="chip">${(d.project_evidence || []).length}</span></summary><div>${(d.project_evidence || []).map((p) => `<div style="padding:6px 0"><b style="font-size:13px">${esc(p.title)}</b> <span class="mut">${esc((p.tech_stack || []).join(', '))}</span></div>`).join('') || '<p class="mut">No projects yet.</p>'}</div></details>
+    ${lk('resume_url', 'Resume link') || lk('portfolio_url', 'Portfolio') || lk('github_url', 'GitHub') ? `<div class="row" style="margin-top:10px">${lk('resume_url', 'Resume link')}${lk('portfolio_url', 'Portfolio')}${lk('github_url', 'GitHub')}</div>` : ''}`;
+};
+
+/* ---------- application modal ---------- */
+async function appModal(id, focus) {
+  const [a, docs] = await Promise.all([api('/v1/opp/applications/' + id), api('/v1/opp/documents').catch(() => ({ resumes: [] }))]);
+  const STEPS = ['Saved', 'Preparing', 'Ready to submit', 'Applied', 'Interview'], idx = Math.max(0, STEPS.indexOf(a.stage === 'Reviewing' ? 'Saved' : a.stage === 'Assessment' ? 'Interview' : a.stage));
+  const stages = ['Saved', 'Reviewing', 'Preparing', 'Ready to submit', 'Applied', 'Assessment', 'Interview', 'Offer', 'Rejected', 'Withdrawn'];
+  modal(`<h2>${esc(a.role)}</h2><p class="mut">${esc(a.company)}${safeHref(a.link) ? ` · <a target="_blank" rel="noopener noreferrer" href="${safeHref(a.link)}">Open original posting ↗</a>` : ''}</p>
+    <ol class="stepper" aria-label="Progress">${STEPS.map((s, i) => `<li class="${i < idx ? 'done' : i === idx ? 'now' : ''}">${esc(s)}</li>`).join('')}</ol>
+    <div class="sec" style="margin-top:14px"><h2 style="font-size:15px">Checklist</h2></div><ul class="checks">${a.checklist.map((c) => `<li class="${c.done ? 'met' : 'unknown'}"><i>${c.done ? '✓' : '○'}</i><span>${esc(c.item)}</span></li>`).join('')}</ul>
+    <div class="sec"><h2 style="font-size:15px">Update</h2></div>
+    <div class="grid"><div class="fld"><label for="as_st">Stage</label><select id="as_st">${stages.map((s) => `<option ${s === a.stage ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+      <div class="fld"><label for="as_dl">Deadline</label><input id="as_dl" type="date" value="${esc(a.deadline || '')}"></div>
+      <div class="fld"><label for="as_res">Resume used</label><select id="as_res"><option value="">Not chosen</option>${(docs.resumes || []).map((r) => `<option value="${esc(r.id)}" ${r.id === a.resume_id ? 'selected' : ''}>${esc(r.label)}</option>`).join('')}</select></div>
+      <div class="fld"><label for="as_ref">Recruiter or referral email</label><input id="as_ref" type="email" value="${esc(a.contact_ref || '')}" placeholder="Used for follow-up drafts"></div></div>
+    <div id="as_applied" hidden><label class="chk"><input type="checkbox" id="as_sub"> I submitted this on the original site myself</label></div>
+    <div class="fld"><label for="as_note">Stage note <span class="mut">(optional)</span></label><input id="as_note" placeholder="e.g. interview on Friday 4 pm"></div>
+    <div class="fld"><label for="as_notes">Your notes</label><textarea id="as_notes" style="min-height:70px">${esc(a.notes || '')}</textarea></div>
+    <details class="fold"><summary>History <span class="chip">${a.history.length}</span></summary><div>${a.history.map((h) => `<div class="mut" style="padding:3px 0">${esc((h.at || '').slice(0, 10))} · ${esc(h.from || '')}${h.to ? ' → ' + esc(h.to) : ''} ${esc(h.note || '')}</div>`).join('') || '<p class="mut">No history yet.</p>'}</div></details>
+    <div class="foot"><button class="b" id="as_go" type="button">Save changes</button><button class="b alt" type="button" data-act="close">Close</button><span class="grow"></span><button class="b dng" id="as_del" type="button">Remove</button></div>`);
+  const sync = () => { $('as_applied').hidden = !($('as_st').value === 'Applied' && a.stage !== 'Applied'); }; $('as_st').onchange = sync;
+  if (focus === 'applied') { $('as_st').value = 'Applied'; sync(); $('as_sub').focus(); }
+  $('as_del').onclick = async () => { if (!await ask('Remove this application?', 'It leaves your pipeline. The opportunity goes back to Discover so you can track it again.', 'Remove', true)) return;
+    try { await api('/v1/opp/applications/' + id, { method: 'DELETE' }); closeModal(); toast('Removed.'); refresh(); } catch (e) { toast(e.message); } };
+  $('as_go').onclick = async () => {
+    const b = $('as_go'); b.disabled = true;
+    try {
+      const prep = {}; if ($('as_ref').value.trim() !== (a.contact_ref || '')) prep.contact_ref = $('as_ref').value.trim(); if ($('as_notes').value !== (a.notes || '')) prep.notes = $('as_notes').value;
+      if (($('as_dl').value || '') !== (a.deadline || '') && $('as_dl').value) prep.deadline = $('as_dl').value; if ($('as_res').value && $('as_res').value !== (a.resume_id || '')) prep.resume_id = $('as_res').value;
+      if (Object.keys(prep).length) await api('/v1/opp/applications/' + id + '/prep', { method: 'PUT', body: prep });
+      if ($('as_st').value !== a.stage) { const r = await post('/v1/opp/applications/' + id + '/stage', { to: $('as_st').value, note: $('as_note').value || null, user_confirms_submitted: $('as_sub').checked }); if (r.next) toast(r.next); }
+      closeModal(); refresh();
+    } catch (e) { b.disabled = false; toast(e.message); }
+  };
+}
+
+/* ---------- professor search / add / email approval / gmail ---------- */
+async function facSearch() {
+  const out = $('fc_out'); if (!out) return; const q = ($('fc_q').value || '').trim(), inst = $('fc_inst').value;
+  out.innerHTML = '<p class="mut">Searching…</p>';
+  try {
+    const r = await api('/v1/opp/faculty/search?q=' + encodeURIComponent(q) + (inst ? '&institute=' + encodeURIComponent(inst) : '') + '&limit=' + S.facLimit);
+    const sel = $('fc_inst'); if (sel.options.length < 2) (r.institutes || []).forEach((i) => { const o = document.createElement('option'); o.textContent = i; sel.appendChild(o); }); sel.value = inst;
+    if (!r.items.length) { out.innerHTML = `<div class="note">${esc(r.note || 'No matches. Try different research terms.')}</div>`; return; }
+    out.innerHTML = `<p class="mut" style="margin-bottom:6px">${r.browse ? `All professors (${r.total}), A to Z` : (r.auto ? 'Recommended for you, based on: ' : 'Results for: ') + esc(String(r.query_used || 'your profile').slice(0, 120))}</p>` +
+      r.items.map((f) => `<div style="padding:10px 0;border-top:1px solid var(--opp-line)"><div class="row sp"><b style="font-size:14px">${esc(f.name)} <span class="mut">· ${esc(f.institute)}${f.department ? ', ' + esc(f.department) : ''}${f.designation ? ' · ' + esc(f.designation) : ''}</span></b><span class="chip">${esc(f.score)}% match</span></div><div class="mut">${esc((f.research_areas || []).join(', ') || 'No research areas listed')}</div><div class="mut">${esc(f.why)}</div>
+        <div class="row" style="margin-top:8px">${safeHref(f.website) ? `<a class="b alt sm" target="_blank" rel="noopener noreferrer" href="${safeHref(f.website)}">Their page</a>` : ''}${f.already_added ? '<span class="chip good">In your contacts</span>' : `<button class="b sm" type="button" data-act="fac.add" data-id="${esc(f.id)}">Add to contacts</button>`}</div></div>`).join('') +
+      (r.browse && r.total > r.items.length ? `<button class="b alt sm" type="button" data-act="fac.more" style="margin-top:8px">Show more (${r.total - r.items.length} left)</button>` : '') + (r.note ? `<p class="hint" style="margin-top:8px">${esc(r.note)}</p>` : '');
+  } catch (e) { out.innerHTML = `<div class="note">${esc(e.message)}</div>`; }
+}
+function profAddForm() {
+  modal(`<h2>Add a professor</h2><p class="mut lead">Use their official faculty page. Start with a few that you researched individually. No bulk campaigns.</p>
+    <div class="grid"><div class="fld"><label for="pr_name">Name</label><input id="pr_name"></div><div class="fld"><label for="pr_inst">Institute / department</label><input id="pr_inst"></div><div class="fld"><label for="pr_url">Official faculty page</label><input id="pr_url" type="url" placeholder="https://..."></div><div class="fld"><label for="pr_email">Public email</label><input id="pr_email" type="email"></div>
+    <div class="fld"><label for="pr_areas">Research areas</label><input id="pr_areas" placeholder="NLP, RAG"><div class="hint">Separate with commas</div></div><div class="fld"><label for="pr_work">Paper or project that connects to you</label><input id="pr_work"></div></div>
+    <label class="chk"><input type="checkbox" id="pr_shown"> This email is shown on the official page</label>
+    <div class="foot"><button class="b" id="pr_add" type="button">Add professor</button><button class="b alt" type="button" data-act="close">Cancel</button></div>`);
+  $('pr_add').onclick = async () => { const b = $('pr_add'); b.disabled = true;
+    try { await post('/v1/opp/professors', { name: $('pr_name').value, institute: $('pr_inst').value, source_url: $('pr_url').value || null, email: $('pr_email').value || null, email_shown_on_source: $('pr_shown').checked, research_areas: $('pr_areas').value.split(',').map((s) => s.trim()).filter(Boolean), relevant_work: $('pr_work').value || null }); closeModal(); toast('Professor added.'); render(); }
+    catch (e) { b.disabled = false; toast(e.message); } };
+}
+let gcfg = null;
+async function gmailCfg() { if (gcfg) return gcfg; try { gcfg = await api('/v1/opp/config'); } catch (e) { gcfg = { gmail_send_enabled: false }; } return gcfg; }
+function gmailToken(cfg) {
+  return new Promise((res, rej) => {
+    const go = () => { try { google.accounts.oauth2.initTokenClient({ client_id: cfg.google_client_id, scope: cfg.gmail_scope, callback: (r) => (r && r.access_token ? res(r.access_token) : rej(new Error('Gmail permission was not granted.'))), error_callback: () => rej(new Error('Gmail sign-in was cancelled.')) }).requestAccessToken(); } catch (e) { rej(new Error('Could not start Google sign-in.')); } };
+    if (window.google && google.accounts && google.accounts.oauth2) return go();
+    const sc = document.createElement('script'); sc.src = 'https://accounts.google.com/gsi/client'; sc.onload = go; sc.onerror = () => rej(new Error('Could not load Google sign-in.')); document.head.appendChild(sc);
+  });
+}
+async function sendViaGmail(id) {
+  const cfg = await gmailCfg(); if (!cfg.gmail_send_enabled) { toast('Gmail sending is not set up. Use Open in Gmail instead.'); return; }
+  try { const tok = await gmailToken(cfg); const r = await api('/v1/opp/outbox/' + id + '/send', { method: 'POST', body: {}, headers: { 'X-Gmail-Token': tok } }); toast('Sent through Gmail. Follow-up scheduled for ' + fmtDate(r.follow_up_date) + '.'); closeModal(); refresh(); } catch (e) { toast(e.message); }
+}
+async function reviewModal(id) {
+  const r = await api('/v1/opp/outbox/' + id + '/review'), ri = r.recipient;
+  modal(`<h2>Review before approving</h2><p class="mut lead">Approval covers exactly this message. If anything changes, you review it again.</p>
+    <p style="font-size:14px"><b>To:</b> ${esc(ri.to || '(none)')} <span class="chip ${ri.verification === 'unverified' ? 'warn' : 'good'}">${esc(String(ri.verification).replace(/_/g, ' '))}</span></p>
+    ${safeHref(ri.source) ? `<p class="mut">Source: <a target="_blank" rel="noopener noreferrer" href="${safeHref(ri.source)}">${esc(ri.source)}</a> · checked ${esc(ri.source_checked_on || '?')}</p>` : ''}
+    <p class="mut">Sending account: ${esc(r.sending_account)}</p>
+    <div class="fld" style="margin-top:12px"><label for="rv_sub">Subject</label><input id="rv_sub" value="${esc(r.subject || '')}"></div><div class="fld"><label for="rv_body">Message</label><textarea id="rv_body" style="min-height:200px">${esc(r.body || '')}</textarea></div>
+    ${(r.attachments || []).length ? `<p class="mut">Attachments: ${esc(r.attachments.join(', '))}</p>` : ''}${(r.warnings || []).map((w) => `<div class="note">${esc(w)}</div>`).join('')}
+    <p class="mut">Follow-up if sent: ${esc(r.follow_up_if_sent)}</p>${ri.verification === 'unverified' ? '<label class="chk"><input type="checkbox" id="rv_conf"> I checked this email address</label>' : ''}
+    <div class="foot"><button class="b" id="rv_ok" type="button">Approve this exact message</button><button class="b alt" id="rv_save" type="button">Save edits</button><button class="b alt" type="button" data-act="close">Close</button></div>`);
+  $('rv_save').onclick = async () => { try { await api('/v1/opp/outbox/' + id, { method: 'PATCH', body: { subject: $('rv_sub').value, body: $('rv_body').value } }); toast('Saved. Review once more to approve.'); reviewModal(id); } catch (e) { toast(e.message); } };
+  $('rv_ok').onclick = async () => {
+    if ($('rv_sub').value !== (r.subject || '') || $('rv_body').value !== (r.body || '')) { toast('You edited the text. Press Save edits, then review again.'); return; }
+    try {
+      const a = await post('/v1/opp/outbox/' + id + '/approve', { reviewed_hash: r.payload_hash, confirm_recipient: !!($('rv_conf') && $('rv_conf').checked) }), gc = await gmailCfg();
+      modal(`<h2>Approved</h2><p>${esc(a.message)}</p><p class="mut">Send with Gmail uses a send-only permission. OPAI cannot read your inbox.</p><div class="foot">${gc.gmail_send_enabled ? '<button class="b" id="gs" type="button">Send with Gmail</button>' : ''}<a class="b ${gc.gmail_send_enabled ? 'alt' : ''}" target="_blank" rel="noopener noreferrer" href="${esc(a.compose_url)}">Open in Gmail</a><button class="b alt" id="mx" type="button">Done</button></div>`);
+      if ($('gs')) $('gs').onclick = () => sendViaGmail(id); $('mx').onclick = () => { closeModal(); render(); };
+    } catch (e) { toast(e.message); }
+  };
+}
+
+/* ---------- actions ---------- */
+const ACTIONS = {
+  tab: (el) => switchTab(el.dataset.t),
+  go: (el) => go(el.dataset.go),
+  close: () => closeModal(),
+  profile: () => profileModal(),
+  add: () => addModal('post'),
+  'add.mode': (el) => addBody(el.dataset.mode),
+  'add.extract': () => intakeReview(),
+  'add.email': () => emailFind(),
+  'filter.discover': (el) => { S.filter = el.dataset.f; S.filterChosen = true; render(); },
+  'filter.apps': (el) => { S.appFilter = el.dataset.f; render(); },
+  'opp.detail': (el) => oppDetail(el.dataset.id),
+  'opp.track': async (el) => { await post('/v1/opp/opportunities/' + el.dataset.id + '/track'); closeModal(); toast('Tracking started. Find it under Your applications.'); S.tab = 'discover'; S.scrollTo = 'apps-sec'; S.appFilter = 'active'; history.replaceState(null, '', '#discover'); refresh(); },
+  'opp.dismiss': async (el) => { if (!await ask('Not interested?', 'It disappears from Discover. You can add it again later from the original posting.', 'Remove it', true)) return; await post('/v1/opp/opportunities/' + el.dataset.id + '/dismiss'); closeModal(); toast('Removed from Discover.'); refresh(); },
+  'opp.verified': async (el) => { await post('/v1/opp/opportunities/' + el.dataset.id + '/verified'); toast('Marked as re-checked today.'); oppDetail(el.dataset.id); },
+  'app.open': (el) => appModal(el.dataset.id, el.dataset.focus),
+  'app.advance': async (el) => { await post('/v1/opp/applications/' + el.dataset.id + '/stage', { to: el.dataset.to, user_confirms_submitted: false }); toast('Moved to ' + el.dataset.to + '.'); refresh(); },
+  'prof.brief': async (el) => {
+    const b = await post('/v1/contacts/' + el.dataset.id + '/research-brief'), weak = b.verification === 'unverified';
+    const src = (b.sources || []).map((x) => `<li>${safeHref(x.url) ? `<a target="_blank" rel="noopener noreferrer" href="${safeHref(x.url)}">${esc(x.title)}</a>` : esc(x.title)}${x.checked_on ? ` <span class="mut">checked ${esc(x.checked_on)}</span>` : ''}</li>`).join('');
+    modal(`<h2>${esc(b.professor)}</h2><p class="mut">${esc(b.institute)}${b.lab ? ' · ' + esc(b.lab) : ''}</p>
+      <div class="row" style="margin:12px 0"><span class="pill ${weak ? 'bad' : b.verification === 'verified' ? 'good' : 'warn'}">Sources: ${esc(b.verification)}</span><span class="chip">Overlap with you: ${esc(b.relevance)}%</span></div>
+      ${(b.warnings || []).map((w) => `<div class="note">${esc(w)}</div>`).join('')}
+      <div class="sec" style="margin-top:8px"><h2 style="font-size:15px">Their research</h2></div>${(b.research_focus || []).length ? `<div class="row">${b.research_focus.map((x) => `<span class="chip">${esc(x)}</span>`).join('')}</div>` : '<p class="mut">No research areas recorded.</p>'}${b.bio ? `<p style="font-size:14px;margin-top:8px">${esc(b.bio)}</p>` : ''}
+      <div class="sec"><h2 style="font-size:15px">Why you may fit</h2></div>${list(b.why_you_fit)}
+      <div class="sec"><h2 style="font-size:15px">Suggested ask</h2></div><p style="font-size:14px">${esc(b.suggested_ask)}</p>
+      <div class="sec"><h2 style="font-size:15px">Sources</h2></div><ul class="tidy">${src || '<li class="mut">None attached.</li>'}</ul>
+      <div class="foot">${weak ? '<span class="mut grow">Add their research areas or a source link before drafting.</span>' : `<button class="b" type="button" data-act="prof.draft" data-id="${esc(el.dataset.id)}">Draft email from this brief</button>`}<button class="b alt" type="button" data-act="close">Close</button></div>`);
+    render();                                                  // the row now offers "Draft email"
+  },
+  'prof.draft': async (el) => {
+    try { await post('/v1/contacts/' + el.dataset.id + '/draft-email'); }
+    catch (e) { if (/research brief/i.test(e.message)) { await ACTIONS['prof.brief'](el); return; } throw e; }     // never show the API hint; do the missing step instead
+    closeModal(); toast('Draft created. Nothing was sent. Review it under Needs your attention.'); S.tab = 'outreach'; S.scrollTo = 'outbox-sec'; history.replaceState(null, '', '#outreach'); refresh();
+  },
+  'prof.add': () => profAddForm(),
+  'fac.toggle': () => { S.facOpen = !S.facOpen; render(); },
+  'fac.search': () => { S.facLimit = 20; facSearch(); },
+  'fac.more': () => { S.facLimit += 30; facSearch(); },
+  'fac.add': async (el) => { const c = await post('/v1/opp/faculty/add', { faculty_id: el.dataset.id }); toast(c.next || 'Added to your contacts.'); S.facLimit = 20; await render(); },
+  fu: async (el) => { const r = await post('/v1/opp/followups/' + el.dataset.k + '/' + el.dataset.id + '/answer', { answer: el.dataset.a }); toast(r.note || r.next || 'Done.'); refresh(); },
+  'ob.review': (el) => reviewModal(el.dataset.id),
+  'ob.reject': async (el) => { if (!await ask('Reject this draft?', 'It will not be sent.', 'Reject', true)) return; await post('/v1/opp/outbox/' + el.dataset.id + '/reject'); refresh(); },
+  'ob.gsend': (el) => sendViaGmail(el.dataset.id),
+  'ob.sent': async (el) => { await post('/v1/opp/outbox/' + el.dataset.id + '/sent', {}); toast('Logged. Follow-up scheduled.'); refresh(); },
+  'pg.addcat': async (el) => { const o = await post('/v1/opp/programs', { catalog_id: el.dataset.id }); toast(o.name + ' added. Confirm its current dates on the official page.'); render(); },
+  'pg.addform': () => pgAddForm(),
+  'pg.plan': async (el) => { const r = await post('/v1/opp/programs/cycles/' + el.dataset.id + '/plan'); toast(r.created.length ? `Added ${r.created.length} task(s) to Today.` : 'Already in your plan.'); render(); },
+  'pg.confirm': (el) => pgConfirmModal(el.dataset.id),
+  'pg.track': (el) => pgTrackModal(el.dataset.id, el.dataset.cur),
+  'pg.nextcycle': async (el) => { await post('/v1/opp/programs/' + el.dataset.id + '/cycles', { label: 'Next announced cycle', year: new Date().getFullYear() + 1, announced: false }); toast('Added. It says Not announced until you confirm it.'); render(); },
+  'pg.remove': async (el) => { if (!await ask('Remove this program?', 'Its unfinished preparation tasks are removed too.', 'Remove', true)) return; await api('/v1/opp/programs/' + el.dataset.id, { method: 'DELETE' }); toast('Removed.'); refresh(); },
+  retry: () => render()
+};
+document.addEventListener('click', async (e) => {
+  const el = e.target.closest('[data-act]');
+  if (!el) {                                              // clicking the empty part of a row opens it
+    const card = e.target.closest('.opp[data-card]');
+    if (card && card.dataset.card !== 'none' && !e.target.closest('a,button,input,select,textarea,summary')) (card.dataset.card === 'opp' ? ACTIONS['opp.detail'] : ACTIONS['app.open'])({ dataset: { id: card.dataset.id } });
+    return;
+  }
+  const fn = ACTIONS[el.dataset.act]; if (!fn || el.disabled) return;
+  const busy = el.tagName === 'BUTTON' && !/^(tab|go|close|filter\.|add\.mode)/.test(el.dataset.act); if (busy) el.disabled = true;
+  try { await fn(el); } catch (err) { toast(err.message); } finally { if (busy && el.isConnected) el.disabled = false; }
+});
+document.addEventListener('change', (e) => { if (e.target.id === 'pg_type') { S.progType = e.target.value; render(); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'fc_q') { e.preventDefault(); S.facLimit = 20; facSearch(); } });
+$('tabs').addEventListener('keydown', (e) => {
+  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+  const b = Array.from($('tabs').querySelectorAll('[role=tab]')); let i = b.indexOf(document.activeElement); if (i < 0) i = b.findIndex((x) => x.getAttribute('aria-selected') === 'true');
+  i = e.key === 'Home' ? 0 : e.key === 'End' ? b.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : b.length - 1)) % b.length; e.preventDefault(); const k = b[i].dataset.t; switchTab(k); requestAnimationFrame(() => { const t = $('opp-tab-' + k); if (t) t.focus(); });
+});
+
+/* ---------- routing + render ---------- */
+function go(target) { const p = String(target).split('#'); S.scrollTo = p[1] || null; switchTab(p[0]); }
+function switchTab(k) { const a = ALIAS[k]; if (!a) return; if (a[1] && !S.scrollTo) S.scrollTo = a[1]; S.tab = a[0]; history.replaceState(null, '', '#' + a[0]); render(); }
+addEventListener('hashchange', () => { if (ONLY_PROGRAMS) return; const a = ALIAS[(location.hash || '').slice(1)]; if (a && (a[0] !== S.tab)) { if (a[1]) S.scrollTo = a[1]; S.tab = a[0]; render(); } });
+async function render() {
+  const version = ++renderVersion, tab = S.tab; renderTabs();
+  $('view').setAttribute('aria-busy', 'true'); $('view').innerHTML = '<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
+  const wake = setTimeout(() => { if (version === renderVersion && $('view').getAttribute('aria-busy') === 'true') $('view').insertAdjacentHTML('beforeend', '<p class="mut" style="text-align:center;margin-top:8px">Waking up the server. The first load after a quiet period can take up to a minute.</p>'); }, 6000);
+  try {
+    await ensureUser(); if (version !== renderVersion) return;
+    const html = await V[tab](); if (version !== renderVersion) return;
+    $('view').innerHTML = (TABHELP[tab] ? `<p class="tabhelp">${TABHELP[tab]}</p>` : '') + html;
+    if (tab === 'professors' && S.facOpen) facSearch();
+    if (S.scrollTo) { const t = $(S.scrollTo); S.scrollTo = null; if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  } catch (e) {
+    if (version !== renderVersion) return;
+    $('view').innerHTML = `<div class="card empty"><h2>Could not load this section</h2><p>${esc(e.message)}</p><button class="b alt" type="button" data-act="retry">Try again</button></div>`;
+  } finally { clearTimeout(wake); if (version === renderVersion) $('view').setAttribute('aria-busy', 'false'); }
+}
+async function refresh() { await render(); loadHero().catch(() => {}); }
+
+(function init() {
+  const a = ALIAS[(location.hash || '').slice(1)];
+  if (ONLY_PROGRAMS) S.tab = 'programs';
+  else if (a) { S.tab = a[0]; S.scrollTo = a[1] || null; }
+  $('view').setAttribute('aria-busy', 'true'); $('view').innerHTML = '<div class="skel"></div><div class="skel"></div><p class="mut" style="text-align:center">Loading… the server may take a few seconds to wake up.</p>';
+  ensureUser().then(() => { render(); loadHero().catch(() => {}); }).catch((e) => { renderTabs(); $('view').innerHTML = `<div class="card empty"><h2>Please sign in</h2><p>${esc(e.message)}</p></div>`; $('view').setAttribute('aria-busy', 'false'); });
+})();
+})();
+</script>
+<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
+<script src="opai-clarity.js" defer></script>
+</body>
+</html>

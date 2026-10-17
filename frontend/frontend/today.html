@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Today · OPAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#F0F4F3"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
+<style>
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;font:15px/24px var(--sans);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}a{color:inherit}
+main{max-width:1400px;margin:0 auto;padding:44px 28px calc(120px + env(safe-area-inset-bottom,0px));position:relative}
+.deco{position:absolute;right:0;top:0;width:min(520px,60vw);height:360px;pointer-events:none;opacity:.5;z-index:0}
+main>*{position:relative;z-index:1}
+.eyebrow{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font:12px/18px var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2)}
+.eyebrow i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);margin-right:8px}
+.guard{display:inline-flex;gap:6px;align-items:center;text-transform:none;letter-spacing:0;color:var(--ink-3)}
+.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;padding:18px 0 26px;border-bottom:1px solid var(--hair)}
+h1{margin:0 0 10px;font-size:clamp(34px,6vw,56px);line-height:1.05;letter-spacing:-.04em;font-weight:700}
+.lede{margin:0;max-width:640px;font-size:19px;line-height:30px;color:var(--ink-2)}
+.lede a{color:var(--coral-ink);text-decoration:underline;text-underline-offset:3px}
+.ctas{display:flex;gap:12px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:9px;padding:13px 22px;border-radius:999px;border:0;font-weight:500;font-size:15px;text-decoration:none;white-space:nowrap}
+.pill.teal{background:var(--teal);color:#fff}.pill.teal:hover{background:var(--teal-2)}.pill.teal i{width:8px;height:8px;border-radius:50%;background:var(--coral)}
+.pill.coral{background:var(--coral-soft);color:var(--coral-ink)}.pill.coral:hover{background:#DEE7E3}
+.pill.line{background:transparent;border:1px solid var(--hair);color:var(--ink)}.pill.line:hover{background:var(--card)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0 4px}
+.chip{padding:5px 12px;border-radius:999px;border:1px solid var(--hair);background:var(--card);font:12px/18px var(--mono);color:var(--ink-2)}
+.chip:hover{border-color:var(--teal);color:var(--teal)}.chip.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.sechd{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:26px 0 14px}
+.sechd h2{margin:0;font-size:22px;letter-spacing:-.02em;font-weight:600}
+.tag{display:inline-block;padding:2px 10px;border-radius:999px;background:var(--well);border:1px solid var(--hair);font:11px/18px var(--mono);color:var(--ink-2)}
+.sechd .r{margin-left:auto;font:12px var(--mono);color:var(--ink-3)}
+.cap{margin:0 0 4px;font:12px/16px var(--mono);color:var(--ink-3);display:flex;flex-direction:column;gap:6px}
+.track{height:5px;border-radius:99px;background:var(--well);overflow:hidden;display:flex}.track i{display:block;height:100%;background:var(--teal)}.track i.d{background:var(--ok)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px}
+.card{background:var(--card);border:1px solid var(--hair);border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
+.card.done{opacity:.55}
+.tags{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tg{padding:4px 12px;border-radius:8px;font:11px/16px var(--mono);letter-spacing:.07em;text-transform:uppercase}
+.tg.c{background:var(--coral-soft);color:var(--coral-ink)}.tg.t{background:var(--teal-soft);color:var(--teal)}
+.idx{margin-left:auto;font:12px var(--mono);color:var(--ink-3)}
+.card h3{margin:6px 0 0;font-size:26px;line-height:32px;letter-spacing:-.03em;font-weight:600;overflow-wrap:anywhere}
+.sub{margin:0;color:var(--ink-2);font-size:15px}
+.chk{display:flex;gap:8px;align-items:center;font:12.5px/18px var(--mono);color:var(--teal);padding-bottom:14px;border-bottom:1px solid var(--hair)}
+.chk.c{color:var(--coral-ink)}.chk svg{flex:none}
+.state{font:11px var(--mono);color:var(--ink-3)}.state.in_progress{color:var(--warn)}.state.completed{color:var(--ok)}
+.big{width:100%;justify-content:center;border-radius:999px;padding:16px 20px;font-size:15px;font-weight:500;border:1px solid var(--teal);background:var(--teal);color:#fff;text-decoration:none;display:flex;align-items:center;gap:10px}
+.big:hover{background:var(--teal-2)}.big.out{background:transparent;color:var(--ink);border-color:var(--hair)}.big.out:hover{background:#fff}
+.mini{display:flex;gap:4px;flex-wrap:wrap}.mini button{border:0;background:none;padding:6px 10px;border-radius:8px;font-size:13px;color:var(--ink-2)}.mini button:hover{background:var(--well);color:var(--ink)}
+.ex{display:grid;gap:10px;padding:14px;border-radius:14px;background:var(--well);font-size:13.5px;line-height:21px;color:var(--ink-2)}
+.ex h4{margin:0 0 2px;font:11px var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}.ex ul{margin:0;padding-left:18px}
+.conf{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--ink-2)}
+.conf button{width:34px;height:34px;border-radius:50%;border:1px solid var(--hair);background:#fff}.conf button:hover{background:var(--teal);color:#fff}
+.sec{font:11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:26px 0 10px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:11px 16px;border:1px solid var(--hair);border-radius:14px;background:var(--card);font-size:14px;margin-bottom:8px}.row .m{font:12px var(--mono);color:var(--ink-3);white-space:nowrap}
+.note{border:1px dashed var(--line-2);border-radius:20px;padding:22px;color:var(--ink-2)}
+.pend{border-color:#DAD2C0;background:#F7FAF9}
+.err{color:var(--bad)}
+dialog{border:1px solid var(--hair);border-radius:24px;background:var(--card);color:var(--ink);padding:22px;width:min(440px,92vw)}
+dialog::backdrop{background:rgba(27,21,22,.4)}dialog h3{margin:0 0 6px;font-size:20px}
+dialog label{display:block;margin:14px 0 6px;font-size:13px;color:var(--ink-2)}
+dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-radius:12px;color:var(--ink);padding:10px;font:inherit;min-height:70px}
+.en{display:flex;gap:6px}.en button{flex:1;padding:10px 0;border-radius:12px;border:1px solid var(--hair);background:#fff}.en button.p{background:var(--teal);color:#fff;border-color:var(--teal)}
+@media(max-width:760px){main{padding:24px 12px calc(150px + env(safe-area-inset-bottom,0px))}.card{padding:18px;border-radius:20px}.card h3{font-size:22px;line-height:28px}.lede{font-size:16px;line-height:25px}.deco{opacity:.3}.ctas{width:100%}.pill{flex:1;justify-content:center}}
+@media(prefers-reduced-motion:no-preference){.card{animation:in .35s ease both}.card:nth-child(2){animation-delay:.06s}.card:nth-child(3){animation-delay:.12s}@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}}
+</style>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)&&location.protocol!=='file:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
+<link rel="stylesheet" href="opai-mobile.css">
+</head>
+<body>
+<main>
+  <svg class="deco" viewBox="0 0 520 360" aria-hidden="true" fill="none" stroke="#E09F62" stroke-width="1"><g opacity=".55"><ellipse cx="330" cy="170" rx="150" ry="95"/><ellipse cx="330" cy="170" rx="118" ry="74"/><ellipse cx="330" cy="170" rx="86" ry="53"/><ellipse cx="330" cy="170" rx="54" ry="32"/><path d="M180 170c0 60 66 100 150 100s150-40 150-100M180 170c0-60 66-100 150-100s150 40 150 100"/></g><path d="M0 130C140 40 360 60 520 190" stroke="#1A404D" opacity=".5"/></svg>
+  <div class="eyebrow"><span><i></i><span id="eb">TODAY</span></span><span class="guard"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>Deterministic guardrails active</span></div>
+  <section class="hero">
+    <div><h1 id="hi">Good day.</h1><p class="lede" id="sum" aria-live="polite">Loading your day…</p></div>
+    <div class="ctas"><button class="pill teal" id="sprint"><i></i>Start today's sprint →</button><a class="pill coral" id="review" href="#pending" hidden>Review proposal</a></div>
+  </section>
+  <div class="tools" role="group" aria-label="Replan today">
+    <button class="chip" data-m="30">I have 30 min</button><button class="chip" data-m="60">1 hour</button><button class="chip" id="tired">I'm tired</button><button class="chip" data-m="">Reset</button>
+  </div>
+  <div class="sechd"><h2>Primary Focus Sprints</h2><span class="tag">Ranked by leverage</span><span class="r" id="count"></span></div>
+  <div class="cap" id="cap"></div>
+  <section class="grid" id="list" aria-label="Next best actions" style="margin-top:12px"></section>
+  <div id="pending"></div><div id="later"></div>
+  <div class="ctas" style="margin-top:28px"><button class="pill line" id="close">End-of-day review</button><a class="pill line" href="super-chat.html">Ask KARNA</a></div>
+</main>
+<dialog id="dlg">
+  <h3>How did today go?</h3><p style="margin:0;color:var(--ink-2);font-size:14px">Tomorrow is planned from what actually happened.</p>
+  <label>Energy (1 low · 5 high)</label><div class="en" id="en"><button data-e="1">1</button><button data-e="2">2</button><button class="p" data-e="3">3</button><button data-e="4">4</button><button data-e="5">5</button></div>
+  <label for="blk">What blocked you? (optional)</label><textarea id="blk" maxlength="500"></textarea>
+  <div class="ctas" style="margin-top:16px"><button class="pill teal" id="save">Save and plan tomorrow</button><button class="pill line" id="cancel">Cancel</button></div>
+  <p id="dmsg" style="margin:12px 0 0;color:var(--ink-2);font-size:14px"></p>
+</dialog>
+<script src="opai-shell.js"></script>
+<script src="guide.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const base = () => (localStorage.getItem('opa_api_base') || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8000' : 'https://opa-52ug.onrender.com')).replace(/\/+$/, '');
+  async function api(path, o = {}) {
+    const r = await fetch(base() + path, { headers: o.body ? { 'Content-Type': 'application/json' } : {}, ...o });
+    if (!r.ok) { let d = ''; try { d = (await r.json()).detail || ''; } catch (e) {} const e = new Error(Array.isArray(d) ? d.map((x) => x.msg).join('; ') : d || r.status); e.status = r.status; throw e; }
+    const t = await r.text(); return t ? JSON.parse(t) : null;
+  }
+  let uid = null, minutes = '', energy = 'normal', plan = null, name = '';
+  async function ensureUser() {
+    if (uid) return uid;
+    const em = new URLSearchParams(location.search).get('email') || localStorage.getItem('opai_sc_email');
+    if (em) { localStorage.setItem('opai_sc_email', em); uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(em), { method: 'POST' })).user_id; return uid; }
+    location.replace('app.html'); throw new Error('Please sign in');
+  }
+  const d = new Date(), h = d.getHours();
+  const greet = () => $('hi').textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + (name ? ', ' + name : '') + '.';
+  greet();
+  const CHECK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>';
+  const MAIL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>';
+  const STATE = { ai_suggested: 'AI suggested', in_progress: 'In progress', completed: 'Completed', paused: 'Paused' };
+  const urgent = (i) => /today|tomorrow|overdue|in [1-3] days/.test(i.due);
+
+  function render(p) {
+    plan = p;
+    $('eb').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) + ' · ' + p.items.length + ' priority focus track' + (p.items.length === 1 ? '' : 's');
+    $('sum').innerHTML = p.needs_plan ? 'You have exams but no study plan for today yet. Building it…' : esc(p.narrative || (p.items.length ? 'Your next best actions, ranked by what matters most right now.' : (p.empty_hint || 'You are clear for today.')));
+    const c = p.capacity, tot = Math.max(c.available_min, 1);
+    $('count').textContent = p.items.length + (p.items.length === 1 ? ' track' : ' tracks') + ' today';
+    $('cap').innerHTML = '<div class="track"><i class="d" style="width:' + Math.min(100, c.done_min / tot * 100) + '%"></i><i style="width:' + Math.min(100, c.planned_min / tot * 100) + '%"></i></div><span>' + c.planned_min + ' min planned · ' + c.done_min + ' done · ' + c.buffer_min + ' buffer · ' + c.available_min + ' available' + (p.energy === 'low' ? ' · low-energy mode' : '') + '</span>';
+    $('list').innerHTML = p.items.map((i, n) => card(i, n, p.items.length)).join('') || '<div class="note" style="grid-column:1/-1">' + esc(p.empty_hint || 'Nothing is due right now.') + ' <a href="super-chat.html" style="color:var(--teal)">Tell KARNA what you are working on.</a></div>';
+    $('later').innerHTML = (p.later_count ? '<div class="sec">Later (' + p.later_count + ')</div>' + p.later.map((x) => '<div class="row"><span>' + esc(x.title) + '</span><span class="m">' + x.minutes + ' min · ' + esc(x.due) + '</span></div>').join('') : '') +
+      (p.completed_today.length ? '<div class="sec">Done today</div>' + p.completed_today.map((x) => '<div class="row"><span>✓ ' + esc(x.title) + '</span><span class="m">' + x.minutes + ' min</span></div>').join('') : '');
+  }
+  function card(i, n, tot) {
+    const ex = i.explain, ob = i.kind === 'outbox', pad = (v) => String(v).padStart(2, '0');
+    const main = ob ? '<a class="big out" href="' + i.link + '">Open &amp; review Outbox draft ↗</a>'
+      : '<button class="big" data-a="start">▶ ' + (i.state === 'in_progress' ? 'Resume focus timer' : 'Start focus timer') + ' (' + i.minutes + 'm' + (i.split ? ', part' : '') + ')</button>';
+    return '<article class="card" data-kind="' + i.kind + '" data-id="' + esc(i.ref_id) + '" data-min="' + i.minutes + '" data-title="' + esc(i.title) + '">' +
+      '<div class="tags"><span class="tg ' + (urgent(i) ? 'c' : 't') + '">' + esc(i.due.startsWith('in') || /day|today|tomorrow|overdue/.test(i.due) ? 'DUE ' + i.due.toUpperCase() : i.due.toUpperCase()) + ' · ' + esc(i.priority_label) + '</span><span class="tg t">' + esc(i.category) + '</span><span class="idx">' + pad(n + 1) + ' / ' + pad(tot) + '</span></div>' +
+      '<h3>' + esc(i.title) + '</h3><p class="sub">' + esc(i.subtitle) + '</p>' +
+      '<div class="chk ' + (ob ? 'c' : '') + '">' + (ob ? MAIL : CHECK) + '<span>' + esc(i.check) + '</span></div>' +
+      main + (i.kind === 'dsa' ? '<a class="big out" href="dsa.html">Open DSA Roadmap (links to external sites) ↗</a>' : '') +
+      '<div class="mini">' + (ob ? '' : '<button data-a="done">Done</button><button data-a="move">Move</button><button data-a="skip">Skip</button>') + '<button data-a="why">Why this?</button><span class="state ' + i.state + '" style="margin-left:auto;align-self:center">' + (STATE[i.state] || i.state) + '</span></div>' +
+      '<div class="ex" hidden><div><h4>Why is this important?</h4>' + esc(ex.why_important) + '</div><div><h4>If I delay it</h4>' + esc(ex.if_delayed) + '</div><div><h4>What OPAI used</h4>' + esc(ex.used.join(', ')) + '</div><div><h4>Change it</h4><ul>' + ex.change.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div></div>' +
+      '<div class="conf" hidden>How confident are you on this topic now? ' + [1,2,3,4,5].map((v) => '<button data-conf="' + v + '">' + v + '</button>').join('') + '</div></article>';
+  }
+  async function load(refresh) {
+    await ensureUser();
+    try { const pr = await api('/v1/profile?user_id=' + encodeURIComponent(uid)); if (pr && pr.name) { name = pr.name.split(' ')[0]; greet(); } } catch (e) {}
+    const q = new URLSearchParams({ user_id: uid, energy }); if (minutes) q.set('minutes', minutes);
+    let p = await api('/v1/today?' + q + '&narrative=true');
+    if (p.needs_plan || refresh) p = await api('/v1/today/refresh', { method: 'POST', body: JSON.stringify({ user_id: uid, minutes: minutes ? +minutes : null, energy }) });
+    render(p); loadPending();
+  }
+  async function loadPending() {
+    try {
+      const a = await api('/v1/actions?user_id=' + uid + '&status=pending_approval');
+      $('review').hidden = !a.length;
+      if (a.length) $('sum').innerHTML += ' KARNA has <a href="#pending">' + a.length + ' proposal' + (a.length > 1 ? 's' : '') + ' ready</a> for your confirmation.';
+      $('pending').innerHTML = a.length ? '<div class="sec">Waiting for your approval</div><div class="grid">' + a.map((x) => '<div class="card pend" data-aid="' + x.action_id + '" data-h="' + x.payload_hash + '"><div class="tags"><span class="tg c">' + esc(x.risk) + ' risk · needs approval</span></div><h3>' + esc(x.intent.replace(/_/g, ' ')) + '</h3><p class="sub">' + esc(x.reason || '') + '</p><p class="state">' + esc(JSON.stringify(x.payload).slice(0, 240)) + '</p><div class="mini"><button class="pill teal" data-d="approve" style="padding:10px 18px">Approve</button><button class="pill line" data-d="reject" style="padding:10px 18px">Reject</button></div></div>').join('') + '</div>' : '';
+    } catch (e) {}
+  }
+  async function act(card, op, extra) {
+    const body = Object.assign({ user_id: uid, kind: card.dataset.kind, ref_id: card.dataset.id, op }, extra || {});
+    card.querySelectorAll('button').forEach((b) => (b.disabled = true));
+    try {
+      if (op === 'start' && window.OPAI_FOCUS) OPAI_FOCUS.start(card.dataset.title, +card.dataset.min);
+      if ((op === 'complete' || op === 'skip' || op === 'snooze') && window.OPAI_FOCUS && OPAI_FOCUS.current() && OPAI_FOCUS.current().title === card.dataset.title) OPAI_FOCUS.stop();
+      const r = await api('/v1/today/act', { method: 'POST', body: JSON.stringify(body) }); render(r.today); loadPending();
+    } catch (e) { card.querySelectorAll('button').forEach((b) => (b.disabled = false)); $('sum').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; }
+  }
+  $('list').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return; const card = b.closest('.card'); if (!card) return;
+    if (b.dataset.conf) return act(card, 'complete', { confidence_now: +b.dataset.conf });
+    const a = b.dataset.a;
+    if (a === 'why') card.querySelector('.ex').hidden = !card.querySelector('.ex').hidden;
+    else if (a === 'start') act(card, 'start');
+    else if (a === 'done') { if (card.dataset.kind === 'study_block' || card.dataset.kind === 'dsa') card.querySelector('.conf').hidden = false; else act(card, 'complete'); }
+    else if (a === 'move') act(card, 'snooze', { days: 1 });
+    else if (a === 'skip') act(card, 'skip');
+  });
+  $('sprint').onclick = () => { const first = $('list').querySelector('.card[data-kind]:not([data-kind=outbox])'); if (first) act(first, 'start'); else $('sum').textContent = 'Nothing to start yet. Add an exam, task or application first.'; };
+  $('pending').addEventListener('click', async (e) => {
+    const b = e.target.closest('button'); if (!b || !b.dataset.d) return; const c = b.closest('.card');
+    try { await api('/v1/actions/' + c.dataset.aid + '/' + b.dataset.d, { method: 'POST', body: JSON.stringify({ user_id: uid, payload_hash: c.dataset.h }) }); load(); }
+    catch (er) { $('sum').innerHTML = '<span class="err">' + esc(er.message) + '</span>'; }
+  });
+  document.querySelectorAll('.chip[data-m]').forEach((b) => (b.onclick = () => { minutes = b.dataset.m; energy = 'normal'; $('tired').classList.remove('on'); document.querySelectorAll('.chip[data-m]').forEach((x) => x.classList.toggle('on', x === b && !!minutes)); load(true).catch(fail); }));
+  $('tired').onclick = () => { energy = energy === 'low' ? 'normal' : 'low'; $('tired').classList.toggle('on', energy === 'low'); load(true).catch(fail); };
+  let en = 3; $('en').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; en = +b.dataset.e; [...$('en').children].forEach((x) => x.classList.toggle('p', x === b)); };
+  $('close').onclick = () => { $('dmsg').textContent = ''; $('dlg').showModal(); };
+  $('cancel').onclick = () => $('dlg').close();
+  $('save').onclick = async () => {
+    try { const r = await api('/v1/today/close', { method: 'POST', body: JSON.stringify({ user_id: uid, energy: en, blockers: $('blk').value || null }) });
+      $('dmsg').textContent = r.summary + ' ' + r.tip; setTimeout(() => $('dlg').close(), 2400); }
+    catch (e) { $('dmsg').textContent = e.message; }
+  };
+  function fail(e) { $('sum').innerHTML = '<span class="err">' + esc(e.name === 'TypeError' ? 'Could not reach the backend at ' + base() + '. If it is on a free host it may be waking up; retry in a minute.' : e.message) + '</span>'; }
+  load().catch(fail);
+  if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+})();
+</script>
+<script src="opai-clarity.js" defer></script>
+</body>
+</html>

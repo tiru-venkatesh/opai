@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projects · OPAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F0F4F3;--s1:#F7FAF9;--s2:#EAEFEE;--s3:#D5E1DE;--line:#C8D8D4;--tx:#1B1516;--mut:#504A4D;--pri:#1A404D;--font:'Geist',system-ui,-apple-system,Segoe UI,sans-serif}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font:14px/22px var(--font)}
+header{position:sticky;top:0;z-index:5;background:rgba(17,13,13,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(74,65,67,.4)}
+.bar{max-width:1200px;margin:0 auto;padding:0 20px;height:56px;display:flex;align-items:center;gap:20px}
+.brand{font-weight:600;color:var(--pri)}
+nav{display:flex;gap:2px;overflow-x:auto}
+nav a{color:var(--mut);text-decoration:none;padding:6px 12px;border-radius:6px;white-space:nowrap}
+nav a:hover{background:var(--s1);color:var(--tx)}
+nav a[aria-current=page]{background:var(--s3);color:var(--pri);font-weight:500}
+a:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+main{max-width:1200px;margin:0 auto;padding:32px 20px 64px}
+h1{font-size:30px;line-height:36px;letter-spacing:-.03em;font-weight:500;margin:0 0 4px;color:var(--pri)}
+.sub{color:var(--mut);margin:0 0 28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;align-items:start}
+.proj{background:var(--s1);border-radius:10px;padding:18px}
+.proj h2{font-size:18px;line-height:24px;font-weight:500;color:var(--pri);margin:0}
+.desc{color:var(--mut);margin:2px 0 12px}
+.prog{display:flex;justify-content:space-between;color:var(--mut);font-size:13px;margin-bottom:6px}
+.track{height:4px;background:var(--bg);border-radius:4px;overflow:hidden;margin-bottom:14px}
+.fill{height:100%;background:var(--pri)}
+ul{list-style:none;margin:0 0 12px;padding:0}
+li label{display:flex;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:6px;cursor:pointer}
+li label:hover{background:var(--s2)}
+li input{margin-top:5px;accent-color:#1A404D}
+li.done span{color:var(--mut);text-decoration:line-through}
+form{display:flex;gap:8px}
+form input{flex:1;min-width:0;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font:inherit}
+form button{background:var(--pri);color:#FFFFFF;border:0;border-radius:6px;padding:7px 14px;font:inherit;font-weight:500;cursor:pointer}
+.empty{background:var(--s1);border-radius:10px;padding:18px;color:var(--mut)}
+.empty b{color:var(--pri);font-weight:500}
+.note{margin-top:40px;color:var(--mut);font-size:13px}
+
+.sec{font-size:28px;line-height:34px;letter-spacing:-.03em;font-weight:600;margin:0;color:var(--pri)}
+.sec-sub{color:var(--mut);margin:4px 0 18px;max-width:78ch}
+#hack{margin:0 0 56px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.chip{background:var(--s1);color:var(--tx);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font:inherit;font-weight:500;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--pri);border-color:var(--pri);color:#fff}
+.hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px;align-items:stretch}
+.hk{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.hk-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{display:inline-block;border-radius:999px;padding:4px 12px;font-size:13px;line-height:20px;font-weight:600;background:#DFE8E6;color:#14313B}
+.pill.soon{background:#D8E2E0;color:#6B3400}.pill.hot{background:#E0EAE7;color:#A05005}.pill.done{background:var(--s3);color:var(--mut)}
+.src{font-size:12px;line-height:18px;font-weight:600;border-radius:6px;padding:2px 8px}
+.src.ok{background:#DFE8E6;color:#14313B}.src.warn{background:#D8E2E0;color:#6B3400}
+.hk h3{font-size:22px;line-height:28px;letter-spacing:-.02em;font-weight:600;margin:0;color:var(--tx)}
+.hk-dl small{display:block;color:var(--mut);font-size:12px;line-height:16px;text-transform:uppercase;letter-spacing:.06em}
+.hk-dl b{display:block;font-size:26px;line-height:32px;letter-spacing:-.02em;color:var(--pri)}
+.hk-dl span{color:var(--mut);font-size:13px}
+.hk dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px;line-height:20px}
+.hk dt{color:var(--mut)}.hk dd{margin:0}
+.hk-note{margin:0;color:var(--mut)}
+.hk-act{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap;padding-top:6px}
+.btn{display:inline-block;background:var(--pri);color:#fff;text-decoration:none;border:0;border-radius:8px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}
+.btn.alt{background:transparent;color:var(--pri);border:1px solid var(--pri)}
+.btn.on{background:#DFE8E6;color:#14313B;border-color:#DFE8E6}
+.banner{background:#D8E2E0;color:#4A2400;border-radius:10px;padding:12px 16px;margin:0 0 16px}
+.also{margin:22px 0 0;color:var(--mut);font-size:14px}
+.also a{color:var(--pri);font-weight:600}
+details.closed{margin-top:22px}
+details.closed summary{cursor:pointer;color:var(--mut);font-weight:600;padding:6px 0}
+.hk.past{opacity:.72}
+.fine{color:var(--mut);font-size:13px;margin:16px 0 0}
+@media (max-width:420px){.hgrid{grid-template-columns:1fr}.hk-dl b{font-size:22px}}
+.o2-jump{display:none!important}
+.focus{background:var(--s1);border:1px solid var(--line);border-radius:18px;padding:22px;margin:0 0 32px}
+.focus small{display:block;color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.focus h2{font-size:24px;line-height:30px;letter-spacing:-.02em;font-weight:600;margin:0 0 10px;color:var(--tx)}
+.fmeta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;color:var(--mut);margin-bottom:8px}
+.nxt{margin:0 0 14px;color:var(--tx)}.nxt b{color:var(--mut);font-weight:500;margin-right:6px}
+.fact{display:flex;flex-wrap:wrap;gap:10px}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.pill.blue{background:#E6EDEB;color:#275A6B}
+.proj{border:1px solid var(--line);border-radius:16px;transition:transform .15s,box-shadow .15s}
+.proj:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(27,21,22,.07)}
+.sugs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.sug{background:var(--bg);color:var(--pri);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.sug:hover{background:var(--s2)}
+details.more{margin-top:32px}details.more>summary{cursor:pointer;font-weight:600;color:var(--pri);margin-bottom:14px}
+details.addbox>summary{cursor:pointer;font-weight:600;color:var(--pri)}
+#rq{width:100%;margin:10px 0;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font:inherit}
+html[data-view=programs] #focus,html[data-view=hackathons] #focus{display:none}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#F0F4F3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
+<script>document.documentElement.setAttribute('data-view',new URLSearchParams(location.search).get('view')||'all')</script>
+<style>
+html[data-view=projects] #hack,html[data-view=projects] #comp,html[data-view=projects] #prog{display:none}
+html[data-view=hackathons] #projwrap,html[data-view=hackathons] #prog,html[data-view=hackathons] #comp,html[data-view=programs] #projwrap,html[data-view=programs] #hack{display:none}
+.addbox{background:#fff;border:1px solid #D8E2E0;border-radius:14px;padding:14px 16px;margin:0 0 14px}
+.addbox h3{margin:0 0 8px;font-size:16px}.addbox .r{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.addbox input{flex:1;min-width:150px;border:1px solid #D8E2E0;border-radius:10px;padding:8px 10px;font:inherit}
+.repo{display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid #EBF1EF;padding:8px 0}
+.repo small{color:#5C5F63;display:block}
+.cgrid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.cc{background:#fff;border:1px solid #D8E2E0;border-radius:14px;padding:14px 16px}.cc h3{margin:0 0 4px;font-size:16px}.cc p{margin:0 0 10px;color:#5C5F63;font-size:14px}
+</style>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
+<link rel="stylesheet" href="opai-mobile.css">
+</head>
+<body>
+<header><div class="bar">
+<span class="brand">OPAI</span>
+<nav aria-label="Main">
+<a href="super-chat.html" id="n-chat">Super Chat</a>
+<a href="app.html#/today">Today</a>
+<a href="applications.html">Applications</a>
+<a href="app.html#/outreach">Outreach</a>
+<a href="projects.html" aria-current="page">Projects</a>
+<a href="app.html#/outbox">Outbox</a>
+<a href="app.html#/agent">Agent</a>
+</nav></div></header>
+<main>
+<div id="focus"></div>
+<section id="hack" aria-labelledby="hh">
+<h1 class="sec" id="hh">Hackathons &amp; Programs</h1>
+<p class="sec-sub" id="hsub"></p>
+<div id="hbanner"></div>
+<div class="chips" role="group" aria-label="Filter hackathons">
+<button type="button" class="chip" data-f="all" aria-pressed="true">All open</button>
+<button type="button" class="chip" data-f="week" aria-pressed="false">Closing in 7 days</button>
+<button type="button" class="chip" data-f="official" aria-pressed="false">Official page only</button>
+</div>
+<div id="hlist" class="hgrid"></div>
+<details class="closed" id="hclosed" hidden><summary id="hclosed-s"></summary><div id="hclosed-l" class="hgrid" style="margin-top:12px"></div></details>
+<p class="also" id="halso"></p>
+<p class="fine" id="hfine"></p>
+</section>
+<section id="prog" aria-labelledby="ph2"><h2 class="sec" id="ph2" style="font-size:24px;margin-top:28px">Programs, fellowships and your tracker</h2>
+<p class="sec-sub">Open-source programs, fellowships, developer events and company or research programs. Track each cycle and confirm dates on the organizer's official page.</p>
+<h3 class="sec" style="font-size:20px;margin:18px 0 12px">Featured programs &amp; events</h3>
+<div class="cgrid" aria-label="Featured programs and events">
+<div class="cc"><h3>Google Summer of Code (GSoC)</h3><p>Open-source mentorship with participating organizations. Check the official timeline for the next cycle.</p><a class="btn alt" href="https://developers.google.com/open-source/gsoc/timeline" target="_blank" rel="noopener noreferrer">Official timeline ↗</a></div>
+<div class="cc"><h3>Hacktoberfest</h3><p>An annual open-source contribution event. Review current participation rules and project requirements.</p><a class="btn alt" href="https://hacktoberfest.com/" target="_blank" rel="noopener noreferrer">Official site ↗</a></div>
+<div class="cc"><h3>MLH Global Hack Week</h3><p>Recurring developer events, hands-on challenges and workshops. Check the organizer's page for upcoming events.</p><a class="btn alt" href="https://ghw.mlh.com/" target="_blank" rel="noopener noreferrer">Official site ↗</a></div>
+</div>
+<iframe id="pgf" title="Programs tracker" style="width:100%;height:700px;border:0;background:transparent;display:block"></iframe></section>
+<div id="projwrap">
+<h2 class="sec" style="font-size:24px">Your projects</h2>
+<p class="sub" id="sum"></p>
+<div class="addbox"><h3>Add a project manually</h3>
+<form id="mform" class="r"><input name="n" placeholder="Project name" aria-label="Project name" required maxlength="120"><input name="d" placeholder="One-line description (optional)" aria-label="Description" maxlength="300"><button class="btn">Add project</button></form></div>
+<details class="addbox"><summary>Import from GitHub (search and promote a repo)</summary>
+<form id="gform" class="r"><input name="u" placeholder="GitHub username" aria-label="GitHub username" required maxlength="39" pattern="[A-Za-z0-9-]+"><button class="btn">Show my public repos</button></form>
+<div id="grepos"></div>
+<p class="fine" style="margin:6px 0 0">Reads your public repositories only, straight from GitHub in your browser. Private repos need a GitHub sign-in, which is not set up yet.</p></details>
+<div id="list"></div>
+<p class="note" id="note"></p>
+</div>
+<section id="comp" aria-labelledby="ch"><h2 class="sec" id="ch" style="font-size:24px;margin-top:28px">Coding contests and competitions</h2>
+<p class="sec-sub">Official pages only. These run all year, so check each page for the next date and the registration rules.</p>
+<div class="cgrid">
+<div class="cc"><h3>ICPC</h3><p>Team programming contest run through your university. Ask your college about its team and regional rounds.</p><a class="btn alt" href="https://icpc.global/" target="_blank" rel="noopener noreferrer">Official site ↗</a></div>
+<div class="cc"><h3>Codeforces</h3><p>Regular rated rounds. The contest list shows upcoming rounds and times.</p><a class="btn alt" href="https://codeforces.com/contests" target="_blank" rel="noopener noreferrer">Contest list ↗</a></div>
+<div class="cc"><h3>CodeChef</h3><p>Starters, Cook-Off and Lunchtime contests.</p><a class="btn alt" href="https://www.codechef.com/contests" target="_blank" rel="noopener noreferrer">Contest list ↗</a></div>
+<div class="cc"><h3>LeetCode</h3><p>Weekly and biweekly contests.</p><a class="btn alt" href="https://leetcode.com/contest/" target="_blank" rel="noopener noreferrer">Contests ↗</a></div>
+<div class="cc"><h3>Kaggle</h3><p>Machine learning competitions with their own deadlines.</p><a class="btn alt" href="https://www.kaggle.com/competitions" target="_blank" rel="noopener noreferrer">Competitions ↗</a></div>
+</div></section>
+</main>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var WS=null,S={};
+function load(){
+  var best=null,bt=-1;
+  try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);
+    if(k!=='opa_demo_v3'&&!/^opa_ws_/.test(k))continue;
+    var o;try{o=JSON.parse(localStorage.getItem(k))}catch(e){continue}
+    if(!o||typeof o!=='object')continue;
+    var t=Date.parse(o.history&&o.history[0]&&o.history[0].at)||0;
+    if(!best||t>bt){best={key:k,data:o};bt=t}}}catch(e){}
+  WS=best;S=(best&&best.data)||{};
+  ['projects','history'].forEach(function(k){if(!Array.isArray(S[k]))S[k]=[]});
+  S.projects.forEach(function(p){if(!Array.isArray(p.tasks))p.tasks=[]});
+}
+function save(){try{if(WS)localStorage.setItem(WS.key,JSON.stringify(S))}catch(e){}}
+function log(t){S.history.unshift({id:'h'+Date.now(),at:new Date().toISOString(),text:t})}
+function hackFor(p){var t=trk();for(var k in t){if(t[k]===String(p.id)){var h=H.find(function(x){return x.id===k});if(h)return h}}return null}
+function dlOf(p){var h=hackFor(p);return h&&left(h)>0?ms(h):Infinity}
+function pstat(p){
+  var tot=p.tasks.length,done=p.tasks.filter(function(t){return t.done}).length,h=hackFor(p),m=h?left(h):0;
+  if(tot&&done===tot)return{c:'',l:'Done'};
+  if(h&&m>0&&m<7*864e5)return{c:tone(m),l:m<864e5?'Due today':leftTxt(m)};
+  if(done>0)return{c:'blue',l:'In progress'};
+  return{c:'done',l:'Planning'};
+}
+function sugFor(p){
+  var n=(p.name+' '+(p.description||'')).toLowerCase();
+  if(/hackathon/.test(n))return['Read rules','Finalize idea','Build demo','Record demo video','Submit'];
+  if(/civic/.test(n))return['Define Civic IQ MVP scope','Pick target user','Design core flow','Test with 5 users'];
+  if(/landing|website|portfolio|site/.test(n))return['Write headline','Add product sections','Add CTA','Deploy'];
+  if(/gym|iron|fitness/.test(n))return['Define workout planner flow','Create demo dashboard','Add AI plan generator'];
+  return['Define the goal in one line','List the 3 core features','Build the smallest demo'];
+}
+function pcard(p){
+  var tot=p.tasks.length,done=p.tasks.filter(function(t){return t.done}).length,pc=tot?Math.round(done/tot*100):0,st=pstat(p),nx=p.tasks.filter(function(t){return !t.done})[0];
+  return '<section class="proj" id="proj-'+esc(p.id)+'"><div class="ph"><h2>'+esc(p.name)+'</h2><span class="pill '+st.c+'">'+esc(st.l)+'</span></div>'+(p.description?'<p class="desc">'+esc(p.description)+'</p>':'<div style="height:12px"></div>')+
+  (nx?'<p class="nxt"><b>Next</b>'+esc(nx.name)+'</p>':'')+
+  '<div class="prog"><span>'+done+' of '+tot+' done</span><span>'+pc+'%</span></div>'+
+  '<div class="track" role="progressbar" aria-valuenow="'+pc+'" aria-valuemin="0" aria-valuemax="100"><div class="fill" style="width:'+pc+'%"></div></div>'+
+  (tot?'<ul>'+p.tasks.map(function(t){return '<li'+(t.done?' class="done"':'')+'><label><input type="checkbox" data-p="'+esc(p.id)+'" data-t="'+esc(t.id)+'"'+(t.done?' checked':'')+'><span>'+esc(t.name)+'</span></label></li>'}).join('')+'</ul>':
+   '<p class="desc">No tasks yet. Add the next smallest action:</p><div class="sugs">'+sugFor(p).slice(0,3).map(function(x){return '<button type="button" class="sug" data-sug="'+esc(x)+'" data-p="'+esc(p.id)+'">+ '+esc(x)+'</button>'}).join('')+'</div>')+
+  '<form data-p="'+esc(p.id)+'"><input name="n" placeholder="Add a task" aria-label="New task for '+esc(p.name)+'" required><button>Add</button></form></section>';
+}
+function renderFocus(act){
+  var p=act[0];if(!p){$('focus').innerHTML='';return}
+  var tot=p.tasks.length,done=p.tasks.filter(function(t){return t.done}).length,st=pstat(p),h=hackFor(p),nx=p.tasks.filter(function(t){return !t.done})[0];
+  $('focus').innerHTML='<section class="focus" aria-label="Focus now"><small>Focus now</small><h2>'+esc(p.name)+'</h2><div class="fmeta"><span class="pill '+st.c+'">'+esc(st.l)+'</span><span>'+done+'/'+tot+' tasks complete</span></div>'+
+  '<p class="nxt"><b>Next</b>'+esc(nx?nx.name:'Add the first task')+'</p><div class="fact"><a class="btn" href="#proj-'+esc(p.id)+'">Open checklist</a>'+(h?'<a class="btn alt" href="'+esc(h.u)+'" target="_blank" rel="noopener noreferrer">Open hackathon page ↗</a>':'')+'</div></section>';
+}
+function render(){
+  renderHack();
+  var ps=S.projects,open=0;
+  ps.forEach(function(p){open+=p.tasks.filter(function(t){return !t.done}).length});
+  var act=ps.filter(function(p){return !(p.tasks.length&&p.tasks.every(function(t){return t.done}))}).sort(function(x,y){return dlOf(x)-dlOf(y)});
+  var due=ps.filter(function(p){var h=hackFor(p);return h&&left(h)>0&&left(h)<3*864e5}).length;
+  $('sum').textContent=ps.length?act.length+' active projects · '+open+' open tasks'+(due?' · '+due+' due soon':''):'';
+  renderFocus(act);
+  if(!WS){$('list').innerHTML='<div class="empty"><b>No workspace found in this browser.</b><br>Open the main app on this site first and add a project. This page shows what it saves.</div>';return}
+  if(!ps.length){$('list').innerHTML='<div class="empty"><b>No projects yet.</b><br>Add one in the main app and it will appear here.</div>';return}
+  var rest=ps.filter(function(p){return act.indexOf(p)<0}).concat(act.slice(5));
+  $('list').innerHTML='<h3 class="sec" style="font-size:18px;margin:0 0 4px">Active projects</h3><p class="sec-sub" style="margin-bottom:14px">Only the projects you are building right now.</p><div class="grid">'+act.slice(0,5).map(pcard).join('')+'</div>'+
+    (rest.length?'<details class="more"><summary>More projects ('+rest.length+')</summary><div class="grid">'+rest.map(pcard).join('')+'</div></details>':'');
+  $('note').textContent='Changes save to the same workspace the main app uses, in this browser.';
+}
+
+/* ===== Upcoming hackathons =====
+   Curated, dated list. Every entry keeps its source link; CHECKED is when the list was last verified.
+   Deadlines are shown in IST. Date-only deadlines are treated as end of day IST. */
+var CHECKED='2026-10-10',STALE_DAYS=14,TRK='opai_hack_tracked',HF='all';
+var H=[
+{id:'raksham',n:'Raksham AI Cybersecurity Hackathon',d:'2026-10-12T23:59:00+05:30',dOnly:1,ev:'Not stated in the listing',u:'https://www.anandabazar.com/amp/education-career/iit-delhi-has-launched-raksham-a-national-level-ai-cybersecurity-hackathon-2026-dgtl/cid/1718463',o:0,note:'IIT Delhi, national level, student-focused. Theme: AI, deepfakes and cyber-fraud. This deadline comes from a news article, so confirm it on the official registration page.'},
+{id:'mandi-mm',n:'Multimodal AI Hackathon, IIT Mandi',d:'2026-10-13T23:59:00+05:30',dOnly:1,ev:'Showcase and winners Oct 21',u:'https://unstop.com/hackathons/multimodal-ai-hackathon-2026-iit-mandi-1755408/amp',o:0,note:'The online build period is already running. Confirm registration is still open before you plan around it.'},
+{id:'ai-good',n:'AI for Good Hackathon',d:'2026-10-15T23:59:00+05:30',dOnly:1,ev:'Nov 7 to 9',elig:'Ages 14 to 22 (per listing)',u:'https://internshala.com/competitions/ai-for-good-hackathon-2026/',o:0,note:'48-hour hybrid sprint. Online participation is possible.'},
+{id:'hackiiitd',n:'HackIIITD at Esya’26',d:'2026-10-16T23:59:00+05:30',dOnly:1,ev:'Oct 24 to 25',elig:'Students across India',team:'2 to 4',u:'https://unstop.com/hackathons/hackiiitd-esya26-indraprastha-institute-of-information-technology-iiit-delhi-1761212/amp',o:0,note:'IIIT Delhi. Form your team early; teams must be 2 to 4 people.'},
+{id:'hackcache',n:'Hackcache’26',d:'2026-10-20T23:59:00+05:30',dOnly:1,ev:'Oct 23 to 24',u:'https://unstop.com/hackathons/hackcache26-government-college-of-engineering-and-technology-jammu-1744316/amp',o:0,note:'48-hour hackathon in Jammu. Check the listing for travel and location requirements.'},
+{id:'devhack',n:'DevHack 2026',d:'2026-10-22T23:59:00+05:30',dOnly:1,ev:'See listing',u:'https://unstop.com/hackathons/devhack-2026-devhost-2026-sahyadri-open-source-community-1759829/amp',o:0,note:'Registration and the PPT submission share this one deadline.'},
+{id:'aws-agent',n:'AWS Agent Experience Hackathon',d:'2026-10-23T23:59:00+05:30',dOnly:1,ev:'Runs Oct 16 to 30',u:'https://builder.aws.com/build/hackathons/4f50957c-1d08-37ab-b11c-97516b9adeb4/agent-experience-hackathon',o:1,note:'Build an AWS agent with Amazon Bedrock. Project due Oct 23. Read the official page for who can enter and what to submit.'},
+{id:'build-ai',n:'Build With AI: Basics',d:'2026-10-26T17:00:00-04:00',ev:'Judging Oct 27 to 30',u:'https://learn-ai-basics.devpost.com/rules',o:1,note:'Build a working proof of concept using the required Devpost Learn Skill Pack.'},
+{id:'codehack',n:'CodeHack India',d:'2026-10-27T23:59:00+05:30',dOnly:1,ev:'Oct 28 to Nov 10',u:'https://unstop.com/hackathons/codehack-india-national-level-hackathon-wecodecoders-1762158/amp',o:0,note:'National-level online hackathon.'},
+{id:'paypal-ai',n:'PayPal AI Hackathon',d:'2026-11-12T12:00:00-08:00',ev:'Submissions open Oct 1 to Nov 12',u:'https://paypalaihackathon.devpost.com/rules',o:1,note:'The project must use PayPal’s developer platform together with an AI tool. Read the rules for eligibility.'}
+];
+var IST='Asia/Kolkata';
+function fmt(d,o){return new Intl.DateTimeFormat('en-IN',Object.assign({timeZone:IST},o)).format(d)}
+function ms(h){return Date.parse(h.d)}
+function left(h){var m=ms(h)-Date.now();return m}
+function leftTxt(m){
+  if(m<=0)return 'Closed';
+  var hrs=Math.floor(m/36e5);if(hrs<24)return hrs<=1?'Closes within the hour':'Closes in '+hrs+' hours';
+  var dd=Math.floor(m/864e5);return dd+(dd===1?' day left':' days left');
+}
+function tone(m){return m<=0?'done':m<3*864e5?'hot':m<7*864e5?'soon':''}
+function stale(){var c=Date.parse(CHECKED+'T00:00:00+05:30');return (Date.now()-c)/864e5>STALE_DAYS}
+function trk(){try{return JSON.parse(localStorage.getItem(TRK)||'{}')||{}}catch(e){return{}}}
+function setTrk(o){try{localStorage.setItem(TRK,JSON.stringify(o))}catch(e){}}
+function isTracked(h){var t=trk()[h.id];return !!(t&&S.projects.some(function(p){return String(p.id)===t}))}
+function card(h,past){
+  var m=left(h),d=new Date(ms(h)),tr=isTracked(h);
+  var dl=fmt(d,{weekday:'short',day:'numeric',month:'short'});
+  var tm=h.dOnly?'Time not stated, treated as end of day IST':fmt(d,{day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true})+' IST';
+  var rows='<dt>Event</dt><dd>'+esc(h.ev)+'</dd>'+(h.team?'<dt>Team size</dt><dd>'+esc(h.team)+'</dd>':'')+'<dt>Eligibility</dt><dd>'+esc(h.elig||'Check the official rules')+'</dd>';
+  return '<article class="hk'+(past?' past':'')+'"><div class="hk-top"><span class="pill '+tone(m)+'">'+esc(leftTxt(m))+'</span>'+
+    '<span class="src '+(h.o?'ok':'warn')+'">'+(h.o?'Official rules page':'Third-party listing: verify')+'</span></div>'+
+    '<h3>'+esc(h.n)+'</h3>'+
+    '<div class="hk-dl"><small>Deadline</small><b>'+esc(dl)+'</b><span>'+esc(tm)+'</span></div>'+
+    '<dl>'+rows+'</dl><p class="hk-note">'+esc(h.note)+'</p>'+
+    '<div class="hk-act"><a class="btn alt" href="'+esc(h.u)+'" target="_blank" rel="noopener noreferrer">Open page ↗</a>'+
+    (past?'':'<button type="button" class="btn'+(tr?' on':'')+'" data-track="'+esc(h.id)+'"'+(tr?' disabled':'')+'>'+(tr?'Tracking in Projects':'Track this')+'</button>')+'</div></article>';
+}
+function renderHack(){
+  var open=H.filter(function(h){return left(h)>0}).sort(function(a,b){return ms(a)-ms(b)});
+  var past=H.filter(function(h){return left(h)<=0}).sort(function(a,b){return ms(b)-ms(a)});
+  var shown=open.filter(function(h){return HF==='week'?left(h)<7*864e5:HF==='official'?h.o:true});
+  $('hsub').textContent=open.length+' open now, soonest deadline first. Last checked '+fmt(new Date(CHECKED+'T12:00:00+05:30'),{day:'numeric',month:'long',year:'numeric'})+'. Deadlines are in IST.';
+  $('hbanner').innerHTML=stale()?'<div class="banner" role="status"><b>This list is more than '+STALE_DAYS+' days old.</b> Deadlines may have changed or new hackathons may be open. Check each page before you rely on a date.</div>':'';
+  $('hlist').innerHTML=shown.length?shown.map(function(h){return card(h,false)}).join(''):'<div class="empty" style="grid-column:1/-1"><b>'+(open.length?'Nothing matches this filter.':'No open hackathons in the list right now.')+'</b><br>'+(open.length?'Try “All open”.':'Every listed deadline has passed. The list needs a refresh.')+'</div>';
+  var det=$('hclosed');det.hidden=!past.length;
+  $('hclosed-s').textContent='Closed ('+past.length+')';
+  $('hclosed-l').innerHTML=past.map(function(h){return card(h,true)}).join('');
+  document.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',c.getAttribute('data-f')===HF?'true':'false')});
+  $('halso').innerHTML='Looking for open-source programs, GSoC, Hacktoberfest, fellowships or recurring initiatives? Open the separate <b>Programs</b> section in Work.';
+  $('hfine').textContent='Listings from Unstop, Internshala and news sites are marked “verify”. Confirm dates, eligibility and team rules on the organizer’s page before you register.';
+}
+function trackHack(id){
+  var h=H.find(function(x){return x.id===id});if(!h||left(h)<=0)return;
+  if(!WS){alert('No workspace found in this browser. Open the main app on this site first, then track again.');return}
+  if(isTracked(h))return;
+  var dl=fmt(new Date(ms(h)),{day:'numeric',month:'short'});
+  var p={id:'p'+Date.now(),name:'Hackathon: '+h.n,description:'Deadline '+dl+' (IST). Verify on the official page: '+h.u,
+    tasks:[{n:'Read the rules and eligibility on the official page'},{n:'Register before '+dl},{n:'Decide the idea and '+(h.team?'find a team of '+h.team:'whether you go solo or with a team')},{n:'Build a working demo'},{n:'Submit before '+dl}]
+    .map(function(t,i){return{id:'t'+Date.now()+i,name:t.n,done:false}})};
+  S.projects.unshift(p);log('Tracking hackathon: '+h.n);save();
+  var t=trk();t[h.id]=p.id;setTrk(t);render();
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('[data-track]');if(b){trackHack(b.getAttribute('data-track'));return}
+  var c=e.target.closest&&e.target.closest('.chip[data-f]');if(c){HF=c.getAttribute('data-f');renderHack()}
+});
+setInterval(function(){renderHack()},60000);
+
+function proj(id){return S.projects.find(function(x){return String(x.id)===id})}
+document.addEventListener('change',function(e){
+  var el=e.target;if(!el.matches||!el.matches('input[type=checkbox][data-t]'))return;
+  var p=proj(el.getAttribute('data-p')),t=p&&p.tasks.find(function(x){return String(x.id)===el.getAttribute('data-t')});
+  if(!t)return;t.done=el.checked;
+  log((t.done?'Completed task: ':'Reopened task: ')+t.name);save();render();
+});
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('[data-sug]');if(!b)return;
+  var p=proj(b.getAttribute('data-p'));if(!p)return;
+  p.tasks.push({id:'t'+Date.now(),name:b.getAttribute('data-sug'),done:false});
+  log('Added task: '+b.getAttribute('data-sug')+' ('+p.name+')');save();render();
+});
+document.addEventListener('input',function(e){
+  if(!e.target||e.target.id!=='rq')return;var q=e.target.value.toLowerCase();
+  document.querySelectorAll('#grepos .repo').forEach(function(r){r.style.display=r.textContent.toLowerCase().indexOf(q)<0?'none':''});
+});
+document.addEventListener('submit',function(e){
+  var f=e.target;if(!f.matches||!f.matches('form[data-p]'))return;e.preventDefault();
+  var v=f.elements.n.value.trim(),p=proj(f.getAttribute('data-p'));if(!v||!p)return;
+  p.tasks.push({id:'t'+Date.now(),name:v,done:false});
+  log('Added task: '+v+' ('+p.name+')');save();render();
+});
+window.addEventListener('storage',function(e){if(WS&&e.key===WS.key){load();render()}});
+var sc=$('n-chat');
+if(sc&&location.protocol!=='file:'&&!/\.html$/.test(location.pathname))sc.setAttribute('href','/super-chat');
+function addProject(name,desc){
+  if(!WS){alert('No workspace found in this browser. Open the main app on this site first, then add again.');return false}
+  if(S.projects.some(function(p){return p.name.toLowerCase()===name.toLowerCase()}))return 'dup';
+  S.projects.unshift({id:'p'+Date.now(),name:name,description:desc||'',tasks:[]});
+  log('Added project: '+name);save();render();return true;
+}
+$('mform').addEventListener('submit',function(e){e.preventDefault();var f=e.target,r=addProject(f.elements.n.value.trim(),f.elements.d.value.trim());
+  if(r==='dup')alert('You already have a project with that name.');else if(r)f.reset()});
+var REPOS=[];
+$('gform').addEventListener('submit',function(e){e.preventDefault();var u=e.target.elements.u.value.trim(),box=$('grepos');
+  box.innerHTML='<p class="fine">Loading…</p>';
+  fetch('https://api.github.com/users/'+encodeURIComponent(u)+'/repos?sort=updated&per_page=30&type=owner',{headers:{Accept:'application/vnd.github+json'}})
+  .then(function(r){if(r.status===404)throw new Error('No GitHub user named '+u);if(r.status===403)throw new Error('GitHub rate limit reached. Try again in a few minutes.');if(!r.ok)throw new Error('GitHub error '+r.status);return r.json()})
+  .then(function(rs){REPOS=rs.filter(function(x){return !x.fork});
+    box.innerHTML=REPOS.length?'<p class="fine">All repositories ('+REPOS.length+')</p><input id="rq" placeholder="Filter repositories" aria-label="Filter repositories">'+REPOS.map(function(x,i){var have=S.projects.some(function(p){return p.name.toLowerCase()===x.name.toLowerCase()});
+      return '<div class="repo"><div><b>'+esc(x.name)+'</b><small>'+esc(x.description||'No description')+(x.language?' · '+esc(x.language):'')+'</small></div><button type="button" class="btn alt" data-repo="'+i+'"'+(have?' disabled':'')+'>'+(have?'Added':'Add')+'</button></div>'}).join(''):'<p class="fine">No public repositories found.</p>'})
+  .catch(function(err){box.innerHTML='<p class="fine" role="alert">'+esc(err.message)+'</p>'});
+});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-repo]');if(!b)return;
+  var x=REPOS[+b.getAttribute('data-repo')];if(!x)return;
+  var r=addProject(x.name,(x.description?x.description+' · ':'')+x.html_url);if(r===true){b.textContent='Added';b.disabled=true}});
+load();render();
+var VIEW=document.documentElement.getAttribute('data-view')||'all';
+if(VIEW==='hackathons'){$('hh').textContent='Hackathons';document.title='Hackathons · OPAI';}
+else if(VIEW==='programs'){document.title='Programs · OPAI';}
+if(VIEW==='programs'||VIEW==='all')$('pgf').src='opportunities.html?embed=1&only=programs';
+addEventListener('message',function(e){var d=e.data;if(d&&d.opaiH&&d.k==='programs'&&e.source===$('pgf').contentWindow)$('pgf').style.height=Math.max(300,d.opaiH+8)+'px'});
+})();
+</script>
+<script src="opai-shell.js" defer></script>
+<script src="guide.js" defer></script>
+<script src="karna-popup.js" defer></script>
+<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
+<script src="opai-clarity.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Set up your workspace · OPAI</title>
+<meta name="theme-color" content="#F0F4F3">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
+<style>
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{background:var(--paper,#F0F4F3);color:var(--ink,#1B1516);font:15px/24px var(--sans,'Geist',system-ui,sans-serif);-webkit-font-smoothing:antialiased}
+.wrap{max-width:600px;margin:0 auto;padding:calc(22px + env(safe-area-inset-top,0px)) 18px calc(48px + env(safe-area-inset-bottom,0px))}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:26px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em;font-size:18px}
+.logo svg{flex:none}
+.prog{margin-bottom:22px}
+.prog .lbl{display:flex;justify-content:space-between;font:12px/18px var(--mono,ui-monospace,monospace);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3,#657378);margin-bottom:8px}
+.bar{height:5px;border-radius:99px;background:var(--well,#E2EAE8);overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:99px;background:var(--teal,#1A404D);transition:width .5s cubic-bezier(.22,.61,.36,1)}
+.card{background:var(--card,#F7FAF9);border:1px solid var(--hair,#D5E1DE);border-radius:24px;padding:28px 26px;box-shadow:var(--shadow,0 10px 30px -18px rgba(26,64,77,.35))}
+h1{margin:0 0 8px;font-size:clamp(26px,5vw,34px);line-height:1.15;letter-spacing:-.03em;font-weight:700}
+.lede{margin:0 0 22px;color:var(--ink-2,#504A4D)}
+.step{animation:stepIn .45s cubic-bezier(.22,.61,.36,1) both}
+.step.back{animation-name:stepBack}
+@keyframes stepIn{from{opacity:0;transform:translateX(26px)}}
+@keyframes stepBack{from{opacity:0;transform:translateX(-26px)}}
+.field{margin:0 0 18px;border:0;padding:0;min-width:0}
+.field>label,.field>legend{display:block;font-weight:600;font-size:14px;margin:0 0 6px;padding:0}
+.opt{font-weight:400;color:var(--ink-3,#657378);margin-left:6px;font-size:12.5px}
+.why{margin:6px 0 0;font-size:12.5px;line-height:18px;color:var(--ink-3,#657378)}
+input[type=text],input[type=date],input[type=number],input[type=url],select{width:100%;height:46px;padding:0 14px;border-radius:12px;border:1px solid var(--line-2,#BECFCC);background:var(--paper,#fff);color:inherit;font:inherit;transition:border-color .2s,box-shadow .25s}
+input:focus,select:focus{outline:0;border-color:var(--teal,#1A404D);box-shadow:0 0 0 4px rgba(55,115,135,.18)}
+input[aria-invalid=true],select[aria-invalid=true]{border-color:var(--bad,#CE6C11)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.opts.one{grid-template-columns:1fr}
+.opt-card{position:relative}
+.opt-card input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.opt-card span{display:flex;align-items:center;gap:10px;min-height:46px;padding:10px 14px;border-radius:12px;border:1px solid var(--line-2,#BECFCC);background:var(--paper,#fff);cursor:pointer;transition:border-color .2s,background .2s,transform .15s}
+.opt-card span::before{content:"";flex:none;width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2,#A3B7B5);transition:all .2s}
+.opts.multi .opt-card span::before{border-radius:6px}
+.opt-card:hover span{border-color:var(--teal,#1A404D)}
+.opt-card input:checked+span{border-color:var(--teal,#1A404D);background:var(--teal-soft,#E4EBE9);font-weight:600}
+.opt-card input:checked+span::before{background:var(--teal,#1A404D);border-color:var(--teal,#1A404D);box-shadow:inset 0 0 0 3px var(--teal-soft,#E4EBE9)}
+.opts.multi .opt-card input:checked+span::before{box-shadow:none;background:var(--teal,#1A404D) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2l2.4 2.4 4.6-5' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat}
+.opt-card input:focus-visible+span{outline:2px solid var(--teal,#1A404D);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.row2{grid-template-columns:1fr}.card{padding:22px 18px}}
+.err{margin:0 0 14px;padding:10px 14px;border-radius:12px;background:var(--coral-soft,#E8F0EE);color:var(--coral-ink,#A65306);font-size:13.5px;line-height:20px}
+.actions{display:flex;gap:10px;align-items:center;margin-top:24px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 24px;border-radius:999px;border:1px solid var(--teal,#1A404D);background:var(--teal,#1A404D);color:#fff;font:600 15px var(--sans,system-ui);cursor:pointer;transition:transform .15s,background .2s,box-shadow .2s,opacity .2s}
+.btn:hover{background:var(--teal-2,#245565);box-shadow:0 8px 20px -10px var(--teal,#1A404D)}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.55;cursor:default;transform:none;box-shadow:none}
+.btn.ghost{background:transparent;color:var(--ink,#1B1516);border-color:var(--line-2,#BECFCC)}
+.btn.ghost:hover{background:var(--well,#E2EAE8);box-shadow:none}
+.btn.link{background:none;border:0;color:var(--ink-2,#504A4D);padding:0 8px;text-decoration:underline;text-underline-offset:3px;height:auto}
+.btn.link:hover{background:none;box-shadow:none;color:var(--ink,#1B1516)}
+.sp{flex:1}
+.ready{margin:0 0 6px;padding:0;list-style:none;display:grid;gap:10px}
+.ready li{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--well,#E2EAE8)}
+.ready li::before{content:"";flex:none;width:22px;height:22px;border-radius:50%;background:var(--teal,#1A404D) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2l2.4 2.4 4.6-5' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat}
+.note{font-size:12.5px;color:var(--ink-3,#657378);margin-top:16px}
+.loading{color:var(--ink-3,#657378);padding:60px 0;text-align:center}
+@media(prefers-reduced-motion:reduce){.step,.step.back{animation:none}.bar i{transition:none}}
+</style>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)&&location.protocol!=='file:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
+<link rel="stylesheet" href="opai-mobile.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="logo"><img src="assets/opai-logo-96.png" width="30" height="30" alt="" style="display:block;border-radius:8px">OPAI</div>
+    <span id="who" class="note" style="margin:0"></span>
+  </div>
+  <div class="prog" id="prog" hidden>
+    <div class="lbl"><span id="plabel">Step 1 of 4</span><span id="pwhy"></span></div>
+    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0" id="pbar"><i></i></div>
+  </div>
+  <main class="card" id="card" aria-live="polite"><div class="loading">Loading…</div></main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  /* ---------- config ---------- */
+  var API = (localStorage.getItem('opa_api_base') || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8000' : 'https://opa-52ug.onrender.com')).replace(/\/+$/, '');
+  var EDIT = /[?&]edit=1/.test(location.search);
+  var uid = null, mail = null;
+  try { mail = localStorage.getItem('opai_sc_email'); } catch (e) {}
+  var card = document.getElementById('card');
+
+  var COURSES = [['btech', 'B.Tech / B.E.', 4, 8, true], ['degree', 'Degree / B.Sc.', 4, 8, true], ['diploma', 'Diploma', 3, 6, false],
+                 ['mtech', 'M.Tech / M.E.', 2, 4, false], ['mba_mca', 'MBA / MCA', 3, 6, false], ['other', 'Other', 5, 10, false]];
+  var GOALS = [['exams', 'Semester exam preparation'], ['dsa', 'DSA and placements'], ['internships', 'Internship applications'],
+               ['research', 'Research / professor outreach'], ['projects', 'Projects and portfolio'], ['freelance', 'Freelance / client work']];
+  var TIMES = [['morning', 'Morning'], ['afternoon', 'Afternoon'], ['evening', 'Evening'], ['night', 'Night']];
+  var FOCUS = [30, 60, 120];
+
+  /* all entered data lives here so Back never loses anything */
+  var S = { full_name: '', date_of_birth: '', course_type: '', branch: '', current_year: '', current_semester: '', college: '',
+            goals: [], focus: 60, focusCustom: false, study: '', github: '', linkedin: '', portfolio: '' };
+  var step = 0, dir = '';
+
+  /* ---------- helpers ---------- */
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (k) {
+      if (k === 'class') n.className = attrs[k]; else if (k === 'text') n.textContent = attrs[k];
+      else if (k.slice(0, 2) === 'on') n.addEventListener(k.slice(2), attrs[k]); else if (attrs[k] !== false && attrs[k] != null) n.setAttribute(k, attrs[k] === true ? '' : attrs[k]);
+    });
+    [].concat(kids || []).forEach(function (c) { if (c != null) n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return n;
+  }
+  async function api(path, opts) {
+    opts = opts || {};
+    var res = await fetch(API + path, { method: opts.method || 'GET', headers: opts.body ? { 'Content-Type': 'application/json' } : {}, body: opts.body ? JSON.stringify(opts.body) : undefined });
+    var data = null; try { data = await res.json(); } catch (e) {}
+    if (!res.ok) {
+      var d = data && data.detail;
+      if (Array.isArray(d)) d = d.map(function (x) { return String(x.msg || '').replace(/^Value error,\s*/i, ''); }).join(' ');
+      var err = new Error(d || ('Something went wrong (' + res.status + ')')); err.status = res.status; throw err;
+    }
+    return data;
+  }
+  function q(path) { return path + (path.indexOf('?') > -1 ? '&' : '?') + 'user_id=' + encodeURIComponent(uid); }
+  function courseInfo() { return COURSES.filter(function (c) { return c[0] === S.course_type; })[0]; }
+
+  function fromProfile(p) {
+    if (!p) return;
+    S.full_name = p.full_name || S.full_name; S.date_of_birth = p.date_of_birth || S.date_of_birth;
+    S.course_type = p.course_type || S.course_type; S.branch = p.branch || S.branch;
+    S.current_year = p.current_year || S.current_year; S.current_semester = p.current_semester || S.current_semester; S.college = p.college || S.college;
+    if (p.goals && p.goals.length) S.goals = p.goals.slice();
+    if (p.daily_focus_minutes) { S.focus = p.daily_focus_minutes; S.focusCustom = FOCUS.indexOf(p.daily_focus_minutes) < 0; }
+    S.study = p.preferred_study_time || S.study; S.github = p.github || ''; S.linkedin = p.linkedin || ''; S.portfolio = p.portfolio || '';
+  }
+
+  /* ---------- rendering ---------- */
+  function progress(n) {
+    var p = document.getElementById('prog'); p.hidden = !(n >= 1 && n <= 4);
+    document.getElementById('plabel').textContent = 'Step ' + n + ' of 4';
+    var bar = document.getElementById('pbar'); bar.setAttribute('aria-valuenow', n - 1); bar.firstElementChild.style.width = (n * 25) + '%';
+  }
+  function show(n, back) {
+    step = n; dir = back ? 'back' : '';
+    progress(n);
+    var node = [welcome, basic, education, goals, links, done][n]();
+    node.classList.add('step'); if (back) node.classList.add('back');
+    card.replaceChildren(node);
+    var first = node.querySelector('input:not([type=radio]):not([type=checkbox]),select,button.btn');
+    if (first && n > 0) setTimeout(function () { try { first.focus({ preventScroll: true }); } catch (e) {} }, 60);
+    scrollTo({ top: 0 });
+  }
+  function errBox(node) { var e = el('div', { class: 'err', role: 'alert', hidden: true }); node.insertBefore(e, node.querySelector('.actions')); return e; }
+  function setErr(box, msg) { box.textContent = msg || ''; box.hidden = !msg; if (msg) box.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  function field(label, input, why, optional, id) {
+    return el('div', { class: 'field' }, [el('label', { for: id }, [label, optional ? el('span', { class: 'opt', text: 'optional' }) : null]), input, why ? el('p', { class: 'why', text: why }) : null]);
+  }
+  function radios(name, list, current, multi, onchange, cls) {
+    var wrap = el('div', { class: 'opts ' + (multi ? 'multi ' : '') + (cls || ''), role: multi ? 'group' : 'radiogroup' });
+    list.forEach(function (it) {
+      var on = multi ? current.indexOf(it[0]) > -1 : String(current) === String(it[0]);
+      var inp = el('input', { type: multi ? 'checkbox' : 'radio', name: name, value: it[0], checked: on });
+      inp.addEventListener('change', function () { onchange(it[0], inp.checked); });
+      wrap.appendChild(el('label', { class: 'opt-card' }, [inp, el('span', { text: it[1] })]));
+    });
+    return wrap;
+  }
+  function actions(opts) {
+    var a = el('div', { class: 'actions' });
+    if (opts.back) a.appendChild(el('button', { type: 'button', class: 'btn ghost', text: 'Back', onclick: opts.back }));
+    a.appendChild(el('span', { class: 'sp' }));
+    if (opts.skip) a.appendChild(el('button', { type: 'button', class: 'btn link', text: opts.skipLabel || 'Skip for now', onclick: opts.skip }));
+    var go = el('button', { type: 'submit', class: 'btn', text: opts.next || 'Continue' }); a.appendChild(go);
+    return a;
+  }
+  /* wraps a step in a <form> so Enter submits and the button disables while saving */
+  function form(children, onSubmit, bar) {
+    var f = el('form', { novalidate: true }, children);
+    var box = errBox(f);
+    f.addEventListener('submit', async function (e) {
+      e.preventDefault(); setErr(box, '');
+      var btn = f.querySelector('button[type=submit]'), label = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try { await onSubmit(box); } catch (er) { setErr(box, er.status ? er.message : 'Could not reach the server. Check your connection and try again.'); }
+      finally { btn.disabled = false; btn.textContent = label; }
+    });
+    return f;
+  }
+
+  /* ---------- steps ---------- */
+  function welcome() {
+    return el('div', {}, [
+      el('h1', { text: 'Welcome to OPAI' }),
+      el('p', { class: 'lede', text: 'Let’s personalize your workspace. It takes about a minute: four short steps, and you can change everything later in Profile.' }),
+      el('ul', { class: 'ready' }, [el('li', { text: 'Your exam plan starts from your course and semester' }), el('li', { text: 'Today shows what to do next, sized to your daily focus time' }), el('li', { text: 'Nothing is shared or sent without your approval' })]),
+      el('div', { class: 'actions' }, [el('span', { class: 'sp' }), el('button', { type: 'button', class: 'btn', text: 'Get started', onclick: function () { show(1); } })])
+    ]);
+  }
+
+  function basic() {
+    var maxDob = new Date(); maxDob.setFullYear(maxDob.getFullYear() - 13);
+    var name = el('input', { type: 'text', id: 'f-name', autocomplete: 'name', maxlength: 80, value: S.full_name, required: true });
+    var dob = el('input', { type: 'date', id: 'f-dob', autocomplete: 'bday', value: S.date_of_birth, max: maxDob.toISOString().slice(0, 10), min: '1920-01-01' });
+    return form([
+      el('h1', { text: 'Who are you?' }),
+      el('p', { class: 'lede', text: 'We’ll use your name across OPAI and in drafts you approve.' }),
+      field('Full name', name, 'Shown on your workspace and in email drafts you review.', false, 'f-name'),
+      field('Date of birth', dob, 'Only used to check age-based eligibility for programs. It is stored privately and never shown. Leave it empty if you prefer.', true, 'f-dob'),
+      actions({ next: 'Continue' })
+    ], async function (box) {
+      var n = name.value.replace(/\s+/g, ' ').trim();
+      name.setAttribute('aria-invalid', 'false');
+      if (n.length < 2 || n.length > 80) { name.setAttribute('aria-invalid', 'true'); name.focus(); return setErr(box, 'Enter your full name (2 to 80 characters).'); }
+      S.full_name = n; S.date_of_birth = dob.value;
+      var tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+      await api(q('/v1/onboarding/basic'), { method: 'POST', body: { full_name: n, date_of_birth: dob.value || null, timezone: tz || null } });
+      show(2);
+    });
+  }
+
+  function education() {
+    var holder = el('div');
+    var branch = el('input', { type: 'text', id: 'f-branch', maxlength: 120, value: S.branch, placeholder: 'e.g. Computer Science and Engineering' });
+    var year = el('select', { id: 'f-year' }), sem = el('select', { id: 'f-sem' });
+    var college = el('input', { type: 'text', id: 'f-college', maxlength: 120, value: S.college, autocomplete: 'organization' });
+    var branchField = field('Course / branch', branch, 'Used to set up your semester and match programs to your field.', false, 'f-branch');
+    var labelOf = branchField.querySelector('label');
+    function fillSelects() {
+      var c = courseInfo(), maxY = c ? c[2] : 5, maxS = c ? c[3] : 10;
+      year.replaceChildren(el('option', { value: '', text: 'Select year' }));
+      for (var y = 1; y <= maxY; y++) year.appendChild(el('option', { value: y, text: ['', '1st', '2nd', '3rd', '4th', '5th'][y] + ' year', selected: String(S.current_year) === String(y) }));
+      sem.replaceChildren(el('option', { value: '', text: 'Select semester' }));
+      for (var s = 1; s <= maxS; s++) sem.appendChild(el('option', { value: s, text: 'Semester ' + s, selected: String(S.current_semester) === String(s) }));
+    }
+    function sync() {
+      var c = courseInfo();
+      labelOf.firstChild.textContent = 'Course / branch'; var o = labelOf.querySelector('.opt'); if (o) o.remove();
+      if (c && !c[4]) labelOf.appendChild(el('span', { class: 'opt', text: 'optional' }));
+      fillSelects();
+    }
+    var types = radios('course', COURSES.map(function (c) { return [c[0], c[1]]; }), S.course_type, false, function (v) { S.course_type = v; if (S.current_year > courseInfo()[2]) S.current_year = ''; if (S.current_semester > courseInfo()[3]) S.current_semester = ''; sync(); });
+    sync();
+    var f = form([
+      el('h1', { text: 'What are you studying?' }),
+      el('p', { class: 'lede', text: 'This sets up your semester and exam planning.' }),
+      el('fieldset', { class: 'field' }, [el('legend', { text: 'Course type' }), types]),
+      branchField,
+      el('div', { class: 'row2' }, [field('Current year', year, '', false, 'f-year'), field('Semester', sem, 'Optional, but needed to create your semester.', true, 'f-sem')]),
+      field('College / university', college, '', true, 'f-college'),
+      actions({ back: function () { collect(); show(1, true); } })
+    ], async function (box) {
+      collect();
+      if (!S.course_type) return setErr(box, 'Choose your course type.');
+      var c = courseInfo();
+      if (c[4] && !S.branch) { branch.setAttribute('aria-invalid', 'true'); branch.focus(); return setErr(box, 'Enter your course / branch.'); }
+      if (!S.current_year) { year.setAttribute('aria-invalid', 'true'); year.focus(); return setErr(box, 'Select your current year.'); }
+      await api(q('/v1/onboarding/education'), { method: 'POST', body: { course_type: S.course_type, branch: S.branch || null, current_year: +S.current_year, current_semester: S.current_semester ? +S.current_semester : null, college: S.college || null } });
+      show(3);
+    });
+    function collect() { S.branch = branch.value.trim(); S.current_year = year.value; S.current_semester = sem.value; S.college = college.value.trim(); }
+    holder.appendChild(f); return holder;
+  }
+
+  function goals() {
+    var custom = el('input', { type: 'number', id: 'f-custom', min: 15, max: 480, step: 5, value: S.focusCustom ? S.focus : '', placeholder: 'Minutes per day', hidden: !S.focusCustom, 'aria-label': 'Custom minutes per day' });
+    var focusOpts = FOCUS.map(function (m) { return [String(m), m === 30 ? '30 minutes' : m === 60 ? '1 hour' : '2 hours']; }).concat([['custom', 'Custom']]);
+    var focus = radios('focus', focusOpts, S.focusCustom ? 'custom' : String(S.focus), false, function (v) {
+      if (v === 'custom') { S.focusCustom = true; custom.hidden = false; custom.focus(); } else { S.focusCustom = false; S.focus = +v; custom.hidden = true; }
+    });
+    var goalsEl = radios('goal', GOALS, S.goals, true, function (v, on) { var i = S.goals.indexOf(v); if (on && i < 0) S.goals.push(v); if (!on && i > -1) S.goals.splice(i, 1); });
+    var study = radios('study', TIMES, S.study, false, function (v) { S.study = v; });
+    return form([
+      el('h1', { text: 'What should OPAI help with first?' }),
+      el('p', { class: 'lede', text: 'Pick everything that applies. This decides what Today shows first.' }),
+      el('fieldset', { class: 'field' }, [el('legend', { text: 'Your main goals' }), goalsEl]),
+      el('fieldset', { class: 'field' }, [el('legend', { text: 'Daily focus time' }), focus, custom, el('p', { class: 'why', text: 'Today plans your day to fit this, with a small buffer.' })]),
+      el('fieldset', { class: 'field' }, [el('legend', {}, ['Preferred study time', el('span', { class: 'opt', text: 'optional' })]), study, el('p', { class: 'why', text: 'Used to place your study blocks when you’re sharpest.' })]),
+      actions({ back: function () { show(2, true); } })
+    ], async function (box) {
+      if (!S.goals.length) return setErr(box, 'Pick at least one goal.');
+      var mins = S.focusCustom ? parseInt(custom.value, 10) : S.focus;
+      if (!(mins >= 15 && mins <= 480)) { custom.setAttribute('aria-invalid', 'true'); custom.focus(); return setErr(box, 'Daily focus time must be between 15 and 480 minutes.'); }
+      S.focus = mins;
+      await api(q('/v1/onboarding/goals'), { method: 'POST', body: { goals: S.goals, daily_focus_minutes: mins, preferred_study_time: S.study || null } });
+      show(4);
+    });
+  }
+
+  function links() {
+    var gh = el('input', { type: 'text', id: 'f-gh', inputmode: 'url', autocomplete: 'off', value: S.github, placeholder: 'github.com/username' });
+    var li = el('input', { type: 'text', id: 'f-li', inputmode: 'url', autocomplete: 'off', value: S.linkedin, placeholder: 'linkedin.com/in/username' });
+    var pf = el('input', { type: 'text', id: 'f-pf', inputmode: 'url', autocomplete: 'off', value: S.portfolio, placeholder: 'yourwebsite.com' });
+    function grab() { S.github = gh.value.trim(); S.linkedin = li.value.trim(); S.portfolio = pf.value.trim(); }
+    async function save(box, empty) {
+      if (empty) { S.github = S.linkedin = S.portfolio = ''; } else grab();
+      await api(q('/v1/onboarding/links'), { method: 'POST', body: { github: S.github || null, linkedin: S.linkedin || null, portfolio: S.portfolio || null } });
+      var r = await api(q('/v1/onboarding/complete'), { method: 'POST' });
+      show5(r);
+    }
+    var f = form([
+      el('h1', { text: 'Add your links' }),
+      el('p', { class: 'lede', text: 'All optional. Add them now or later from Profile.' }),
+      field('GitHub', gh, 'Helps match your projects to opportunities.', true, 'f-gh'),
+      field('LinkedIn', li, 'Kept as a link you provide. OPAI never scrapes or messages through it.', true, 'f-li'),
+      field('Portfolio', pf, '', true, 'f-pf'),
+      actions({ back: function () { grab(); show(3, true); }, next: 'Finish setup', skip: function () { var box = f.querySelector('.err'); f.querySelectorAll('button').forEach(function (b) { b.disabled = true; }); save(box, true).catch(function (er) { f.querySelectorAll('button').forEach(function (b) { b.disabled = false; }); setErr(box, er.message); }); } })
+    ], function (box) { return save(box, false); });
+    return f;
+  }
+
+  var result = null;
+  function show5(r) { result = r; show(5); }
+  function done() {
+    var r = result || { first_name: (S.full_name || '').split(' ')[0], starts_with: [] };
+    var starts = (r.starts_with && r.starts_with.length) ? r.starts_with : GOALS.filter(function (g) { return S.goals.indexOf(g[0]) > -1; }).map(function (g) { return g[1]; });
+    return el('div', {}, [
+      el('h1', { text: r.first_name ? 'You’re ready, ' + r.first_name + '.' : 'You’re ready.' }),
+      el('p', { class: 'lede', text: 'OPAI will start with:' }),
+      el('ul', { class: 'ready' }, starts.map(function (s) { return el('li', { text: s }); })),
+      el('p', { class: 'note', text: 'You can update your profile anytime.' }),
+      el('div', { class: 'actions' }, [el('span', { class: 'sp' }), el('button', { type: 'button', class: 'btn', text: 'Open my workspace', onclick: function () { try { localStorage.setItem(DONE_KEY, '1'); } catch (e) {} location.replace(NEXT || r.next || 'today.html'); } })])
+    ]);
+  }
+
+  /* ---------- boot ---------- */
+  var NEXT = (function () { try { var n = new URLSearchParams(location.search).get('next') || ''; return /^[a-z0-9-]+\.html$/i.test(n) && !/^(login|onboarding|landing)\.html$/i.test(n) ? n : ''; } catch (e) { return ''; } })();
+  var DONE_KEY = 'opai_onb_done:' + (mail || '');
+  function goOn() { location.replace(NEXT || 'today.html'); }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  async function withRetry(fn) {            /* free-tier servers sleep: wait for them instead of showing an error */
+    var wait = [0, 3000, 6000, 10000, 15000], last;
+    for (var i = 0; i < wait.length; i++) {
+      if (wait[i]) { card.replaceChildren(el('div', {}, [el('h1', { text: 'Waking up OPAI…' }), el('p', { class: 'lede', text: 'The server was asleep. This takes a few seconds the first time.' })])); await sleep(wait[i]); }
+      try { return await fn(); } catch (e) { last = e; if (e && e.status && e.status < 500) throw e; }
+    }
+    throw last;
+  }
+  async function boot() {
+    if (!mail) { location.replace('app.html'); return; }
+    try {
+      var d = await withRetry(function () { return api('/v1/auth/dev-login?email=' + encodeURIComponent(mail), { method: 'POST' }); });
+      uid = d.user_id;
+      document.getElementById('who').textContent = mail;
+      var st = await withRetry(function () { return api(q('/v1/onboarding/status')); });
+      if (!st.required) { try { localStorage.setItem(DONE_KEY, '1'); } catch (e) {} }
+      if (!st.required && !EDIT) { goOn(); return; }
+      fromProfile(st.profile);
+      if (EDIT) show(1);
+      else if (st.step >= 1) show(Math.min(st.step + 1, 4));      /* resume where they left off (all 4 saved -> last step to finish) */
+      else show(0);
+    } catch (e) {
+      try { if (localStorage.getItem(DONE_KEY) === '1' && !EDIT) { goOn(); return; } } catch (x) {}   /* already set up before: never trap them on this page */
+      card.replaceChildren(el('div', {}, [el('h1', { text: 'We couldn’t reach OPAI' }), el('p', { class: 'lede', text: 'The server may be waking up. Wait a few seconds and try again.' }),
+        el('div', { class: 'actions' }, [el('button', { type: 'button', class: 'btn', text: 'Try again', onclick: function () { location.reload(); } })])]));
+    }
+  }
+  boot();
+})();
+</script>
+<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
+</body>
+</html>

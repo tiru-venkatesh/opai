@@ -1,0 +1,103 @@
+/* OpAI — black & white glass theme. Loaded last. Remove the <link> to roll back. */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400..800&display=swap');
+
+/* catch-all: any leftover colour (old blue skins, inline styles, logos) renders grey */
+html{filter:grayscale(1)}
+
+html:root:root:root{
+  --bg:#F3F6F5; --surface:rgba(255,255,255,.78); --surface-2:rgba(239,243,242,.85);
+  --ink:#0B0909; --ink-2:#4F494C; --ink-3:#839499;
+  --line:rgba(0,0,0,.09); --line-2:rgba(0,0,0,.18);
+  --accent:#0B0909; --accent-d:#000; --accent-soft:rgba(0,0,0,.06); --on-accent:#fff;
+  --good:#231B1C; --good-soft:rgba(0,0,0,.07); --warn:#403435; --warn-soft:rgba(0,0,0,.07);
+  --bad:#000; --bad-soft:rgba(0,0,0,.10);
+  --c-app:#130F0F; --c-out:#555356; --c-proj:#392D2E; --c-acad:#6B7D83; --c-req:#000; --c-opp:#8EA0A3;
+  --side:rgba(255,255,255,.70);
+  --r-lg:20px; --r-md:14px; --r-sm:10px;
+  --shadow-1:0 1px 0 #fff inset,0 8px 24px -14px rgba(0,0,0,.25);
+  --shadow-2:0 28px 60px -26px rgba(0,0,0,.45);
+  --display:'Plus Jakarta Sans',system-ui,sans-serif; --body:'Plus Jakarta Sans',system-ui,sans-serif;
+  --pine:#0B0909; --pine-soft:rgba(0,0,0,.06);
+  color-scheme:light;
+}
+html:root:root:root[data-theme="dark"]{
+  --bg:#060404; --surface:rgba(32,26,26,.72); --surface-2:rgba(52,40,41,.8);
+  --ink:#F3F7F6; --ink-2:#ADC0BD; --ink-3:#73868D;
+  --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.20);
+  --accent:#F3F7F6; --accent-d:#fff; --accent-soft:rgba(255,255,255,.10); --on-accent:#0B0909;
+  --good:#E1E9E7; --warn:#C7D7D3; --bad:#fff;
+  --side:rgba(19,15,15,.75);
+  --shadow-1:0 1px 0 rgba(255,255,255,.06) inset,0 10px 28px -14px rgba(0,0,0,.8);
+  --shadow-2:0 28px 70px -26px #000;
+  color-scheme:dark;
+}
+
+/* canvas: kill the old photo background, use plain monochrome light */
+html body::before{display:none!important}
+html body{
+  font-family:var(--body)!important;color:var(--ink)!important;background-attachment:fixed!important;
+  background-color:var(--bg)!important;
+  background-image:radial-gradient(900px 500px at 10% -10%,rgba(0,0,0,.07),transparent 60%),
+                   radial-gradient(800px 500px at 100% 0,rgba(0,0,0,.05),transparent 60%)!important;
+}
+html[data-theme="dark"] body{
+  background-image:radial-gradient(900px 500px at 10% -10%,rgba(255,255,255,.08),transparent 60%),
+                   radial-gradient(800px 500px at 100% 0,rgba(255,255,255,.05),transparent 60%)!important;
+}
+.app,#page,main#view{background:transparent!important}
+.scanline{display:none!important}
+h1,h2,h3,h4,.brand b{font-family:var(--display)!important;letter-spacing:-.025em}
+
+/* glass surfaces (only real cards — never wrappers) */
+.panel,.hero,.kcard,.proj,.form-panel,.dialog,.pal,.focus,.hm-card,.hm-stat,.gate-card,.onboard-card,.cal-pop,
+.jv-main,.jv-ctx,.board .col{
+  background:var(--surface)!important;border:1px solid var(--line)!important;border-radius:var(--r-lg)!important;
+  box-shadow:var(--shadow-1)!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+.dialog,.pal,.onboard-card,.cal-pop{box-shadow:var(--shadow-2)!important}
+/* inner wrappers must not become nested boxes */
+.gate-form,.gate-tabs+form,#ob-body,#ob-nav,.ob-steps,.panel-h,.hero-top{background:transparent!important;box-shadow:none!important;backdrop-filter:none!important}
+.gate-form,#ob-body{border:0!important}
+.overlay{background:rgba(255,255,255,.55)!important;backdrop-filter:blur(6px)}
+html[data-theme="dark"] .overlay{background:rgba(0,0,0,.6)!important}
+
+/* sidebar + header */
+.side{background:var(--side)!important;color:var(--ink-2)!important;border-right:1px solid var(--line)!important;
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:none!important}
+.side .brand span,.side-foot,.side .kbd{color:var(--ink-3)!important}
+.brand-mark{background:#0B0909!important;border-radius:12px!important;box-shadow:none!important}
+.brand-mark svg{stroke:#fff!important}
+html[data-theme="dark"] .brand-mark{background:#fff!important}
+html[data-theme="dark"] .brand-mark svg{stroke:#000!important}
+.search-btn,.hdr-search,.conn,.userchip{background:var(--surface)!important;color:var(--ink-2)!important;
+  border:1px solid var(--line)!important;border-radius:var(--r-md)!important;box-shadow:none!important}
+.nav button{color:var(--ink-2)!important;border-radius:12px!important}
+.nav button:hover{background:var(--accent-soft)!important;color:var(--ink)!important}
+.nav button.on{background:var(--accent)!important;color:var(--on-accent)!important;box-shadow:none!important}
+.hdr{background:var(--side)!important;border-bottom:1px solid var(--line)!important;backdrop-filter:blur(18px)}
+.hdr-av,.av{background:var(--accent)!important;color:var(--on-accent)!important}
+
+/* buttons: .btn = solid black pill; .ghost / .soft / .danger = outlined */
+.btn{background:var(--accent)!important;color:var(--on-accent)!important;border:1px solid var(--accent)!important;
+  border-radius:999px!important;box-shadow:none!important;font-weight:650}
+.btn:hover{opacity:.86}
+.btn.ghost,.btn.soft,.btn.danger{background:transparent!important;color:var(--ink)!important;border:1px solid var(--line-2)!important}
+.btn.ghost:hover,.btn.soft:hover,.btn.danger:hover{background:var(--accent-soft)!important;opacity:1}
+.icon-btn{background:var(--surface)!important;border:1px solid var(--line)!important;color:var(--ink)!important;border-radius:999px!important}
+.chip{border-radius:999px!important}
+
+/* inputs */
+input:not([type=checkbox]):not([type=radio]),select,textarea{
+  background:var(--surface-2)!important;color:var(--ink)!important;border:1px solid var(--line-2)!important;
+  border-radius:var(--r-sm)!important;box-shadow:none!important}
+input:focus,select:focus,textarea:focus{border-color:var(--ink)!important;box-shadow:0 0 0 3px var(--accent-soft)!important}
+:focus-visible{outline:2px solid var(--ink)!important;outline-offset:2px}
+::placeholder{color:var(--ink-3)!important}
+
+/* landing + login (own inline styles) */
+.btn.accent,.btn.primary,button.primary{background:var(--accent)!important;color:var(--on-accent)!important}
+::selection{background:#000;color:#fff}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* landing hero is a full-width section, not a card */
+section.hero{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important}

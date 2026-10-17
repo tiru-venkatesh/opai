@@ -1,0 +1,96 @@
+/* OPAI shared design layer v8 — warm paper, deep teal, coral signal. Loaded LAST on every page. */
+:root{
+  --paper:#F0F4F3;--card:#F7FAF9;--card-2:#EAEFEE;--well:#E2EAE8;--hair:#D5E1DE;--line-2:#BECFCC;
+  --ink:#1B1516;--ink-2:#504A4D;--ink-3:#70838A;
+  --teal:#1A404D;--teal-2:#245565;--teal-soft:#E4EBE9;--coral:#E09F62;--coral-ink:#DB7516;--coral-soft:#E8F0EE;
+  --ok:#30687B;--warn:#C7680F;--bad:#CE6C11;
+  --sans:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --shadow:0 1px 0 #fff inset,0 10px 30px -18px rgba(26,64,77,.35);
+}
+html{background:var(--paper);color-scheme:light}
+body{background-color:var(--paper);color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){body{animation:opaiIn .25s ease-out both}@keyframes opaiIn{from{opacity:0}to{opacity:1}}}
+::selection{background:var(--coral-soft);color:var(--ink)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+/* ---------- shell header ---------- */
+.opai-hd{position:fixed;top:0;left:0;right:0;z-index:50;height:64px;display:flex;align-items:center;gap:16px;padding:0 max(12px,env(safe-area-inset-left,0px)) 0 max(12px,env(safe-area-inset-left,0px));background:rgba(240,244,243,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--hair)}
+.opai-hd .in{width:100%;max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:0 8px}
+.opai-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.opai-logo svg{display:block}.opai-logo b{display:block;font:700 17px/1 var(--sans);letter-spacing:-.02em}.opai-logo small{display:block;font:11px/1.2 var(--mono);color:var(--ink-3);margin-top:3px}
+.opai-pills{display:flex;gap:2px;padding:4px;border-radius:999px;background:var(--well);border:1px solid var(--hair);overflow-x:auto;scrollbar-width:none;min-width:0;margin:0 auto}
+.opai-pills::-webkit-scrollbar{display:none}
+.opai-pills a{padding:7px 16px;border-radius:999px;color:var(--ink-2);text-decoration:none;font:14px/20px var(--sans);white-space:nowrap}
+.opai-pills a:hover{color:var(--ink)}
+.opai-pills a[aria-current=page]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(27,21,22,.12);font-weight:500}
+.opai-right{display:flex;align-items:center;gap:10px;flex:none}
+.opai-k{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 12px;border-radius:10px;border:1px solid var(--hair);background:transparent;font:500 13px/18px var(--sans,system-ui);color:var(--ink-2,#504A4D);cursor:pointer}.opai-k kbd{font:500 11px/16px var(--sans,system-ui);color:var(--ink-3,#70838A);border:1px solid var(--hair);border-radius:5px;padding:0 5px;background:var(--well)}
+.opai-k:hover{color:var(--ink);border-color:var(--ink-3,#70838A)}
+.opai-st{display:flex;align-items:center;gap:7px;padding:4px 6px;font:500 13px/18px var(--sans,system-ui);color:var(--ink-2,#504A4D);white-space:nowrap}
+.opai-st i{width:8px;height:8px;border-radius:50%;background:var(--ok,#31697B);flex:none}.opai-st.off{color:var(--coral-ink,#CE6C11)}.opai-st.off i{background:var(--coral,#E09F62)}
+.opai-user{display:flex;align-items:center;gap:9px;padding:5px 14px 5px 5px;border-radius:999px;border:1px solid var(--hair);background:var(--card);text-decoration:none;color:var(--ink)}
+.opai-user .av{width:32px;height:32px;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;font:600 13px var(--sans)}
+.opai-user b{display:block;font:600 13px/16px var(--sans,system-ui)}.opai-user small{display:block;font:12px/14px var(--sans,system-ui);color:var(--ink-3);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.opai-pad{padding-top:64px}
+body.opai-has-shell main.pt-fix{padding-top:0}
+@media(max-width:1100px){.opai-st,.opai-k{display:none}}
+@media(max-width:760px){.opai-hd{height:56px;gap:8px}.opai-hd .in{padding:0 4px;gap:8px}body.opai-pad{padding-top:56px}.opai-logo small,.opai-user b,.opai-user small{display:none}.opai-user{padding:3px}.opai-pills a{padding:6px 12px;font-size:13px}}
+
+/* ---------- floating focus timer + dock ---------- */
+.opai-timer{position:fixed;left:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:70;display:none;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-radius:999px;background:var(--card);border:1px solid var(--hair);box-shadow:0 12px 30px -12px rgba(27,21,22,.35)}
+.opai-timer.on{display:flex}.opai-timer i{width:9px;height:9px;border-radius:50%;background:var(--coral);flex:none}.opai-timer.paused i{background:var(--ink-3)}
+.opai-timer b{font:600 12px var(--mono)}.opai-timer span{font-size:14px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opai-timer button{border:0;background:var(--well);border-radius:50%;width:28px;height:28px;display:grid;place-items:center;color:var(--ink-2);cursor:pointer}
+.opai-dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;gap:6px;padding:6px;border-radius:999px;background:rgba(247,250,249,.85);backdrop-filter:blur(14px);border:1px solid var(--hair);box-shadow:0 12px 30px -12px rgba(27,21,22,.3)}
+.opai-dock a,.opai-dock button{width:44px;height:44px;border-radius:50%;border:0;background:none;display:grid;place-items:center;color:var(--ink-2);cursor:pointer;text-decoration:none}
+.opai-dock a:hover,.opai-dock button:hover{background:var(--well);color:var(--ink)}.opai-dock [aria-current=page]{background:var(--well);color:var(--teal)}
+body.opai-has-shell main,body.opai-has-shell .wrap{scroll-padding-bottom:90px}
+@media(max-width:760px){.opai-timer{bottom:calc(76px + env(safe-area-inset-bottom,0px));left:12px}}
+
+/* ---------- Guide panel ---------- */
+#opai-guide{position:fixed;inset:0;z-index:90;display:none;background:rgba(27,21,22,.35);backdrop-filter:blur(4px)}
+#opai-guide.open{display:flex;align-items:flex-end;justify-content:center}
+#opai-guide .gp{width:min(560px,100%);max-height:86vh;overflow:auto;background:var(--card);border:1px solid var(--hair);border-radius:20px 20px 0 0;padding:16px 14px calc(18px + env(safe-area-inset-bottom,0px));color:var(--ink);font:14px/21px var(--sans)}
+@media(min-width:640px){#opai-guide.open{align-items:center}#opai-guide .gp{border-radius:20px}}
+#opai-guide h2{margin:0 0 4px;font-size:18px;font-weight:600}#opai-guide .gs{color:var(--ink-2);font-size:12.5px;margin:0 0 10px}
+#opai-guide a.gi{display:block;padding:10px 12px;margin:6px 0;border:1px solid var(--hair);border-radius:12px;background:#fff;color:var(--ink);text-decoration:none}
+#opai-guide a.gi:hover{border-color:var(--teal)}#opai-guide a.gi b{display:block;font-weight:600}#opai-guide a.gi span{color:var(--ink-2);font-size:13px}
+#opai-guide .gx{float:right;border:0;background:none;color:var(--ink-2);font-size:22px;cursor:pointer;line-height:1}
+#opai-guide input{width:100%;margin:6px 0 4px;padding:10px 12px;border-radius:10px;border:1px solid var(--hair);background:#fff;color:var(--ink);font:inherit}
+
+/* ---------- mobile tuning ---------- */
+@media (max-width:640px){
+  .bar{padding:0 12px!important}
+  main{padding-left:12px!important;padding-right:12px!important}
+  .px-margin-tablet,.px-gutter-desktop,.px-margin-desktop{padding-left:12px!important;padding-right:12px!important}
+}
+
+/* Tailwind pages: headings use ink; teal is reserved for actions */
+.text-primary{color:var(--ink)!important}
+.bg-primary,.bg-primary\/90{color:#fff}
+
+/* ===== Mobile comfort (phones). Kept in one place so every page that loads this file gets it. ===== */
+@media (max-width:760px){
+  /* 16px+ text in fields stops iPhones from zooming the page when a field is focused */
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]),select,textarea{font-size:16px!important}
+  /* comfortable touch targets */
+  button,select,summary,[role=tab],.menu-btn,.o2-jump a{min-height:40px}
+  .o2-jump a{display:inline-flex;align-items:center}
+  /* the floating KARNA button becomes a compact round icon so it stops covering page buttons */
+  html body #kp-fab{width:52px;height:52px;padding:0;gap:0;justify-content:center;font-size:0;border-radius:50%;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  html body #kp-fab i{display:none}
+  html body #kp-fab::after{content:"";width:24px;height:24px;background:#fff;
+    -webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'/></svg>") center/contain no-repeat;
+    mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'/></svg>") center/contain no-repeat}
+  /* the floating bottom bar must never hide the last thing on a page (the chat page manages its own layout) */
+  body.opai-has-shell:not(:has(#ktools)){padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+  /* tab rows that scroll sideways show a fade at the edge and snap to tabs */
+  .tabs{-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+  .tabs button{scroll-snap-align:start}
+}
+.opai-ib{width:36px;height:36px;border-radius:50%;border:1px solid var(--hair);background:var(--well,transparent);color:var(--ink-2,#504A4D);display:grid;place-items:center;padding:0;cursor:pointer;flex:none;transition:background-color .2s,color .2s,border-color .2s}
+.opai-ib:hover{color:var(--ink);border-color:var(--ink-3,#70838A)}
+.opai-ib svg{width:18px;height:18px}
+
+/* Desktop: no floating dock (the top navbar already has these links). Phones keep it as the bottom tab bar. */
+@media(min-width:761px){.opai-dock{display:none!important}}
