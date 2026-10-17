@@ -1267,6 +1267,19 @@ def set_agent_permissions(user_id: UUID, payload: AgentPermissionsUpdate, db: Se
 # ================= KARNA UNIFIED CHAT =================
 @app.post("/v1/jarvis/chat", response_model=JarvisChatResponse)
 def jarvis_chat(request: JarvisChatRequest, db: Session = Depends(get_db)):
+    # Greetings / thanks / "what can you do" / help: answered locally BEFORE the memory-extraction pass below,
+    # which does DB reads and can call the LLM. That pass is why a plain "hi" used to take ~6 s.
+    if not request.doc_ids:
+        from agent import conversation as _conv
+        if _conv.answer(request.message) is not None:
+            first = None
+            try:
+                row = db.query(User.name).filter(User.id == str(request.user_id)).first()
+                first = (row[0] or "").split(" ")[0] if row else None
+            except Exception:
+                db.rollback()
+            c = _conv.answer(request.message, first)
+            return JarvisChatResponse(action="chat", reply=c["reply"], payload=c["payload"])
     from agent import learn
     try:
         res = learn.propose_from_message(db, str(request.user_id), request.message, history=request.history)   # confirm-first: nothing is stored until the user presses Save
