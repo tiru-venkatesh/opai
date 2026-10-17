@@ -242,6 +242,7 @@ def web_manifest():
 _ROOT_ASSETS = {
     "opai-shell.js": "application/javascript",
     "guide.js": "application/javascript",
+    "opai-shader.js": "application/javascript",
     "attach.js": "application/javascript",
     "fx.js": "application/javascript",
     "opai-shared.css": "text/css",
