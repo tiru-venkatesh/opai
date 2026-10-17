@@ -38,8 +38,8 @@ var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.tes
 var uid=null,cur=null,qs=new URLSearchParams(location.search),BRIEF_ID=qs.get('brief')||qs.get('brief_id');
 function safeUrl(u){try{var x=new URL(u,location.href);if(x.protocol==='https:'||x.protocol==='http:')return x.href}catch(e){}return null}
 function fmtTime(i){try{return new Date(i).toLocaleString()}catch(e){return ''}}
-var TABS=[['daily_plan','Today'],['exam_readiness','Exam'],['dsa_roadmap','DSA'],['weekly_review','Weekly'],['recovery','Recovery'],['approval','Approvals'],['decision','Decide']];
-var PATH={daily_plan:'daily',exam_readiness:'exam',dsa_roadmap:'dsa',weekly_review:'weekly',recovery:'recovery',approval:'approval',decision:'decision'};
+var TABS=[['daily_plan','Today'],['exam_readiness','Exam'],['weekly_review','Weekly'],['recovery','Recovery'],['approval','Approvals'],['decision','Decide']];
+var PATH={daily_plan:'daily',exam_readiness:'exam',weekly_review:'weekly',recovery:'recovery',approval:'approval',decision:'decision'};
 function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
 function say(s){var m=document.getElementById('msg');m.textContent=s;m.style.display='block';clearTimeout(say.t);say.t=setTimeout(function(){m.style.display='none'},3500)}
 async function api(p,o){o=o||{};var r=await fetch(API+p,Object.assign({headers:o.body?{'Content-Type':'application/json'}:{}},o));var t=await r.text(),j=t?JSON.parse(t):null;
@@ -102,14 +102,9 @@ function render(b){cur=b.type;var out=document.getElementById('out');out.textCon
     var pv=el('div','pv',Object.keys(i.preview||{}).map(function(k){return k+': '+i.preview[k]}).join('\n'));c.appendChild(pv);out.appendChild(c)});
   if(b.options){var o=el('div','card');o.appendChild(el('div','t','Trade-offs'));b.options.forEach(function(x){o.appendChild(el('div','m',x.id+') '+x.title+' — '+x.trade_off))});(b.assumptions||[]).forEach(function(a){o.appendChild(el('div','m','• '+a))});out.appendChild(o)}
   if(b.exam){var e=el('div','card');e.appendChild(el('div','t',b.exam.course+' · '+b.exam.risk_level+' risk'));e.appendChild(el('div','m','Preparation estimate '+b.exam.preparation_estimate+'% · '+(b.exam.days_remaining==null?'no date':b.exam.days_remaining+' days left')+' · '+b.plan.remaining_estimated_min+' min of study remaining'));out.appendChild(e)}
-  if(b.brief&&b.type==='dsa_roadmap'){var dc=b.brief,card=el('div','card');card.appendChild(el('div','t','DSA Brief'));
-    [['Recommended block',dc.recommended_block+' · '+dc.phase],['Duration',dc.duration_min+' minutes'],['Reason',dc.reason],['Expected outcome',dc.expected_outcome]].forEach(function(r){var row=el('div','');row.style.margin='8px 0 0';var k=el('div','m',r[0]);k.style.textTransform='uppercase';k.style.fontSize='11px';row.appendChild(k);row.appendChild(el('div','',r[1]));card.appendChild(row)});
-    var ar=el('div','row');ar.style.cssText='gap:8px;flex-wrap:wrap;margin-top:12px';
-    (dc.action_ids||[]).forEach(function(id){var a=(b.actions||[]).find(function(x){return x.action_id===id});if(a)ar.appendChild(actionBtn(a,b))});
-    card.appendChild(ar);out.appendChild(card)}
   if(b.today&&b.today.external_resources&&b.today.external_resources.length){var r=el('div','card');r.appendChild(el('div','t','Today · '+(b.today.learning_target||'')));b.today.external_resources.forEach(function(x){var xu=safeUrl(x.url);if(!xu)return;var a=el('a','m',x.title+' ↗');a.href=xu;a.target='_blank';a.rel='noopener noreferrer';r.appendChild(a);r.appendChild(document.createElement('br'))});out.appendChild(r)}
-  if(b.review){var rv=el('div','card'),s=b.review.study;rv.appendChild(el('div','t','This week'));rv.appendChild(el('div','m',s.done+'/'+s.planned+' study blocks · '+s.minutes_done+' min · '+b.review.dsa.done+' DSA sessions'));out.appendChild(rv)}
-  if(b.changes){var cg=el('div','card');cg.appendChild(el('div','t','What changed'));cg.appendChild(el('div','m',b.changes.missed_blocks.length+' missed blocks · '+b.changes.overdue_tasks.length+' overdue tasks · '+b.changes.dsa_skipped+' DSA skipped'));out.appendChild(cg)}
+  if(b.review){var rv=el('div','card'),s=b.review.study;rv.appendChild(el('div','t','This week'));rv.appendChild(el('div','m',s.done+'/'+s.planned+' study blocks · '+s.minutes_done+' min'));out.appendChild(rv)}
+  if(b.changes){var cg=el('div','card');cg.appendChild(el('div','t','What changed'));cg.appendChild(el('div','m',b.changes.missed_blocks.length+' missed blocks · '+b.changes.overdue_tasks.length+' overdue tasks'));out.appendChild(cg)}
   var loose=(b.actions||[]).filter(function(a){return !(b.priorities||[]).some(function(p){return (p.actions||[]).some(function(x){return x.action_id===a.action_id})})&&a.kind!=='decision'&&!((b.brief&&b.brief.action_ids)||[]).some(function(id){return id===a.action_id})});
   if(loose.length){var lc=el('div','card'),la=el('div','acts');la.style.marginTop='0';loose.forEach(function(a){la.appendChild(actionBtn(a,b))});lc.appendChild(la);out.appendChild(lc)}
   if(!(b.priorities||[]).length&&!(b.alerts||[]).length&&!loose.length)out.appendChild(el('div','card m','Nothing needs your attention here.'));

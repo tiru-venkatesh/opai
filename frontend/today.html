@@ -57,6 +57,7 @@ h1{margin:0 0 10px;font-size:clamp(34px,6vw,56px);line-height:1.05;letter-spacin
 .conf{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--ink-2)}
 .conf button{width:34px;height:34px;border-radius:50%;border:1px solid var(--hair);background:#fff}.conf button:hover{background:var(--teal);color:#fff}
 .sec{font:11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:26px 0 10px}
+.lc{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;border:1px solid var(--hair);border-radius:14px;background:var(--card);font-size:14px;margin:0 0 14px}.lc b{font-weight:650}.lc .m{font:12px var(--mono);color:var(--ink-3)}.lc button{margin-left:auto;padding:7px 14px;border-radius:999px;border:1px solid var(--hair);background:#fff;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}.lc button.p{background:var(--teal);color:#fff;border-color:var(--teal)}.lc .off{margin-left:0;padding:0;border:0;background:none;color:var(--ink-3);text-decoration:underline;font-size:12px}
 .row{display:flex;justify-content:space-between;gap:10px;padding:11px 16px;border:1px solid var(--hair);border-radius:14px;background:var(--card);font-size:14px;margin-bottom:8px}.row .m{font:12px var(--mono);color:var(--ink-3);white-space:nowrap}
 .note{border:1px dashed var(--line-2);border-radius:20px;padding:22px;color:var(--ink-2)}
 .pend{border-color:#DAD2C0;background:#F7FAF9}
@@ -84,6 +85,7 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
   <div class="tools" role="group" aria-label="Replan today">
     <button class="chip" data-m="30">I have 30 min</button><button class="chip" data-m="60">1 hour</button><button class="chip" id="tired">I'm tired</button><button class="chip" data-m="">Reset</button>
   </div>
+  <div class="lc" id="lc" hidden></div>
   <div class="sechd"><h2>Primary Focus Sprints</h2><span class="tag">Ranked by leverage</span><span class="r" id="count"></span></div>
   <div class="cap" id="cap"></div>
   <section class="grid" id="list" aria-label="Next best actions" style="margin-top:12px"></section>
@@ -143,7 +145,7 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
       '<div class="tags"><span class="tg ' + (urgent(i) ? 'c' : 't') + '">' + esc(i.due.startsWith('in') || /day|today|tomorrow|overdue/.test(i.due) ? 'DUE ' + i.due.toUpperCase() : i.due.toUpperCase()) + ' · ' + esc(i.priority_label) + '</span><span class="tg t">' + esc(i.category) + '</span><span class="idx">' + pad(n + 1) + ' / ' + pad(tot) + '</span></div>' +
       '<h3>' + esc(i.title) + '</h3><p class="sub">' + esc(i.subtitle) + '</p>' +
       '<div class="chk ' + (ob ? 'c' : '') + '">' + (ob ? MAIL : CHECK) + '<span>' + esc(i.check) + '</span></div>' +
-      main + (i.kind === 'dsa' ? '<a class="big out" href="dsa.html">Open DSA Roadmap (links to external sites) ↗</a>' : '') +
+      main +
       '<div class="mini">' + (ob ? '' : '<button data-a="done">Done</button><button data-a="move">Move</button><button data-a="skip">Skip</button>') + '<button data-a="why">Why this?</button><span class="state ' + i.state + '" style="margin-left:auto;align-self:center">' + (STATE[i.state] || i.state) + '</span></div>' +
       '<div class="ex" hidden><div><h4>Why is this important?</h4>' + esc(ex.why_important) + '</div><div><h4>If I delay it</h4>' + esc(ex.if_delayed) + '</div><div><h4>What OPAI used</h4>' + esc(ex.used.join(', ')) + '</div><div><h4>Change it</h4><ul>' + ex.change.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div></div>' +
       '<div class="conf" hidden>How confident are you on this topic now? ' + [1,2,3,4,5].map((v) => '<button data-conf="' + v + '">' + v + '</button>').join('') + '</div></article>';
@@ -154,8 +156,26 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
     const q = new URLSearchParams({ user_id: uid, energy }); if (minutes) q.set('minutes', minutes);
     let p = await api('/v1/today?' + q + '&narrative=true');
     if (p.needs_plan || refresh) p = await api('/v1/today/refresh', { method: 'POST', body: JSON.stringify({ user_id: uid, minutes: minutes ? +minutes : null, energy }) });
-    render(p); loadPending();
+    render(p); loadPending(); loadLC();
   }
+  /* LeetCode streak: one line, one Done tap */
+  async function loadLC() {
+    try { renderLC(await api('/v1/leetcode/streak?user_id=' + encodeURIComponent(uid))); } catch (e) { $('lc').hidden = true; }
+  }
+  function renderLC(s) {
+    const el = $('lc'); el.hidden = false;
+    const n = s.streak ? '<span class="m">' + s.streak + '-day streak</span>' : '';
+    if (!s.enabled) el.innerHTML = '<span>LeetCode streak reminder</span><span class="m">off</span><button class="p" data-lc="on">Remind me at ' + esc(s.time) + '</button>';
+    else if (s.done_today) el.innerHTML = '<span>✓ <b>LeetCode done today</b></span>' + n + '<button class="off" data-lc="off">turn off reminder</button>';
+    else el.innerHTML = '<span><b>LeetCode today?</b></span>' + n + '<button class="p" data-lc="done">Done</button><button class="off" data-lc="off">turn off</button>';
+  }
+  $('lc').addEventListener('click', async (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    try {
+      if (b.dataset.lc === 'done') renderLC(await api('/v1/leetcode/done', { method: 'POST', body: JSON.stringify({ user_id: uid }) }));
+      else renderLC(await api('/v1/leetcode/streak', { method: 'PUT', body: JSON.stringify({ user_id: uid, enabled: b.dataset.lc === 'on' }) }));
+    } catch (er) { $('sum').innerHTML = '<span class="err">' + esc(er.message) + '</span>'; }
+  });
   async function loadPending() {
     try {
       const a = await api('/v1/actions?user_id=' + uid + '&status=pending_approval');
@@ -179,7 +199,7 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
     const a = b.dataset.a;
     if (a === 'why') card.querySelector('.ex').hidden = !card.querySelector('.ex').hidden;
     else if (a === 'start') act(card, 'start');
-    else if (a === 'done') { if (card.dataset.kind === 'study_block' || card.dataset.kind === 'dsa') card.querySelector('.conf').hidden = false; else act(card, 'complete'); }
+    else if (a === 'done') { if (card.dataset.kind === 'study_block') card.querySelector('.conf').hidden = false; else act(card, 'complete'); }
     else if (a === 'move') act(card, 'snooze', { days: 1 });
     else if (a === 'skip') act(card, 'skip');
   });

@@ -22,7 +22,6 @@
   var HELP = {
     /* Work */
     'internship': 'Find opportunities that fit you, track applications, and handle professor outreach.',
-    'dsa': 'Your DSA roadmap, today’s topic and weekly consistency.',
     'projects': 'Your projects and the coding contests you can enter.',
     'resume': 'Keep resume versions, match them to a posting and tailor them.',
     'programs': 'Hackathons and programs you could join.',

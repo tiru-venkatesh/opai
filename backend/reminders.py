@@ -368,24 +368,28 @@ def fire_due(db: Session, now: Optional[datetime] = None, user_id: Optional[str]
                     continue
                 n = _notify(db, uid, "daily_brief", "Today's plan", jarvis.spoken_summary(b), f"briefs.html?brief={b['brief_id']}",
                             {"brief_id": b["brief_id"], "reminder_id": r.id}, r.id, key)
-            elif r.kind == "dsa_streak":
-                # opt-in DSA practice nudge: decided at fire time (done today? quiet hours? daily cap? away for days?)
+            elif r.kind == "dsa_streak":                          # retired feature: drop any leftover rows quietly
+                db.query(Reminder).filter(Reminder.id == r.id).update({"status": "cancelled"})
+                db.commit()
+                continue
+            elif r.kind == "leetcode_streak":
+                # one line, one "Done" tap; skipped when today is already marked done or the server was asleep
                 if (now - old) > timedelta(minutes=STALE_STREAK_MIN):
-                    continue                                      # late (server asleep): a 9 PM nudge at midnight is worse than none
-                key = f"dsa_streak:{uid}:{local_old.date().isoformat()}:{local_old.strftime('%H:%M')}"
+                    continue
+                key = f"leetcode_streak:{uid}:{local_old.date().isoformat()}"
                 if db.query(Notification.id).filter(Notification.idempotency_key == key).first():
                     continue
                 try:
-                    import dsa_coach_service as DC
-                    slot = int((r.title or "dsa_streak:0").rsplit(":", 1)[-1])
-                    msg = DC.streak_nudge(db, uid, slot, local_old)
+                    import leetcode_streak as LC
+                    msg = LC.nudge(db, uid, local_old)
                 except Exception as e:
-                    log.warning("dsa streak nudge failed for %s: %s", uid, e)
+                    log.warning("leetcode nudge failed for %s: %s", uid, e)
                     db.rollback()
                     continue
                 if not msg:
                     continue
-                n = _notify(db, uid, "dsa_streak", msg["title"], msg["body"], "dsa.html#coach", {"tone": msg["tone"]}, r.id, key)
+                n = _notify(db, uid, "leetcode_streak", msg["title"], msg["body"], "today.html",
+                            {"actions": ["done"], "done_endpoint": "/v1/leetcode/done"}, r.id, key)
             else:
                 key = f"reminder_due:{r.id}:{old.isoformat()}"
                 if db.query(Notification.id).filter(Notification.idempotency_key == key).first():

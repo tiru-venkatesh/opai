@@ -103,8 +103,8 @@ def test_owner_still_reaches_own_rows(c, world):
 def test_user_id_of_someone_else_is_403(c, world):
     hb = H(tok(world["b"]))
     assert c.get("/v1/tasks", params={"user_id": world["ua"]}, headers=hb).status_code == 403
-    assert c.get("/v1/dsa", params={"user_id": world["ua"]}, headers=hb).status_code == 403
-    assert c.post("/v1/dsa/plan", json={"user_id": world["ua"], "daily_minutes": 30}, headers=hb).status_code == 403
+    assert c.get("/v1/leetcode/streak", params={"user_id": world["ua"]}, headers=hb).status_code == 403
+    assert c.post("/v1/leetcode/done", json={"user_id": world["ua"]}, headers=hb).status_code == 403
 
 
 def test_multipart_uploads_cannot_name_another_user(c, world):
@@ -119,5 +119,5 @@ def test_multipart_uploads_cannot_name_another_user(c, world):
 
 
 def test_no_token_is_401(c, world):
-    assert c.get("/v1/dsa", params={"user_id": world["ua"]}).status_code == 401
+    assert c.get("/v1/leetcode/streak", params={"user_id": world["ua"]}).status_code == 401
     assert c.delete(f"/v1/tasks/{world['ids']['task']}").status_code == 401

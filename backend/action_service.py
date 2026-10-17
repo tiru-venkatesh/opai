@@ -48,27 +48,25 @@ class CreateStudyBlock(BaseModel):
 
 
 class TodayOp(BaseModel):
-    kind: str                       # study_block | task | application | academic | dsa
+    kind: str                       # study_block | task | application | academic
     ref_id: str
     op: str                         # start | complete | skip | snooze
     actual_minutes: Optional[int] = Field(default=None, ge=1, le=600)
     difficulty_felt: Optional[int] = Field(default=None, ge=1, le=5)
     confidence_now: Optional[int] = Field(default=None, ge=1, le=5)
-    outcome: str = "completed"                      # dsa: completed | partial | could_not_start
-    difficulty: list = Field(default_factory=list, max_length=5)   # dsa: concept | pattern | implementation | time | nothing
     days: int = Field(default=1, ge=1, le=14)
 
     @field_validator("kind")
     @classmethod
     def _k(cls, v):
-        if v not in {"study_block", "task", "application", "academic", "dsa"}:
+        if v not in {"study_block", "task", "application", "academic"}:
             raise ValueError("unknown item kind")
         return v
 
     @field_validator("op")
     @classmethod
     def _o(cls, v):
-        if v not in {"start", "complete", "skip", "snooze", "shorten"}:
+        if v not in {"start", "complete", "skip", "snooze"}:
             raise ValueError("unknown op")
         return v
 
@@ -105,17 +103,6 @@ class CreateReminder(BaseModel):
         return v
 
 
-class SetDsaMode(BaseModel):
-    mode: str
-
-    @field_validator("mode")
-    @classmethod
-    def _m(cls, v):
-        if v not in {"auto", "normal", "maintenance", "paused"}:
-            raise ValueError("mode must be auto, normal, maintenance or paused")
-        return v
-
-
 class SetDailyCapacity(BaseModel):
     minutes: int = Field(ge=30, le=720)
 
@@ -149,7 +136,6 @@ INTENTS: Dict[str, tuple] = {
     "create_reminder": (CreateReminder, "low"),
     # brief actions. "medium" runs only after the user confirms on the brief (that confirmation is the approval).
     "replan_today": (Empty, "low"),
-    "set_dsa_mode": (SetDsaMode, "medium"),
     "set_daily_capacity": (SetDailyCapacity, "medium"),
     "create_application": (CreateApplication, "low"),           # tracks it as 'To Apply'; never submits anything
     "tailor_resume": (TailorResume, "low"),                     # suggestions only; the resume itself is not changed
@@ -311,15 +297,6 @@ def _h_today_op(db, uid, p):
     today = date.today()
     if op == "start":
         return {"state": "in_progress", "kind": kind, "ref_id": rid}
-    if op == "shorten":                               # only DSA blocks can be shortened; never fall through to snooze
-        if kind != "dsa":
-            raise ActionError(422, "Only DSA blocks can be shortened")
-        import dsa_service as DS
-        try:
-            DS.shorten_session(db, uid, rid, int(p.get("actual_minutes") or 0))
-        except DS.DsaError as e:
-            raise ActionError(e.status, e.detail)
-        return {"state": "shortened", "kind": kind, "ref_id": rid, "minutes": int(p["actual_minutes"])}
     if kind == "study_block":
         b = _owner(db, StudyBlock, rid, uid)
         if op == "complete":
@@ -337,16 +314,6 @@ def _h_today_op(db, uid, p):
         a = _owner(db, Academic, rid, uid)
         if op == "complete":
             a.done = True; db.commit(); return {"state": "completed", "kind": kind, "ref_id": rid}
-        return {"state": "paused", "kind": kind, "ref_id": rid}
-    if kind == "dsa":                                # DSA Roadmap block: the learner marks progress after using the external site
-        import dsa_service as DS
-        try:
-            if op == "complete":
-                DS.complete_session(db, uid, rid, p.get("actual_minutes"), p.get("confidence_now"), p.get("outcome") or "completed", p.get("difficulty") or [])
-                return {"state": "completed", "kind": kind, "ref_id": rid}
-            DS.skip_session(db, uid, rid)            # skip / snooze: tomorrow resumes with the same topic
-        except DS.DsaError as e:
-            raise ActionError(e.status, e.detail)
         return {"state": "paused", "kind": kind, "ref_id": rid}
     ap = _owner(db, Application, rid, uid)           # application: "complete" = preparation done, NEVER submitted
     if op == "complete":
@@ -396,15 +363,6 @@ def _h_replan_today(db, uid, p):
     from agent_service import generate_study_plan
     blocks = generate_study_plan(uid, db, date.today())
     return {"replanned": "today", "blocks": len(blocks or [])}
-
-
-def _h_set_dsa_mode(db, uid, p):
-    import dsa_service as DS
-    try:
-        DS.update_settings(db, uid, {"mode_override": p["mode"]})
-    except DS.DsaError as e:
-        raise ActionError(e.status, e.detail)
-    return {"dsa_mode": p["mode"]}
 
 
 def _h_set_daily_capacity(db, uid, p):
@@ -481,7 +439,7 @@ def _h_snooze_reminder(db, uid, p):
 
 _HANDLERS = {"create_task": _h_create_task, "create_study_block": _h_create_study_block, "today_op": _h_today_op,
              "send_email": _h_send_email, "update_application_status": _h_update_application, "delete_task": _h_delete_task,
-             "create_reminder": _h_create_reminder, "replan_today": _h_replan_today, "set_dsa_mode": _h_set_dsa_mode,
+             "create_reminder": _h_create_reminder, "replan_today": _h_replan_today,
              "set_daily_capacity": _h_set_daily_capacity, "create_application": _h_create_application,
              "tailor_resume": _h_tailor_resume, "create_outreach_draft": _h_create_outreach_draft,
              "complete_reminder": _h_complete_reminder, "snooze_reminder": _h_snooze_reminder}

@@ -38,7 +38,6 @@ REGISTRY: Dict[str, IntentDef] = {i.name: i for i in [
     _d("stop_daily_plan", [], [], risk="medium", handler="reminder_chat.handle"),
     _d("generate_daily_brief", [], ["capacity_override", "energy"], handler="briefs.daily_plan"),
     _d("generate_exam_brief", [], ["exam_id"], handler="briefs.exam_readiness"),
-    _d("generate_dsa_brief", [], [], handler="briefs.dsa_roadmap"),
     _d("create_task", ["title"], ["due_date", "estimated_minutes"], handler="orchestrator.capture"),
     _d("create_project", ["title"], [], handler="orchestrator.capture"),
     _d("create_application", ["company", "role"], ["deadline", "link"], handler="orchestrator.capture"),
@@ -68,7 +67,7 @@ class Intent:
 
 
 _BRIEF_MAP = {"daily_plan": "generate_daily_brief", "weekly_review": "weekly_review", "recovery": "recovery_plan", "approval": "show_approvals",
-              "decision": "decision_support", "exam_readiness": "generate_exam_brief", "dsa_roadmap": "generate_dsa_brief"}
+              "decision": "decision_support", "exam_readiness": "generate_exam_brief"}
 _TASK = re.compile(r"^\s*(?:please\s+)?(add|create|make)\s+(?:a\s+|an\s+|the\s+)?task\b[:\s-]*(.*)$", re.I)
 _PROJECT = re.compile(r"^\s*(?:please\s+)?(add|create|start)\s+(?:a\s+|an\s+|the\s+)?(?:new\s+)?project\b[:\s-]*(.*)$", re.I)
 

@@ -65,10 +65,8 @@ from rag_api import router as rag_router
 from syllabus_api import router as syllabus_router
 app.include_router(syllabus_router)
 app.include_router(rag_router)
-from dsa_api import router as dsa_router
-app.include_router(dsa_router)
-from dsa_coach_api import router as dsa_coach_router
-app.include_router(dsa_coach_router)
+from leetcode_streak import router as leetcode_router
+app.include_router(leetcode_router)
 from extras_api import router as extras_router
 app.include_router(extras_router)
 from opportunities_api import router as opportunities_router

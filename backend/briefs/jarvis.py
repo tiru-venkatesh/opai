@@ -50,10 +50,6 @@ def detect(message: str) -> Optional[Tuple[str, Dict[str, Any]]]:
         return "decision", {"question": message.strip(), "estimated_minutes": parse_minutes(t)}
     if re.search(r"\b(exam (brief|readiness|risk|status)|how (ready|prepared) am i|am i ready for)\b", t):
         return "exam_readiness", {}
-    if re.search(r"\bdsa (brief|roadmap|today|plan)\b|\b(start|open|show|resume) my dsa\b", t):
-        return "dsa_roadmap", {}
-    if re.search(r"\bdsa\b", t) and re.search(r"\b(only have|just have|got)\b", t) and _CAPACITY.search(t):
-        return "dsa_roadmap", {"minutes": max(5, min(parse_minutes(t), 180))}
     tired = bool(re.search(r"\b(tired|exhausted|drained|low energy)\b", t))
     cap = parse_minutes(t) if _CAPACITY.search(t) else None
     if _DAILY.search(t) or cap:
@@ -130,4 +126,4 @@ def respond(db: Session, uid: str, message: str):
 
 def _intent_name(btype: str) -> str:
     return {"daily_plan": "generate_daily_brief", "weekly_review": "weekly_review", "recovery": "recovery_plan", "approval": "show_approvals",
-            "decision": "decision_support", "exam_readiness": "generate_exam_brief", "dsa_roadmap": "generate_dsa_brief"}.get(btype, btype)
+            "decision": "decision_support", "exam_readiness": "generate_exam_brief"}.get(btype, btype)

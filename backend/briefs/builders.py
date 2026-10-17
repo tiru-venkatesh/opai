@@ -13,9 +13,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-import dsa_roadmap as R
 import today_engine as T
-from database import (Reminder, ActionRecord, Application, Contact, Course, DsaPlan, DsaSession, Exam, Milestone, Opportunity,
+from database import (Reminder, ActionRecord, Application, Contact, Course, Exam, Milestone, Opportunity,
                       OutboxItem, Project, ResearchBrief, Semester, StudyBlock, Task, Topic)
 from .core import BriefError, Ctx, clamp01, urgency_label
 
@@ -88,10 +87,6 @@ def _daily_codes(it: Dict[str, Any]) -> List[str]:
         c.append(_code("task_due", d))
     elif k == "academic":
         c.append(_code("exam", d))
-    elif k == "dsa":
-        c.append("dsa_maintenance" if f.get("mode") == "maintenance" else "roadmap_daily_block")
-        if f.get("exam_in_days") is not None:
-            c.append(_code("exam", f["exam_in_days"]))
     elif k == "outbox":
         c.append("draft_awaiting_review")
     if it.get("split"):
@@ -170,7 +165,7 @@ def build_daily(ctx: Ctx) -> Dict[str, Any]:
     srcs = [_src("Today engine (deterministic scoring)", "rules")]
     kinds = {i["kind"] for i in items}
     for kind, label in (("study_block", "SEMS exam map and study blocks"), ("task", "Tasks"), ("application", "Applications"),
-                        ("dsa", "DSA roadmap"), ("outbox", "Outbox drafts")):
+                        ("outbox", "Outbox drafts")):
         if kind in kinds:
             srcs.append(_src(label))
     top_codes = priorities[0]["reason_codes"] if priorities else []
@@ -271,88 +266,6 @@ def build_exam(ctx: Ctx) -> Dict[str, Any]:
                          "weak_topics": risk["weak_topics"]},
                    priority_topics=ptopics, plan={"today_min": today_min, "remaining_estimated_min": remaining, "review_sessions_due": reviews_due})
 
-
-# ================================================================== 3. DSA ROADMAP BRIEF
-def build_dsa(ctx: Ctx) -> Dict[str, Any]:
-    import dsa_service as DS
-    db, uid, today = ctx.db, ctx.uid, date.today()
-    st = DS.state(db, uid, today)
-    if not st.get("plan"):
-        ctx.act("create_dsa_roadmap", "Create DSA roadmap", link="dsa.html", primary=True)
-        return _result("DSA roadmap brief", "No DSA roadmap yet. Create one and OPAI will schedule one small learning block a day.", 0.95,
-                       scope="dsa", expires=_in(1), context={"user_id": uid, "date": today.isoformat()}, sources=[_src("DSA roadmap")],
-                       roadmap=None, today=None)
-    plan, prog, mode, tb = st["plan"], st["progress"], st["mode"], st.get("today")
-    topic_row = None
-    if tb:
-        for ph in st["phases"]:
-            for t in ph["topics"]:
-                if t["id"] == tb["topic"]["id"]:
-                    topic_row = t
-    resources: List[Dict[str, Any]] = []
-    if tb:
-        learn = (topic_row or {}).get("learn_url") or st["resources"]["learn"]
-        resources.append({"title": f"Learn: {tb['topic']['name']}", "url": learn, "type": "learning"})
-        if (topic_row or {}).get("practice_url") and tb["mode"] != "maintenance":
-            resources.append({"title": "Practice one linked external question", "url": topic_row["practice_url"], "type": "external_practice"})
-    priorities: List[Dict[str, Any]] = []
-    if tb and tb["status"] in ("planned", "in_progress"):
-        open_res = ctx.act("open_resource", "Open learning resource", link=resources[0]["url"], entity_id=tb["session_id"], primary=True)
-        start = ctx.act("start_focus", f"Start {tb['minutes']}-minute block", kind="execute", intent="today_op",
-                        payload={"kind": "dsa", "ref_id": tb["session_id"], "op": "start"}, entity_id=tb["session_id"])
-        codes = ["dsa_maintenance" if tb["mode"] == "maintenance" else "roadmap_daily_block"] + ([_code("exam", mode["exam_in_days"])] if mode.get("exam_in_days") is not None else [])
-        priorities.append({"rank": 1, "entity_type": "dsa", "entity_id": tb["session_id"], "title": f"DSA — {tb['topic']['name']}", "duration_min": tb["minutes"],
-                           "urgency": "low", "reason_codes": [c for c in codes if c], "reason_text": mode["reason"] or "Small daily sessions beat long irregular ones.",
-                           "next_action": "open_resource", "actions": [open_res, start]})
-    brief_card = None
-    if tb:                                          # the spec's DSA Brief: block, duration, reason, outcome + four actions
-        cap = ctx.params.get("minutes")
-        dur = tb["minutes"]
-        if cap and 5 <= int(cap) < dur:             # "I only have 15 minutes"
-            dur = int(cap)
-        short = max(10, int(round(dur / 2 / 5)) * 5)
-        open_res_a = priorities[0]["actions"][0] if priorities else None
-        card_actions = []
-        if tb["status"] in ("planned", "in_progress"):
-            if open_res_a:
-                card_actions.append(open_res_a)
-            if dur < tb["minutes"]:                  # capped by the learner: offer the shorter block instead of the full one
-                card_actions.append(ctx.act("shorten_block", f"Make it {dur} min", kind="execute", intent="today_op", primary=True,
-                                            payload={"kind": "dsa", "ref_id": tb["session_id"], "op": "shorten", "actual_minutes": dur}, entity_id=tb["session_id"]))
-            else:
-                card_actions.append(priorities[0]["actions"][1])         # Start N-minute block
-                if short < tb["minutes"]:
-                    card_actions.append(ctx.act("shorten_block", f"Make it {short} min", kind="execute", intent="today_op",
-                                                payload={"kind": "dsa", "ref_id": tb["session_id"], "op": "shorten", "actual_minutes": short}, entity_id=tb["session_id"]))
-            card_actions.append(ctx.act("move_block", "Move to tomorrow", kind="execute", intent="today_op",
-                                        payload={"kind": "dsa", "ref_id": tb["session_id"], "op": "snooze"}, entity_id=tb["session_id"]))
-        brief_card = {"recommended_block": tb["topic"]["name"], "duration_min": dur, "kind": tb["kind"], "phase": tb["topic"]["phase"],
-                      "reason": tb.get("why") or mode["reason"] or "Small daily sessions beat long irregular ones.",
-                      "expected_outcome": R.expected_outcome(tb["topic"]["name"], tb["kind"], tb["mode"]),
-                      "blocks": R.day_blocks(topic_row or {"name": tb["topic"]["name"]}, tb["mode"], tb["kind"], dur) if dur != tb["minutes"] else tb["blocks"],
-                      "action_ids": [a["action_id"] for a in card_actions]}
-    maint = tb and tb["mode"] == "maintenance"
-    if mode["override"] != "maintenance":
-        ctx.act("pause_dsa", "Keep DSA in maintenance until exams end", kind="execute", risk="medium", intent="set_dsa_mode", payload={"mode": "maintenance"}, confirm=True)
-    else:
-        ctx.act("resume_dsa", "Return DSA to automatic mode", kind="execute", risk="medium", intent="set_dsa_mode", payload={"mode": "auto"}, confirm=True)
-    alerts = []
-    if st["pace"]["state"] == "behind":
-        alerts.append({"severity": "warning", "title": "DSA pace is behind schedule", "detail": st["pace"]["message"]})
-    if mode.get("exam_in_days") is not None and mode["mode"] == "maintenance":
-        alerts.append({"severity": "info", "title": "DSA is in maintenance mode", "detail": mode["reason"]})
-    phase = prog["current_phase"]
-    summary = (f"You are in Week {prog['week']} of {prog['weeks']} ({phase}). " +
-               ("DSA is in maintenance mode: review only, no heavy new topics." if maint else "Keep today's block small and steady."))
-    return _result("DSA roadmap brief", summary, 0.9, scope="dsa", expires=_end_of_day(today),
-                   context={"user_id": uid, "date": today.isoformat(), "week": prog["week"], "percent": prog["percent"]},
-                   priorities=priorities, alerts=alerts, sources=[_src("DSA roadmap plan and topic progress"), _src("Exam calendar", "workspace")],
-                   codes=priorities[0]["reason_codes"] if priorities else [], short=mode["reason"] or summary,
-                   roadmap={"goal": plan["goal"], "language": plan["language"], "current_phase": phase, "current_topic": prog["current_topic"],
-                            "status": "active", "mode": mode["mode"], "pace": st["pace"]["state"], "percent": prog["percent"]},
-                   today={"duration_min": tb["minutes"] if tb else 0, "learning_target": tb["topic"]["name"] if tb else None,
-                          "external_resources": resources, "blocks": tb["blocks"] if tb else []},
-                   reason=mode["reason"] or "Consistency beats volume.", brief=brief_card)
 
 
 # ================================================================== 4. APPLICATION BRIEF
@@ -556,8 +469,6 @@ def build_weekly(ctx: Ctx) -> Dict[str, Any]:
                                          ActionRecord.created_at >= T.local_day_start_utc(start)).all())
     completed_ops = sum(1 for o in ops if (o.result_json or {}).get("state") == "completed")
     moved_ops = sum(1 for o in ops if (o.result_json or {}).get("state") == "paused")
-    dsa = db.query(DsaSession).filter(DsaSession.user_id == uid, DsaSession.plan_date >= start, DsaSession.plan_date <= today).all()
-    dsa_done, dsa_skipped = sum(1 for s in dsa if s.status == "done"), sum(1 for s in dsa if s.status == "skipped")
     horizon = today + timedelta(days=7)
     exams = [e for e in db.query(Exam).filter(Exam.user_id == uid, Exam.status != "completed").all() if e.exam_date and today < e.exam_date <= horizon]
     apps = [a for a in db.query(Application).filter(Application.user_id == uid).all()
@@ -578,10 +489,7 @@ def build_weekly(ctx: Ctx) -> Dict[str, Any]:
         a = ctx.act("open_recovery", "See what to recover", link="briefs.html?type=recovery")
         add("Recover missed work", f"{len(missed)} study blocks were missed.", ["missed_blocks"], "medium", [a])
     if exams:
-        acts = []
-        if db.query(DsaPlan).filter(DsaPlan.user_id == uid, DsaPlan.status == "active", DsaPlan.mode_override != "maintenance").first():
-            acts.append(ctx.act("pause_dsa", "Keep DSA in maintenance", kind="execute", risk="medium", intent="set_dsa_mode", payload={"mode": "maintenance"}, confirm=True))
-        add("Exam week ahead", f"{len(exams)} exam(s) in the next 7 days. Protect study time.", ["exam_within_7_days"], "high", acts)
+        add("Exam week ahead", f"{len(exams)} exam(s) in the next 7 days. Protect study time.", ["exam_within_7_days"], "high", [])
     if apps:
         a = ctx.act("open_applications", "Open applications", link="applications.html")
         add("Application deadlines next week", f"{len(apps)} application deadline(s) in the next 7 days.", ["application_deadlines_7d"], "medium", [a])
@@ -598,10 +506,10 @@ def build_weekly(ctx: Ctx) -> Dict[str, Any]:
     conf = 0.9 if total >= 5 else 0.7 if total >= 2 else 0.5
     return _result("Weekly review", summary, conf, scope=start.isoformat(), expires=_in(7),
                    context={"user_id": uid, "window_start": start.isoformat(), "window_end": today.isoformat(), "capacity_min": cap},
-                   priorities=priorities, alerts=alerts, sources=[_src("Study blocks"), _src("Today actions"), _src("DSA sessions")],
+                   priorities=priorities, alerts=alerts, sources=[_src("Study blocks"), _src("Today actions")],
                    codes=priorities[0]["reason_codes"] if priorities else [], short=summary,
                    review={"study": {"planned": total, "done": len(done), "missed": len(missed), "minutes_done": mins_done, "completion_rate": rate},
-                           "today_actions": {"completed": completed_ops, "moved": moved_ops}, "dsa": {"sessions": len(dsa), "done": dsa_done, "skipped": dsa_skipped}},
+                           "today_actions": {"completed": completed_ops, "moved": moved_ops}},
                    next_week={"exams": [{"id": e.id, "course": _course_name(db, e.course_id), "date": e.exam_date.isoformat()} for e in exams],
                               "application_deadlines": [{"id": a.id, "title": f"{a.role} at {a.company}", "date": a.deadline.isoformat()} for a in apps],
                               "tasks_due": len(tasks)})
@@ -680,7 +588,6 @@ def build_recovery(ctx: Ctx) -> Dict[str, Any]:
     since = today - timedelta(days=7)
     blocks = db.query(StudyBlock).filter(StudyBlock.user_id == uid, StudyBlock.plan_date >= since, StudyBlock.plan_date < today, StudyBlock.mode != "buffer").all()
     missed = [b for b in blocks if b.status == "missed" or b.status == "planned"]
-    skipped = db.query(DsaSession).filter(DsaSession.user_id == uid, DsaSession.plan_date >= since, DsaSession.plan_date < today, DsaSession.status == "skipped").count()
     overdue = [t for t in db.query(Task).filter(Task.user_id == uid, Task.status != "done").all() if t.due_date and t.due_date < today]
     overdue.sort(key=lambda t: t.due_date)
     moved = [o for o in db.query(ActionRecord).filter(ActionRecord.user_id == uid, ActionRecord.intent == "today_op", ActionRecord.status == "executed",
@@ -705,16 +612,16 @@ def build_recovery(ctx: Ctx) -> Dict[str, Any]:
                            "reason_codes": [f"task_overdue_{(today - t.due_date).days}_days"], "reason_text": f"Overdue since {t.due_date.isoformat()}.", "next_action": a["type"], "actions": [a]})
     dropped = plan["later"]
     alerts = [{"severity": "info", "title": f"{plan['later_count']} item(s) will not fit today", "detail": ", ".join(l["title"] for l in dropped[:3])}] if plan["later_count"] else []
-    if not (missed or overdue or skipped):
+    if not (missed or overdue):
         summary = "Nothing to recover. You are on track."
     else:
-        summary = (f"{len(missed)} study block(s) missed, {len(overdue)} overdue task(s)" + (f", {skipped} DSA session(s) skipped" if skipped else "") +
+        summary = (f"{len(missed)} study block(s) missed, {len(overdue)} overdue task(s)" + "" +
                    ". Re-planning today puts the highest-risk work back first.")
     return _result("Recovery brief", summary, 0.95 if not (missed or overdue) else 0.85, scope=today.isoformat(), expires=_end_of_day(today),
                    context={"user_id": uid, "window_start": since.isoformat(), "capacity_min": plan["capacity"]["available_min"]},
                    priorities=priorities, alerts=alerts, sources=[_src("Study blocks"), _src("Tasks"), _src("Today actions")],
                    codes=["missed_blocks"] if missed else [], short=summary,
-                   changes={"missed_blocks": names, "dsa_skipped": skipped, "overdue_tasks": [{"id": t.id, "title": t.title, "days_overdue": (today - t.due_date).days} for t in overdue[:10]],
+                   changes={"missed_blocks": names, "overdue_tasks": [{"id": t.id, "title": t.title, "days_overdue": (today - t.due_date).days} for t in overdue[:10]],
                             "moved_recently": len(moved)},
                    recovery_plan={"fits_today": [{"title": i["title"], "minutes": i["minutes"]} for i in plan["items"]], "dropped_or_deferred": dropped})
 
@@ -801,7 +708,7 @@ def build_reminder(ctx: Ctx) -> Dict[str, Any]:
 
 # ================================================================== registry
 BUILDERS: Dict[str, Callable[[Ctx], Dict[str, Any]]] = {
-    "daily_plan": build_daily, "exam_readiness": build_exam, "dsa_roadmap": build_dsa, "application_opportunity": build_application,
+    "daily_plan": build_daily, "exam_readiness": build_exam, "application_opportunity": build_application,
     "outreach_research": build_outreach, "project": build_project, "weekly_review": build_weekly, "decision": build_decision,
     "recovery": build_recovery, "approval": build_approval, "reminder": build_reminder,
 }

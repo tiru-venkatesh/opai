@@ -10,6 +10,6 @@ Chat is an input method. Briefs are the product output. Actions are the executio
 Groq never decides priorities, dates or actions. It may only reword the finished facts into `explanation.narrative`.
 """
 BRIEF_TYPES = (
-    "daily_plan", "exam_readiness", "dsa_roadmap", "application_opportunity", "outreach_research",
+    "daily_plan", "exam_readiness", "application_opportunity", "outreach_research",
     "project", "weekly_review", "decision", "recovery", "approval", "reminder",
 )

@@ -1,8 +1,8 @@
 """Brief System API.  Chat is an input method. Briefs are the product output. Actions are the execution method.
 
-  POST /v1/briefs/{daily|exam|dsa|weekly|decision|recovery|approval}
+  POST /v1/briefs/{daily|exam|weekly|decision|recovery|approval}
   POST /v1/briefs/{application/{opportunity_id}|outreach/{contact_id}|project/{project_id}}
-  GET  /v1/briefs/daily?date=  /v1/briefs/exam/{exam_id}  /v1/briefs/dsa  /v1/briefs  /v1/briefs/{id}
+  GET  /v1/briefs/daily?date=  /v1/briefs/exam/{exam_id}  /v1/briefs  /v1/briefs/{id}
   POST /v1/briefs/{id}/refresh  /v1/briefs/{id}/dismiss
   POST /v1/actions/{action_id}/execute        (approve / reject live in today_api and understand brief action ids)
 
@@ -91,22 +91,6 @@ def post_exam(body: Optional[ExamBody] = None, user_id: Optional[str] = None, db
 @router.get("/v1/briefs/exam/{exam_id}")
 def get_exam(exam_id: str, user_id: str, narrative: bool = False, db: Session = Depends(get_db)):
     return _run(service.get_or_create, db, _uid(db, user_id), "exam_readiness", exam_id, {"exam_id": exam_id}, narrative)
-
-
-# ---------------- dsa
-class DsaBody(Body):
-    minutes: Optional[int] = Field(default=None, ge=5, le=180)      # "I only have 15 minutes"
-
-
-@router.post("/v1/briefs/dsa")
-def post_dsa(body: Optional[DsaBody] = None, user_id: Optional[str] = None, db: Session = Depends(get_db)):
-    b = body or DsaBody()
-    return _run(service.generate, db, _uid(db, b.user_id, user_id), "dsa_roadmap", {"minutes": b.minutes}, b.narrative)
-
-
-@router.get("/v1/briefs/dsa")
-def get_dsa(user_id: str, db: Session = Depends(get_db)):
-    return _run(service.get_or_create, db, _uid(db, user_id), "dsa_roadmap", "dsa", {})
 
 
 # ---------------- entity briefs

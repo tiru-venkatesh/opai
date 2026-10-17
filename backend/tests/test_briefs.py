@@ -245,35 +245,6 @@ def test_exam_actions_execute(c, uid):
     assert c.post(f"/v1/actions/{plan['action_id']}/execute", json={"user_id": uid}).json()["result"]["replanned"] == "today"
 
 
-# ---------------------------------------------------------------- DSA
-def test_dsa_brief_without_and_with_plan(c, uid):
-    b = c.post("/v1/briefs/dsa", json={"user_id": uid}).json()
-    assert b["roadmap"] is None and b["actions"][0]["type"] == "create_dsa_roadmap"
-    c.post("/v1/dsa/plan", json={"user_id": uid, "language": "Python"})
-    b = c.post("/v1/briefs/dsa", json={"user_id": uid}).json()
-    assert b["roadmap"]["language"] == "Python" and b["today"]["external_resources"][0]["url"].startswith("http")
-    assert b["today"]["duration_min"] > 0 and b["roadmap"]["mode"] == "normal"
-    # no practice platform: only external links
-    assert all(r["type"] in ("learning", "external_practice") for r in b["today"]["external_resources"])
-
-
-def test_dsa_brief_exam_season_is_maintenance_and_pause_needs_confirmation(c, uid):
-    seed_exam(uid, days=5)
-    c.post("/v1/dsa/plan", json={"user_id": uid})
-    b = c.post("/v1/briefs/dsa", json={"user_id": uid}).json()
-    assert b["roadmap"]["mode"] == "maintenance" and "exam" in b["reason"].lower()
-    pause = [a for a in b["actions"] if a["type"] == "pause_dsa"][0]
-    assert pause["risk"] == "medium" and pause["requires_confirmation"] is True
-    r = c.post(f"/v1/actions/{pause['action_id']}/execute", json={"user_id": uid}).json()
-    assert r["status"] == "needs_confirmation"
-    assert c.get("/v1/dsa", params={"user_id": uid}).json()["mode"]["override"] == "auto"      # nothing changed yet
-    ok = c.post(f"/v1/actions/{pause['action_id']}/execute", json={"user_id": uid, "confirm": True}).json()
-    assert ok["status"] == "executed"
-    assert c.get("/v1/dsa", params={"user_id": uid}).json()["mode"]["override"] == "maintenance"
-    acts = c.get("/v1/actions", params={"user_id": uid}).json()
-    assert any(a["intent"] == "set_dsa_mode" and a["status"] == "executed" for a in acts)          # approval recorded + audited
-
-
 # ---------------------------------------------------------------- application
 def mk_opp(c, title="ML Intern", tags=("python", "rag", "pytorch"), days=3):
     r = c.post("/v1/opportunities", json={"title": title, "company_or_lab": "Example AI", "tags": list(tags), "deadline": D1(days).isoformat(), "link": "https://example.com/jobs"})
@@ -383,6 +354,15 @@ def test_weekly_review_suggests_lighter_load_with_confirmation(c, uid):
     assert c.post(f"/v1/actions/{adj['action_id']}/execute", json={"user_id": uid}).json()["status"] == "needs_confirmation"
     r = c.post(f"/v1/actions/{adj['action_id']}/execute", json={"user_id": uid, "confirm": True}).json()
     assert r["status"] == "executed" and r["result"]["to"] < r["result"]["from"]
+
+
+def test_medium_risk_confirm_endpoint(c, uid):
+    eid = seed_exam(uid, days=4); seed_blocks(uid, eid, done=1, missed=4)
+    b = c.post("/v1/briefs/weekly", json={"user_id": uid}).json()
+    adj = [a for a in b["actions"] if a["type"] == "adjust_capacity"][0]
+    assert adj["requires_confirmation"] and adj["risk"] == "medium" and adj["requires_approval"] is False
+    assert c.post(f"/v1/actions/{adj['id']}/execute", json={"user_id": uid}).json()["status"] == "needs_confirmation"
+    assert c.post(f"/v1/actions/{adj['id']}/confirm", json={"user_id": uid}).json()["status"] == "executed"
 
 
 def test_weekly_review_with_no_data_is_honest(c, uid):

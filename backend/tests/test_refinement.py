@@ -66,7 +66,7 @@ def test_registry_is_closed_and_declares_contracts():
     d = I.REGISTRY["create_reminder"]
     assert d.required == ("title", "due_at") and d.risk == "low" and "whatsapp" in d.channels and not d.confirmation_required
     assert I.REGISTRY["approve_action"].risk == "high" and I.REGISTRY["approve_action"].confirmation_required
-    for name in ("complete_reminder", "snooze_reminder", "stop_daily_plan", "enable_daily_plan", "generate_daily_brief", "generate_exam_brief", "generate_dsa_brief",
+    for name in ("complete_reminder", "snooze_reminder", "stop_daily_plan", "enable_daily_plan", "generate_daily_brief", "generate_exam_brief",
                  "create_task", "create_project", "create_application", "draft_outreach", "approve_action", "reject_action", "weekly_review", "recovery_plan", "decision_support"):
         assert name in I.REGISTRY
 
@@ -83,7 +83,7 @@ def test_missing_title_is_a_clarification_not_a_guess(c, uid):
 @pytest.mark.parametrize("text,name", [
     ("What should I do today?", "generate_daily_brief"), ("I only have one hour", "generate_daily_brief"), ("weekly review", "weekly_review"),
     ("I missed yesterday's session", "recovery_plan"), ("what needs my approval", "show_approvals"), ("Should I take the gig?", "decision_support"),
-    ("how ready am I for my exam", "generate_exam_brief"), ("dsa today", "generate_dsa_brief"), ("send me my plan every morning at 7:30", "enable_daily_plan"),
+    ("how ready am I for my exam", "generate_exam_brief"), ("send me my plan every morning at 7:30", "enable_daily_plan"),
     ("stop the daily plan", "stop_daily_plan"), ("add task Submit the DS record", "create_task"), ("create a project Alpha", "create_project"),
     ("what is a deadlock", "general_chat")])
 def test_intent_routing_table(c, uid, text, name):
@@ -398,15 +398,6 @@ def test_unknown_action_and_expired_brief(c, uid):
     assert c.post(f"/v1/actions/{ex['id']}/confirm", json={"user_id": uid}).status_code == 409
 
 
-def test_medium_risk_confirm_endpoint(c, uid):
-    c.post("/v1/dsa/plan", json={"user_id": uid})
-    b = c.post("/v1/briefs/dsa", json={"user_id": uid}).json()
-    pause = [a for a in b["actions"] if a["type"] == "pause_dsa"][0]
-    assert pause["requires_confirmation"] and pause["risk"] == "medium" and pause["requires_approval"] is False
-    assert c.post(f"/v1/actions/{pause['id']}/execute", json={"user_id": uid}).json()["status"] == "needs_confirmation"
-    assert c.post(f"/v1/actions/{pause['id']}/confirm", json={"user_id": uid}).json()["status"] == "executed"
-
-
 def _propose_email(c, uid, to="prof@iit.ac.in"):
     return c.post("/v1/actions/propose", json={"user_id": uid, "intent": "send_email", "payload": {"to": to, "subject": "Hi", "body": "Hello professor."}}).json()
 
@@ -446,8 +437,7 @@ def test_all_brief_types_share_one_action_shape(c, uid):
     _daily_with_exam(c, uid)
     briefs = [c.post("/v1/briefs/exam", json={"user_id": uid}).json(), c.post("/v1/briefs/weekly", json={"user_id": uid}).json(),
               c.post("/v1/briefs/recovery", json={"user_id": uid}).json(), c.post("/v1/briefs/approval", json={"user_id": uid}).json(),
-              c.post("/v1/briefs/decision", json={"user_id": uid, "question": "Should I join the club?"}).json(),
-              c.post("/v1/briefs/dsa", json={"user_id": uid}).json()]
+              c.post("/v1/briefs/decision", json={"user_id": uid, "question": "Should I join the club?"}).json()]
     for b in briefs:
         for a in b["actions"]:
             assert {"id", "action_id", "brief_id", "type", "label", "risk", "kind", "status", "requires_confirmation", "requires_approval"} <= set(a)

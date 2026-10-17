@@ -34,28 +34,26 @@ body{display:flex;flex-direction:column;background:var(--paper);color:var(--ink)
 </head>
 <body>
 <section class="coding-top" aria-label="Coding workspace">
-  <div class="coding-head"><div><h1>Coding</h1><p>DSA practice, coding contests, open source and hackathons in one place.</p></div></div>
+  <div class="coding-head"><div><h1>Coding</h1><p>Coding contests, open source and hackathons in one place.</p></div></div>
   <div class="coding-tabs" role="tablist" aria-label="Coding sections" id="coding-tabs">
-    <button type="button" role="tab" id="tab-roadmap" data-k="roadmap" aria-selected="true">DSA Roadmap</button>
-    <button type="button" role="tab" id="tab-events" data-k="events" aria-selected="false">Hackathons &amp; Programs</button>
+    <button type="button" role="tab" id="tab-events" data-k="events" aria-selected="true">Hackathons &amp; Programs</button>
   </div>
 </section>
 <div class="coding-stage" id="coding-stage">
-  <iframe id="frame-roadmap" title="DSA Roadmap" src="dsa.html?embed=1" class="on"></iframe>
-  <iframe id="frame-events" title="Hackathons, open-source programs and coding contests" data-src="projects.html?view=programs&amp;embed=1"></iframe>
+  <iframe id="frame-events" class="on" title="Hackathons, open-source programs and coding contests" data-src="projects.html?view=programs&amp;embed=1"></iframe>
 </div>
 <script>
 (function(){
- var tabs=document.getElementById('coding-tabs'),keys=['roadmap','events'],loaded={roadmap:true};
- function show(k){if(keys.indexOf(k)<0)k='roadmap';
+ var tabs=document.getElementById('coding-tabs'),keys=['events'],loaded={};
+ function show(k){if(keys.indexOf(k)<0)k='events';
    keys.forEach(function(x){var on=x===k,b=document.querySelector('[data-k="'+x+'"]'),f=document.getElementById('frame-'+x);b.setAttribute('aria-selected',String(on));f.classList.toggle('on',on);if(on&&!loaded[x]){f.src=f.getAttribute('data-src');loaded[x]=true;}});
    try{localStorage.setItem('opai_coding_tab',k)}catch(e){}
    if(location.hash!=='#'+k)history.replaceState(null,'','#'+k);
-   document.title=(k==='roadmap'?'DSA Roadmap':'Hackathons & Programs')+' · Coding · OPAI';
+   document.title='Hackathons & Programs · Coding · OPAI';
  }
  tabs.addEventListener('click',function(e){var b=e.target.closest('button[data-k]');if(b)show(b.dataset.k)});
  tabs.addEventListener('keydown',function(e){if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;var active=document.querySelector('#coding-tabs [aria-selected="true"]'),i=keys.indexOf(active.dataset.k);i=(i+(e.key==='ArrowRight'?1:keys.length-1))%keys.length;show(keys[i]);document.querySelector('[data-k="'+keys[i]+'"]').focus()});
- var start=location.hash.slice(1);try{start=start||localStorage.getItem('opai_coding_tab')||'roadmap'}catch(e){start=start||'roadmap'}show(start);
+ var start=location.hash.slice(1);try{start=start||localStorage.getItem('opai_coding_tab')||'events'}catch(e){start=start||'events'}show(start);
  addEventListener('hashchange',function(){show(location.hash.slice(1))});
 })();
 </script>

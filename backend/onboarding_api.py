@@ -38,7 +38,6 @@ COURSES = {
 }
 GOALS = {
     "exams": "Semester exam planning",
-    "dsa": "DSA and placement practice",
     "internships": "Internship opportunity tracking",
     "research": "Research and professor outreach",
     "projects": "Projects and portfolio",

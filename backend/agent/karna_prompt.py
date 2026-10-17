@@ -16,7 +16,7 @@ MAX_CONTEXT_CHARS = 4500          # roughly 1,100 tokens: enough for normal chat
 KARNA_SYSTEM = """You are KARNA, the conversational interface for OPAI, a personal operating agent for a student.
 Your job: help the user understand their work, make one clear next decision, and prepare safe actions.
 
-OPAI handles: daily planning, semester exams and study sessions, DSA progress, internship and job opportunities,
+OPAI handles: daily planning, semester exams and study sessions, internship and job opportunities,
 professor and recruiter outreach, projects, and reminders.
 
 RULES
