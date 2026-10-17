@@ -110,6 +110,9 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
 .modebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:8px;margin-top:6px;border-top:1px solid var(--line)}
 .seg{display:inline-flex;padding:2px;border-radius:10px;background:var(--tint);border:1px solid var(--line)}
 .seg button{border:0;background:none;height:26px;padding:0 12px;border-radius:8px;font:600 11px/1 var(--head);color:var(--ink2)}.seg button.on{background:var(--pri);color:#fff;box-shadow:0 1px 4px rgba(15,82,87,.25)}
+#model{height:28px;max-width:190px;padding:0 8px;border-radius:999px;border:1px solid var(--line);background:var(--tint3);font:500 11px/1 var(--head);color:var(--ink2)}
+.mbadge{font:500 10px/16px var(--mono);padding:0 7px;border-radius:999px;border:1px solid var(--line);background:var(--tint3);color:var(--ink2);white-space:nowrap}
+.mbadge.fb{border-color:#d9a441;background:#fff6e0;color:#7a5200}
 #lang{height:28px;padding:0 8px;border-radius:999px;border:1px solid var(--line);background:var(--tint3);font:500 11px/1 var(--head);color:var(--ink2)}
 .scope{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;background:var(--tint);border:1px solid var(--line2);font:500 11px/18px var(--mono);color:var(--pri);max-width:220px}.scope span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.scope button{border:0;background:none;color:var(--pri);padding:0}
 .hint{text-align:center;font:400 11px/16px var(--mono);color:var(--mute);margin-top:6px}
@@ -194,6 +197,7 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
       </div>
       <div class="modebar">
         <div class="seg" role="group" aria-label="Chat mode"><button type="button" id="m-ws" title="Answers from your documents and your own applications, tasks, projects and exams">Workspace</button><button type="button" id="m-gen" title="Open-ended chat, not tied to your data">General</button></div>
+        <select id="model" aria-label="AI model" title="Which model writes the final answer. Auto uses the default routing. Routing, memory and tools always use fixed models."><option value="auto">Auto</option></select>
         <select id="lang" aria-label="Reply language" title="Reply language (General mode, files, Guide) and voice input language"><option value="en">English</option><option value="hi">Hinglish</option><option value="te">Tenglish</option></select>
         <span class="scope" id="scope" hidden></span>
       </div>
@@ -229,6 +233,7 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
     if (e.name === 'AbortError') return null;
     if ((e.status === 503 || e.status === 502) && /GROQ|not configured|AI is not/i.test(e.message))
       return 'The AI key is not set on the backend yet. Add GROQ_API_KEY (or ANTHROPIC_API_KEY) in Render and try again. Workspace mode still answers from your documents and data without it.';
+    if (e.status === 429 && /daily limit/i.test(e.message)) return e.message;
     if (e.status === 429) return 'Too many requests, or the AI service is rate-limited. Wait a minute and retry.';
     if (e.status === 502 || e.status === 503) return e.message;
     if (e.name === 'TypeError') return 'Could not reach the backend at ' + base() + '. If it is on a free host it may be waking up; retry in a minute.';
@@ -365,12 +370,36 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
     ws: ['Lets learn Java', '/guide','What is on my plan today?', 'Summarise my uploaded documents', 'Show my upcoming deadlines', 'Add a project called My App using React', 'Add an exam for Operating Systems on 20 Nov', 'Add an application as ML Intern at Acme deadline 30 Oct'],
     gen: ['Lets learn Java', 'Explain RAG like I am new to AI', 'Help me write a cold email to a professor', 'Quiz me on database normalization']
   };
+  /* ---------- model picker (server-side catalog; the server validates every key) ---------- */
+  const LS_MODEL = 'opai_sc_model';
+  let modelKey = 'auto';
+  try { modelKey = localStorage.getItem(LS_MODEL) || 'auto'; } catch (e) {}
+  async function loadModels() {
+    const sel = $('model'); if (!sel) return;
+    try {
+      const r = await api('/v1/models?mode=' + (store.mode === 'ws' ? 'workspace' : 'general') + '&user_id=' + encodeURIComponent(uid || ''));
+      const rows = (r && r.models || []).filter((m) => m.ready);
+      sel.innerHTML = '<option value="auto">Auto</option>' + rows.map((m) =>
+        '<option value="' + esc(m.key) + '"' + (m.available ? '' : ' disabled') + '>' + esc(m.label) + (m.available ? '' : ' (General only)') + '</option>').join('');
+      const ok = rows.some((m) => m.key === modelKey && m.available);
+      if (!ok) modelKey = 'auto';
+      sel.value = modelKey;
+    } catch (e) { /* picker is optional: stay on Auto */ modelKey = 'auto'; sel.value = 'auto'; }
+  }
+  $('model').addEventListener('change', (e) => { modelKey = e.target.value || 'auto'; try { localStorage.setItem(LS_MODEL, modelKey); } catch (x) {} });
+  const modelBody = () => (modelKey && modelKey !== 'auto' ? { model_key: modelKey } : {});
+  function modelBadge(mm) {
+    if (!mm || !mm.label) return '';
+    const prov = { anthropic: 'Claude', groq: 'Groq', hf: 'Hugging Face' }[mm.provider] || mm.provider || '';
+    const t = mm.fallback ? 'Fallback used: answered by ' + prov + (mm.model ? ' (' + mm.model + ')' : '') : (mm.model || mm.label);
+    return '<span class="mbadge' + (mm.fallback ? ' fb' : '') + '" title="' + esc(t) + '">' + esc(mm.fallback ? 'fallback \u00b7 ' + prov : mm.label) + '</span>';
+  }
   function applyMode() {
     $('m-ws').classList.toggle('on', store.mode === 'ws'); $('m-gen').classList.toggle('on', store.mode === 'gen');
     $('q').placeholder = store.mode === 'ws' ? 'Ask about your documents, applications, projects, exams…' : 'Ask anything…';
     $('sugg').innerHTML = SUGG[store.mode].map((s) => '<button type="button">' + esc(s) + '</button>').join('');
     $('b-know').hidden = store.mode !== 'ws'; if (store.mode !== 'ws') toggleKnow(false);
-    renderScope(); renderEmpty();
+    renderScope(); renderEmpty(); loadModels();
   }
   function renderEmpty() {
     const e = $('empty'); const has = conv().msgs.length;
@@ -418,7 +447,7 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
       d.innerHTML = '<div class="av av-u" aria-hidden="true">' + userAv() + '</div><div class="body"><div class="meta"><b>You</b><span>' + clock(m.ts) + '</span></div>' + filesHTML(m.files) + (m.text ? '<div class="bubble">' + esc(m.text) + '</div>' : '') + '</div>';
     } else if (m.role === 'agent') {
       const tcs = m.tool_calls || [], srcs = m.sources || [];
-      let h = '<div class="av av-k" aria-hidden="true">' + KLOGO + '</div><div class="body"><div class="meta"><b>KARNA</b><span class="pill">' + esc(label(m)) + '</span><span>' + clock(m.ts) + '</span>' + (m.ms ? '<span>' + (m.ms / 1000).toFixed(1) + ' s</span>' : '') + '</div>';
+      let h = '<div class="av av-k" aria-hidden="true">' + KLOGO + '</div><div class="body"><div class="meta"><b>KARNA</b><span class="pill">' + esc(label(m)) + '</span>' + modelBadge(m.model) + '<span>' + clock(m.ts) + '</span>' + (m.ms ? '<span>' + (m.ms / 1000).toFixed(1) + ' s</span>' : '') + '</div>';
       if (tcs.length) h += '<details class="trace"><summary>Tool calls this turn (' + tcs.length + ')</summary>' + tcs.map(stepHTML).join('') + '</details>';
       h += '<div class="bubble">' + withCites(md(m.text || 'Done.'), srcs) + '</div>';
       if (srcs.length) h += '<div class="srcs">' + srcs.map((s) => '<button type="button" class="src" data-n="' + s.n + '"><b>' + s.n + '</b><span>' + srcLabel(s) + '</span></button>').join('') + '</div><div class="snip-slot"></div>';
@@ -666,16 +695,16 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
         am = { role: 'agent', action: 'attachment', text: r.analysis || 'No analysis returned.' };
       } else if (store.mode === 'gen') {
         const hist = c.msgs.filter((m) => m.role === 'user' || m.role === 'agent').slice(-12).map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text || '' }));
-        const r = await api('/v1/chat/general', { method: 'POST', signal: ctrl.signal, body: JSON.stringify({ system: SYSTEM_GEN(), messages: hist, user_id: await ensureUser() }) });
-        am = { role: 'agent', action: 'general', text: r.reply || '', memory: r.memory || null };
+        const r = await api('/v1/chat/general', { method: 'POST', signal: ctrl.signal, body: JSON.stringify({ system: SYSTEM_GEN(), messages: hist, user_id: await ensureUser(), ...modelBody() }) });
+        am = { role: 'agent', action: 'general', text: r.reply || '', memory: r.memory || null, model: r.model || null };
       } else {
-        const body = { user_id: await ensureUser(), message: text, history: historyFor(c) };
+        const body = { user_id: await ensureUser(), message: text, history: historyFor(c), ...modelBody() };
         if (scopeDoc) body.doc_ids = [scopeDoc.doc_id];
         const r = await api('/v1/jarvis/chat', { method: 'POST', signal: ctrl.signal, body: JSON.stringify(body) });
         const p = r.payload && typeof r.payload === 'object' && !Array.isArray(r.payload) ? r.payload : null;
         const srcs = p && Array.isArray(p.sources) ? p.sources.filter((s) => s && s.n) : [];
         const small = r.payload != null && JSON.stringify(r.payload).length < 4000 ? r.payload : null;
-        am = { role: 'agent', action: r.action, text: r.reply || '', tool_calls: r.tool_calls || [], payload: small, sources: srcs, mode: p && p.answer_mode };
+        am = { role: 'agent', action: r.action, text: r.reply || '', tool_calls: r.tool_calls || [], payload: small, sources: srcs, mode: p && p.answer_mode, model: p && p.model || null };
         if (r.action === 'task') refreshDocs();
       }
       am.ts = Date.now(); am.ms = performance.now() - t0; c.msgs.push(am); c.msgs = c.msgs.slice(-200);

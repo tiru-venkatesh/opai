@@ -394,9 +394,8 @@ def _llm_answer(question: str, history, context: str) -> str:
         if _role(h) in ("user", "assistant"):
             msgs.append({"role": _role(h), "content": _content(h)[:1500]})
     msgs.append({"role": "user", "content": f"Context passages:\n{context}\n\nQuestion: {question}"})
-    out = groq_client.get_client().chat.completions.create(
-        model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), messages=msgs, temperature=0.2, max_tokens=900,
-    ).choices[0].message.content or ""
+    from agent import llm
+    out = llm.final_answer(msgs, default_model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), max_tokens=900, temperature=0.2)
     return out.strip()
 
 
@@ -449,9 +448,8 @@ def general_answer(question: str, history=None) -> str:
         if _role(h) in ("user", "assistant"):
             msgs.append({"role": _role(h), "content": _content(h)[:1500]})
     msgs.append({"role": "user", "content": question})
-    out = groq_client.get_client().chat.completions.create(
-        model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), messages=msgs, temperature=0.4, max_tokens=1200,
-    ).choices[0].message.content or ""
+    from agent import llm
+    out = llm.final_answer(msgs, default_model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), max_tokens=1200, temperature=0.4)
     return out.strip()
 
 

@@ -1290,7 +1290,28 @@ def jarvis_chat(request: JarvisChatRequest, db: Session = Depends(get_db)):
     msg = learn.ack_pending(res)
     if msg and len((request.message or "").split()) <= 14:
         return JarvisChatResponse(action="chat", reply=msg, payload={"intent": "memory_pending", "memory": res})
-    return process_jarvis_message(request.user_id, request.message, db, history=request.history, doc_ids=request.doc_ids)
+    entry = _select_model(request.model_key, "workspace", str(request.user_id))
+    _charge_model(entry, str(request.user_id))
+    res = process_jarvis_message(request.user_id, request.message, db, history=request.history, doc_ids=request.doc_ids)
+    meta = llm_meta()
+    if meta:
+        pl = res.payload if isinstance(res.payload, dict) else ({} if res.payload is None else None)
+        if pl is not None:                 # leave non-dict payloads (plans, matches, emails) untouched
+            res.payload = {**pl, "model": meta}
+    return res
+
+
+def llm_meta():
+    from agent import llm
+    return llm.last_meta()
+
+
+@app.get("/v1/models")
+def list_models(mode: str = "general", user_id: Optional[str] = None):
+    """Model picker contents. Server-side catalog only: the client never supplies provider model ids."""
+    from agent import model_catalog
+    return {"models": model_catalog.public_list(mode if mode in ("general", "workspace") else None),
+            "remaining_today": model_catalog.remaining(user_id or "anon")}
 
 
 # ================= GENERAL CHAT (no workspace data) =================
@@ -1303,6 +1324,7 @@ class GeneralChatRequest(BaseModel):
     system: Optional[str] = None
     user_id: Optional[str] = None      # lets General mode answer questions about the user's own profile
     messages: List[GeneralChatMessage]
+    model_key: Optional[str] = None    # server-validated catalog key; None/"auto" = default routing
 
 
 _GENERAL_HITS: dict = {}
@@ -1339,12 +1361,37 @@ GENERAL_GUARD = (
 )
 
 
+def _select_model(model_key, mode: str, who: str):
+    """Validate the client's model_key server-side. Unknown / not allowed in this mode -> HTTP 400."""
+    from agent import llm
+    from agent.model_catalog import ModelChoiceError
+    try:
+        return llm.select(model_key, mode, who)
+    except ModelChoiceError as e:
+        raise HTTPException(e.status, e.message)
+
+
+def _charge_model(entry, who: str):
+    """One use against the user's daily cap for that model tier. Auto (None) is not capped here. -> HTTP 429 when exhausted."""
+    if entry is None:
+        return
+    from agent import llm
+    from agent.model_catalog import ModelChoiceError
+    try:
+        llm.charge(entry, who)
+    except ModelChoiceError as e:
+        raise HTTPException(e.status, e.message)
+
+
 def _general_prepare(req, request: Request, db: Session):
     """Everything before the model call. Returns ("done", response_dict) for local answers, or ("llm", msgs, saved, ctx)."""
     from agent import groq_client, learn
-    _general_rate_limit(request.client.host if request.client else "unknown")
+    ip = request.client.host if request.client else "unknown"
+    _general_rate_limit(ip)
     last_user = next((m.content for m in reversed(req.messages) if m.role == "user"), "")
     uid = str(req.user_id) if req.user_id else None
+    entry = _select_model(req.model_key, "general", uid or ip)     # validated before anything else runs
+    third_party = bool(entry and not entry.workspace_ok)           # e.g. Hugging Face: never sent profile / memory context
     from agent import conversation          # greetings / "what can you do" / help: local reply, no DB-heavy memory pass, no LLM
     if conversation.answer(last_user) is not None:
         first = None
@@ -1374,7 +1421,7 @@ def _general_prepare(req, request: Request, db: Session):
         if ident:
             return ("done", {"reply": ident["reply"], "source": "profile"})
     ctx = {"text": "", "hits": [], "empty": True}
-    if uid:
+    if uid and not third_party:
         try:
             ctx = learn.personal_context(db, uid, last_user)
         except Exception:
@@ -1386,6 +1433,9 @@ def _general_prepare(req, request: Request, db: Session):
             src = build_sources(ctx["hits"])
             return ("done", {"reply": extractive_answer(src, ctx["hits"], last_user), "source": "workspace", "sources": src})
         raise HTTPException(503, "No AI key is configured on the backend (set GROQ_API_KEY or ANTHROPIC_API_KEY)")
+    if personal_q and third_party:
+        return ("done", {"reply": "That question needs your personal data, and I don't send that to third-party models. "
+                                  "Switch the model to Auto or Claude and ask again."})
     if personal_q and ctx["empty"]:
         return ("done", {"reply": "I don't have anything about that in your OPAI data yet. Add it in Plan/Work, or tell me here "
                                   "(for example \"I study at ...\" or \"my goal is ...\") and I'll remember it."})
@@ -1403,7 +1453,8 @@ def _general_prepare(req, request: Request, db: Session):
     for m in req.messages[-12:]:
         if m.role in ("user", "assistant"):
             msgs.append({"role": m.role, "content": m.content[:6000]})
-    return ("llm", msgs, saved, ctx)
+    _charge_model(entry, uid or ip)
+    return ("llm", msgs, saved, ctx, entry)
 
 
 @app.post("/v1/chat/general")
@@ -1412,15 +1463,15 @@ def general_chat(req: GeneralChatRequest, request: Request, db: Session = Depend
     prep = _general_prepare(req, request, db)
     if prep[0] == "done":
         return prep[1]
-    _, msgs, saved, ctx = prep
+    _, msgs, saved, ctx, entry = prep
+    from agent import llm
     try:
-        out = groq_client.get_client().chat.completions.create(
-            model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), messages=msgs,
-            temperature=float(os.getenv("GENERAL_TEMPERATURE", "0.2")), max_tokens=int(os.getenv("GENERAL_MAX_TOKENS", "2500")),
-        ).choices[0].message.content or ""
+        out = llm.final_answer(msgs, default_model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"),
+                               max_tokens=int(os.getenv("GENERAL_MAX_TOKENS", "2500")),
+                               temperature=float(os.getenv("GENERAL_TEMPERATURE", "0.2")), entry=entry)
     except Exception as e:
         raise HTTPException(502, f"AI chat failed: {type(e).__name__}")
-    return {"reply": learn.strip_false_claim(out, saved), "personalised": not ctx["empty"]}
+    return {"reply": learn.strip_false_claim(out, saved), "personalised": not ctx["empty"], "model": llm.last_meta()}
 
 
 @app.post("/v1/chat/general/stream")
@@ -1440,14 +1491,26 @@ def general_chat_stream(req: GeneralChatRequest, request: Request, db: Session =
             yield sse({"delta": prep[1]["reply"]})
             yield sse({"done": True, **prep[1]})
             return
-        _, msgs, saved, ctx = prep
+        _, msgs, saved, ctx, entry = prep
         buf = []
+        mx = int(os.getenv("GENERAL_MAX_TOKENS", "2500"))
+        temp = float(os.getenv("GENERAL_TEMPERATURE", "0.2"))
         try:
-            for piece in llm.stream_chat(msgs, tier="balanced", max_tokens=int(os.getenv("GENERAL_MAX_TOKENS", "2500")),
-                                         temperature=float(os.getenv("GENERAL_TEMPERATURE", "0.2"))):
+            meta = None
+            if entry is not None and entry.provider != "anthropic":
+                # Groq / Hugging Face: one-shot answer (no native streaming here), with fallback + labelling handled in final_answer
+                piece = llm.final_answer(msgs, default_model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), max_tokens=mx,
+                                         temperature=temp, entry=entry)
+                meta = llm.last_meta()
                 buf.append(piece)
                 yield sse({"delta": piece})
-            yield sse({"done": True, "reply": learn.strip_false_claim("".join(buf), saved), "personalised": not ctx["empty"]})
+            else:
+                tier = entry.claude_tier if entry is not None else "balanced"
+                for piece in llm.stream_chat(msgs, tier=tier, max_tokens=mx, temperature=temp):
+                    buf.append(piece)
+                    yield sse({"delta": piece})
+                meta = llm.stream_meta(entry)
+            yield sse({"done": True, "reply": learn.strip_false_claim("".join(buf), saved), "personalised": not ctx["empty"], "model": meta})
         except Exception as e:
             import logging
             logging.getLogger("opa").exception("stream failed")

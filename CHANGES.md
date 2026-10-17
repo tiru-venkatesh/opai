@@ -1,3 +1,17 @@
+# Model picker (multi-model chat)
+
+- `backend/agent/model_catalog.py` (new): server-side catalog (Claude fast/balanced/deep, Groq, optional Hugging Face), per-mode rules
+  and per-user daily caps by tier. The client only sends a `model_key`; unknown keys are rejected (400), provider ids are never client-supplied.
+- `agent/llm.py`: `select()`, `final_answer()`, `stream_meta()`, Hugging Face router provider (`HUGGINGFACE_API_KEY`, no new dependency).
+  Only the FINAL answer uses the picker. Intent routing, memory extraction, JSON-mode and tool calls are unchanged.
+- Existing routes take `model_key` (no new chat route): `/v1/chat/general` (+ `/stream`) and `/v1/jarvis/chat`. New `GET /v1/models`.
+  Replies carry `model: {key,label,provider,model,fallback}`. `fallback: true` means the chosen model failed and default routing answered.
+- Privacy: Hugging Face models are General mode only (Workspace returns 400 unless `KARNA_HF_WORKSPACE=on`), and in General they never
+  receive profile/memory context; personal questions are answered with a "switch model" notice.
+- UI (`super-chat.html`, both copies): model picker in the composer bar, badge under each reply, amber "fallback" badge, daily-limit message.
+- Tests: `backend/test_model_catalog.py`.
+- Note: counters for daily caps are in-memory per process; with several workers the cap is per worker. Move to the DB/Redis if you need it exact.
+
 # OPAI clean drop (backend + frontend)
 
 ## Frontend

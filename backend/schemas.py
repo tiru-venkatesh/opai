@@ -72,6 +72,7 @@ class JarvisChatRequest(BaseModel):
     message: str
     history: Optional[List[ChatTurn]] = None  # prior turns, so follow-ups ("what does it use?") resolve
     doc_ids: Optional[List[str]] = None       # restrict retrieval to these uploaded docs ("ask only this doc")
+    model_key: Optional[str] = None           # server-validated model catalog key; None/"auto" = default routing
 
 
 class JarvisChatResponse(BaseModel):

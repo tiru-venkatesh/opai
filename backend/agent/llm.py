@@ -16,6 +16,10 @@ Provider selection (env):
   CLAUDE_DEEP_MODEL  hardest requests, opt-in via tier="deep"      (default claude-opus-5-5)
   KARNA_FALLBACK     on (default) | off: if Claude fails, retry the same call on Groq when a Groq key exists.
   ANTHROPIC_TIMEOUT  seconds (default 60)
+  HUGGINGFACE_API_KEY optional: enables Hugging Face models in the chat model picker (see agent/model_catalog.py).
+
+User-selectable models: only the FINAL answer in chat / General / RAG uses `final_answer()`. Routing, memory extraction,
+JSON-mode and tool-calling calls keep using get_client() and never see the picker.
 """
 from __future__ import annotations
 
@@ -24,6 +28,9 @@ import logging
 import os
 import re
 import time
+import contextvars
+import urllib.request
+import urllib.error
 from types import SimpleNamespace
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
@@ -64,6 +71,7 @@ def status() -> Dict[str, Any]:
         "provider": p,
         "anthropic_key_set": bool(_key("ANTHROPIC_API_KEY")),
         "groq_key_set": bool(_key("GROQ_API_KEY")),
+        "huggingface_key_set": bool(_key("HUGGINGFACE_API_KEY")),
         "fallback": _fallback_allowed(),
         "models": {"fast": _model_for("fast"), "balanced": _model_for("balanced"),
                    "agent": _model_for("agent"), "deep": _model_for("deep")} if p == "anthropic" else None,
@@ -325,6 +333,7 @@ def _create(**kw):
     except Exception as e:
         if _fallback_allowed() and type(e).__name__ not in ("BadRequestError",):
             log.warning("Claude call failed (%s: %s); falling back to Groq", type(e).__name__, str(e)[:200])
+            _fell.set(True)
             return _groq_create(**kw)
         raise
 
@@ -364,3 +373,104 @@ def stream_chat(messages: List[Dict[str, Any]], *, tier: str = "balanced", max_t
     with _anthropic_client().messages.stream(**args) as s:
         for delta in s.text_stream:
             yield delta
+
+
+# ----------------------------------------------------------------------------- user-selected model (final answers only)
+_fell: "contextvars.ContextVar[bool]" = contextvars.ContextVar("karna_fell_back", default=False)
+_sel: "contextvars.ContextVar[Any]" = contextvars.ContextVar("karna_selected", default=None)    # (entry, who) | None
+_meta: "contextvars.ContextVar[Optional[Dict[str, Any]]]" = contextvars.ContextVar("karna_meta", default=None)
+
+HF_URL = "https://router.huggingface.co/v1/chat/completions"
+
+
+def select(model_key: Optional[str], mode: str, who: str = "") -> Any:
+    """Validate the client's model_key against the server catalog and remember it for this request.
+    Raises agent.model_catalog.ModelChoiceError (400 unknown / not allowed in this mode). Returns the entry or None (= Auto)."""
+    from . import model_catalog
+    entry = model_catalog.resolve(model_key, mode)
+    _sel.set((entry, who) if entry else None)
+    _meta.set(None)
+    _fell.set(False)
+    return entry
+
+
+def last_meta() -> Optional[Dict[str, Any]]:
+    """{'key','label','provider','model','fallback'} for the last model-written answer in this request, else None."""
+    return _meta.get()
+
+
+def _hf_create(entry: Any, messages: List[Dict[str, Any]], max_tokens: int, temperature: Optional[float]) -> SimpleNamespace:
+    key = _key("HUGGINGFACE_API_KEY")
+    if not key:
+        raise RuntimeError("HUGGINGFACE_API_KEY is not configured")
+    plain = [{"role": m.get("role"), "content": _text_of(m.get("content"))} for m in messages
+             if m.get("role") in ("system", "user", "assistant")]
+    body = {"model": entry.model_id, "messages": plain, "max_tokens": int(max_tokens)}
+    if temperature is not None:
+        body["temperature"] = max(0.0, min(1.5, float(temperature)))
+    req = urllib.request.Request(HF_URL, data=json.dumps(body).encode(), method="POST",
+                                 headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
+    t0 = time.perf_counter()
+    try:
+        with urllib.request.urlopen(req, timeout=float(os.getenv("HF_TIMEOUT", "60"))) as r:
+            data = json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"HuggingFace HTTP {e.code}") from None
+    text = (((data.get("choices") or [{}])[0]).get("message") or {}).get("content") or ""
+    log.info("llm provider=hf model=%s ms=%.0f", entry.model_id, (time.perf_counter() - t0) * 1000)
+    msg = SimpleNamespace(role="assistant", content=text, tool_calls=None)
+    return SimpleNamespace(id=data.get("id", ""), model=entry.model_id, choices=[SimpleNamespace(index=0, message=msg, finish_reason="stop")],
+                           usage=SimpleNamespace(prompt_tokens=0, completion_tokens=0))
+
+
+def _call_entry(entry: Any, messages, max_tokens, temperature) -> SimpleNamespace:
+    if entry.provider == "anthropic":
+        return _claude_create(messages=messages, tier=entry.claude_tier, max_tokens=max_tokens, temperature=temperature)
+    if entry.provider == "groq":
+        return _groq_create(model=entry.model_id, messages=messages, max_tokens=max_tokens, temperature=temperature)
+    return _hf_create(entry, messages, max_tokens, temperature)
+
+
+def charge(entry: Any, who: str) -> None:
+    from . import model_catalog
+    model_catalog.charge(entry, who)
+
+
+def final_answer(messages: List[Dict[str, Any]], *, default_model: str, max_tokens: int, temperature: Optional[float] = 0.2,
+                 entry: Any = None, who: Optional[str] = None) -> str:
+    """The user-visible answer. Honors the model chosen with select() (or an explicit entry); otherwise the existing default
+    routing. If the chosen model fails, falls back to the default routing and records fallback=True so the UI can say so."""
+    if entry is None:
+        cur = _sel.get()
+        entry, who = (cur if cur else (None, who))
+    _fell.set(False)
+    if entry is None:
+        out = _create(messages=messages, model=default_model, max_tokens=max_tokens, temperature=temperature)
+        p = provider()
+        fb = _fell.get()
+        _meta.set({"key": "auto", "label": "Auto", "provider": "groq" if (fb or p == "groq") else p,
+                   "model": getattr(out, "model", "") or default_model, "fallback": bool(fb)})
+        return out.choices[0].message.content or ""
+    fb = False
+    try:
+        out = _call_entry(entry, messages, max_tokens, temperature)
+    except Exception as e:
+        log.warning("selected model %s failed (%s: %s); using default routing", entry.key, type(e).__name__, str(e)[:200])
+        _fell.set(False)
+        out = _create(messages=messages, model=default_model, max_tokens=max_tokens, temperature=temperature)
+        fb = True
+    prov = ("groq" if _fell.get() else provider()) if fb else entry.provider
+    _meta.set({"key": entry.key, "label": entry.label, "provider": prov,
+               "model": getattr(out, "model", "") or entry.model_id, "fallback": fb or _fell.get()})
+    return out.choices[0].message.content or ""
+
+
+def stream_meta(entry: Any = None) -> Dict[str, Any]:
+    """Label for a reply produced by stream_chat (Claude tier, or Groq when Claude isn't the active provider)."""
+    p = provider()
+    if entry is not None and entry.provider == "anthropic" and p == "anthropic":
+        return {"key": entry.key, "label": entry.label, "provider": "anthropic", "model": _model_for(entry.claude_tier), "fallback": False}
+    if p == "anthropic":
+        return {"key": "auto", "label": "Auto", "provider": "anthropic", "model": _model_for("balanced"), "fallback": False}
+    return {"key": "auto" if entry is None else entry.key, "label": "Auto" if entry is None else entry.label, "provider": "groq",
+            "model": os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), "fallback": entry is not None}
