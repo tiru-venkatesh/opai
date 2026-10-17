@@ -520,6 +520,55 @@ class DsaSession(Base):
     completed_at = Column(DateTime)
 
 
+class DsaAttempt(Base):
+    """DSA Coach: one logged attempt at a problem on an external platform. Metadata only: no statement, solution or code."""
+    __tablename__ = "dsa_attempts"
+    __table_args__ = (Index("ix_dsa_attempts_user_day", "user_id", "attempted_on"), Index("ix_dsa_attempts_user_key", "user_id", "problem_key"))
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    problem_key = Column(String(120), nullable=False)
+    title = Column(String(200), nullable=False)
+    url = Column(String(500))
+    platform = Column(String(32), default="LeetCode")
+    pattern = Column(String(32))
+    difficulty = Column(String(10))
+    result = Column(String(10), nullable=False)        # solved | hinted | failed
+    hints_used = Column(Integer, default=0)
+    saw_solution = Column(Boolean, default=False)
+    minutes = Column(Integer)
+    mistakes = Column(JSON)                            # list of tags from dsa_coach.MISTAKES
+    time_complexity = Column(String(40))
+    space_complexity = Column(String(40))
+    predicted_pattern = Column(String(32))             # active recall: what the learner guessed BEFORE solving
+    recall_correct = Column(Boolean)
+    approach_note = Column(String(500))                # the learner's own words, optional
+    slot = Column(String(10))                          # new | revision | mixed | manual
+    is_resolve = Column(Boolean, default=False)        # a repeat of a problem tried before
+    attempted_on = Column(Date, nullable=False)
+    created_at = Column(DateTime, default=_dt.utcnow)
+
+
+class DsaMastery(Base):
+    """DSA Coach: one row per (user, problem) with the spaced-revision schedule."""
+    __tablename__ = "dsa_mastery"
+    __table_args__ = (Index("ux_dsa_mastery_user_key", "user_id", "problem_key", unique=True), Index("ix_dsa_mastery_due", "user_id", "next_review"))
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    problem_key = Column(String(120), nullable=False)
+    title = Column(String(200), nullable=False)
+    url = Column(String(500))
+    pattern = Column(String(32))
+    difficulty = Column(String(10))
+    stage = Column(Integer, default=0)                 # 0-5, see dsa_coach.REVISION_DAYS
+    state = Column(String(12), default="new")          # new | learning | shaky | solid | mastered
+    attempts = Column(Integer, default=0)
+    clean_resolves = Column(Integer, default=0)        # solved with no help on a repeat attempt
+    last_result = Column(String(10))
+    last_attempt = Column(Date)
+    next_review = Column(Date)
+    updated_at = Column(DateTime, default=_dt.utcnow)
+
+
 # ---------------- OPAI extras: outreach safety, research briefs, quizzes, mastery ----------------
 class SuppressedContact(Base):
     """Do-not-contact / bounce list. Checked before any outreach is drafted or approved."""

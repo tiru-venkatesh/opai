@@ -174,6 +174,11 @@ def put_settings(p: Settings, db: Session = Depends(get_db)):
     if p.daily_brief is not None or p.daily_brief_time or ((p.tz_offset_min is not None or p.timezone) and cur["enabled"]):
         enabled = cur["enabled"] if p.daily_brief is None else p.daily_brief
         RM.upsert_daily_brief(db, uid, p.daily_brief_time or cur["time"], enabled)
+    if p.timezone or p.tz_offset_min is not None:       # opt-in DSA streak nudges keep the same LOCAL times in the new zone
+        import dsa_coach_service as DC
+        st = DC.streak_settings(db, uid)
+        if st["enabled"]:
+            DC.set_streak_settings(db, uid, True, st["times"], st["quiet_start"], st["quiet_end"])
     return get_settings(uid, db)
 
 

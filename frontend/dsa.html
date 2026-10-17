@@ -148,6 +148,22 @@ ul.plain li>span,.steps li>span,.rq>div,.hist>span{min-width:0;overflow-wrap:any
 </head>
 <script>if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add("emb")</script>
 <style>html.emb main>h1{display:none}.o2-jump{display:none!important}</style>
+<style>
+/* ---- DSA Coach ---- */
+.ci{padding:12px 0;border-top:1px solid #D5E1DE}.ci:first-of-type{border-top:0}
+.ci .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.ci .top b{font-weight:600}.ci small{color:var(--dim);font:11px var(--mono)}
+.ci .rc{margin:6px 0 0;color:var(--mut);font-size:13px}.ci .ln{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.ci select,.lg select,.lg input[type=text],.lg input[type=url],.lg input[type=number],.lg textarea{font:13px var(--font);padding:6px 9px;border-radius:8px;border:1px solid var(--line);background:var(--s2);color:var(--tx);max-width:100%}
+.lg{margin-top:10px;padding:12px;border-radius:12px;background:var(--s2);border:1px dashed var(--line);display:grid;gap:10px}
+.lg label.k{display:block;font:11px var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--dim);margin-bottom:4px}
+.lg .g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}.lg textarea{width:100%;min-height:54px}
+.lg .opt span{padding:5px 12px}.lg .ck{display:inline-flex;gap:6px;align-items:center;margin:0 12px 6px 0;font-size:13px}
+.pb{display:grid;grid-template-columns:150px 1fr auto;gap:6px 12px;align-items:center;padding:6px 0;border-top:1px solid #D5E1DE;font-size:13px}.pb:first-of-type{border-top:0}
+.pb .bar{height:8px}.pb .bar i.w{background:var(--coral-ink)}.pb .bar i.s{background:var(--ok)}.pb .bar i.n{background:var(--dim);opacity:.35}.pb small{font:11px var(--mono);color:var(--dim)}
+.pb .mm{grid-column:2/-1;color:var(--mut);font-size:12px}
+@media(max-width:600px){.pb{grid-template-columns:1fr auto}.pb .bar{grid-column:1/-1}.pb .mm{grid-column:1/-1}}
+.okmsg{margin:10px 0 0;padding:10px 14px;border-radius:12px;background:var(--pri-soft);color:var(--pri);font-size:13px}
+</style>
 <body>
 <main>
   <h1>DSA Roadmap</h1>
@@ -192,6 +208,121 @@ ul.plain li>span,.steps li>span,.rq>div,.hist>span{min-width:0;overflow-wrap:any
     const label = kind === 'practice' ? 'Optional practice' : 'Open learning resource';
     return '<a class="lnk" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(label) + ' <small>' + esc(h.replace(/^www\./, '')) + '</small> ↗</a>';
   }
+
+
+  /* ================= DSA Coach: plan tomorrow, log attempts, find weak patterns ================= */
+  let CO = null, logFor = null, coachMsg = '', preds = {};
+  const RES = { solved: 'Solved on my own', hinted: 'Solved with hints', failed: "Couldn't solve it" };
+  const SLOTN = { new: 'New', revision: 'Revision', mixed: 'Mixed' };
+  const bits = (o) => o.options;
+  const patSelect = (id, cur, blank) => '<select id="' + id + '"><option value="">' + esc(blank) + '</option>' + CO.options.patterns.map((p) => '<option value="' + esc(p.id) + '"' + (p.id === cur ? ' selected' : '') + '>' + esc(p.label) + '</option>').join('') + '</select>';
+
+  function planItem(it, i) {
+    const lab = '<span class="chip' + (it.slot === 'mixed' ? ' warn' : '') + '">' + SLOTN[it.slot] + '</span>';
+    if (!it.title) return '<div class="ci"><div class="top">' + lab + '<span class="tag" style="margin:0">' + esc(it.reason) + '</span></div></div>';
+    const pat = it.reveal_pattern ? esc(it.pattern_name) : 'Pattern hidden: name it first';
+    const link = it.url && /^https?:\/\//i.test(it.url) ? '<a class="lnk" data-act="c-open" data-key="' + esc(it.key) + '" href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">Open on LeetCode ↗</a>' : '';
+    const guess = it.reveal_pattern ? '' : '<select data-pred="' + esc(it.key) + '" aria-label="Which pattern do you think this is?"><option value="">Which pattern is this?</option>' + CO.options.patterns.map((p) => '<option value="' + esc(p.id) + '"' + (preds[it.key] === p.id ? ' selected' : '') + '>' + esc(p.label) + '</option>').join('') + '</select>';
+    return '<div class="ci"><div class="top">' + lab + '<b>' + esc(it.title) + '</b><small>' + esc(it.difficulty || '') + ' · ' + pat + ' · about ' + it.minutes + ' min</small></div>' +
+      '<p class="goal" style="margin:4px 0 0">' + esc(it.reason) + '</p><p class="rc"><b>Recall first.</b> ' + esc(it.recall) + '</p>' +
+      '<div class="ln">' + guess + link + '<button class="btn" type="button" data-act="c-log" data-i="' + i + '">Log result</button></div>' +
+      (logFor && logFor.i === i ? logForm(it) : '') + '</div>';
+  }
+
+  function logForm(it) {
+    const manual = !it, o = CO.options, rev = it && it.slot === 'revision';
+    return '<div class="lg" id="lg">' +
+      (manual ? '<div class="g2"><div><label class="k" for="lg-title">Problem title</label><input type="text" id="lg-title" maxlength="200" placeholder="e.g. Two Sum"></div>' +
+        '<div><label class="k" for="lg-url">Link (optional)</label><input type="url" id="lg-url" maxlength="500" placeholder="https://leetcode.com/problems/…"></div>' +
+        '<div><label class="k" for="lg-pat">Pattern</label>' + patSelect('lg-pat', '', 'Pick one') + '</div>' +
+        '<div><label class="k" for="lg-diff">Difficulty</label><select id="lg-diff"><option value="">Not sure</option>' + o.difficulties.map((d) => '<option>' + esc(d) + '</option>').join('') + '</select></div></div>' : '') +
+      (rev ? '<div><label class="k" for="lg-note">Your approach from memory (before you looked)</label><textarea id="lg-note" maxlength="500" placeholder="Two lines in your own words. No code."></textarea></div>' : '') +
+      '<div><label class="k">How did it go?</label><div class="opt">' + o.results.map((r, k) => '<label><input type="radio" name="lg-res" value="' + r + '"' + (k === 0 ? ' checked' : '') + '><span>' + esc(RES[r]) + '</span></label>').join('') + '</div></div>' +
+      '<div class="g2"><div><label class="k" for="lg-min">Minutes</label><input type="number" id="lg-min" min="1" max="600" step="1"></div><div id="lg-hints" hidden><label class="k" for="lg-h">Hints used</label><input type="number" id="lg-h" min="0" max="20" value="0"></div>' +
+      '<div><label class="k" for="lg-tc">Time complexity</label><input type="text" id="lg-tc" maxlength="40" placeholder="O(n)"></div><div><label class="k" for="lg-sc">Space complexity</label><input type="text" id="lg-sc" maxlength="40" placeholder="O(1)"></div></div>' +
+      '<div id="lg-mist" hidden><label class="k">What went wrong? (pick what applies)</label>' + o.mistakes.map((m) => '<label class="ck"><input type="checkbox" name="lg-m" value="' + esc(m.id) + '">' + esc(m.label) + '</label>').join('') +
+      '<label class="ck"><input type="checkbox" id="lg-saw">I read the solution</label></div>' +
+      (!rev && !manual ? '<div><label class="k" for="lg-note">One line: the idea that unlocked it (optional)</label><textarea id="lg-note" maxlength="500"></textarea></div>' : '') +
+      '<div class="actions" style="margin:0"><button class="btn p" type="button" data-act="c-save">Save attempt</button><button class="btn" type="button" data-act="c-cancel">Cancel</button></div></div>';
+  }
+
+  function patternBars() {
+    const seen = CO.patterns.filter((p) => p.label !== 'untested').sort((a, b) => (b.weakness || 0) - (a.weakness || 0));
+    const untested = CO.patterns.filter((p) => p.label === 'untested').map((p) => p.name);
+    if (!seen.length) return '<p class="tag" style="margin:0">Log a few problems and OPAI shows which patterns hold up and which do not.</p>';
+    const chipc = { weak: ' warn', strong: '', steady: '', 'not enough data': ' pause' };
+    return seen.map((p) => '<div class="pb"><span><b>' + esc(p.name) + '</b></span><div class="bar" role="img" aria-label="' + esc(p.name + ': ' + Math.round(p.strength * 100) + '% solid') + '"><i class="' + (p.label === 'weak' ? 'w' : p.label === 'not enough data' ? 'n' : 's') + '" style="width:' + Math.round(p.strength * 100) + '%"></i></div>' +
+      '<span class="chip' + (chipc[p.label] || '') + '">' + esc(p.label) + '</span>' +
+      '<small class="mm">' + p.solved + ' solved · ' + p.hinted + ' with hints · ' + p.failed + ' failed' + (p.top_mistakes.length ? ' · most common slip: ' + esc(p.top_mistakes.map((m) => m.label.toLowerCase()).join(', ')) : '') + '</small></div>').join('') +
+      (untested.length ? '<p class="note" style="margin:10px 0 0">Not tried yet: ' + esc(untested.join(', ')) + '.</p>' : '');
+  }
+
+  function reminderRow() {
+    const r = CO.reminders;
+    return '<div class="row" style="margin-top:14px"><span class="note" style="margin:0">' + (r.enabled
+      ? 'Practice reminders are on: ' + esc(r.times.join(', ')) + '. Only on days you have not logged a problem, at most ' + r.max_per_day + ' a day, never ' + esc(r.quiet_start) + '–' + esc(r.quiet_end) + '.'
+      : 'Optional practice reminders (evening, only on days you have not logged a problem, never more than 3 a day). Off by default.') +
+      '</span><button type="button" class="btn" data-act="c-rem">' + (r.enabled ? 'Turn off' : 'Turn on reminders') + '</button></div>';
+  }
+
+  function coachCard() {
+    if (!CO) return '<section class="card"><span class="eyebrow">Coach</span><p class="tag" style="margin:0">Loading your coach…</p></section>';
+    const st = CO.streak, rs = CO.resolve;
+    const chips = '<div class="chips" style="margin:6px 0 0">' +
+      (st.current ? '<span class="chip">' + st.current + '-day practice streak</span>' : '') +
+      (rs.rate != null ? '<span class="chip' + (rs.rate < 50 ? ' warn' : '') + '" title="Repeat attempts solved with no hints">Re-solved without help: ' + rs.clean + ' of ' + rs.resolves + '</span>' : '') +
+      (CO.recall.rate != null ? '<span class="chip" title="Pattern you named before solving a mixed problem">Named the pattern: ' + CO.recall.correct + ' of ' + CO.recall.tried + '</span>' : '') +
+      (CO.due_count ? '<span class="chip warn">' + CO.due_count + ' due for revision</span>' : '') + '</div>';
+    const manual = logFor && logFor.i === -1;
+    return '<section class="card" id="coach"><span class="eyebrow">Coach</span><h2 class="big">Your next three problems</h2>' +
+      '<p class="tag" style="margin:2px 0 0">Chosen from how your recent attempts actually went. Practise on the external site, then log the result here.</p>' + chips +
+      (coachMsg ? '<p class="okmsg" role="status">' + esc(coachMsg) + '</p>' : '') +
+      '<div style="margin-top:8px">' + CO.plan.items.map(planItem).join('') + '</div>' +
+      '<div class="actions"><button class="btn" type="button" data-act="c-manual">' + (manual ? 'Close' : 'Log a problem I solved elsewhere') + '</button></div>' + (manual ? logForm(null) : '') +
+      '<h2 style="margin-top:20px">Pattern strength</h2>' + patternBars() +
+      (CO.mistakes.length ? '<p class="note" style="margin:10px 0 0">Slips you log most: ' + esc(CO.mistakes.map((m) => m.label.toLowerCase() + ' (' + m.count + ')').join(', ')) + '.</p>' : '') +
+      (CO.recent.length ? '<details class="dr" style="margin-top:14px"><summary>Recent attempts<span class="c">' + CO.recent.length + '</span></summary><div class="drb">' + CO.recent.slice(0, 8).map((a) => '<div class="hist"><small>' + esc(a.date) + '</small><span>' + esc(a.title) + ' <small>· ' + esc(RES[a.result] || a.result) + (a.is_resolve ? ' · re-solve' : '') + '</small></span><button class="ghost" type="button" data-act="c-del" data-id="' + esc(a.id) + '" aria-label="Delete attempt ' + esc(a.title) + '">undo</button></div>').join('') + '</div></details>' : '') +
+      reminderRow() + '</section>';
+  }
+
+  async function loadCoach() { try { CO = await api('/v1/dsa/coach?user_id=' + encodeURIComponent(uid)); } catch (e) { CO = null; } render(); }
+
+  document.addEventListener('change', (e) => {
+    const t = e.target; if (!t.matches) return;
+    if (t.matches('select[data-pred]')) { preds[t.dataset.pred] = t.value; return; }
+    if (t.matches('input[name=lg-res]')) { const r = t.value, hint = $('lg-hints'), mist = $('lg-mist'); if (hint) hint.hidden = r !== 'hinted'; if (mist) mist.hidden = r === 'solved'; }
+  });
+  document.addEventListener('click', async (e) => {
+    const b = e.target.closest && e.target.closest('[data-act^="c-"]'); if (!b) return; const a = b.dataset.act;
+    try {
+      if (a === 'c-open') return;                                   // the link opens by itself; the guess stays in `preds`
+      if (a === 'c-log') { const i = +b.dataset.i; logFor = logFor && logFor.i === i ? null : { i }; return render(); }
+      if (a === 'c-manual') { logFor = logFor && logFor.i === -1 ? null : { i: -1 }; return render(); }
+      if (a === 'c-cancel') { logFor = null; return render(); }
+      if (a === 'c-save') {
+        const it = logFor.i >= 0 ? CO.plan.items[logFor.i] : null, v = (id) => { const el = $(id); return el ? el.value.trim() : ''; };
+        const res = (document.querySelector('input[name=lg-res]:checked') || {}).value || 'solved';
+        const body = { user_id: uid, result: res, slot: it ? it.slot : 'manual', hints_used: res === 'hinted' ? +v('lg-h') || 0 : 0, saw_solution: !!($('lg-saw') && $('lg-saw').checked && res !== 'solved'),
+          minutes: +v('lg-min') || null, time_complexity: v('lg-tc') || null, space_complexity: v('lg-sc') || null, approach_note: v('lg-note') || null,
+          mistakes: res === 'solved' ? [] : [...document.querySelectorAll('input[name=lg-m]:checked')].map((x) => x.value) };
+        if (it) { body.title = it.title; body.url = it.url; if (!it.reveal_pattern && preds[it.key]) body.predicted_pattern = preds[it.key]; }
+        else { body.title = v('lg-title') || null; body.url = v('lg-url') || null; body.pattern = v('lg-pat') || null; body.difficulty = v('lg-diff') || null; }
+        if (!body.title && !body.url) { err('Give the problem a title or a link.'); return; }
+        err(''); b.disabled = true;
+        const r = await api('/v1/dsa/attempts', { method: 'POST', body: JSON.stringify(body) });
+        const m = r.mastery; logFor = null; CO = r.coach;
+        coachMsg = '"' + m.title + '" saved. ' + (r.attempt.result === 'solved' ? 'Next re-solve ' + (m.due_in_days <= 1 ? 'tomorrow' : 'in ' + m.due_in_days + ' days') + '.' : 'It comes back ' + (m.due_in_days <= 1 ? 'tomorrow' : 'in ' + m.due_in_days + ' days') + ' so you can try it without help.') +
+          (it && !it.reveal_pattern ? ' It was ' + (m.pattern_name || 'a mixed pattern') + (body.predicted_pattern ? (body.predicted_pattern === m.pattern ? ': you named it correctly.' : '; you guessed ' + (CO.options.patterns.find((p) => p.id === body.predicted_pattern) || {}).label + '.') : '.') : '');
+        return render();
+      }
+      if (a === 'c-del') { if (!confirm('Remove this attempt? Its revision schedule is rebuilt from your other attempts.')) return; CO = await api('/v1/dsa/attempts/' + encodeURIComponent(b.dataset.id) + '?user_id=' + encodeURIComponent(uid), { method: 'DELETE' }); coachMsg = ''; return render(); }
+      if (a === 'c-rem') {
+        const on = !CO.reminders.enabled;
+        if (on && window.Notification && Notification.permission === 'default') { try { await Notification.requestPermission(); } catch (x) {} }
+        CO.reminders = await api('/v1/dsa/coach/reminders', { method: 'PUT', body: JSON.stringify({ user_id: uid, enabled: on }) }); return render();
+      }
+    } catch (x) { err(x.message); render(); }
+  });
 
   function setup(o) {
     const radios = (name, arr, def, fmt) => '<div class="opt">' + arr.map((v) => '<label><input type="radio" name="' + name + '" value="' + esc(v) + '"' + (v === def ? ' checked' : '') + '><span>' + esc(fmt ? fmt(v) : v) + '</span></label>').join('') + '</div>';
@@ -296,6 +427,7 @@ ul.plain li>span,.steps li>span,.rq>div,.hist>span{min-width:0;overflow-wrap:any
       (m.heads_up ? '<div class="rules">' + esc(m.heads_up) + '</div>' : '') + '</section>';
 
     h += '<div class="sec">' + todayCard(s) + '</div>';
+    h += '<div class="sec">' + coachCard() + '</div>';
 
     const wp = s.week_plan, mins = c.planned * p.daily_minutes;
     const behind = pc.state === 'behind';
@@ -449,7 +581,7 @@ ul.plain li>span,.steps li>span,.rq>div,.hist>span{min-width:0;overflow-wrap:any
           throw new Error('The backend at ' + base() + ' is running an older version without the DSA roadmap (/v1/dsa). Redeploy the latest backend code.');
         } else throw e1;
       }
-      render(); loadStreak();
+      render(); loadStreak(); loadCoach();
     }
     catch (e) { $('app').innerHTML = '<div class="card">Could not reach the OPAI backend at ' + esc(base()) + '. If it is on a free host it may be waking up; retry in a minute.<br><small>' + esc(e.message) + '</small></div>'; }
   })();

@@ -25,6 +25,7 @@ from database import Notification, NotificationDelivery, PushSubscription, Remin
 
 log = logging.getLogger("opa.reminders")
 DEFAULT_BRIEF_TIME = "07:30"
+STALE_STREAK_MIN = 45          # a streak nudge more than 45 min late is dropped
 STALE_DAILY_HOURS = 6          # a 'today's plan' nudge that is >6h late is skipped, not sent at night
 MAX_PUSH_ATTEMPTS = 3
 STATE: Dict[str, Any] = {"ticks": 0, "fired_total": 0, "last_tick_at": None, "last_ok_at": None, "last_error": None, "last_fired": 0}
@@ -367,6 +368,24 @@ def fire_due(db: Session, now: Optional[datetime] = None, user_id: Optional[str]
                     continue
                 n = _notify(db, uid, "daily_brief", "Today's plan", jarvis.spoken_summary(b), f"briefs.html?brief={b['brief_id']}",
                             {"brief_id": b["brief_id"], "reminder_id": r.id}, r.id, key)
+            elif r.kind == "dsa_streak":
+                # opt-in DSA practice nudge: decided at fire time (done today? quiet hours? daily cap? away for days?)
+                if (now - old) > timedelta(minutes=STALE_STREAK_MIN):
+                    continue                                      # late (server asleep): a 9 PM nudge at midnight is worse than none
+                key = f"dsa_streak:{uid}:{local_old.date().isoformat()}:{local_old.strftime('%H:%M')}"
+                if db.query(Notification.id).filter(Notification.idempotency_key == key).first():
+                    continue
+                try:
+                    import dsa_coach_service as DC
+                    slot = int((r.title or "dsa_streak:0").rsplit(":", 1)[-1])
+                    msg = DC.streak_nudge(db, uid, slot, local_old)
+                except Exception as e:
+                    log.warning("dsa streak nudge failed for %s: %s", uid, e)
+                    db.rollback()
+                    continue
+                if not msg:
+                    continue
+                n = _notify(db, uid, "dsa_streak", msg["title"], msg["body"], "dsa.html#coach", {"tone": msg["tone"]}, r.id, key)
             else:
                 key = f"reminder_due:{r.id}:{old.isoformat()}"
                 if db.query(Notification.id).filter(Notification.idempotency_key == key).first():
