@@ -155,17 +155,52 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
   }
   function snap(){var o={};FIELDS.forEach(function(k){o[k]=$('p-'+k).value.trim()});return o}
 
-  function load(){
-    $('form').classList.add('skel');
-    return api('/v1/auth/dev-login?email='+encodeURIComponent(mail),{method:'POST'}).then(function(d){
+  /* ---- fast load: paint from cache instantly, one request when the user id is known,
+          12s timeout per try + automatic retries while a sleeping server wakes up ---- */
+  var CK='opai_profile_v1:'+mail, fromCache=false, relogged=false;
+  function cached(){try{return JSON.parse(localStorage.getItem(CK))}catch(e){return null}}
+  function stash(p){try{localStorage.setItem(CK,JSON.stringify({p:p,uid:uid}))}catch(e){}}
+  function timed(path,opts,ms){
+    var c=window.AbortController?new AbortController():null,t=c&&setTimeout(function(){c.abort()},ms);
+    opts=Object.assign({},opts||{});if(c)opts.signal=c.signal;
+    return api(path,opts).then(function(v){clearTimeout(t);return v},function(e){clearTimeout(t);throw e});
+  }
+  function fetchProfile(){
+    var step=uid?Promise.resolve({user_id:uid}):timed('/v1/auth/dev-login?email='+encodeURIComponent(mail),{method:'POST'},12000);
+    return step.then(function(d){
       uid=d.user_id;
       if(d.onboarding_required){location.replace('onboarding.html');return null}
-      return api('/v1/profile?user_id='+encodeURIComponent(uid));
-    }).then(function(p){if(p)fill(p)}).catch(function(e){
-      $('h-name').textContent=mail.split('@')[0];$('h-mail').textContent=mail;paintAv(mail);$('p-email').value=mail;
-      msg(e.name==='TypeError'?'Couldn’t reach the server (it may be waking up). Try again in a minute.':e.message,'err');
+      return timed('/v1/profile?user_id='+encodeURIComponent(uid),{},12000);
+    });
+  }
+  function retryBtn(){
+    var m=$('save-msg'),b=document.createElement('button');b.type='button';b.textContent='Try again';
+    b.style.cssText='margin-left:10px;font:600 12px/1 inherit;padding:5px 10px;border-radius:8px;border:1px solid currentColor;background:none;color:inherit;cursor:pointer';
+    b.onclick=function(){relogged=false;load(0)};m.appendChild(b);
+  }
+  function load(n){
+    n=n||0;
+    if(n===0){
+      var c=cached();
+      if(c&&c.p){uid=c.uid||null;fromCache=!!uid;fill(c.p);$('form').classList.remove('skel');msg('Syncing…')}
+      else{
+        $('h-name').textContent=mail.split('@')[0];$('h-mail').textContent=mail;paintAv(mail);$('p-email').value=mail;
+        $('form').classList.add('skel');msg('Connecting to server… the first load can take up to a minute.');
+      }
       $('save').disabled=true;
-    }).then(function(){$('form').classList.remove('skel')});
+    }
+    return fetchProfile().then(function(p){
+      if(p){fill(p);stash(p);msg('');$('save').disabled=false}
+      $('form').classList.remove('skel');
+    }).catch(function(e){
+      var net=e.name==='TypeError'||e.name==='AbortError';
+      if(!net&&fromCache&&!relogged){relogged=true;fromCache=false;uid=null;return load(0)}   // stale cached id: log in again
+      if(net&&n<6){msg('Server is waking up… retrying ('+(n+1)+'/6)');return new Promise(function(r){setTimeout(r,3000)}).then(function(){return load(n+1)})}
+      $('form').classList.remove('skel');
+      if(uid&&cached()){$('save').disabled=false;msg('Offline: showing your last saved details.','err')}
+      else msg(net?'Couldn’t reach the server.':e.message,'err');
+      retryBtn();
+    });
   }
 
   $('save').onclick=function(){
