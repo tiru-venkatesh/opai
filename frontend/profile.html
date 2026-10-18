@@ -161,7 +161,8 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
           12s timeout per try + automatic retries while a sleeping server wakes up ---- */
   var CK='opai_profile_v1:'+mail, fromCache=false, relogged=false;
   function cached(){try{return JSON.parse(localStorage.getItem(CK))}catch(e){return null}}
-  function stash(p){try{localStorage.setItem(CK,JSON.stringify({p:p,uid:uid}))}catch(e){}}
+  function today(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+  function stash(p){try{localStorage.setItem(CK,JSON.stringify({p:p,uid:uid,day:today()}))}catch(e){}}
   function timed(path,opts,ms){
     var c=window.AbortController?new AbortController():null,t=c&&setTimeout(function(){c.abort()},ms);
     opts=Object.assign({},opts||{});if(c)opts.signal=c.signal;
@@ -184,7 +185,9 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
     n=n||0;
     if(n===0){
       var c=cached();
-      if(c&&c.p){uid=c.uid||null;fromCache=!!uid;fill(c.p);$('form').classList.remove('skel');msg('Syncing…')}
+      if(c&&c.p){uid=c.uid||null;fromCache=!!uid;fill(c.p);$('form').classList.remove('skel');
+        if(uid&&c.day===today()){msg('');$('save').disabled=false;return Promise.resolve()}   /* already loaded today: no server round trip */
+        msg('Syncing…')}
       else{
         $('h-name').textContent=mail.split('@')[0];$('h-mail').textContent=mail;paintAv(mail);$('p-email').value=mail;
         $('form').classList.add('skel');msg('Connecting to server… the first load can take up to a minute.');
@@ -213,7 +216,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
     if(v.cgpa){var c=parseFloat(v.cgpa);if(isNaN(c)||c<0||c>10){msg('CGPA should be a number between 0 and 10.','err');$('p-cgpa').focus();return}body.cgpa=c}
     $('save').disabled=true;msg('Saving…');
     api('/v1/profile?user_id='+encodeURIComponent(uid),{method:'PATCH',body:JSON.stringify(body)}).then(function(p){
-      fill(p);msg('Saved','ok');setTimeout(function(){if($('save-msg').textContent==='Saved')msg('')},3000);
+      fill(p);stash(p);msg('Saved','ok');setTimeout(function(){if($('save-msg').textContent==='Saved')msg('')},3000);
     }).catch(function(e){msg(e.name==='TypeError'?'Couldn’t reach the server. Your changes are still here, try again.':e.message,'err')})
       .then(function(){$('save').disabled=false});
   };

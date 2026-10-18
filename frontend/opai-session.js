@@ -90,7 +90,7 @@
   function read(k) { try { var o = JSON.parse(localStorage.getItem('opai_sess:' + k) || 'null'); if (o && o.exp > Date.now() && o.d && o.d.user_id && o.d.onboarding_required === false) return o.d; } catch (e) {} return null; }
   function write(k, d) { try { if (d && d.user_id && d.onboarding_required === false) localStorage.setItem('opai_sess:' + k, JSON.stringify({ exp: Date.now() + TTL, d: d })); else localStorage.removeItem('opai_sess:' + k); } catch (e) {} }
   function fake(d) { return new Response(JSON.stringify(d), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
-  window.opaiClearSession = function () { try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('opai_sess:') === 0) localStorage.removeItem(k); }); } catch (e) {} };
+  window.opaiClearSession = function () { try { Object.keys(localStorage).forEach(function (k) { if (/^(opai_sess:|opai_profile_v1:|opai_today:|opai_uid:)/.test(k)) localStorage.removeItem(k); }); } catch (e) {} };
   /* ---- logout: one place. Ends the Firebase session, wipes every cached identity, returns to the landing page ---- */
   window.opaiSignOut = function (to) {
     var go = function () {

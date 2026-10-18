@@ -106,8 +106,27 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const base = () => (localStorage.getItem('opa_api_base') || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8000' : 'https://opa-52ug.onrender.com')).replace(/\/+$/, '');
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  /* Free hosting sleeps: reads (GET) and login get a 15s timeout and up to 6 retries, so the page never hangs on "Loading". Writes are sent once. */
+  async function fetchRetry(url, o) {
+    const safe = !o.method || o.method === 'GET' || /dev-login/.test(url);
+    for (let i = 0; ; i++) {
+      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 15000);
+      try {
+        const r = await fetch(url, { ...o, signal: ctl.signal }); clearTimeout(t);
+        if (safe && r.status >= 502 && r.status <= 504 && i < 5) throw new TypeError('waking');
+        return r;
+      } catch (e) {
+        clearTimeout(t);
+        if (!safe || i >= 5) throw (e.name === 'AbortError' ? new TypeError('timeout') : e);
+        if (!cacheShown) $('sum').textContent = 'Server is waking up… retrying (' + (i + 1) + '/6). The first load after a quiet period can take up to a minute.';
+        await sleep(3000);
+      }
+    }
+  }
+  let cacheShown = false;
   async function api(path, o = {}) {
-    const r = await fetch(base() + path, { headers: o.body ? { 'Content-Type': 'application/json' } : {}, ...o });
+    const r = await fetchRetry(base() + path, { headers: o.body ? { 'Content-Type': 'application/json' } : {}, ...o });
     if (!r.ok) { let d = ''; try { d = (await r.json()).detail || ''; } catch (e) {} const e = new Error(Array.isArray(d) ? d.map((x) => x.msg).join('; ') : d || r.status); e.status = r.status; throw e; }
     const t = await r.text(); return t ? JSON.parse(t) : null;
   }
@@ -115,8 +134,9 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
   async function ensureUser() {
     if (uid) return uid;
     const em = new URLSearchParams(location.search).get('email') || localStorage.getItem('opai_sc_email');
-    if (em) { localStorage.setItem('opai_sc_email', em); uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(em), { method: 'POST' })).user_id; return uid; }
-    location.replace('app.html'); throw new Error('Please sign in');
+    try { const cu = em && localStorage.getItem('opai_uid:' + em.toLowerCase()); if (cu) { uid = cu; return uid; } } catch (e) {}
+    if (em) { localStorage.setItem('opai_sc_email', em); uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(em), { method: 'POST' })).user_id; try { localStorage.setItem('opai_uid:' + em.toLowerCase(), uid); } catch (e) {} return uid; }
+    location.replace('login.html?next=today.html'); throw new Error('Please sign in');
   }
   const d = new Date(), h = d.getHours();
   const greet = () => $('hi').textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + (name ? ', ' + name : '') + '.';
@@ -126,8 +146,13 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
   const STATE = { ai_suggested: 'AI suggested', in_progress: 'In progress', completed: 'Completed', paused: 'Paused' };
   const urgent = (i) => /today|tomorrow|overdue|in [1-3] days/.test(i.due);
 
+  /* One plan per user per day, shown instantly on every later visit. Only the default view (no minutes/energy override) is cached. */
+  const ckey = () => { const e = (localStorage.getItem('opai_sc_email') || '').toLowerCase(), dt = new Date(); return 'opai_today:' + e + ':' + dt.getFullYear() + '-' + (dt.getMonth() + 1) + '-' + dt.getDate(); };
+  const readCache = () => { try { const o = JSON.parse(localStorage.getItem(ckey()) || 'null'); return o && o.p ? o : null; } catch (e) { return null; } };
+  const writeCache = (p) => { try { Object.keys(localStorage).forEach((k) => { if (k.indexOf('opai_today:') === 0 && k !== ckey()) localStorage.removeItem(k); }); localStorage.setItem(ckey(), JSON.stringify({ p, name, ts: Date.now() })); } catch (e) {} };
   function render(p) {
     plan = p;
+    if (!minutes && energy === 'normal' && !p.needs_plan) writeCache(p);
     $('eb').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) + ' · ' + p.items.length + ' priority focus track' + (p.items.length === 1 ? '' : 's');
     $('sum').innerHTML = p.needs_plan ? 'You have exams but no study plan for today yet. Building it…' : esc(p.narrative || (p.items.length ? 'Your next best actions, ranked by what matters most right now.' : (p.empty_hint || 'You are clear for today.')));
     const c = p.capacity, tot = Math.max(c.available_min, 1);
@@ -151,7 +176,10 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
       '<div class="conf" hidden>How confident are you on this topic now? ' + [1,2,3,4,5].map((v) => '<button data-conf="' + v + '">' + v + '</button>').join('') + '</div></article>';
   }
   async function load(refresh) {
+    const hit = !refresh && !minutes && energy === 'normal' ? readCache() : null;
+    if (hit) { if (hit.name) { name = hit.name; greet(); } cacheShown = true; render(hit.p); }
     await ensureUser();
+    if (hit && Date.now() - hit.ts < 5 * 60 * 1000) { loadPending(); loadLC(); return; }   /* fresh enough: no server round trip */
     try { const pr = await api('/v1/profile?user_id=' + encodeURIComponent(uid)); if (pr && pr.name) { name = pr.name.split(' ')[0]; greet(); } } catch (e) {}
     const q = new URLSearchParams({ user_id: uid, energy }); if (minutes) q.set('minutes', minutes);
     let p = await api('/v1/today?' + q + '&narrative=true');
@@ -206,7 +234,7 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
   $('sprint').onclick = () => { const first = $('list').querySelector('.card[data-kind]:not([data-kind=outbox])'); if (first) act(first, 'start'); else $('sum').textContent = 'Nothing to start yet. Add an exam, task or application first.'; };
   $('pending').addEventListener('click', async (e) => {
     const b = e.target.closest('button'); if (!b || !b.dataset.d) return; const c = b.closest('.card');
-    try { await api('/v1/actions/' + c.dataset.aid + '/' + b.dataset.d, { method: 'POST', body: JSON.stringify({ user_id: uid, payload_hash: c.dataset.h }) }); load(); }
+    try { await api('/v1/actions/' + c.dataset.aid + '/' + b.dataset.d, { method: 'POST', body: JSON.stringify({ user_id: uid, payload_hash: c.dataset.h }) }); try { localStorage.removeItem(ckey()); } catch (e) {} load(); }
     catch (er) { $('sum').innerHTML = '<span class="err">' + esc(er.message) + '</span>'; }
   });
   document.querySelectorAll('.chip[data-m]').forEach((b) => (b.onclick = () => { minutes = b.dataset.m; energy = 'normal'; $('tired').classList.remove('on'); document.querySelectorAll('.chip[data-m]').forEach((x) => x.classList.toggle('on', x === b && !!minutes)); load(true).catch(fail); }));
@@ -220,7 +248,7 @@ dialog textarea{width:100%;background:#fff;border:1px solid var(--hair);border-r
     catch (e) { $('dmsg').textContent = e.message; }
   };
   function fail(e) { $('sum').innerHTML = '<span class="err">' + esc(e.name === 'TypeError' ? 'Could not reach the backend at ' + base() + '. If it is on a free host it may be waking up; retry in a minute.' : e.message) + '</span>'; }
-  load().catch(fail);
+  load().catch((e) => { if (!cacheShown) fail(e); });
   if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 })();
 </script>
