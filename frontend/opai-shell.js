@@ -122,7 +122,7 @@ body.opai-side:not(:has(#ktools)){padding-bottom:0}\
   function curTitle(){var t='OPAI';NAV.forEach(function(g){g.items.forEach(function(n){if(isCur(n[1]))t=n[0]})});if(path==='profile.html')t='Profile';return t}
   function header(){
     if(!document.getElementById('opai-sb-css')){var st=document.createElement('style');st.id='opai-sb-css';st.textContent=MB_VAR+CSS;document.head.appendChild(st)}
-    if(!document.getElementById('opai-redesign')){var lk=document.createElement('link');lk.id='opai-redesign';lk.rel='stylesheet';lk.href='opai-redesign.css?v=1';document.head.appendChild(lk);
+    if(!document.getElementById('opai-redesign')){var lk=document.createElement('link');lk.id='opai-redesign';lk.rel='stylesheet';lk.href='opai-redesign.css?v=2';document.head.appendChild(lk);
       var fl=document.createElement('link');fl.rel='stylesheet';fl.href='https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400..800&display=swap';document.head.appendChild(fl)}
     try{if(localStorage.getItem('opai_sb_min')==='1')document.documentElement.classList.add('opai-min')}catch(e){}
     /* the old per-page top nav (a body-level <header>, never the chat tool row) is removed */

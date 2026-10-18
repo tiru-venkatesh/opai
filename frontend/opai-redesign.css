@@ -35,3 +35,59 @@ dialog{border:1px solid var(--hair);box-shadow:0 30px 70px -30px rgba(18,20,43,.
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #6D63FF;outline-offset:2px}
 /* the floating Ask-KARNA button picks up the new accent */
 #kp-fab{background:linear-gradient(135deg,#4F46E5,#7C3AED)!important;color:#fff!important;box-shadow:0 14px 34px -12px rgba(79,70,229,.7)!important}
+
+/* ===== KARNA chat page ===== */
+body.opai-chat{--bg:var(--paper)}
+body.opai-chat #ktools{background:color-mix(in srgb,var(--card) 82%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--hair)}
+body.opai-chat .brand{font-family:var(--font);font-weight:800;letter-spacing:.16em;color:var(--ink)}
+body.opai-chat .brand em{background:linear-gradient(90deg,#4F46E5,#F43F8E);-webkit-background-clip:text;background-clip:text;color:transparent}
+body.opai-chat .brand img{border-radius:9px;width:30px;height:30px}
+body.opai-chat .hbtn{border-radius:12px;font-weight:600}
+body.opai-chat .hbtn:hover,body.opai-chat .hbtn[aria-expanded=true]{background:var(--teal-soft);color:var(--pri);border-color:transparent}
+body.opai-chat .hbtn b{background:var(--pri)}
+body.opai-chat .chip{background:var(--card);border:1px solid var(--hair);color:var(--ink-2)}
+body.opai-chat .dot.ok{background:#12926B;box-shadow:0 0 0 4px rgba(18,146,107,.16)}
+body.opai-chat .dot.wait{background:#D9830B}
+body.opai-chat #ctxbar .tag{background:var(--teal-soft);color:var(--pri);border-color:transparent}
+/* messages */
+body.opai-chat .msg.agent .body{background:var(--card);backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid var(--hair);border-radius:22px;box-shadow:0 18px 44px -28px rgba(79,70,229,.45);padding:18px 24px 14px 26px}
+body.opai-chat .msg.agent .body::before{left:0;right:auto;top:20px;bottom:20px;width:4px;height:auto;border-radius:0 4px 4px 0;background:linear-gradient(180deg,#4F46E5,#F43F8E);opacity:1}
+body.opai-chat .msg.user .body{background:linear-gradient(135deg,#4F46E5,#7C3AED);border:0;color:#fff;border-radius:22px 22px 6px 22px;box-shadow:0 18px 40px -20px rgba(79,70,229,.8);backdrop-filter:none}
+body.opai-chat .msg.user .body *{color:#fff!important}
+body.opai-chat .msg.user .meta{border-bottom-color:rgba(255,255,255,.22)}
+body.opai-chat .msg.user .meta,body.opai-chat .msg.user .meta *{opacity:.85}
+body.opai-chat .msg.sys .body{background:var(--well);border:0;box-shadow:none;color:var(--ink-2)}
+body.opai-chat .msg.err .body{background:#FFF1F2;border-color:#FDA4AF}
+body.opai-chat .av{box-shadow:0 0 0 3px var(--card),0 8px 20px -8px rgba(79,70,229,.5)}
+body.opai-chat .av-k{border:0;border-radius:12px;background:var(--card)}
+body.opai-chat .av-k img{border-radius:12px}
+body.opai-chat .av-u,body.opai-chat .msg>.av:not(.av-k){background:linear-gradient(135deg,#4F46E5,#F43F8E)}
+body.opai-chat .meta{border-bottom-color:var(--hair)}
+body.opai-chat .pill{background:var(--teal-soft);color:var(--pri);border:0;font-weight:700}
+body.opai-chat .src{border-radius:999px;border-color:var(--hair);background:var(--card-2);padding:3px 12px 3px 4px}
+body.opai-chat .src b{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:50%;background:var(--pri);color:#fff;font:700 10px/1 var(--mono)}
+body.opai-chat .cite{border:0;background:var(--teal-soft);color:var(--pri);border-radius:999px;padding:2px 7px}
+body.opai-chat .act{border-radius:10px;font-weight:600}
+body.opai-chat .act:hover{background:var(--teal-soft);color:var(--pri)}
+body.opai-chat .bubble code{background:var(--well);color:var(--pri)}
+body.opai-chat .bubble pre,body.opai-chat .codebox,body.opai-chat details.trace,body.opai-chat details.data{background:var(--card-2);border-color:var(--hair);border-radius:14px}
+/* empty state */
+body.opai-chat .empty .eyebrow{background:#C6F135;border:0;color:#10122A;font-weight:800}
+body.opai-chat .empty .eyebrow i{background:#10122A}
+body.opai-chat .empty h1{font-family:var(--font);font-weight:800;background:linear-gradient(120deg,var(--ink) 28%,#4F46E5 62%,#F43F8E);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* composer */
+body.opai-chat .dock{background:linear-gradient(to top,var(--bg) 52%,transparent)}
+body.opai-chat .card-in{background:var(--card);border:1px solid var(--hair);border-radius:26px;box-shadow:0 24px 60px -28px rgba(79,70,229,.55)}
+body.opai-chat .card-in:focus-within,body.opai-chat .composer.drag .card-in{border-color:#6D63FF;box-shadow:0 0 0 4px rgba(109,99,255,.18),0 24px 60px -28px rgba(79,70,229,.6)}
+body.opai-chat .input .btn.primary{background:linear-gradient(135deg,#4F46E5,#7C3AED);border:0;border-radius:16px;height:38px;box-shadow:0 10px 24px -10px rgba(79,70,229,.9)}
+body.opai-chat .modebar{border-top-color:var(--hair)}
+body.opai-chat .seg{background:var(--well);border:0;border-radius:12px}
+body.opai-chat .seg button{border-radius:10px}
+body.opai-chat .seg button.on{background:var(--pri);box-shadow:0 6px 14px -6px rgba(79,70,229,.8)}
+body.opai-chat #model,body.opai-chat #lang,body.opai-chat .mbadge{background:var(--well);border:0;color:var(--ink-2)}
+body.opai-chat .sugg button{background:var(--card);border-color:var(--hair);border-radius:999px;font-weight:600}
+body.opai-chat .sugg button:hover{border-color:#6D63FF;color:var(--pri);background:var(--teal-soft)}
+body.opai-chat .hint{color:var(--ink-3)}
+body.opai-chat #jump{border-color:var(--hair);color:var(--pri)}
+/* drawers */
+body.opai-chat #hist,body.opai-chat #mem,body.opai-chat #know{background:var(--card);border-left:1px solid var(--hair);box-shadow:-24px 0 60px -30px rgba(18,20,43,.4)}
