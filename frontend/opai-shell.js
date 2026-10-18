@@ -24,7 +24,9 @@
 html.opai-min{--opai-sw:76px}\
 body.opai-side{padding-left:var(--opai-sw);transition:padding-left .22s cubic-bezier(.16,1,.3,1)}\
 .opai-sb{position:fixed;top:0;left:0;bottom:0;width:var(--opai-sw);z-index:55;display:flex;flex-direction:column;gap:4px;padding:14px 12px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,#14172e 0%,#0d0f21 100%);color:#e9ebff;border-right:1px solid rgba(255,255,255,.06);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;font:14px/20px "Plus Jakarta Sans","Geist",system-ui,-apple-system,"Segoe UI",sans-serif;scrollbar-width:none;transition:width .22s cubic-bezier(.16,1,.3,1)}\
-.opai-sb::-webkit-scrollbar{display:none}\
+.opai-sb,.opai-sb *{scrollbar-width:none;-ms-overflow-style:none}\
+.opai-sb::-webkit-scrollbar,.opai-sb *::-webkit-scrollbar{display:none;width:0;height:0}\
+.opai-sb nav{overflow:visible!important;max-height:none!important;flex:none}\
 .opai-sb .sb-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 2px 14px}\
 .opai-sb .sb-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;min-width:0}\
 .opai-sb .sb-brand img{width:34px;height:34px;border-radius:11px;object-fit:cover;display:block;flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.12)}\
