@@ -104,7 +104,7 @@
   /* ---- route guard: private pages need a signed-in identity, otherwise go to login and come back afterwards ---- */
   try {
     var pg = (location.pathname.split('/').pop() || 'landing.html').toLowerCase();
-    var PUBLIC = /^(landing|login|signup|privacy|terms|feedback|review|today-legacy)(\.html)?$|^$/;
+    var PUBLIC = /^(landing|login|signup|privacy|terms|feedback|review|admin|today-legacy)(\.html)?$|^$/;
     var hasId = !!localStorage.getItem('opai_sc_email') || /[?&]email=/.test(location.search);
     if (location.protocol !== 'file:' && !/[?&]embed=1/.test(location.search) && !PUBLIC.test(pg) && !hasId)
       location.replace('login.html?next=' + encodeURIComponent(pg.indexOf('.') < 0 ? pg + '.html' : pg));

@@ -258,7 +258,7 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
       uid = (await api('/v1/auth/dev-login?email=' + encodeURIComponent(email), { method: 'POST' })).user_id;
       return uid;
     }
-    location.replace('app.html'); throw new Error('Please sign in');
+    location.replace('login.html?next=super-chat.html'); throw new Error('Please sign in');
   }
 
   /* ---------- tiny safe markdown (escape first, then format) ---------- */
@@ -890,5 +890,6 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
 })();
 </script>
 <script src="karna-motion.js?v=1" defer></script>
+<script data-prefill>window.addEventListener("load",function(){try{var q=new URLSearchParams(location.search).get("q"),el=document.getElementById("q");if(q&&el){el.value=q.slice(0,500);el.focus();el.dispatchEvent(new Event("input",{bubbles:true}))}}catch(e){}})</script>
 </body>
 </html>

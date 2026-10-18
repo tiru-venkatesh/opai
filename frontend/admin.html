@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Admin · Reviews &amp; feedback</title>
+<link rel="icon" type="image/png" href="icons/favicon-32.png">
+<style>
+:root{--bg:#f9f9ff;--ink:#141b2b;--mut:#4a4454;--line:#dce2f7;--pri:#6b34d6;--card:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Geist,system-ui,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:24px 16px 64px}h1{margin:0 0 4px;font-size:26px}p.s{margin:0 0 18px;color:var(--mut)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+input,select,button,textarea{font:inherit;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;color:var(--ink)}
+button{background:var(--pri);color:#fff;border:0;font-weight:600;cursor:pointer}button.g{background:#e9edff;color:var(--ink)}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 18px}.stat b{display:block;font-size:24px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.item h3{margin:0 0 4px;font-size:16px}.meta{color:var(--mut);font-size:12.5px;margin-bottom:6px}.tag{display:inline-block;padding:1px 9px;border-radius:99px;background:#e9edff;font-size:12px;margin-right:6px}
+.tag.rating{background:#caf165;color:#151f00}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}.err{color:#ba1a1a}.desc{white-space:pre-wrap;margin:0}
+</style></head><body><div class="wrap">
+<h1>Reviews &amp; feedback</h1>
+<p class="s">Everything users send from the Review and Feedback pages lands here. Ratings show as “Rating: N / 5”.</p>
+<div class="bar"><input id="key" type="password" placeholder="Admin key (FEEDBACK_ADMIN_KEY)" autocomplete="off" style="min-width:260px">
+<button id="load">Load</button>
+<select id="ft"><option value="">All types</option><option value="general">General / ratings</option><option value="idea">Ideas</option><option value="bug">Bugs</option></select>
+<select id="fs"><option value="">All statuses</option></select><button class="g" id="lock">Forget key</button></div>
+<p id="msg" class="s"></p><div class="stats" id="stats"></div><div id="list"></div></div>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
+var items=[],statuses=[];
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function key(){return $('key').value.trim()}
+async function call(path,opt){opt=opt||{};opt.headers=Object.assign({'X-Admin-Key':key()},opt.headers||{});
+  var r=await fetch(API+path,opt);if(r.status===403)throw new Error('Wrong admin key.');if(!r.ok)throw new Error('Server error '+r.status);return r.json()}
+async function load(){
+  $('msg').className='s';$('msg').textContent='Loading… (server may take up to a minute to wake)';
+  try{var q=new URLSearchParams();if($('ft').value)q.set('type',$('ft').value);if($('fs').value)q.set('status',$('fs').value);
+    var d=await call('/v1/admin/feedback?'+q);items=d.items;statuses=d.statuses;
+    if($('fs').options.length<2)statuses.forEach(function(s){var o=document.createElement('option');o.value=o.textContent=s;$('fs').appendChild(o)});
+    try{sessionStorage.setItem('opai_admin_key',key())}catch(e){}
+    $('msg').textContent='';render()}catch(e){$('msg').className='s err';$('msg').textContent=e.message}}
+function stars(i){var m=/^Rating: (\d) \/ 5/.exec(i.title);return m?+m[1]:0}
+function render(){
+  var rs=items.map(stars).filter(Boolean),avg=rs.length?(rs.reduce(function(a,b){return a+b},0)/rs.length).toFixed(1):'–';
+  $('stats').innerHTML='<div class="stat"><b>'+items.length+'</b>items</div><div class="stat"><b>'+rs.length+'</b>ratings</div><div class="stat"><b>'+avg+' ★</b>average</div>';
+  $('list').innerHTML=items.map(function(i){var st=stars(i);
+    return '<div class="item" data-id="'+esc(i.id)+'"><h3>'+(st?'<span class="tag rating">'+'★'.repeat(st)+'</span>':'')+esc(st?'Rating':i.title)+'</h3>'
+    +'<div class="meta"><span class="tag">'+esc(i.type)+'</span><span class="tag">'+esc(i.product_area)+'</span>'+esc(i.created_at)+' · user '+esc(i.user_id).slice(0,8)+' · '+(i.votes||0)+' votes'+(i.allow_follow_up?' · OK to follow up':'')+'</div>'
+    +'<p class="desc">'+esc(i.description)+'</p><div class="row"><select class="st">'+statuses.map(function(s){return '<option'+(s===i.status?' selected':'')+'>'+esc(s)+'</option>'}).join('')+'</select>'
+    +'<input class="nt" placeholder="Admin note" value="'+esc(i.admin_notes)+'" style="flex:1;min-width:160px"><button class="sv">Save</button><span class="ok"></span></div></div>'}).join('')||'<p class="s">Nothing yet.</p>'}
+$('list').addEventListener('click',async function(e){if(!e.target.classList.contains('sv'))return;
+  var it=e.target.closest('.item'),ok=it.querySelector('.ok');
+  try{await call('/v1/admin/feedback/'+it.dataset.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:it.querySelector('.st').value,admin_notes:it.querySelector('.nt').value})});ok.textContent='Saved'}catch(x){ok.className='ok err';ok.textContent=x.message}});
+$('load').onclick=load;$('ft').onchange=$('fs').onchange=function(){if(key())load()};
+$('lock').onclick=function(){try{sessionStorage.removeItem('opai_admin_key')}catch(e){}$('key').value='';items=[];render()};
+try{var k=sessionStorage.getItem('opai_admin_key');if(k){$('key').value=k;load()}}catch(e){}
+})();
+</script></body></html>
