@@ -450,6 +450,11 @@ def start_scheduler(interval: int = 30) -> bool:
                 s = SessionLocal()
                 try:
                     fire_due(s)
+                    try:
+                        import auto_outreach
+                        auto_outreach.tick(s)          # daily professor draft; never sends, only fills the Outbox
+                    except Exception as e:
+                        log.warning("auto outreach tick failed: %s", e)
                 finally:
                     s.close()
             except Exception as e:

@@ -772,7 +772,7 @@ def outbox_list(user_id: str, db: Session = Depends(get_db)):
     rows = db.query(OutboxItem).filter(OutboxItem.user_id == u.id, OutboxItem.channel == "email").order_by(OutboxItem.created_at.desc()).limit(50).all()
     return {"items": [{"id": r.id, "status": r.status, "to": (r.payload or {}).get("to"), "subject": (r.payload or {}).get("subject"),
                        "kind": (r.ref or {}).get("kind"), "created_at": r.created_at.isoformat() if r.created_at else None,
-                       "sent_at": r.sent_at.isoformat() if r.sent_at else None} for r in rows],
+                       "auto_draft": bool((r.note or "").startswith("Auto-draft")), "sent_at": r.sent_at.isoformat() if r.sent_at else None} for r in rows],
             "daily_cap_remaining": G.remaining_today(db, u.id)}
 
 

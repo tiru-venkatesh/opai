@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+import auto_outreach as AO
 import faculty_search as F
 import outreach_guard as G
 from audit.logger import record as audit
@@ -73,3 +74,46 @@ def add_faculty(p: AddBody, db: Session = Depends(get_db)):
     out = _contact_out(db, c, u.id)
     out["next"] = "Open their official page, confirm the research connection and email, then build a research brief."
     return out
+
+
+# ---------------- daily auto-draft (one draft per 24h at the IIT the user picked; the user still approves) ----------------
+class AutoBody(BaseModel):
+    user_id: str
+    enabled: bool
+    institute: Optional[str] = Field(default=None, max_length=80)
+
+
+@router.get("/auto")
+def auto_status(user_id: str, db: Session = Depends(get_db)):
+    u = _user(db, user_id)
+    return AO.status(db, u.id)
+
+
+@router.put("/auto")
+def auto_set(p: AutoBody, db: Session = Depends(get_db)):
+    u = _user(db, p.user_id)
+    inst = (p.institute or "").strip() or None
+    if inst and inst.lower() not in {i.lower() for i in F.institutes()}:
+        raise HTTPException(422, "Unknown institute. Pick one from the list.")
+    if p.enabled and not inst:
+        raise HTTPException(422, "Pick the IIT to write to first.")
+    if inst:
+        inst = next(i for i in F.institutes() if i.lower() == inst.lower())
+    s = AO.get_setting(db, u.id, create=True)
+    s.enabled, s.institute = bool(p.enabled), inst
+    if p.enabled:
+        s.last_attempt_at = None          # a fresh opt-in tries on the next tick, not after an old back-off
+    db.commit()
+    audit(db, u.id, "opp.auto_outreach_set", {"enabled": s.enabled, "institute": inst}, {}, "medium")
+    return AO.status(db, u.id)
+
+
+@router.post("/auto/run")
+def auto_run(p: Optional[dict] = None, user_id: Optional[str] = None, db: Session = Depends(get_db)):
+    """Draft now instead of waiting for the scheduler. Still obeys the 24h gap, so it cannot be used to mass-draft."""
+    uid = user_id or (p or {}).get("user_id")
+    if not uid:
+        raise HTTPException(422, "user_id is required")
+    u = _user(db, uid)
+    r = AO.run_for_user(db, u.id, force=True)
+    return {**r, "status": AO.status(db, u.id)}

@@ -468,6 +468,23 @@ class SuppressedContact(Base):
     created_at = Column(DateTime, default=_dt.utcnow)
 
 
+class AutoOutreachSetting(Base):
+    """Daily auto-DRAFT for one user: at most one new cold-email draft per 24h, aimed at the IIT they picked.
+    It only ever creates a pending Outbox item. The user still reviews and approves every message."""
+    __tablename__ = "auto_outreach_settings"
+    __table_args__ = (Index("uq_auto_outreach_user", "user_id", unique=True),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    enabled = Column(Boolean, default=False)
+    institute = Column(String)                 # e.g. "IIT Kharagpur"; NULL = any IIT in the dataset
+    last_run_at = Column(DateTime)             # last time a draft was actually created (drives the 24h gap)
+    last_attempt_at = Column(DateTime)         # last try, even a failed one (drives the retry back-off)
+    last_result = Column(String)               # drafted | waiting_for_approval | no_candidates | blocked | error
+    last_message = Column(Text)
+    last_outbox_id = Column(String(36))
+    created_at = Column(DateTime, default=_dt.utcnow)
+
+
 class ResearchBrief(Base):
     """Grounded brief about a contact, built BEFORE any draft. Every claim lists its source."""
     __tablename__ = "research_briefs"

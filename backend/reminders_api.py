@@ -219,7 +219,13 @@ def _require_tick_secret(header: Optional[str], query: Optional[str]) -> None:
 def tick(x_tick_secret: Optional[str] = Header(default=None), secret: Optional[str] = None, db: Session = Depends(get_db)):
     """For an external cron (also keeps a sleeping free host awake). ALWAYS requires OPAI_TICK_SECRET."""
     _require_tick_secret(x_tick_secret, secret)
-    return {"fired": RM.fire_due(db)}
+    out = {"fired": RM.fire_due(db)}
+    try:
+        import auto_outreach
+        out["auto_drafts"] = auto_outreach.tick(db)
+    except Exception as e:
+        obs.emit("scheduler_error", where="auto_outreach", error=str(e)[:200])
+    return out
 
 
 @router.get("/v1/system/health")

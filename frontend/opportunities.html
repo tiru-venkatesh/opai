@@ -561,7 +561,7 @@ V.outreach = async () => {
   const [f, o, gc] = await Promise.all([api('/v1/opp/followups'), api('/v1/opp/outbox'), gmailCfg()]);
   const items = o.items || [], pending = items.filter((x) => x.status === 'pending'), approved = items.filter((x) => x.status === 'approved' && !x.sent_at), past = items.filter((x) => x.status !== 'pending' && !(x.status === 'approved' && !x.sent_at));
   const attention = [];
-  pending.forEach((x) => attention.push(`<div class="card"><div class="row sp"><div><b>${esc(x.subject || '(no subject)')}</b><div class="mut">To ${esc(x.to || '?')}</div></div><span class="chip warn">Needs your review</span></div><div class="row" style="margin-top:10px"><button class="b sm" type="button" data-act="ob.review" data-id="${esc(x.id)}">Review and approve</button><button class="b dng sm" type="button" data-act="ob.reject" data-id="${esc(x.id)}">Reject</button></div></div>`));
+  pending.forEach((x) => attention.push(`<div class="card"><div class="row sp"><div><b>${esc(x.subject || '(no subject)')}</b><div class="mut">To ${esc(x.to || '?')}</div></div><span class="chip warn">Needs your review</span>${x.auto_draft ? '<span class="chip">Daily auto-draft</span>' : ''}</div><div class="row" style="margin-top:10px"><button class="b sm" type="button" data-act="ob.review" data-id="${esc(x.id)}">Review and approve</button><button class="b dng sm" type="button" data-act="ob.reject" data-id="${esc(x.id)}">Reject</button></div></div>`));
   approved.forEach((x) => attention.push(`<div class="card"><div class="row sp"><div><b>${esc(x.subject || '(no subject)')}</b><div class="mut">To ${esc(x.to || '?')}</div></div><span class="chip good">Approved, not sent</span></div><div class="row" style="margin-top:10px">${gc.gmail_send_enabled ? `<button class="b sm" type="button" data-act="ob.gsend" data-id="${esc(x.id)}">Send with Gmail</button>` : ''}<button class="b alt sm" type="button" data-act="ob.sent" data-id="${esc(x.id)}">I sent it myself</button></div></div>`));
   (f.items || []).forEach((x) => attention.push(`<div class="card"><b>${esc(x.title)}</b><div class="mut">Due ${esc(fmtDate(x.due))}${x.days_since != null ? ` · ${x.days_since} days since` : ''}</div><p style="margin:8px 0 6px;font-size:14px">Have they replied?</p><div class="row"><button class="b alt sm" type="button" data-act="fu" data-a="yes" data-k="${esc(x.kind)}" data-id="${esc(x.id)}">Yes</button><button class="b sm" type="button" data-act="fu" data-a="not_yet" data-k="${esc(x.kind)}" data-id="${esc(x.id)}">Not yet, draft a follow-up</button><button class="b alt sm" type="button" data-act="fu" data-a="later" data-k="${esc(x.kind)}" data-id="${esc(x.id)}">Remind me later</button></div></div>`));
   return `<div class="sec" id="outbox-sec"><h2>Needs your attention</h2><span class="hint">Review drafts and tell OPAI if someone replied. OPAI never reads your inbox.</span></div>` +
@@ -570,9 +570,26 @@ V.outreach = async () => {
     (past.length ? `<details class="fold" style="margin-top:14px"><summary>Earlier emails <span class="chip">${past.length}</span></summary><div>${past.slice(0, 15).map((x) => `<div class="row sp" style="padding:6px 0;border-bottom:1px solid var(--opp-line)"><span style="font-size:13px">${esc(x.subject || '(no subject)')} <span class="mut">to ${esc(x.to || '?')}</span></span><span class="chip">${esc(x.status)}</span></div>`).join('')}</div></details>` : '');
 };
 
+function autoCard(st) {
+  if (!st) return '';
+  const when = (iso) => { try { return new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return ''; } };
+  const opts = ['<option value="">Pick an IIT</option>'].concat((st.institutes || []).map((i) => `<option ${st.institute === i ? 'selected' : ''}>${esc(i)}</option>`)).join('');
+  const line = st.enabled
+    ? (st.pending_outbox_id ? 'A draft is waiting for your review. The next one is written after you approve or reject it.'
+      : st.last_message ? esc(st.last_message) + (st.next_run_at && st.last_result === 'drafted' ? ' Next draft after ' + esc(when(st.next_run_at)) + '.' : '') : 'First draft is written within a minute.')
+    : 'Off. Turn it on and OPAI writes one new draft a day to a professor at the IIT you pick.';
+  return `<div class="card" id="auto-card"><div class="row sp"><h3 style="margin:0">Daily auto-draft</h3><span class="chip ${st.enabled ? 'good' : ''}">${st.enabled ? 'On' : 'Off'}</span></div>
+    <p class="mut" style="margin:6px 0 10px">One new cold email draft every 24 hours, matched to your skills and projects. <b>Nothing is sent automatically.</b> You review and approve each one, so your Gmail stays safe from spam flags.</p>
+    <div class="row"><select id="au_inst" aria-label="IIT to write to" style="width:auto;flex:0 1 220px">${opts}</select>
+    <label class="chk" style="margin:0"><input type="checkbox" id="au_on" ${st.enabled ? 'checked' : ''}> Draft daily</label>
+    <button class="b sm" type="button" data-act="auto.save">Save</button>
+    ${st.enabled ? '<button class="b alt sm" type="button" data-act="auto.run">Draft one now</button>' : ''}
+    ${st.pending_outbox_id ? '<button class="b alt sm" type="button" data-act="auto.review">Open draft</button>' : ''}</div>
+    <p class="hint" style="margin-top:8px">${line}</p></div>`;
+}
 V.professors = async () => {
-  const pr = await api('/v1/opp/professors'), contacts = pr.items || [];
-  return `<div class="sec"><h2>Professors <span class="mut">(${contacts.length})</span></h2><div class="row"><span class="hint">${esc(pr.daily_cap_remaining)} sends left today</span><button class="b alt sm" type="button" data-act="fac.toggle">${S.facOpen ? 'Hide search' : 'Find professors'}</button><button class="b alt sm" type="button" data-act="prof.add">Add manually</button></div></div>` +
+  const [pr, au] = await Promise.all([api('/v1/opp/professors'), api('/v1/opp/faculty/auto').catch(() => null)]), contacts = pr.items || [];
+  return autoCard(au) + `<div class="sec"><h2>Professors <span class="mut">(${contacts.length})</span></h2><div class="row"><span class="hint">${esc(pr.daily_cap_remaining)} sends left today</span><button class="b alt sm" type="button" data-act="fac.toggle">${S.facOpen ? 'Hide search' : 'Find professors'}</button><button class="b alt sm" type="button" data-act="prof.add">Add manually</button></div></div>` +
     (S.facOpen ? `<div class="card"><div class="row"><input id="fc_q" style="flex:1 1 220px;width:auto" placeholder="Research area, e.g. computer vision, RAG (optional)"><select id="fc_inst" style="width:auto;flex:0 1 200px"><option value="">All IITs</option></select><button class="b" type="button" data-act="fac.search">Search</button></div><p class="hint" style="margin-top:8px">Leave it empty to get matches based on your skills and projects.</p><div id="fc_out" style="margin-top:8px"></div></div>` : '') +
     (contacts.length ? contacts.map(contactRow).join('') : '<div class="card empty"><h2>No professors added yet</h2><p>Start here:</p><ol class="steps"><li>Press <b>Find professors</b> and search your area, e.g. computer vision.</li><li>Add the ones you like to your list.</li><li>Press <b>Research first</b>, then <b>Draft email</b>.</li></ol><button class="b" type="button" data-act="fac.toggle" style="margin-top:12px">Find professors</button></div>');
 };
@@ -782,6 +799,19 @@ const ACTIONS = {
     closeModal(); toast('Draft created. Nothing was sent. Review it under Needs your attention.'); S.tab = 'outreach'; S.scrollTo = 'outbox-sec'; history.replaceState(null, '', '#outreach'); refresh();
   },
   'prof.add': () => profAddForm(),
+  'auto.save': async () => {
+    const on = $('au_on').checked, inst = $('au_inst').value;
+    if (on && !inst) { toast('Pick the IIT to write to first.'); return; }
+    await api('/v1/opp/faculty/auto', { method: 'PUT', body: { enabled: on, institute: inst || null } });
+    toast(on ? 'Daily auto-draft is on. You will approve every email.' : 'Daily auto-draft is off.'); render();
+  },
+  'auto.run': async () => {
+    const r = await post('/v1/opp/faculty/auto/run'); toast(r.message || 'Done.');
+    if (r.result === 'drafted') { S.tab = 'outreach'; S.scrollTo = 'outbox-sec'; history.replaceState(null, '', '#outreach'); refresh(); } else render();
+  },
+  'auto.review': async () => {
+    const st = await api('/v1/opp/faculty/auto'); if (st.pending_outbox_id) reviewModal(st.pending_outbox_id); else render();
+  },
   'fac.toggle': () => { S.facOpen = !S.facOpen; render(); },
   'fac.search': () => { S.facLimit = 20; facSearch(); },
   'fac.more': () => { S.facLimit += 30; facSearch(); },
