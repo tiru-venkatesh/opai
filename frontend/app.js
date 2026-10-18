@@ -2604,7 +2604,8 @@ function signOutNow() {
   AUTH.user = null; GMAIL.token = null; GMAIL.exp = 0;
   try { localStorage.removeItem(LS_SESSION); localStorage.removeItem('opai_sc_email'); localStorage.removeItem('opai_sc_photo'); } catch (e) {}
   $('userchip').style.display = 'none';
-  const done = () => location.replace('app.html');
+  if (window.opaiSignOut) return window.opaiSignOut();
+  const done = () => location.replace('landing.html');
   if (a) a.signOut().then(done, done); else done();
 }
 function accountPanel() {

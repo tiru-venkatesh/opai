@@ -109,8 +109,10 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
   </section>
 
   <section class="card" aria-labelledby="so-t">
-    <h2 id="so-t">Local workspace</h2>
-    <p class="hint">Sign-in is paused. This development workspace stays on your computer.</p>
+    <h2 id="so-t">Account</h2>
+    <p class="hint" id="acct-line">Signed in.</p>
+    <button type="button" id="signout-btn" class="btn" style="margin-top:8px" onclick="window.opaiSignOut&&window.opaiSignOut()">Sign out</button>
+    <script>(function(){try{var e=localStorage.getItem('opai_sc_email');if(e)document.getElementById('acct-line').textContent='Signed in as '+e}catch(x){}})()</script>
   </section>
 </main>
 
@@ -121,7 +123,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
   var mail=localStorage.getItem('opai_sc_email');
   var uid=null,orig=null;
   var FIELDS=['name','degree','branch','cgpa','github','skills','highlight'];
-  if(!mail){location.replace('app.html');return}
+  if(!mail){location.replace('login.html?next=profile.html');return}
 
   function api(path,opts){
     opts=opts||{};

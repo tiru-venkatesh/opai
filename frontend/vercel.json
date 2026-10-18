@@ -5,6 +5,14 @@
       "destination": "/landing.html"
     },
     {
+      "source": "/login",
+      "destination": "/login.html"
+    },
+    {
+      "source": "/signup",
+      "destination": "/signup.html"
+    },
+    {
       "source": "/privacy",
       "destination": "/privacy.html"
     },

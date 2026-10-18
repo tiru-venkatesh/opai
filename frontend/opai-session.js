@@ -91,6 +91,24 @@
   function write(k, d) { try { if (d && d.user_id && d.onboarding_required === false) localStorage.setItem('opai_sess:' + k, JSON.stringify({ exp: Date.now() + TTL, d: d })); else localStorage.removeItem('opai_sess:' + k); } catch (e) {} }
   function fake(d) { return new Response(JSON.stringify(d), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
   window.opaiClearSession = function () { try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('opai_sess:') === 0) localStorage.removeItem(k); }); } catch (e) {} };
+  /* ---- logout: one place. Ends the Firebase session, wipes every cached identity, returns to the landing page ---- */
+  window.opaiSignOut = function (to) {
+    var go = function () {
+      try { ['opai_sc_email', 'opai_sc_photo', 'opa_session'].forEach(function (k) { localStorage.removeItem(k); }); Object.keys(localStorage).forEach(function (k) { if (k.indexOf('opai_sess:') === 0) localStorage.removeItem(k); }); } catch (e) {}
+      try { sessionStorage.clear(); } catch (e) {}
+      location.replace(to || 'landing.html');
+    };
+    var t = setTimeout(go, 2500);                                        /* never let a slow SDK trap the user on a signed-in page */
+    firebaseAuth().then(function (a) { return a ? a.signOut() : null; }).then(function () { clearTimeout(t); go(); }, function () { clearTimeout(t); go(); });
+  };
+  /* ---- route guard: private pages need a signed-in identity, otherwise go to login and come back afterwards ---- */
+  try {
+    var pg = (location.pathname.split('/').pop() || 'landing.html').toLowerCase();
+    var PUBLIC = /^(landing|login|signup|privacy|terms|feedback|review|today-legacy)(\.html)?$|^$/;
+    var hasId = !!localStorage.getItem('opai_sc_email') || /[?&]email=/.test(location.search);
+    if (location.protocol !== 'file:' && !/[?&]embed=1/.test(location.search) && !PUBLIC.test(pg) && !hasId)
+      location.replace('login.html?next=' + encodeURIComponent(pg.indexOf('.') < 0 ? pg + '.html' : pg));
+  } catch (e) {}
   window.fetch = function (input, init) {
     var url = typeof input === 'string' ? input : (input && input.url) || '';
     var method = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();

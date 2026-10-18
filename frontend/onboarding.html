@@ -342,7 +342,7 @@ input[aria-invalid=true],select[aria-invalid=true]{border-color:var(--bad,#CE6C1
     throw last;
   }
   async function boot() {
-    if (!mail) { location.replace('app.html'); return; }
+    if (!mail) { location.replace('login.html?next=onboarding.html'); return; }
     try {
       var d = await withRetry(function () { return api('/v1/auth/dev-login?email=' + encodeURIComponent(mail), { method: 'POST' }); });
       uid = d.user_id;

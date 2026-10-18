@@ -1,14 +1,156 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex">
-  <link rel="icon" type="image/png" href="icons/favicon-32.png">
-  <meta http-equiv="refresh" content="0;url=app.html">
-  <title>OPAI workspace</title>
-  <script>location.replace('app.html');</script>
-<script src="opai-shader.js" defer></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log in · OPAI</title>
+<meta name="description" content="Log in or create your OPAI account.">
+<meta name="theme-color" content="#f9f9ff">
+<link rel="icon" type="image/png" href="icons/favicon-32.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="tw-config.js"></script>
+<style>body{font-family:Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #6b34d6;outline-offset:2px}</style>
 </head>
-<body><p>Sign-in is paused. <a href="app.html">Open the OPAI workspace</a>.</p></body>
+<body class="bg-background text-on-surface min-h-screen">
+<canvas data-opai-shader aria-hidden="true" class="fixed inset-0 w-full h-full pointer-events-none opacity-70 -z-0"></canvas>
+<div class="absolute inset-x-0 top-0 h-[420px] bg-gradient-to-tr from-primary-fixed-dim/40 via-secondary-fixed/50 to-transparent blur-3xl pointer-events-none -z-0"></div>
+<header class="relative z-10 px-5 h-20 flex items-center justify-between max-w-[1240px] mx-auto">
+  <a href="landing.html" class="flex items-center gap-2 font-bold tracking-tight text-xl"><img src="assets/opai-logo-96.png" alt="" class="h-8 w-8">OPAI</a>
+  <a href="landing.html" class="text-sm text-on-surface-variant hover:text-on-surface">← Back to home</a>
+</header>
+
+<main class="relative z-10 px-5 pb-16 flex justify-center">
+  <div class="w-full max-w-md mt-4 bg-surface-container-lowest rounded-2xl p-7 sm:p-9 shadow-[0_16px_48px_-12px_rgba(93,96,237,0.2)]">
+    <h1 id="title" class="text-3xl font-bold tracking-tight">Welcome back</h1>
+    <p id="sub" class="mt-1 mb-6 text-on-surface-variant text-[15px]">Log in to open your workspace.</p>
+
+    <div class="inline-flex w-full p-1 rounded-full bg-surface-container mb-6" role="tablist">
+      <button id="tab-in" role="tab" class="flex-1 py-2 rounded-full text-sm font-semibold transition">Log in</button>
+      <button id="tab-up" role="tab" class="flex-1 py-2 rounded-full text-sm font-semibold transition">Sign up</button>
+    </div>
+
+    <button id="google" type="button" class="w-full flex items-center justify-center gap-3 py-3 rounded-full bg-surface-container hover:bg-surface-container-high font-semibold text-[15px] transition">
+      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+      Continue with Google
+    </button>
+
+    <div class="flex items-center gap-3 my-5 text-xs text-outline"><span class="flex-1 h-px bg-outline-variant/60"></span>or with email<span class="flex-1 h-px bg-outline-variant/60"></span></div>
+
+    <form id="form" novalidate class="space-y-4">
+      <label id="name-wrap" class="block hidden"><span class="text-sm font-medium">Full name</span>
+        <input id="name" type="text" autocomplete="name" class="mt-1 w-full rounded-xl bg-surface-container-low px-4 py-3 text-[15px] border border-transparent focus:border-primary"></label>
+      <label class="block"><span class="text-sm font-medium">Email</span>
+        <input id="email" type="email" autocomplete="email" required class="mt-1 w-full rounded-xl bg-surface-container-low px-4 py-3 text-[15px] border border-transparent focus:border-primary"></label>
+      <label class="block"><span class="text-sm font-medium">Password</span>
+        <input id="pw" type="password" autocomplete="current-password" required minlength="6" class="mt-1 w-full rounded-xl bg-surface-container-low px-4 py-3 text-[15px] border border-transparent focus:border-primary"></label>
+      <label id="pw2-wrap" class="block hidden"><span class="text-sm font-medium">Confirm password</span>
+        <input id="pw2" type="password" autocomplete="new-password" class="mt-1 w-full rounded-xl bg-surface-container-low px-4 py-3 text-[15px] border border-transparent focus:border-primary"></label>
+      <div class="flex justify-end -mt-1"><button type="button" id="forgot" class="text-sm text-primary hover:underline">Forgot password?</button></div>
+      <p id="msg" role="alert" class="text-sm min-h-[20px]"></p>
+      <button id="submit" type="submit" class="w-full py-3.5 rounded-full bg-gradient-to-r from-primary-container to-secondary text-on-primary font-semibold shadow-[0_8px_24px_rgba(93,96,237,0.3)] hover:opacity-95 active:scale-[.99] transition disabled:opacity-60">Log in</button>
+    </form>
+
+    <p class="mt-6 text-xs text-outline text-center">By continuing you agree to the <a class="underline" href="terms.html">Terms</a> and <a class="underline" href="privacy.html">Privacy Policy</a>.</p>
+  </div>
+</main>
+
+<script src="opai-hero-shader.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var CFG = { apiKey: "AIzaSyCIXqCDmMDSO8ch451PGCbZjMYCVJLtGNs", authDomain: "opagent-3ef8b.firebaseapp.com", projectId: "opagent-3ef8b", appId: "1:701157045370:web:386c270095d7655d5037c3" };
+  var q = new URLSearchParams(location.search);
+  var mode = q.get('mode') === 'signup' || /signup/i.test(location.pathname) ? 'up' : 'in';
+  var NEXT = (function () { var n = q.get('next') || ''; return /^[a-z0-9-]+\.html$/i.test(n) && !/^(login|signup|landing)\.html$/i.test(n) ? n : 'today.html'; })();
+  var auth = null, busy = false;
+
+  function msg(t, ok) { $('msg').textContent = t || ''; $('msg').className = 'text-sm min-h-[20px] ' + (ok ? 'text-tertiary' : 'text-error'); }
+  function setMode(m) {
+    mode = m; var up = m === 'up';
+    $('tab-in').className = 'flex-1 py-2 rounded-full text-sm font-semibold transition ' + (!up ? 'bg-primary text-on-primary shadow' : 'text-on-surface-variant');
+    $('tab-up').className = 'flex-1 py-2 rounded-full text-sm font-semibold transition ' + (up ? 'bg-primary text-on-primary shadow' : 'text-on-surface-variant');
+    $('title').textContent = up ? 'Create your account' : 'Welcome back';
+    $('sub').textContent = up ? 'Start planning exams, projects and applications in one place.' : 'Log in to open your workspace.';
+    $('submit').textContent = up ? 'Create account' : 'Log in';
+    $('name-wrap').classList.toggle('hidden', !up); $('pw2-wrap').classList.toggle('hidden', !up); $('forgot').parentElement.classList.toggle('hidden', up);
+    $('pw').autocomplete = up ? 'new-password' : 'current-password';
+    msg('');
+  }
+  function errText(e) {
+    var c = (e && e.code) || '';
+    var m = { 'auth/popup-closed-by-user': 'Sign-in was cancelled.', 'auth/cancelled-popup-request': 'Sign-in was cancelled.',
+      'auth/popup-blocked': 'The popup was blocked. Allow popups and try again.',
+      'auth/unauthorized-domain': 'This domain is not authorized in Firebase (Authentication → Settings → Authorized domains).',
+      'auth/operation-not-allowed': 'This sign-in method is not enabled in Firebase yet (Authentication → Sign-in method).',
+      'auth/email-already-in-use': 'An account with that email already exists. Log in instead.',
+      'auth/invalid-email': 'That email address looks invalid.', 'auth/weak-password': 'Password must be at least 6 characters.',
+      'auth/wrong-password': 'Wrong email or password.', 'auth/invalid-credential': 'Wrong email or password.',
+      'auth/user-not-found': 'No account with that email. Sign up instead.', 'auth/too-many-requests': 'Too many attempts. Wait a minute and try again.',
+      'auth/network-request-failed': 'Network problem. Check your connection.' };
+    return m[c] || (e && e.message) || 'Something went wrong.';
+  }
+  function finish(user, fresh) {
+    try {
+      localStorage.setItem('opai_sc_email', (user.email || '').toLowerCase());
+      localStorage.setItem('opai_sc_photo', user.photoURL || '');
+      localStorage.setItem('opa_session', 'google');
+    } catch (e) {}
+    msg('Signed in. Opening your workspace…', true);
+    location.replace(fresh ? 'onboarding.html?next=' + encodeURIComponent(NEXT) : NEXT);
+  }
+  function lock(on) { busy = on; $('submit').disabled = on; $('google').disabled = on; }
+
+  $('tab-in').onclick = function () { setMode('in'); };
+  $('tab-up').onclick = function () { setMode('up'); };
+
+  $('google').onclick = function () {
+    if (busy || !auth) return msg(auth ? '' : 'Sign-in service is still loading. Try again in a moment.');
+    lock(true); msg('');
+    var p = new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account' });
+    auth.signInWithPopup(p).then(function (r) { finish(r.user, r.additionalUserInfo && r.additionalUserInfo.isNewUser); },
+      function (e) { lock(false); msg(errText(e)); });
+  };
+
+  $('form').onsubmit = function (ev) {
+    ev.preventDefault(); if (busy) return;
+    if (!auth) return msg('Sign-in service is still loading. Try again in a moment.');
+    var email = $('email').value.trim(), pw = $('pw').value;
+    if (!email || !pw) return msg('Enter your email and password.');
+    if (mode === 'up') {
+      if (pw.length < 6) return msg('Password must be at least 6 characters.');
+      if (pw !== $('pw2').value) return msg('Passwords do not match.');
+      lock(true); msg('');
+      auth.createUserWithEmailAndPassword(email, pw).then(function (r) {
+        var nm = $('name').value.trim();
+        return (nm ? r.user.updateProfile({ displayName: nm }) : Promise.resolve()).then(function () { finish(r.user, true); });
+      }).catch(function (e) { lock(false); msg(errText(e)); });
+    } else {
+      lock(true); msg('');
+      auth.signInWithEmailAndPassword(email, pw).then(function (r) { finish(r.user, false); }, function (e) { lock(false); msg(errText(e)); });
+    }
+  };
+
+  $('forgot').onclick = function () {
+    var email = $('email').value.trim();
+    if (!email) return msg('Type your email above first, then press "Forgot password?".');
+    if (!auth) return msg('Sign-in service is still loading.');
+    auth.sendPasswordResetEmail(email).then(function () { msg('Password reset email sent. Check your inbox.', true); }, function (e) { msg(errText(e)); });
+  };
+
+  setMode(mode);
+  try {
+    firebase.initializeApp(CFG); auth = firebase.auth();
+    /* Already signed in? Skip the form. (Not after an explicit logout: that clears the Firebase session first.) */
+    auth.onAuthStateChanged(function (u) { if (u && !busy && !q.get('out')) finish(u, false); });
+  } catch (e) { msg('Could not load the sign-in service. Check your connection and reload.'); }
+})();
+</script>
+<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
+</body>
 </html>
