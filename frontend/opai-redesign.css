@@ -1,0 +1,37 @@
+/* OPAI redesign v9 — "Midnight Indigo": cool paper, ink-navy, indigo + lime + pink. Overrides the old warm teal/coral skin on every page. */
+html:root{
+  --bg:#F5F6FB;--paper:#F5F6FB;--card:#FFFFFF;--card-2:#F0F1FA;--well:#ECEEF8;--hair:#E3E5F1;--line:#E3E5F1;--line-2:#D3D6EA;
+  --s1:#FFFFFF;--s2:#F0F1FA;--s3:#E3E5F1;
+  --ink:#12142B;--tx:#12142B;--ink-2:#464B6B;--ink-3:#7A7F9E;--mut:#5A5F7A;--dim:#7A7F9E;
+  --pri:#4F46E5;--primary:#4F46E5;--teal:#4F46E5;--teal-2:#6D63FF;--teal-soft:#E8E7FF;
+  --coral:#F43F8E;--coral-ink:#C21F6B;--coral-soft:#FFE1EE;
+  --good:#12926B;--ok:#12926B;--warn:#D9830B;--bad:#DC3C4A;
+  --surface:#FFFFFF;--surface-2:#F0F1FA;--surface-3:#E3E5F1;--text:#12142B;--muted:#5A5F7A;
+  --tint:#ECEEF8;--line2:#D3D6EA;--ink2:#464B6B;--mute:#7A7F9E;
+  --font:'Plus Jakarta Sans','Geist',system-ui,-apple-system,'Segoe UI',sans-serif;--sans:var(--font);--head:var(--font);
+  --shadow:0 1px 0 #fff inset,0 14px 34px -20px rgba(79,70,229,.35);
+}
+html[data-theme=dark]:root{
+  --bg:#0B0D1A;--paper:#0B0D1A;--card:#14172B;--card-2:#191C34;--well:#1E2240;--hair:#262A45;--line:#262A45;--line-2:#343A5E;
+  --s1:#14172B;--s2:#191C34;--s3:#262A45;
+  --ink:#ECEEFF;--tx:#ECEEFF;--ink-2:#B7BBE0;--ink-3:#8389B3;--mut:#9CA1C8;--dim:#8389B3;
+  --pri:#8B85FF;--primary:#8B85FF;--teal:#8B85FF;--teal-2:#A7A2FF;--teal-soft:#25285A;
+  --coral:#FF6BA8;--coral-ink:#FF8FBC;--coral-soft:#3A1830;
+  --surface:#14172B;--surface-2:#191C34;--surface-3:#262A45;--text:#ECEEFF;--muted:#9CA1C8;
+  --tint:#1E2240;--line2:#343A5E;--ink2:#B7BBE0;--mute:#8389B3;
+}
+/* flat, calm backdrop instead of the glassy bubbles */
+#opai-shader,canvas#opai-shader{display:none!important}
+html:root body{
+  background:radial-gradient(900px 420px at 88% -8%,rgba(109,99,255,.14),transparent 62%),radial-gradient(700px 360px at -5% 105%,rgba(244,63,142,.08),transparent 60%),var(--bg);
+  background-attachment:fixed;color:var(--ink);font-family:var(--font);letter-spacing:-.005em}
+html[data-theme=dark]:root body{background:radial-gradient(900px 420px at 88% -8%,rgba(109,99,255,.22),transparent 62%),var(--bg)}
+button,input,select,textarea{font-family:inherit}
+::selection{background:#C6F135;color:#12142B}
+h1,h2,h3{letter-spacing:-.03em}
+/* softer, rounder surfaces */
+.card,.panel,.tile,dialog,.modal>div{border-radius:18px}
+dialog{border:1px solid var(--hair);box-shadow:0 30px 70px -30px rgba(18,20,43,.45)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #6D63FF;outline-offset:2px}
+/* the floating Ask-KARNA button picks up the new accent */
+#kp-fab{background:linear-gradient(135deg,#4F46E5,#7C3AED)!important;color:#fff!important;box-shadow:0 14px 34px -12px rgba(79,70,229,.7)!important}
