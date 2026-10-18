@@ -8,7 +8,7 @@
   var NAV=[
     {g:'',items:[['Today','today.html','today'],['KARNA','super-chat.html','chat'],['Plan','plan.html','plan']]},
     {g:'Work',items:[['Internship','opportunities.html','intern'],['Hackathons','projects.html?view=hackathons','hack'],['Programs','projects.html?view=programs','prog'],['Projects','projects.html?view=projects','proj'],['Resume','resume-lab.html','resume'],['Academics','academics.html','acad']]},
-    {g:'More',items:[['Review','review.html','review'],['Feedback','feedback.html','fb']]}
+    {g:'More',items:[['Review','review.html','review'],['Feedback','feedback.html','fb'],['Home page','landing.html','home'],['Log out','#logout','out']]}
   ];
   var isChat=/super-chat/.test(path);
   var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
@@ -131,6 +131,9 @@ body.opai-side:not(:has(#ktools)){padding-bottom:0}\
     var old=document.querySelector('body > header:not(#ktools), body > .app > header');
     if(old&&old.parentNode)old.parentNode.removeChild(old);
     var I=sbIcons();
+    var SV='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+    I.home=SV+'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>';
+    I.out=SV+'<path d="M9 4H5v16h4"/><path d="M16 8l4 4-4 4"/><path d="M20 12H9"/></svg>';
     var nav=NAV.map(function(g){return (g.g?'<div class="sb-gh">'+g.g+'</div>':'')+'<nav aria-label="'+(g.g||'Main')+'">'+g.items.map(function(n){return '<a href="'+n[1]+'" title="'+n[0]+'"'+(isCur(n[1])?' aria-current="page"':'')+'>'+I[n[2]]+'<span class="l">'+n[0]+'</span></a>'}).join('')+'</nav>'}).join('');
     var sb=h('<aside class="opai-sb" id="opai-sb" aria-label="Main navigation"><div class="sb-top"><a class="sb-brand" href="today.html" aria-label="OPAI home" title="OPAI">'+LOGO+'<span class="l"><b>OPAI</b><small>v8</small></span></a>'+
       '<button class="sb-col" type="button" id="opai-collapse" aria-label="Collapse sidebar" aria-expanded="true" title="Collapse / expand (Ctrl B)">'+I.chev+'</button></div>'+
@@ -158,6 +161,7 @@ body.opai-side:not(:has(#ktools)){padding-bottom:0}\
     setMin(document.documentElement.classList.contains('opai-min'));
     cb.onclick=function(){setMin(!document.documentElement.classList.contains('opai-min'))};
     addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='b'&&!/^(INPUT|TEXTAREA|SELECT)$/.test((e.target||{}).tagName||'')){e.preventDefault();cb.click()}});
+    var lo=sb.querySelector('a[href="#logout"]');if(lo)lo.addEventListener('click',function(e){e.preventDefault();if(window.opaiSignOut)window.opaiSignOut();else location.href='landing.html'});
     var gb=sb.querySelector('#hd-guide'),ib=sb.querySelector('#hd-install');
     gb.onclick=function(){setOpen(false);window.OPAI_GUIDE&&OPAI_GUIDE.open('')};
     var standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
