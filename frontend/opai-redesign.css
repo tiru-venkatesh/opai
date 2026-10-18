@@ -21,7 +21,7 @@ html[data-theme=dark]:root{
   --tint:#1E2240;--line2:#343A5E;--ink2:#B7BBE0;--mute:#8389B3;
 }
 /* flat, calm backdrop instead of the glassy bubbles */
-#opai-shader,canvas#opai-shader{display:none!important}
+body:not(.opai-chat) #opai-shader,body:not(.opai-chat) canvas#opai-shader{display:none!important}
 html:root body{
   background:radial-gradient(900px 420px at 88% -8%,rgba(109,99,255,.14),transparent 62%),radial-gradient(700px 360px at -5% 105%,rgba(244,63,142,.08),transparent 60%),var(--bg);
   background-attachment:fixed;color:var(--ink);font-family:var(--font);letter-spacing:-.005em}
