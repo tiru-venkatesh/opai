@@ -15,7 +15,7 @@
   var uid=null,mail=((localStorage.getItem('opai_sc_email')||'').trim().toLowerCase())||null;
   function h(s){var d=document.createElement('div');d.innerHTML=s.trim();return d.firstChild}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
-  var LOGO='<img class="opai-mark" src="assets/opai-logo-96.png" width="30" height="30" alt="" decoding="async">';
+  var LOGO='<img class="opai-mark" src="assets/opai-logo-96.png?v=3d" width="30" height="30" alt="" decoding="async">';
 
   /* ---------- sidebar ---------- */
   var MQ='(max-width:900px)';

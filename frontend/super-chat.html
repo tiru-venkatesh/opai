@@ -146,7 +146,7 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
 <header id="ktools" role="toolbar" aria-label="Chat tools">
   <div class="lead">
     <a class="back" href="today.html" title="Back to OPAI" aria-label="Back to OPAI">&#8592;</a>
-    <span class="brand"><img src="assets/opai-logo-96.png" alt="">OPAI <em>KARNA</em></span>
+    <span class="brand"><img src="assets/opai-logo-96.png?v=3d" alt="">OPAI <em>KARNA</em></span>
   </div>
   <span class="chip hide-sm" id="agent-chip" title="Tool calls allowed per message"><span class="dot wait"></span><span>agent</span></span>
   <span class="chip" id="conn"><span class="dot wait"></span><span>connecting</span></span>
@@ -395,7 +395,7 @@ pre.json{margin:0;padding:12px 14px;font:400 11.5px/18px var(--mono);overflow-x:
   }
   function filesHTML(names) { return names && names.length ? '<div class="files">' + names.map((n) => '<span class="fchip"><span>' + esc(n) + '</span></span>').join('') + '</div>' : ''; }
 
-  const KLOGO = '<img src="assets/opai-logo-96.png" alt="">';
+  const KLOGO = '<img src="assets/opai-logo-96.png?v=3d" alt="">';
   function userAv() {
     let ph = '', em = '';
     try { ph = localStorage.getItem('opai_sc_photo') || ''; em = localStorage.getItem('opai_sc_email') || ''; } catch (e) {}

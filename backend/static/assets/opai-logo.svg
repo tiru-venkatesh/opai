@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+  <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5F3FF"/><stop offset="1" stop-color="#DCD3FB"/></linearGradient>
+  <radialGradient id="tileGlow" cx=".5" cy=".62" r=".55"><stop offset="0" stop-color="#A78BFA" stop-opacity=".35"/><stop offset="1" stop-color="#A78BFA" stop-opacity="0"/></radialGradient>
+  <clipPath id="orb"><circle cx="256" cy="246" r="172"/></clipPath>
+  <radialGradient id="base" cx=".35" cy=".3" r=".95"><stop offset="0" stop-color="#6D4BEA"/><stop offset=".45" stop-color="#3B1FA8"/><stop offset="1" stop-color="#0E0630"/></radialGradient>
+  <linearGradient id="upper" x1=".15" y1=".05" x2=".85" y2=".75"><stop offset="0" stop-color="#F5F8FF"/><stop offset=".3" stop-color="#BAD0FF"/><stop offset=".62" stop-color="#8B6BF7"/><stop offset="1" stop-color="#4C1D95"/></linearGradient>
+  <linearGradient id="lower" x1=".7" y1=".3" x2=".2" y2="1"><stop offset="0" stop-color="#5B34D6"/><stop offset=".45" stop-color="#1E0F6B"/><stop offset="1" stop-color="#07021F"/></linearGradient>
+  <linearGradient id="ribbon" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".5" stop-color="#E0E7FF" stop-opacity=".6"/><stop offset="1" stop-color="#C4B5FD" stop-opacity=".85"/></linearGradient>
+  <radialGradient id="vol" cx=".5" cy=".5" r=".5"><stop offset=".55" stop-color="#0B0426" stop-opacity="0"/><stop offset="1" stop-color="#0B0426" stop-opacity=".4"/></radialGradient>
+  <radialGradient id="under" cx=".5" cy=".95" r=".6"><stop offset="0" stop-color="#E879F9" stop-opacity=".75"/><stop offset=".5" stop-color="#8B5CF6" stop-opacity=".35"/><stop offset="1" stop-color="#8B5CF6" stop-opacity="0"/></radialGradient>
+  <linearGradient id="rim" x1=".1" y1="0" x2=".9" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".4" stop-color="#C4B5FD" stop-opacity=".25"/><stop offset=".75" stop-color="#A78BFA" stop-opacity=".4"/><stop offset="1" stop-color="#F0ABFC" stop-opacity=".9"/></linearGradient>
+  <radialGradient id="gloss" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <radialGradient id="lime" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#F4FFB0"/><stop offset=".45" stop-color="#C6F135"/><stop offset="1" stop-color="#C6F135" stop-opacity="0"/></radialGradient>
+  <filter id="b2" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2"/></filter>
+  <filter id="b6" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="6"/></filter>
+  <filter id="b14" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="14"/></filter>
+<filter id="bh" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="14"/></filter>
+</defs>
+  <rect width="512" height="512" rx="112" fill="url(#tile)"/>
+  <rect width="512" height="512" rx="112" fill="url(#tileGlow)"/>
+  <rect x="3" y="3" width="506" height="506" rx="109" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="3"/>
+<g transform="translate(0.00 0.00) scale(1.0)">
+  <!-- ground glow + contact shadow -->
+  <ellipse cx="256" cy="438" rx="150" ry="20" fill="#6D28D9" opacity=".45" filter="url(#b14)"/>
+  <ellipse cx="256" cy="430" rx="95" ry="9" fill="#2E1065" opacity=".5" filter="url(#b6)"/>
+  <!-- outer halo -->
+  <circle cx="256" cy="246" r="178" fill="#8B5CF6" opacity=".35" filter="url(#bh)"/>
+  <!-- orb body -->
+  <circle cx="256" cy="246" r="172" fill="url(#base)"/>
+  <g clip-path="url(#orb)">
+    <!-- lower dark lobe -->
+    <path d="M70 330 C130 400 250 340 262 262 C272 196 190 176 118 214 C60 244 40 300 70 330Z" fill="url(#lower)"/>
+    <path d="M100 420 C240 440 400 380 430 250 L430 460 L100 460Z" fill="url(#lower)"/>
+    <!-- upper glassy lobe -->
+    <path d="M60 150 C120 70 300 40 372 130 C440 215 380 330 300 322 C236 316 244 240 182 220 C128 204 80 214 40 250Z" fill="url(#upper)"/>
+    <!-- inner light caustic in upper lobe -->
+    <ellipse cx="310" cy="140" rx="90" ry="46" fill="#CFE4FF" opacity=".7" filter="url(#b14)" transform="rotate(-25 300 150)"/>
+    <!-- glass ribbon (S-swirl) -->
+    <path d="M86 238 C150 150 262 180 262 262 C262 340 372 360 428 266" fill="none" stroke="url(#ribbon)" stroke-width="54" stroke-linecap="round" opacity=".9"/>
+    <path d="M86 238 C150 150 262 180 262 262 C262 340 372 360 428 266" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="3" transform="translate(0 -26)" filter="url(#b2)"/>
+    <path d="M86 238 C150 150 262 180 262 262 C262 340 372 360 428 266" fill="none" stroke="#C4B5FD" stroke-opacity=".7" stroke-width="3" transform="translate(0 27)" filter="url(#b2)"/>
+    <!-- thin inner swirl lines -->
+    <path d="M120 300 C180 360 300 330 330 250" fill="none" stroke="#A78BFA" stroke-opacity=".55" stroke-width="2.5" filter="url(#b2)"/>
+    <path d="M200 120 C300 90 380 150 392 214" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="3" filter="url(#b2)"/>
+    <!-- volume shading + underglow -->
+    <circle cx="256" cy="246" r="172" fill="url(#vol)"/>
+    <circle cx="256" cy="246" r="172" fill="url(#under)"/>
+    <!-- lime spark bead in ribbon -->
+    <circle cx="352" cy="318" r="22" fill="url(#lime)" opacity=".8"/>
+  </g>
+  <!-- rim -->
+  <circle cx="256" cy="246" r="170.5" fill="none" stroke="url(#rim)" stroke-width="3"/>
+  <!-- specular highlights -->
+  <ellipse cx="196" cy="140" rx="62" ry="30" fill="url(#gloss)" opacity=".9" transform="rotate(-38 196 140)"/>
+  <ellipse cx="168" cy="168" rx="9" ry="5" fill="#fff" transform="rotate(-38 168 168)"/>
+  <path d="M130 316 C160 388 250 420 330 396" fill="none" stroke="#F5D0FE" stroke-opacity=".8" stroke-width="5" stroke-linecap="round" filter="url(#b2)"/>
+  <circle cx="352" cy="318" r="5" fill="#fff"/>
+</g>
+</svg>
