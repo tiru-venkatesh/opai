@@ -40,9 +40,9 @@ footer a{color:var(--ink-3);margin-right:14px}
 <header><div class="wrap"><a href="/">OPAI</a><nav><a href="/">Home</a><a href="/terms">Terms</a><a href="app.html">Open workspace</a></nav></div></header>
 <main><div class="wrap">
 <h1>Privacy Policy</h1>
-<p class="meta">Last updated: October 12, 2026</p>
+<p class="meta">Last updated: October 29, 2026</p>
 
-<p>OPAI ("OPAI", "we", "us") is a personal workspace and AI assistant (called KARNA) that helps one person manage applications, outreach, projects, coursework and client work. It is operated by Tiru Venkatesh and available at <a href="https://opai.live">opai.live</a>. This policy explains what data we collect, why, how it is stored and shared, and the choices you have. If anything here is unclear, write to <a href="mailto:tiruvenkatesh123@gmail.com">tiruvenkatesh123@gmail.com</a>.</p>
+<p>OPAI ("OPAI", "we", "us") is a personal workspace and AI assistant (called KARNA) that helps one person manage applications, outreach, projects, coursework and client work. It is available at <a href="https://opai.live">opai.live</a> and was founded by <strong>Tiru Venkatesh Musirana</strong> (Founder) and <strong>Himesh Arava</strong> (Co-founder). This policy explains what data we collect, why, how it is stored and shared, and the choices you have. If anything here is unclear, write to <a href="mailto:tiruvenkatesh123@gmail.com">tiruvenkatesh123@gmail.com</a>.</p>
 
 <h2>1. Information we collect</h2>
 <div class="tw"><table>
@@ -51,9 +51,9 @@ footer a{color:var(--ink-3);margin-right:14px}
 <tr><td><strong>Email and password</strong> (if you sign up with email instead)</td><td>You, via Firebase Authentication</td><td>Authentication only. Passwords are handled by Firebase; OPAI does not see or store them.</td></tr>
 <tr><td><strong>Profile details you enter:</strong> name, college, course, branch, year, semester, goals, study preferences, time zone, optional date of birth, optional GitHub / LinkedIn / portfolio links</td><td>You, during onboarding or in the app</td><td>To personalise planning, study schedules and answers. Date of birth is optional, is never shown in chat, and is not sent to the AI service.</td></tr>
 <tr><td><strong>Content you add:</strong> applications, projects, tasks, notes, documents and resumes you upload, outreach drafts, saved memory items</td><td>You</td><td>To provide the features you use (trackers, planner, search over your own documents, drafting).</td></tr>
-<tr><td><strong>Chat messages</strong> with KARNA</td><td>You</td><td>To generate replies and, only after you confirm it, to remember facts about you.</td></tr>
+<tr><td><strong>Chat messages</strong> with KARNA</td><td>You</td><td>To generate replies and, only after you confirm it, to remember facts about you. Chat data saved to your account is stored with your workspace and deleted when you delete your account.</td></tr>
 <tr><td><strong>Gmail send permission</strong> (optional, off by default)</td><td>You, only when you click "Connect Gmail" inside the app</td><td>To send an email you wrote and approved, from your own Gmail account. See section 3.</td></tr>
-<tr><td><strong>Device storage:</strong> preferences, theme, recent chat history, cached app files</td><td>Your browser</td><td>To keep the app fast and remember your settings. This stays on your device.</td></tr>
+<tr><td><strong>Device storage:</strong> preferences, theme, recent chat history, cached app files</td><td>Your browser</td><td>To keep the app fast and remember your settings. This stays on your device until you clear it.</td></tr>
 </table></div>
 <p>We do not collect your contacts, your inbox contents, your Google Drive files, your location, or payment information. We do not use advertising trackers. To count page views we use Vercel Web Analytics, which sets no cookies and does not receive any Google user data.</p>
 
@@ -67,7 +67,7 @@ footer a{color:var(--ink-3);margin-right:14px}
 <p>We do not sell your data, we do not use it for advertising, and we do not use it to train AI models.</p>
 
 <h2 id="google-data">3. Google user data and the Gmail permission</h2>
-<p><strong>Sign-in.</strong> When you choose Sign in with Google, we receive your name, email address and profile picture. We use them only to run your account as described above. Your profile picture is displayed from your browser and is not stored in OPAI's database, and your Google email address and profile picture are never sent to our AI provider (see section 4).</p>
+<p><strong>Sign-in.</strong> When you choose Sign in with Google, we receive your name, email address and profile picture. We use them only to run your account as described above. Your Google email address and profile picture are never sent to our AI provider (see section 4).</p>
 <p><strong>Gmail (optional).</strong> If you click "Connect Gmail", Google asks you to grant the <code>gmail.send</code> permission. It allows OPAI to send an email on your behalf and nothing more:</p>
 <ul>
 <li>It is used <strong>only</strong> when you approve a specific outreach email in your Outbox and choose to send it. OPAI never sends email on its own.</li>
@@ -90,13 +90,13 @@ footer a{color:var(--ink-3);margin-right:14px}
 <li>for an outreach draft: your name, branch, skills and profile highlight, and the notes saved about the contact (for example a professor's research areas).</li>
 </ul>
 We never send Groq your Google email address, your profile picture, your date of birth, your password or Gmail access tokens, and we never send the content of your Gmail (OPAI cannot read it). Text you add yourself, such as a resume that contains your email address, is sent as you wrote it when a request needs it.</li>
-<li><strong>Hosting and database providers</strong> that store and serve the application and your account data.</li>
+<li><strong>Hosting and database providers</strong> (including Vercel and Firebase) that store and serve the application and your account data.</li>
 </ul>
 <p>We may disclose information if required by law or to protect the rights and safety of users or the service. We do not sell or rent personal information.</p>
 
 <h2>5. Storage, security and retention</h2>
 <p>Your account data is stored in a database operated for OPAI and is kept separate per user; you can only access your own workspace. Data is transmitted over HTTPS. No system is perfectly secure, but we limit what we collect and who can access it.</p>
-<p>We keep your data while your account is active. When you ask us to delete your account, we delete your profile, workspace content, uploaded documents, chat data and memory items. Backups are overwritten on their normal cycle.</p>
+<p>We keep your data while your account is active. If an account stays inactive for 24 months, we may delete it after giving notice to the email address on the account. When you ask us to delete your account, we delete your profile, workspace content, uploaded documents, chat data saved to your account and memory items. Backups are overwritten within 30 days of deletion.</p>
 
 <h2>6. Your choices and rights</h2>
 <ul>
@@ -105,16 +105,25 @@ We never send Groq your Google email address, your profile picture, your date of
 <li><strong>Delete your account and data:</strong> email <a href="mailto:tiruvenkatesh123@gmail.com">tiruvenkatesh123@gmail.com</a> from the address you signed up with. We will confirm and complete deletion within 30 days.</li>
 <li><strong>Revoke Google access:</strong> at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
 <li><strong>Clear local data:</strong> clear this site's data in your browser settings.</li>
+<li><strong>Withdraw consent or raise a complaint:</strong> you can withdraw consent to processing at any time by writing to us, and you can contact our grievance contact in section 9 about any concern with how your data is handled.</li>
 </ul>
 
-<h2>7. Children</h2>
-<p>OPAI is not directed to children under 13, and we do not knowingly collect their data. If you believe a child has given us data, contact us and we will delete it.</p>
+<h2>7. International processing</h2>
+<p>OPAI is operated from India. Our service providers (Google, Groq, Vercel and others listed in section 4) may process and store data on servers outside India. By using OPAI you understand that your data may be transferred to and processed in those locations, and we require our providers to protect it with appropriate safeguards.</p>
 
-<h2>8. Changes to this policy</h2>
+<h2>8. Children</h2>
+<p>OPAI is not directed to children under 13, or under any higher minimum age that applies to you under local law, and we do not knowingly collect their data. If you believe a child has given us data, contact us and we will delete it.</p>
+
+<h2>9. Changes to this policy</h2>
 <p>We may update this policy as OPAI changes. The "Last updated" date above shows the latest version, and we will give notice in the app for material changes.</p>
 
-<h2>9. Contact</h2>
-<p>OPAI, operated by Tiru Venkatesh<br>Email: <a href="mailto:tiruvenkatesh123@gmail.com">tiruvenkatesh123@gmail.com</a><br>Website: <a href="https://opai.live">opai.live</a></p>
+<h2>10. Contact and grievance officer</h2>
+<p>OPAI<br>
+Founder: Tiru Venkatesh Musirana<br>
+Co-founder: Himesh Arava<br>
+Grievance contact: Tiru Venkatesh Musirana, <a href="mailto:tiruvenkatesh123@gmail.com">tiruvenkatesh123@gmail.com</a><br>
+Website: <a href="https://opai.live">opai.live</a></p>
+<p>We aim to acknowledge privacy requests and complaints within 7 days and resolve them within 30 days.</p>
 </div></main>
 <footer><div class="wrap"><a href="/">Home</a><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a></div></footer>
 </body>
