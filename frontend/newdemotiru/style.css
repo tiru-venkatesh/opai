@@ -126,3 +126,18 @@ h2 em{font-style:italic;color:#8a8a8a}
 }
 @media (max-height:560px) and (orientation:landscape){.lead{display:none}h1{font-size:clamp(40px,12vh,80px)}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.rise,.reveal{animation:none;opacity:1;transform:none;transition:none}.status i,.hint::after{animation:none}}
+
+/* ---------- OPAI additions (kept minimal) ---------- */
+.top{gap:20px}
+.auth{display:flex;align-items:center;gap:6px}
+.auth span{display:flex;align-items:center;gap:6px}
+.auth a,.auth button{font:400 11px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:#fff;background:none;border:0;padding:10px 8px;cursor:pointer;text-decoration:none}
+.auth a:last-child{border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:10px 16px}
+html:not(.in) [data-auth=in]{display:none!important}
+html.in [data-auth=out]{display:none!important}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.lead{max-width:40ch}
+.row .ar{font-size:22px}
+.foot a{color:inherit;text-decoration:none}
+.foot a:hover{color:#fff}
+@media (max-width:640px){.auth a:first-child{display:none}}

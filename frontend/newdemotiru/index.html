@@ -3,12 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Tiru Builds — AI products that scale</title>
-<meta name="description" content="Tiru Builds designs and ships AI-powered web products.">
+<title>OPAI — Turn context into action</title>
+<meta name="description" content="OPAI helps students plan exams, track internships and programs, manage projects and prepare outreach. KARNA shows your next best action.">
 <meta name="theme-color" content="#000000">
-<!-- Served at "/" AND "/newdemotiru/" → every path is ABSOLUTE on purpose. Fonts are self-hosted in /newdemotiru/fonts -->
+<link rel="canonical" href="https://opai.live/">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="manifest" href="/manifest.json">
+<!-- Every path is ABSOLUTE on purpose. Fonts are self-hosted in /newdemotiru/fonts -->
 <link rel="preload" href="/newdemotiru/fonts/instrument-serif-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/newdemotiru/style.css">
+<script>try{if(localStorage.getItem("opai_sc_email"))document.documentElement.className="in"}catch(e){}</script>
 </head>
 <body>
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -17,71 +22,115 @@
 <div id="cursor" aria-hidden="true"><div class="cring"></div><div class="cdot"></div></div>
 
 <header class="top rise d1">
-  <a class="brand" href="#top"><i></i>Tiru Builds</a>
-  <div class="status label"><i></i>Systems operational</div>
+  <a class="brand" href="#top"><i></i>OPAI</a>
+  <div class="status label"><i></i>Built for students</div>
   <nav aria-label="Primary">
-    <a href="#work">Work</a>
-    <a href="https://github.com/tiru-venkatesh" target="_blank" rel="noopener">GitHub</a>
-    <a href="#contact">Contact</a>
+    <a href="#work">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#contact">Get started</a>
   </nav>
+  <div class="auth">
+    <span data-auth="out"><a href="/login.html">Log in</a><a href="/signup.html">Sign up</a></span>
+    <span data-auth="in"><button type="button" data-logout>Log out</button><a href="/today.html">Open workspace</a></span>
+  </div>
 </header>
 
 <section class="hero" id="top">
   <main>
-    <div class="eyebrow label rise d2">Research // Lab</div>
+    <div class="eyebrow label rise d2">OPAI // Personal AI workspace</div>
     <h1 class="rise d3">
-      <span>Building</span>
-      <span>AI products</span>
-      <span><em>that scale</em></span>
-      <span><em>into future</em></span>
+      <span>Turn context</span>
+      <span>into action.</span>
+      <span><em>Exams, projects,</em></span>
+      <span><em>internships.</em></span>
     </h1>
-    <p class="lead rise d4">LLMs, agents and reasoning — web products designed, built and shipped end to end. Learning by shipping.</p>
+    <p class="lead rise d4">One plan for everything on your plate. Ask KARNA in plain language, and approve anything important before it happens.</p>
     <div class="cta rise d5">
-      <a class="btn solid" href="#work">View work →</a>
-      <a class="btn ghost" href="#contact">Start a project</a>
+      <a class="btn solid" data-auth="out" href="/signup.html">Get started free →</a>
+      <a class="btn ghost" data-auth="out" href="/login.html">Log in</a>
+      <a class="btn solid" data-auth="in" href="/today.html">Open workspace →</a>
+      <a class="btn ghost" href="#how">How it works</a>
     </div>
   </main>
   <div class="hud rise d6">
-    <div>Lat 0.00° N<em>|</em>Lon 0.00° E<em>|</em>Alt 410 km</div>
+    <div>You approve every action</div>
     <div class="hint">Touch the earth · Scroll to rotate</div>
   </div>
 </section>
 
 <section class="work" id="work">
-  <div class="sec-head label reveal">01 — Selected work</div>
-  <h2 class="reveal">Things I’ve <em>shipped</em></h2>
+  <div class="sec-head label reveal">01 — Features</div>
+  <h2 class="reveal">One plan, <em>six workspaces</em></h2>
   <ol class="rows">
-    <li class="row reveal"><a href="https://github.com/tiru-venkatesh/opai" target="_blank" rel="noopener">
-      <span class="n label">01</span><h3>KARNA <i>/ OPAI</i></h3>
-      <p>A personal AI operating agent — plan your day, learn, build and apply from one connected workspace.</p>
-      <span class="tg label">FastAPI · Groq · RAG</span><span class="ar">↗</span></a></li>
-    <li class="row reveal"><a href="https://github.com/tiru-venkatesh" target="_blank" rel="noopener">
-      <span class="n label">02</span><h3>CivicIQ</h3>
-      <p>AI-powered civic complaint triage — routing what citizens report to where it needs to go.</p>
-      <span class="tg label">AI · Triage</span><span class="ar">↗</span></a></li>
-    <li class="row reveal"><a href="https://github.com/tiru-venkatesh" target="_blank" rel="noopener">
-      <span class="n label">03</span><h3>ULTRON</h3>
-      <p>An autonomous desktop agent running a vision and tool-calling loop.</p>
-      <span class="tg label">Groq · Agents</span><span class="ar">↗</span></a></li>
-    <li class="row reveal"><a href="https://github.com/tiru-venkatesh" target="_blank" rel="noopener">
-      <span class="n label">04</span><h3>Derma-Pilot <i>AI</i></h3>
-      <p>An agentic skincare platform built for the YouCam Skin AI hackathon track.</p>
-      <span class="tg label">Agents · Hackathon</span><span class="ar">↗</span></a></li>
+    <li class="row reveal"><a href="/signup.html">
+      <span class="n label">01</span><h3>Today</h3>
+      <p>Deadlines, exams and reminders become a realistic daily plan.</p>
+      <span class="tg label">Daily plan</span><span class="ar">↗</span></a></li>
+    <li class="row reveal"><a href="/signup.html">
+      <span class="n label">02</span><h3>KARNA</h3>
+      <p>Chat in plain language and your plan updates itself.</p>
+      <span class="tg label">AI assistant</span><span class="ar">↗</span></a></li>
+    <li class="row reveal"><a href="/signup.html">
+      <span class="n label">03</span><h3>Academics</h3>
+      <p>Syllabi and exam dates turn into daily study blocks.</p>
+      <span class="tg label">Exam prep</span><span class="ar">↗</span></a></li>
+    <li class="row reveal"><a href="/signup.html">
+      <span class="n label">04</span><h3>Resume Lab</h3>
+      <p>Tailor your master resume to any job description.</p>
+      <span class="tg label">Resumes</span><span class="ar">↗</span></a></li>
+    <li class="row reveal"><a href="/signup.html">
+      <span class="n label">05</span><h3>Outreach</h3>
+      <p>Track internships and prepare emails for your review.</p>
+      <span class="tg label">Opportunities</span><span class="ar">↗</span></a></li>
+    <li class="row reveal"><a href="/signup.html">
+      <span class="n label">06</span><h3>Projects <i>/ DSA</i></h3>
+      <p>Follow milestones and keep your daily LeetCode streak.</p>
+      <span class="tg label">Build and practice</span><span class="ar">↗</span></a></li>
+  </ol>
+</section>
+
+<section class="work" id="how">
+  <div class="sec-head label reveal">02 — How it works</div>
+  <h2 class="reveal">Ask. Plan. <em>Approve.</em></h2>
+  <ol class="rows">
+    <li class="row reveal"><a href="/signup.html">
+      <span class="n label">01</span><h3>You ask</h3>
+      <p>Type what you need in any workspace.</p>
+      <span class="tg label">Plain language</span><span class="ar">↗</span></a></li>
+    <li class="row reveal"><a href="/signup.html">
+      <span class="n label">02</span><h3>KARNA routes</h3>
+      <p>Your request goes to the right workspace.</p>
+      <span class="tg label">Intent</span><span class="ar">↗</span></a></li>
+    <li class="row reveal"><a href="/signup.html">
+      <span class="n label">03</span><h3>OPAI updates</h3>
+      <p>Your notes are retrieved and your plan changes.</p>
+      <span class="tg label">Your docs</span><span class="ar">↗</span></a></li>
+    <li class="row reveal"><a href="/signup.html">
+      <span class="n label">04</span><h3>You approve</h3>
+      <p>Nothing is sent until you say so.</p>
+      <span class="tg label">Your click</span><span class="ar">↗</span></a></li>
   </ol>
 </section>
 
 <section class="contact" id="contact">
-  <div class="sec-head label reveal">02 — Contact</div>
-  <h2 class="reveal">Let’s build <em>something</em></h2>
+  <div class="sec-head label reveal">03 — Get started</div>
+  <h2 class="reveal">Stop juggling <em>five tools</em></h2>
   <a class="mail reveal" href="mailto:tiruvenkatesh123@gmail.com">tiruvenkatesh123@gmail.com</a>
   <div class="links reveal">
-    <a class="btn solid" href="mailto:tiruvenkatesh123@gmail.com">Start a project →</a>
-    <a class="btn ghost" href="https://github.com/tiru-venkatesh" target="_blank" rel="noopener">GitHub ↗</a>
+    <a class="btn solid" data-auth="out" href="/signup.html">Get started free →</a>
+    <a class="btn ghost" data-auth="out" href="/login.html">Log in</a>
+    <a class="btn solid" data-auth="in" href="/today.html">Open workspace →</a>
   </div>
-  <div class="foot label reveal"><span>© 2026 Tiru Builds</span><span>Lat 0.00° N | Lon 0.00° E</span></div>
+  <div class="foot label reveal"><span>© <span id="yr">2026</span> OPAI · Tiru Venkatesh &amp; Himesh</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/feedback.html">Feedback</a></span></div>
 </section>
 
 <script src="/newdemotiru/shader.js"></script>
 <script src="/newdemotiru/main.js"></script>
+<script src="/opai-session.js"></script>
+<script>
+document.getElementById('yr').textContent=new Date().getFullYear();
+document.querySelectorAll('[data-logout]').forEach(function(b){b.onclick=function(){window.opaiSignOut&&window.opaiSignOut();};});
+if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})});
+</script>
 </body>
 </html>
