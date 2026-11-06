@@ -1,8 +1,12 @@
-/* Earth-horizon fragment shader. All layout comes from uniforms (see main.js CONFIG). */
+/* Earth-horizon shader — cursor-reactive + scroll-driven rotation.
+   Layout comes from uniforms (see main.js CONFIG). */
 window.TIRU_FRAG = `
 precision highp float;
 uniform vec2 R; uniform float T; uniform vec2 M;
 uniform float uHor,uRad,uTilt,uSunX,uK,uIntro,uBright,uPortrait;
+uniform float uScroll,uVel,uPtrOn;
+uniform vec2 uPtr;
+uniform vec3 uRip[4];           // x, y (screen units), age in seconds (<0 = inactive)
 
 float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 vec2 h22(vec2 p){float n=h21(p);return vec2(n,h21(p+n+17.3));}
@@ -26,69 +30,107 @@ void main(){
   vec2 uv=(gl_FragCoord.xy-.5*R)/R.y;
   vec2 m=(M-.5);
   float e=uIntro;
+  float sc=uScroll;
+  float scE=sc*sc*(3.-2.*sc);
 
-  // planet geometry: huge circle, only the top limb is visible
-  vec2 p=rot(uTilt+m.x*.02)*(uv+m*.01);
-  float hor=uHor-(1.-e)*.5;
-  vec2 c=vec2(0.,hor-uRad);
+  // geometry: scrolling lifts the planet, tilts it and sweeps the sun across
+  vec2 p=rot(uTilt+scE*.10+m.x*.02)*(uv+m*.012);
+  float Rad=uRad;
+  float hor=uHor+scE*.22-(1.-e)*.5;
+  vec2 c=vec2(0.,hor-Rad);
   vec2 q=p-c;
   float len=length(q);
-  float d=len-uRad;
+  float d=len-Rad;
   float t=max(-d,0.);
 
   vec3 col=vec3(0.);
 
-  // stars (fade near the sun so the flare stays clean)
-  vec2 g=uv*mix(78.,54.,uPortrait);
+  // stars drift opposite to the rotation (parallax)
+  vec2 g=(uv+vec2(sc*.35,0.))*mix(78.,54.,uPortrait);
   vec2 id=floor(g);float r=h21(id);
   vec2 f=fract(g)-.5;vec2 o=(h22(id)-.5)*.6;
   float st=smoothstep(.07,0.,length(f-o))*step(.945,r);
   st*=.55+.45*sin(T*(1.2+r*3.)+r*50.);
   col+=vec3(st)*.85*smoothstep(0.,.03,d)*e;
 
-  // sun sits exactly on the limb
-  float sx=uSunX;
-  vec2 sunP=vec2(sx,c.y+sqrt(uRad*uRad-sx*sx));
+  // sun
+  float sx=mix(uSunX,-.24,scE);
+  vec2 sunP=vec2(sx,c.y+sqrt(Rad*Rad-sx*sx));
   vec2 sd=p-sunP;
   float sunSide=exp(-pow(abs(p.x-sunP.x)*mix(1.1,2.2,uPortrait),2.));
 
-  // atmosphere rim above the limb
-  float rim=exp(-max(d,0.)*mix(30.,24.,uPortrait));
-  col+=vec3(.82,.9,1.)*rim*.32*sunSide*smoothstep(-.01,.01,d)*e;
+  // pointer terms
+  vec2 dir=uv-uPtr;
+  float dp=length(dir);
+  float gl=exp(-dp*dp*mix(24.,60.,uPortrait))*uPtrOn;
 
-  // surface: perspective ground plane with a glowing voronoi network
+  // atmosphere rim (brightens when the cursor is near the limb)
+  float rim=exp(-max(d,0.)*mix(30.,24.,uPortrait));
+  col+=vec3(.82,.9,1.)*rim*(.32*sunSide+.55*exp(-dp*dp*14.)*uPtrOn)*smoothstep(-.01,.01,d)*e;
+
   if(d<0.){
-    float Z=1./(t+.045);
-    vec2 P=vec2(q.x*Z+T*.03,Z)*uK;
+    // lens: surface bulges toward the cursor
+    float tt=max(t-gl*.03,0.);
+    float Z=1./(tt+.045);
+    vec2 qd=q+dir*gl*.10;
+    // scroll = rotation of the planet around its axis
+    vec2 P=vec2(qd.x*Z+T*.03+scE*18.,Z)*uK;
     float fade=smoothstep(0.,.07,t);
+
+    // shockwaves travel across the planet SURFACE (ground-plane distance -> ellipses in perspective)
+    float rg=0.;
+    vec2 Gp=vec2(qd.x*Z,Z);
+    mat2 RT=rot(uTilt+scE*.10+m.x*.02);
+    for(int i=0;i<4;i++){
+      float age=uRip[i].z;
+      if(age>=0.){
+        vec2 qr=RT*(uRip[i].xy+m*.012)-c;
+        float tr=max(Rad-length(qr),.14);
+        float Zr=1./(tr+.045);
+        float rr=length(Gp-vec2(qr.x*Zr,Zr));
+        float w=rr-age*3.2;
+        float life=1.-smoothstep(0.,2.7,age);
+        rg+=(exp(-w*w*4.)+.4*exp(-(w+.9)*(w+.9)*5.))*life;
+      }
+    }
+    // thin orbit ring that follows the cursor
+    float halo=exp(-pow((dp-(.085+.012*sin(T*3.)))*48.,2.))*uPtrOn;
 
     vec3 v=vor(P);
     float edge=1.-smoothstep(0.,.045,v.y-v.x);
     float mask=smoothstep(.42,.78,fbm(P*.32+3.7));
 
     float lines=edge*(.18+.82*mask);
+    float pul=.5+.5*sin(T*6.+v.z*30.);
     float nodes=smoothstep(.07,.0,v.x)*step(.40,v.z)*(.3+mask*1.5);
     nodes*=.65+.35*sin(T*2.+v.z*40.);
     vec2 gp=P*mix(15.,22.,uPortrait);vec2 gc=floor(gp);vec2 gf=abs(fract(gp)-.5);
     float spark=step(.80,h21(gc))*step(max(gf.x,gf.y),.20)*(.55+.45*sin(T*1.6+h21(gc+3.)*30.));
     float dust=spark*(.25+mask*1.2);
 
-    float s=(lines*.62+nodes*1.9+dust*1.05)*fade*uBright;
+    float boost=1.+gl*2.4+rg*5.+halo*2.2+uVel*.9;
+    float s=(lines*.62*boost
+            +nodes*1.9*(1.+gl*3.2*pul+rg*7.+uVel*1.2)
+            +dust*1.05*(1.+gl*2.+rg*3.+uVel))*fade*uBright;
     s*=.30+.70*smoothstep(0.,.35,t);
     col+=vec3(.93,.96,1.)*s*e;
+
+    // soft energy under the cursor + cyan shockwave tint
+    float body=.35+.65*smoothstep(0.,.3,t);
+    col+=vec3(.80,.92,1.)*gl*.30*body*fade;
+    col+=vec3(.55,.82,1.)*(rg*.36+halo*.24)*body*fade;
 
     col+=vec3(.8,.9,1.)*exp(-t*38.)*.28*(.3+sunSide)*e;
     col+=vec3(.004,.005,.007);
   }
 
-  // sunrise flare
+  // sunrise flare (kicks up with scroll speed)
   float core=exp(-length(sd)*mix(24.,34.,uPortrait))*1.7;
   float streak=.010/(length(sd*vec2(mix(.14,.30,uPortrait),1.))+.016);
-  float halo=.020/(length(sd)+.09);
+  float halo2=.020/(length(sd)+.09);
   float thin=exp(-abs(sd.y)*150.)*exp(-abs(sd.x)*1.8)*.6;
-  col+=vec3(1.,.98,.95)*(core+streak*.55+halo*.6+thin)*(.2+.8*e);
+  col+=vec3(1.,.98,.95)*(core+streak*.55+halo2*.6+thin)*(.2+.8*e)*(1.+uVel*.45);
 
-  // grade
   col=1.-exp(-col*1.35);
   col*=1.-.40*dot(uv*.9,uv*.9);
   col+=(h21(gl_FragCoord.xy+T)-.5)*.016;
