@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/landing.html"
+      "destination": "/newdemotiru/index.html"
     },
     {
       "source": "/login",
