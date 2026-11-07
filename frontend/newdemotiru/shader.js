@@ -36,7 +36,7 @@ void main(){
   // geometry: scrolling lifts the planet, tilts it and sweeps the sun across
   vec2 p=rot(uTilt+scE*.10+m.x*.02)*(uv+m*.012);
   float Rad=uRad;
-  float hor=uHor+scE*.22-(1.-e)*.5;
+  float hor=uHor+(sc*.62+scE*.30)-(1.-e)*.5;
   vec2 c=vec2(0.,hor-Rad);
   vec2 q=p-c;
   float len=length(q);
@@ -74,7 +74,7 @@ void main(){
     float Z=1./(tt+.045);
     vec2 qd=q+dir*gl*.10;
     // scroll = rotation of the planet around its axis
-    vec2 P=vec2(qd.x*Z+T*.03+sc*uSpan*7.,Z)*uK;
+    vec2 P=vec2(qd.x*Z+T*.03+sc*uSpan*12.,Z)*uK;
     float fade=smoothstep(0.,.07,t);
 
     // shockwaves travel across the planet SURFACE (ground-plane distance -> ellipses in perspective)
@@ -113,6 +113,7 @@ void main(){
             +nodes*1.9*(1.+gl*3.2*pul+rg*7.+uVel*1.2)
             +dust*1.05*(1.+gl*2.+rg*3.+uVel))*fade*uBright;
     s*=.30+.70*smoothstep(0.,.35,t);
+    s*=1.-.30*scE;
     col+=vec3(.93,.96,1.)*s*e;
 
     // soft energy under the cursor + cyan shockwave tint
