@@ -56,7 +56,7 @@
   gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
   var U = {};
-  ['R','T','M','uHor','uRad','uTilt','uSunX','uK','uIntro','uBright','uPortrait','uScroll','uVel','uPtrOn','uPtr','uRip']
+  ['R','T','M','uHor','uRad','uTilt','uSunX','uK','uIntro','uBright','uPortrait','uScroll','uVel','uPtrOn','uSpan','uPtr','uRip']
     .forEach(function (n) { U[n] = gl.getUniformLocation(pr, n); });
 
   var dpr = Math.min(window.devicePixelRatio || 1, 1.5), minDpr = 0.7;
@@ -124,7 +124,7 @@
     cur = document.getElementById('cursor'); dot = cur.querySelector('.cdot'); ring = cur.querySelector('.cring');
     root.classList.add('has-cursor');
     document.addEventListener('pointerover', function (e) {
-      cur.classList.toggle('link', !!e.target.closest('a,button,[data-hover]'));
+      cur.classList.toggle('link', !!e.target.closest('a,button,summary,input,[data-hover]'));
     });
   }
 
@@ -174,6 +174,7 @@
     gl.uniform1f(U.uPortrait, innerWidth / innerHeight < 0.9 ? 1 : 0);
     gl.uniform1f(U.uScroll, sCur);
     gl.uniform1f(U.uVel, vel);
+    gl.uniform1f(U.uSpan, range / innerHeight);
     gl.uniform1f(U.uPtrOn, ptr.on);
     gl.uniform2f(U.uPtr, ptr.sx, ptr.sy);
     gl.uniform3fv(U.uRip, rbuf);

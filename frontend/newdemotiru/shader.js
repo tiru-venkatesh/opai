@@ -4,7 +4,7 @@ window.TIRU_FRAG = `
 precision highp float;
 uniform vec2 R; uniform float T; uniform vec2 M;
 uniform float uHor,uRad,uTilt,uSunX,uK,uIntro,uBright,uPortrait;
-uniform float uScroll,uVel,uPtrOn;
+uniform float uScroll,uVel,uPtrOn,uSpan;
 uniform vec2 uPtr;
 uniform vec3 uRip[4];           // x, y (screen units), age in seconds (<0 = inactive)
 
@@ -74,7 +74,7 @@ void main(){
     float Z=1./(tt+.045);
     vec2 qd=q+dir*gl*.10;
     // scroll = rotation of the planet around its axis
-    vec2 P=vec2(qd.x*Z+T*.03+scE*18.,Z)*uK;
+    vec2 P=vec2(qd.x*Z+T*.03+sc*uSpan*7.,Z)*uK;
     float fade=smoothstep(0.,.07,t);
 
     // shockwaves travel across the planet SURFACE (ground-plane distance -> ellipses in perspective)
@@ -133,7 +133,22 @@ void main(){
 
   col=1.-exp(-col*1.35);
   col*=1.-.40*dot(uv*.9,uv*.9);
-  col+=(h21(gl_FragCoord.xy+T)-.5)*.016;
+
+  // ---- sage palette map: #E7F5DC #CFE1B9 #B6C99B #98A77C #88976C #728156 ----
+  float L=clamp(dot(col,vec3(.299,.587,.114))*1.12,0.,1.);
+  vec3 c0=vec3(.035,.050,.027),c1=vec3(.095,.125,.065),c2=vec3(.447,.506,.337),c3=vec3(.596,.655,.486);
+  vec3 c4=vec3(.714,.788,.608),c5=vec3(.812,.882,.725),c6=vec3(.906,.961,.863);
+  vec3 pc=mix(c0,c1,smoothstep(0.,.10,L));
+  pc=mix(pc,c2,smoothstep(.10,.32,L));
+  pc=mix(pc,c3,smoothstep(.32,.48,L));
+  pc=mix(pc,c4,smoothstep(.48,.64,L));
+  pc=mix(pc,c5,smoothstep(.64,.80,L));
+  pc=mix(pc,c6,smoothstep(.80,1.,L));
+  // soft olive sky: lighter toward the horizon, like the palette's vertical gradient
+  float skyG=smoothstep(.55,-.35,uv.y);
+  pc+=vec3(.050,.070,.032)*skyG*(1.-L);
+  pc+=(h21(gl_FragCoord.xy+T)-.5)*.012;
+  col=pc;
   gl_FragColor=vec4(max(col,0.),1.);
 }
 `;
