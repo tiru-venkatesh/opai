@@ -134,19 +134,20 @@ void main(){
   col=1.-exp(-col*1.35);
   col*=1.-.40*dot(uv*.9,uv*.9);
 
-  // ---- sage palette map: #E7F5DC #CFE1B9 #B6C99B #98A77C #88976C #728156 ----
+  // ---- neutral palette map; uTint controls how much sage is left (0 = grey, 1 = full sage) ----
   float L=clamp(dot(col,vec3(.299,.587,.114))*1.12,0.,1.);
-  vec3 c0=vec3(.035,.050,.027),c1=vec3(.095,.125,.065),c2=vec3(.447,.506,.337),c3=vec3(.596,.655,.486);
-  vec3 c4=vec3(.714,.788,.608),c5=vec3(.812,.882,.725),c6=vec3(.906,.961,.863);
+  vec3 c0=vec3(.040,.040,.037),c1=vec3(.090,.090,.085),c2=vec3(.420,.420,.405),c3=vec3(.560,.560,.540);
+  vec3 c4=vec3(.690,.690,.670),c5=vec3(.820,.820,.800),c6=vec3(.945,.945,.930);
   vec3 pc=mix(c0,c1,smoothstep(0.,.10,L));
   pc=mix(pc,c2,smoothstep(.10,.32,L));
   pc=mix(pc,c3,smoothstep(.32,.48,L));
   pc=mix(pc,c4,smoothstep(.48,.64,L));
   pc=mix(pc,c5,smoothstep(.64,.80,L));
   pc=mix(pc,c6,smoothstep(.80,1.,L));
-  // soft olive sky: lighter toward the horizon, like the palette's vertical gradient
+  const float TINT=.10;
+  pc*=mix(vec3(1.),vec3(.93,1.,.86),TINT*2.);
   float skyG=smoothstep(.55,-.35,uv.y);
-  pc+=vec3(.050,.070,.032)*skyG*(1.-L);
+  pc+=vec3(.030,.030,.028)*skyG*(1.-L);
   pc+=(h21(gl_FragCoord.xy+T)-.5)*.012;
   col=pc;
   gl_FragColor=vec4(max(col,0.),1.);
