@@ -52,11 +52,11 @@
     ' float n1=snoise(p*1.8+vec2(t*0.4,-t*0.3));',
     ' float n2=snoise(p*3.2-vec2(n1*0.6,t*0.5)+mouse*0.3);',
     ' float n3=snoise(p*2.5+vec2(n2*0.8,t*0.2));',
-    ' vec3 cBg=mix(vec3(0.976,0.973,0.992),vec3(0.055,0.043,0.125),u_dark);',
-    ' vec3 cLav=mix(vec3(0.910,0.918,0.988),vec3(0.105,0.082,0.235),u_dark);',
-    ' vec3 cPur=mix(vec3(0.518,0.322,0.941),vec3(0.330,0.190,0.640),u_dark);',
-    ' vec3 cRoy=mix(vec3(0.365,0.376,0.929),vec3(0.200,0.210,0.620),u_dark);',
-    ' vec3 cLime=mix(vec3(0.812,0.965,0.412),vec3(0.420,0.520,0.150),u_dark);',
+    ' vec3 cBg=mix(vec3(0.955,0.955,0.940),vec3(0.043,0.043,0.039),u_dark);',
+    ' vec3 cLav=mix(vec3(0.900,0.900,0.880),vec3(0.075,0.075,0.070),u_dark);',
+    ' vec3 cPur=mix(vec3(0.560,0.580,0.520),vec3(0.190,0.200,0.180),u_dark);',
+    ' vec3 cRoy=mix(vec3(0.700,0.700,0.680),vec3(0.150,0.150,0.140),u_dark);',
+    ' vec3 cLime=mix(vec3(0.700,0.720,0.660),vec3(0.250,0.270,0.220),u_dark);',
     ' float radial=length(st-vec2(0.5,0.45));',
     ' float glow1=smoothstep(0.85,0.1,radial+n1*0.35);',
     ' float glow2=smoothstep(0.7,0.05,length(st-vec2(0.65,0.3))+n2*0.3);',
@@ -121,7 +121,7 @@
     }
 
     function isDark() {
-      return root.getAttribute('data-theme') === 'dark' || root.classList.contains('dark') ? 1 : 0;
+      return 1;
     }
     var dark = isDark(), darkTarget = dark;
     var mx = 0.5, my = 0.5, tx = 0.5, ty = 0.5;       // normalised mouse (eased)

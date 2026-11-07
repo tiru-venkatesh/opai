@@ -13,7 +13,7 @@ body.opai-chat .empty>*:nth-child(5){animation-delay:.5s}
 @keyframes k-up{from{opacity:0;transform:translateY(22px) scale(.98);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
 body.opai-chat .empty h1{background-size:220% 100%;animation:k-up .8s var(--k-ease) .16s forwards,k-sheen 7s ease-in-out 1s infinite}
 @keyframes k-sheen{0%,100%{background-position:0 0}50%{background-position:100% 0}}
-body.opai-chat .empty .eyebrow i{animation:k-beat 1.8s ease-in-out infinite;box-shadow:0 0 0 0 rgba(18,20,43,.35)}
+body.opai-chat .empty .eyebrow i{animation:k-beat 1.8s ease-in-out infinite;box-shadow:0 0 0 0 rgba(0,0,0,.35)}
 @keyframes k-beat{0%{box-shadow:0 0 0 0 rgba(109,75,234,.55)}70%,100%{box-shadow:0 0 0 9px rgba(109,75,234,0)}}
 
 /* suggestion chips: spring in, lift on hover */
@@ -22,21 +22,21 @@ body.opai-chat .sugg button:nth-child(1){animation-delay:.55s}body.opai-chat .su
 body.opai-chat .sugg button:nth-child(3){animation-delay:.71s}body.opai-chat .sugg button:nth-child(4){animation-delay:.79s}
 body.opai-chat .sugg button:nth-child(5){animation-delay:.87s}body.opai-chat .sugg button:nth-child(n+6){animation-delay:.95s}
 @keyframes k-chip{from{opacity:0;transform:translateY(14px) scale(.86)}to{opacity:1;transform:none}}
-body.opai-chat .sugg button:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 12px 26px -12px rgba(79,70,229,.55);border-color:rgba(109,75,234,.45);color:#4F46E5}
+body.opai-chat .sugg button:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 12px 26px -12px rgba(155,174,126,.55);border-color:rgba(109,75,234,.45);color:#5F7448}
 body.opai-chat .sugg button:active{transform:scale(.96)}
 
 /* ---------- composer: animated gradient border on focus, glow, press feedback ---------- */
 body.opai-chat .card-in{position:relative;transition:box-shadow .35s,transform .35s var(--k-ease)}
 body.opai-chat .card-in::before{content:"";position:absolute;inset:-1.5px;border-radius:inherit;padding:1.5px;pointer-events:none;
-  background:conic-gradient(from var(--kang),#4F46E5,#8B5CF6,#F43F8E,#C6F135,#4F46E5);
+  background:conic-gradient(from var(--kang),#5F7448,#7A8F5E,#7A8F5E,#F1F1EE,#5F7448);
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
   opacity:0;transition:opacity .4s}
-body.opai-chat .card-in:focus-within{transform:translateY(-2px);box-shadow:0 26px 60px -22px rgba(79,70,229,.55),0 0 0 6px rgba(109,75,234,.07)}
+body.opai-chat .card-in:focus-within{transform:translateY(-2px);box-shadow:0 26px 60px -22px rgba(155,174,126,.55),0 0 0 6px rgba(109,75,234,.07)}
 body.opai-chat .card-in:focus-within::before{opacity:1;animation:k-spin 4.5s linear infinite}
 @keyframes k-spin{to{--kang:360deg}}
 body.opai-chat #send{position:relative;overflow:hidden;transition:transform .2s var(--k-spring),box-shadow .25s}
 body.opai-chat #send::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);transform:translateX(-120%)}
-body.opai-chat #send:hover{transform:translateY(-1px) scale(1.04);box-shadow:0 10px 26px -8px rgba(124,58,237,.75)}
+body.opai-chat #send:hover{transform:translateY(-1px) scale(1.04);box-shadow:0 10px 26px -8px rgba(155,174,126,.75)}
 body.opai-chat #send:hover::after{animation:k-shine .9s ease}
 @keyframes k-shine{to{transform:translateX(120%)}}
 body.opai-chat #send:active{transform:scale(.92)}
@@ -44,8 +44,8 @@ body.opai-chat #send.k-launch{animation:k-launch .55s var(--k-ease)}
 @keyframes k-launch{0%{transform:scale(1)}30%{transform:translate(4px,-6px) scale(.9) rotate(-6deg)}100%{transform:none}}
 body.opai-chat #send:not([hidden]),body.opai-chat #stop:not([hidden]){animation:k-pop .4s var(--k-spring)}
 @keyframes k-pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
-body.opai-chat #stop:not([hidden]){box-shadow:0 0 0 0 rgba(244,63,142,.5);animation:k-pop .4s var(--k-spring),k-ring 1.6s ease-out .4s infinite}
-@keyframes k-ring{to{box-shadow:0 0 0 12px rgba(244,63,142,0)}}
+body.opai-chat #stop:not([hidden]){box-shadow:0 0 0 0 rgba(155,174,126,.5);animation:k-pop .4s var(--k-spring),k-ring 1.6s ease-out .4s infinite}
+@keyframes k-ring{to{box-shadow:0 0 0 12px rgba(155,174,126,0)}}
 
 /* ---------- messages ---------- */
 body.opai-chat .msg{animation:none}
@@ -69,10 +69,10 @@ body.opai-chat .msg.sys.k-in-agent{animation:k-up .6s var(--k-ease) both}
 @keyframes k-word{from{opacity:0;transform:translateY(7px);filter:blur(5px)}60%{filter:blur(0)}to{opacity:1;transform:none;filter:blur(0)}}
 
 /* live streaming caret becomes a glowing orb; avatar breathes */
-body.opai-chat .msg.live .bubble::after{width:9px;height:9px;border-radius:50%;vertical-align:0;background:linear-gradient(135deg,#4F46E5,#F43F8E);opacity:1;animation:k-caret 1s ease-in-out infinite;box-shadow:0 0 12px rgba(124,58,237,.8)}
+body.opai-chat .msg.live .bubble::after{width:9px;height:9px;border-radius:50%;vertical-align:0;background:linear-gradient(135deg,#5F7448,#7A8F5E);opacity:1;animation:k-caret 1s ease-in-out infinite;box-shadow:0 0 12px rgba(155,174,126,.8)}
 @keyframes k-caret{50%{transform:scale(.55);opacity:.55}}
 .av-k{position:relative;overflow:visible!important}
-.av-k::after{content:"";position:absolute;inset:-4px;border-radius:50%;background:conic-gradient(from var(--kang),#4F46E5,#F43F8E,#C6F135,#4F46E5);opacity:0;z-index:-1;filter:blur(6px);transition:opacity .4s}
+.av-k::after{content:"";position:absolute;inset:-4px;border-radius:50%;background:conic-gradient(from var(--kang),#5F7448,#7A8F5E,#F1F1EE,#5F7448);opacity:0;z-index:-1;filter:blur(6px);transition:opacity .4s}
 .av-k img{border-radius:50%}
 #typing .av-k::after,.msg.live .av-k::after{opacity:.85;animation:k-spin 2.2s linear infinite}
 .msg.agent:not(#typing):not(.live) .av-k::after{opacity:.28;animation:k-spin 9s linear infinite}
@@ -80,10 +80,10 @@ body.opai-chat .msg.live .bubble::after{width:9px;height:9px;border-radius:50%;v
 /* typing indicator: gradient orbs in a wave + shimmering label */
 #typing .body{animation:k-up .5s var(--k-ease) both}
 .typing{display:inline-flex;align-items:center;gap:7px}
-.typing i{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,#4F46E5,#F43F8E);animation:k-wave 1.2s ease-in-out infinite;box-shadow:0 0 14px rgba(124,58,237,.55)}
+.typing i{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,#5F7448,#7A8F5E);animation:k-wave 1.2s ease-in-out infinite;box-shadow:0 0 14px rgba(155,174,126,.55)}
 .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
 @keyframes k-wave{0%,60%,100%{transform:translateY(0) scale(.8);opacity:.45}30%{transform:translateY(-7px) scale(1.15);opacity:1}}
-.typing em{font-style:normal;font:500 11px/16px var(--mono);margin-left:6px;background:linear-gradient(90deg,#9A9CC4 20%,#4F46E5 45%,#F43F8E 55%,#9A9CC4 80%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:k-shimmer 2s linear infinite}
+.typing em{font-style:normal;font:500 11px/16px var(--mono);margin-left:6px;background:linear-gradient(90deg,#A5A5A0 20%,#5F7448 45%,#7A8F5E 55%,#A5A5A0 80%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:k-shimmer 2s linear infinite}
 @keyframes k-shimmer{to{background-position:-250% 0}}
 
 /* jump-to-latest, drawers, toolbar polish */
@@ -94,8 +94,8 @@ body.opai-chat #ktools .hbtn:hover{transform:translateY(-1px)}
 body.opai-chat .msg .acts .act{transition:transform .2s var(--k-spring),background-color .2s,color .2s}
 body.opai-chat .msg .acts .act:hover{transform:translateY(-1px)}
 body.opai-chat .src{transition:transform .25s var(--k-spring),box-shadow .25s,border-color .2s}
-body.opai-chat .src:hover{transform:translateY(-2px);box-shadow:0 10px 22px -12px rgba(79,70,229,.55);border-color:rgba(109,75,234,.5)}
+body.opai-chat .src:hover{transform:translateY(-2px);box-shadow:0 10px 22px -12px rgba(155,174,126,.55);border-color:rgba(109,75,234,.5)}
 body.opai-chat .msg.agent .body{transition:box-shadow .35s,transform .35s var(--k-ease)}
-body.opai-chat .msg.agent .body:hover{box-shadow:0 26px 56px -26px rgba(79,70,229,.6)}
+body.opai-chat .msg.agent .body:hover{box-shadow:0 26px 56px -26px rgba(155,174,126,.6)}
 
 @media (prefers-reduced-motion:reduce){.kw{opacity:1!important;animation:none!important;filter:none!important}.empty>*,.sugg button{opacity:1!important}}
