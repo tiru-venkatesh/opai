@@ -1,4 +1,221 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>Sign up · OPAI</title>
-<script>location.replace('login.html?mode=signup'+(location.search?'&'+location.search.slice(1):''));</script></head>
-<body><p><a href="login.html?mode=signup">Create your OPAI account</a></p></body></html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sign up · OPAI</title>
+<meta name="description" content="Create your OPAI account.">
+<meta name="theme-color" content="#0b0b0a">
+<link rel="icon" type="image/png" href="icons/favicon-32.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preload" href="/newdemotiru/fonts/outfit-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/newdemotiru/fonts/manrope-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:'Outfit';font-weight:500;font-display:swap;src:url('/newdemotiru/fonts/outfit-latin-500-normal.woff2') format('woff2')}
+@font-face{font-family:'Outfit';font-weight:600;font-display:swap;src:url('/newdemotiru/fonts/outfit-latin-600-normal.woff2') format('woff2')}
+@font-face{font-family:'Manrope';font-weight:400;font-display:swap;src:url('/newdemotiru/fonts/manrope-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Manrope';font-weight:500;font-display:swap;src:url('/newdemotiru/fonts/manrope-latin-500-normal.woff2') format('woff2')}
+@font-face{font-family:'Manrope';font-weight:600;font-display:swap;src:url('/newdemotiru/fonts/manrope-latin-600-normal.woff2') format('woff2')}
+:root{--ink:#F1F1EE;--mut:#8E8E89;--soft:#C9C9C5;--sage:#9BAE7E;--bg:#0b0b0a;--err:#F0A9A3;
+  --head:'Outfit',system-ui,-apple-system,'Segoe UI',sans-serif;--sans:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;--pad:clamp(18px,3vw,44px)}
+*{box-sizing:border-box}
+html{background:var(--bg);-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;min-height:100svh;background:transparent;color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+#sky{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;background:var(--bg)}
+.no-gl #sky{background:radial-gradient(ellipse 70% 35% at 80% 92%,#7A7A76,#0b0b0a 70%)}
+.shade{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 60% 55% at 50% 42%,rgba(11,11,10,.55),rgba(11,11,10,0) 70%)}
+#cursor{display:none!important}
+.hidden{display:none!important}
+a{color:inherit}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--sage);outline-offset:3px}
+
+header{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:1240px;margin:0 auto;
+  padding:max(18px,env(safe-area-inset-top)) var(--pad) 10px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font:600 20px/1 var(--head);letter-spacing:.02em}
+.brand i{width:8px;height:8px;border-radius:50%;background:var(--ink);box-shadow:0 0 14px var(--ink)}
+.back{font:500 15px/1 var(--sans);color:var(--mut);text-decoration:none;transition:color .2s}
+.back:hover{color:var(--ink)}
+
+main{position:relative;z-index:5;display:flex;justify-content:center;padding:clamp(8px,3vh,36px) var(--pad) max(48px,env(safe-area-inset-bottom))}
+.card{width:100%;max-width:440px;padding:clamp(24px,4vw,36px);border-radius:26px;
+  background:rgba(11,11,10,.58);border:1px solid rgba(241,241,238,.11);
+  backdrop-filter:blur(18px) saturate(1.1);-webkit-backdrop-filter:blur(18px) saturate(1.1);
+  box-shadow:0 30px 80px -30px rgba(0,0,0,.8);opacity:0;transform:translateY(16px);animation:rise .9s .35s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+h1{margin:0;font:600 clamp(28px,3.4vw,34px)/1.1 var(--head);letter-spacing:-.03em}
+.sub{margin:8px 0 22px;color:var(--soft);font:400 15.5px/1.55 var(--sans)}
+
+.tabs{display:flex;width:100%;padding:4px;border-radius:999px;background:rgba(241,241,238,.06);border:1px solid rgba(241,241,238,.08);margin-bottom:18px}
+.tab{flex:1;padding:11px 0;border:0;border-radius:999px;background:none;color:var(--mut);font:600 15px/1 var(--head);cursor:pointer;transition:background .25s,color .25s}
+.tab.on{background:var(--ink);color:#151514}
+.tab:not(.on):hover{color:var(--ink)}
+
+.g{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 16px;border-radius:999px;cursor:pointer;
+  background:rgba(241,241,238,.07);border:1px solid rgba(241,241,238,.14);color:var(--ink);font:600 15px/1 var(--head);transition:background .2s,border-color .2s,transform .2s}
+.g:hover:not(:disabled){background:rgba(241,241,238,.12);border-color:rgba(241,241,238,.28);transform:translateY(-2px)}
+.or{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--mut);font:500 13px/1 var(--sans)}
+.or span{flex:1;height:1px;background:rgba(241,241,238,.12)}
+
+form{display:grid;gap:14px}
+label{display:block}
+label>span{display:block;margin-bottom:7px;font:600 13.5px/1 var(--sans);color:var(--soft)}
+input{width:100%;height:50px;padding:0 16px;border-radius:14px;background:rgba(241,241,238,.06);border:1px solid rgba(241,241,238,.12);
+  color:var(--ink);font:500 16px/1 var(--sans);transition:border-color .2s,background .2s}
+input::placeholder{color:#6b6b67}
+input:focus{outline:0;border-color:var(--sage);background:rgba(241,241,238,.09)}
+.frow{display:flex;justify-content:flex-end;margin-top:-4px}
+#forgot{border:0;background:none;padding:2px 0;color:var(--sage);font:600 14px/1 var(--sans);cursor:pointer}
+#forgot:hover{text-decoration:underline}
+.msg{margin:0;min-height:20px;font:500 14px/1.45 var(--sans)}
+.msg.err{color:var(--err)}.msg.ok{color:var(--sage)}
+#submit{width:100%;padding:16px;border:0;border-radius:999px;cursor:pointer;background:var(--ink);color:#151514;font:600 16px/1 var(--head);
+  box-shadow:0 12px 34px -12px rgba(241,241,238,.28);transition:transform .25s,background .25s,opacity .25s}
+#submit:hover:not(:disabled){transform:translateY(-3px);background:#fff}
+#submit:disabled,.g:disabled{opacity:.55;cursor:default}
+.legal{margin:20px 0 0;text-align:center;color:var(--mut);font:400 12.5px/1.6 var(--sans)}
+.legal a{color:var(--soft)}
+@media (prefers-reduced-motion:reduce){.card{animation:none;opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="shade" aria-hidden="true"></div>
+<div id="cursor" aria-hidden="true"><div class="cring"></div><div class="cdot"></div></div>
+
+<header>
+  <a href="/" class="brand"><i></i>OPAI</a>
+  <a href="/" class="back">← Back to home</a>
+</header>
+
+<main>
+  <div class="card">
+    <h1 id="title">Welcome back</h1>
+    <p id="sub" class="sub">Log in to open your workspace.</p>
+
+    <div class="tabs" role="tablist">
+      <button id="tab-in" role="tab" class="tab on" type="button">Log in</button>
+      <button id="tab-up" role="tab" class="tab" type="button">Sign up</button>
+    </div>
+
+    <button id="google" type="button" class="g">
+      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+      Continue with Google
+    </button>
+
+    <div class="or"><span></span>or with email<span></span></div>
+
+    <form id="form" novalidate>
+      <label id="name-wrap" class="hidden"><span>Full name</span>
+        <input id="name" type="text" autocomplete="name" placeholder="Your name"></label>
+      <label><span>Email</span>
+        <input id="email" type="email" autocomplete="email" required placeholder="you@college.edu"></label>
+      <label><span>Password</span>
+        <input id="pw" type="password" autocomplete="current-password" required minlength="6" placeholder="At least 6 characters"></label>
+      <label id="pw2-wrap" class="hidden"><span>Confirm password</span>
+        <input id="pw2" type="password" autocomplete="new-password" placeholder="Repeat your password"></label>
+      <div class="frow"><button type="button" id="forgot">Forgot password?</button></div>
+      <p id="msg" role="alert" class="msg"></p>
+      <button id="submit" type="submit">Log in</button>
+    </form>
+
+    <p class="legal">By continuing you agree to the <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Policy</a>.</p>
+  </div>
+</main>
+
+<script src="/newdemotiru/shader.js"></script>
+<script src="/newdemotiru/main.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var CFG = { apiKey: "AIzaSyCIXqCDmMDSO8ch451PGCbZjMYCVJLtGNs", authDomain: "opagent-3ef8b.firebaseapp.com", projectId: "opagent-3ef8b", appId: "1:701157045370:web:386c270095d7655d5037c3" };
+  var q = new URLSearchParams(location.search);
+  var mode = q.get('mode') === 'signup' || /signup/i.test(location.pathname) ? 'up' : 'in';
+  var NEXT = (function () { var n = q.get('next') || ''; return /^[a-z0-9-]+\.html$/i.test(n) && !/^(login|signup|landing)\.html$/i.test(n) ? n : 'today.html'; })();
+  var auth = null, busy = false;
+
+  function msg(t, ok) { $('msg').textContent = t || ''; $('msg').className = 'msg ' + (ok ? 'ok' : 'err'); }
+  function setMode(m) {
+    mode = m; var up = m === 'up';
+    $('tab-in').className = 'tab' + (!up ? ' on' : ''); $('tab-in').setAttribute('aria-selected', String(!up));
+    $('tab-up').className = 'tab' + (up ? ' on' : ''); $('tab-up').setAttribute('aria-selected', String(up));
+    $('title').textContent = up ? 'Create your account' : 'Welcome back';
+    $('sub').textContent = up ? 'Start planning exams, projects and applications in one place.' : 'Log in to open your workspace.';
+    $('submit').textContent = up ? 'Create account' : 'Log in';
+    $('name-wrap').classList.toggle('hidden', !up); $('pw2-wrap').classList.toggle('hidden', !up); $('forgot').parentElement.classList.toggle('hidden', up);
+    $('pw').autocomplete = up ? 'new-password' : 'current-password';
+    msg('');
+  }
+  function errText(e) {
+    var c = (e && e.code) || '';
+    var m = { 'auth/popup-closed-by-user': 'Sign-in was cancelled.', 'auth/cancelled-popup-request': 'Sign-in was cancelled.',
+      'auth/popup-blocked': 'The popup was blocked. Allow popups and try again.',
+      'auth/unauthorized-domain': 'This domain is not authorized in Firebase (Authentication → Settings → Authorized domains).',
+      'auth/operation-not-allowed': 'This sign-in method is not enabled in Firebase yet (Authentication → Sign-in method).',
+      'auth/email-already-in-use': 'An account with that email already exists. Log in instead.',
+      'auth/invalid-email': 'That email address looks invalid.', 'auth/weak-password': 'Password must be at least 6 characters.',
+      'auth/wrong-password': 'Wrong email or password.', 'auth/invalid-credential': 'Wrong email or password.',
+      'auth/user-not-found': 'No account with that email. Sign up instead.', 'auth/too-many-requests': 'Too many attempts. Wait a minute and try again.',
+      'auth/network-request-failed': 'Network problem. Check your connection.' };
+    return m[c] || (e && e.message) || 'Something went wrong.';
+  }
+  function finish(user, fresh) {
+    try {
+      localStorage.setItem('opai_sc_email', (user.email || '').toLowerCase());
+      localStorage.setItem('opai_sc_photo', user.photoURL || '');
+      localStorage.setItem('opa_session', 'google');
+    } catch (e) {}
+    msg('Signed in. Opening your workspace…', true);
+    location.replace(fresh ? 'onboarding.html?next=' + encodeURIComponent(NEXT) : NEXT);
+  }
+  function lock(on) { busy = on; $('submit').disabled = on; $('google').disabled = on; }
+
+  $('tab-in').onclick = function () { setMode('in'); };
+  $('tab-up').onclick = function () { setMode('up'); };
+
+  $('google').onclick = function () {
+    if (busy || !auth) return msg(auth ? '' : 'Sign-in service is still loading. Try again in a moment.');
+    lock(true); msg('');
+    var p = new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account' });
+    auth.signInWithPopup(p).then(function (r) { finish(r.user, r.additionalUserInfo && r.additionalUserInfo.isNewUser); },
+      function (e) { lock(false); msg(errText(e)); });
+  };
+
+  $('form').onsubmit = function (ev) {
+    ev.preventDefault(); if (busy) return;
+    if (!auth) return msg('Sign-in service is still loading. Try again in a moment.');
+    var email = $('email').value.trim(), pw = $('pw').value;
+    if (!email || !pw) return msg('Enter your email and password.');
+    if (mode === 'up') {
+      if (pw.length < 6) return msg('Password must be at least 6 characters.');
+      if (pw !== $('pw2').value) return msg('Passwords do not match.');
+      lock(true); msg('');
+      auth.createUserWithEmailAndPassword(email, pw).then(function (r) {
+        var nm = $('name').value.trim();
+        return (nm ? r.user.updateProfile({ displayName: nm }) : Promise.resolve()).then(function () { finish(r.user, true); });
+      }).catch(function (e) { lock(false); msg(errText(e)); });
+    } else {
+      lock(true); msg('');
+      auth.signInWithEmailAndPassword(email, pw).then(function (r) { finish(r.user, false); }, function (e) { lock(false); msg(errText(e)); });
+    }
+  };
+
+  $('forgot').onclick = function () {
+    var email = $('email').value.trim();
+    if (!email) return msg('Type your email above first, then press "Forgot password?".');
+    if (!auth) return msg('Sign-in service is still loading.');
+    auth.sendPasswordResetEmail(email).then(function () { msg('Password reset email sent. Check your inbox.', true); }, function (e) { msg(errText(e)); });
+  };
+
+  setMode(mode);
+  try {
+    firebase.initializeApp(CFG); auth = firebase.auth();
+    /* Already signed in? Skip the form. (Not after an explicit logout: that clears the Firebase session first.) */
+    auth.onAuthStateChanged(function (u) { if (u && !busy && !q.get('out')) finish(u, false); });
+  } catch (e) { msg('Could not load the sign-in service. Check your connection and reload.'); }
+})();
+</script>
+<script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
+</body>
+</html>
