@@ -56,14 +56,14 @@ html[data-theme=dark] img:not([src$=".svg"]){filter:brightness(.92)}
 html[data-theme=dark] body{--ac:#B3C494}
 html[data-theme=light]{color-scheme:light}
 html[data-theme=light]:has(#tools){--bg:#F6F9F8;--card:#fff;--line:#E4ECEA;--tx:#151514;--mut:#6F6F6B}
-html[data-theme=light] .why{background:rgba(135,183,199,.08)}
+html[data-theme=light] .why{background:rgba(168,185,149,.08)}
 
 /* Tailwind-page colour channels (tailwind config maps every colour to rgb(var(--c-name) / alpha)) */
 :root{--c-tertiary-fixed:228 235 233;--c-primary-fixed:228 235 233;--c-surface-container-low:247 250 249;--c-on-tertiary-container:26 64 77;--c-on-tertiary-fixed:17 43 51;--c-on-primary-container:26 64 77;--c-on-tertiary-fixed-variant:35 83 99;--c-tertiary:47 103 122;--c-surface-container-high:229 236 234;--c-primary-fixed-dim:195 212 208;--c-on-primary-fixed-variant:26 64 77;--c-on-secondary:255 255 255;--c-inverse-primary:118 172 190;--c-outline:112 131 138;--c-error-container:234 239 238;--c-on-surface-variant:80 74 77;--c-primary-container:228 235 233;--c-surface-bright:247 250 249;--c-inverse-on-surface:240 244 243;--c-secondary-container:232 240 238;--c-on-surface:27 21 22;--c-on-secondary-fixed:107 52 0;--c-outline-variant:200 216 212;--c-on-tertiary:255 255 255;--c-background:240 244 243;--c-tertiary-fixed-dim:195 212 208;--c-on-primary:255 255 255;--c-surface-tint:26 64 77;--c-on-primary-fixed:17 43 51;--c-secondary:224 159 98;--c-surface-variant:213 225 222;--c-surface-container:242 246 245;--c-surface-container-highest:218 228 226;--c-surface:240 244 243;--c-on-error:255 255 255;--c-on-background:27 21 22;--c-inverse-surface:27 21 22;--c-surface-dim:226 234 232;--c-secondary-fixed:232 240 238;--c-surface-container-lowest:240 244 243;--c-on-secondary-fixed-variant:166 83 6;--c-primary:26 64 77;--c-secondary-fixed-dim:217 213 196;--c-on-error-container:139 68 1;--c-tertiary-container:228 235 233;--c-on-secondary-container:166 83 6;--c-error:206 108 17;}
 html[data-theme=dark]{--c-tertiary-fixed:21 53 64;--c-primary-fixed:21 53 64;--c-surface-container-low:25 19 20;--c-on-tertiary-container:163 199 210;--c-on-tertiary-fixed:211 226 225;--c-on-primary-container:163 199 210;--c-on-tertiary-fixed-variant:163 199 210;--c-tertiary:118 172 190;--c-surface-container-high:38 30 31;--c-primary-fixed-dim:67 56 58;--c-on-primary-fixed-variant:163 199 210;--c-on-secondary:68 33 0;--c-inverse-primary:55 115 135;--c-outline:126 143 149;--c-error-container:85 41 0;--c-on-surface-variant:170 189 187;--c-primary-container:21 53 64;--c-surface-bright:34 27 27;--c-inverse-on-surface:27 21 22;--c-secondary-container:50 40 40;--c-on-surface:228 235 233;--c-on-secondary-fixed:222 230 226;--c-outline-variant:57 45 46;--c-on-tertiary:10 25 30;--c-background:18 15 15;--c-tertiary-fixed-dim:67 56 58;--c-on-primary:10 25 30;--c-surface-tint:118 172 190;--c-on-primary-fixed:211 226 225;--c-secondary:228 177 129;--c-surface-variant:51 40 41;--c-surface-container:28 22 22;--c-surface-container-highest:46 37 37;--c-surface:18 15 15;--c-on-error:66 32 0;--c-on-background:228 235 233;--c-inverse-surface:228 235 233;--c-surface-dim:14 11 11;--c-secondary-fixed:50 40 40;--c-surface-container-lowest:18 15 15;--c-on-secondary-fixed-variant:217 213 196;--c-primary:76 143 166;--c-secondary-fixed-dim:130 63 0;--c-on-error-container:220 200 173;--c-tertiary-container:21 53 64;--c-on-secondary-container:217 213 196;--c-error:226 171 120;}
 
 /* ================= TOGGLE BUTTON ================= */
-.opai-theme{width:36px;height:36px;border-radius:50%;border:1px solid var(--hair,#D5E1DE);background:var(--well,#E2EAE8);color:var(--ink-2,#504A4D);display:grid;place-items:center;cursor:pointer;padding:0;flex:none;position:relative;overflow:hidden;transition:background .25s,border-color .25s,transform .2s}
+.opai-theme{width:36px;height:36px;border-radius:50%;border:1px solid var(--hair,#dbdcda);background:var(--well,#e6e7e5);color:var(--ink-2,#504A4D);display:grid;place-items:center;cursor:pointer;padding:0;flex:none;position:relative;overflow:hidden;transition:background .25s,border-color .25s,transform .2s}
 .opai-theme:hover{color:var(--ink,#1B1516);transform:rotate(-12deg) scale(1.06)}
 .opai-theme svg{position:absolute;width:18px;height:18px;transition:transform .5s cubic-bezier(.34,1.56,.64,1),opacity .3s}
 .opai-theme .sun{transform:rotate(0) scale(1);opacity:1}.opai-theme .moon{transform:rotate(-90deg) scale(.4);opacity:0}
@@ -126,17 +126,17 @@ dialog[open]{animation:oPop .3s var(--o-ease)}
 /* PERF: static soft glow. The old version animated three 90px-blurred layers forever, which also forced every
    backdrop-filter above it to re-blur on every frame (3-8 fps on many laptops). Gradients cost nothing. */
 #o-amb i{position:absolute;border-radius:50%}
-#o-amb i:nth-child(1){width:60vw;height:60vw;left:-18vw;top:-20vw;background:radial-gradient(closest-side,rgba(26,64,77,.16),transparent)}
+#o-amb i:nth-child(1){width:60vw;height:60vw;left:-18vw;top:-20vw;background:radial-gradient(closest-side,rgba(52,57,46,.16),transparent)}
 #o-amb i:nth-child(2){width:50vw;height:50vw;right:-14vw;top:16vh;background:radial-gradient(closest-side,rgba(224,159,98,.13),transparent)}
-#o-amb i:nth-child(3){width:46vw;height:46vw;left:28vw;bottom:-24vw;background:radial-gradient(closest-side,rgba(26,64,77,.11),transparent)}
-html[data-theme=dark] #o-amb i:nth-child(1){background:radial-gradient(closest-side,rgba(55,115,135,.19),transparent)}
+#o-amb i:nth-child(3){width:46vw;height:46vw;left:28vw;bottom:-24vw;background:radial-gradient(closest-side,rgba(52,57,46,.11),transparent)}
+html[data-theme=dark] #o-amb i:nth-child(1){background:radial-gradient(closest-side,rgba(96,114,76,.19),transparent)}
 html[data-theme=dark] #o-amb i:nth-child(2){background:radial-gradient(closest-side,rgba(228,177,129,.12),transparent)}
-html[data-theme=dark] #o-amb i:nth-child(3){background:radial-gradient(closest-side,rgba(55,115,135,.13),transparent)}
+html[data-theme=dark] #o-amb i:nth-child(3){background:radial-gradient(closest-side,rgba(96,114,76,.13),transparent)}
 html[data-theme=dark] #o-amb{opacity:.9}
 
 /* cursor spotlight on cards */
-.o-spot{background-image:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(55,115,135,.10),transparent 55%)!important}
-html[data-theme=dark] .o-spot{background-image:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(139,185,201,.09),transparent 55%)!important}
+.o-spot{background-image:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(96,114,76,.10),transparent 55%)!important}
+html[data-theme=dark] .o-spot{background-image:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(171,187,153,.09),transparent 55%)!important}
 
 /* header: sliding hover pill, scroll state, logo wiggle, live dots */
 .opai-pills{position:relative}
@@ -148,7 +148,7 @@ html[data-theme=dark] .o-spot{background-image:radial-gradient(420px circle at v
 body.opai-pad{transition:padding-top .3s var(--o-ease)}
 .opai-mark{display:block;transition:transform .7s var(--o-spring),filter .3s}
 .opai-logo:hover .opai-mark{transform:rotate(90deg) scale(1.06);filter:drop-shadow(0 0 8px #5498AF80)}
-@keyframes oLive{0%,100%{box-shadow:0 0 0 0 rgba(55,115,135,.55)}70%{box-shadow:0 0 0 7px rgba(55,115,135,0)}}
+@keyframes oLive{0%,100%{box-shadow:0 0 0 0 rgba(96,114,76,.55)}70%{box-shadow:0 0 0 7px rgba(96,114,76,0)}}
 .opai-timer.on i{animation:oLive 2s ease-out infinite}
 .opai-st.off i{animation:none}
 .opai-user .av{transition:transform .35s var(--o-spring)}.opai-user:hover .av{transform:rotate(-8deg) scale(1.1)}
@@ -189,7 +189,7 @@ dialog::backdrop{animation:oFade .3s ease both}@keyframes oFade{from{opacity:0}}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{animation:oFocus 1.6s ease-in-out infinite}
 @keyframes oFocus{50%{outline-offset:4px}}
 /* inputs: lift on focus */
-input:focus,textarea:focus,select:focus{box-shadow:0 0 0 4px rgba(55,115,135,.15);transition:box-shadow .25s}
+input:focus,textarea:focus,select:focus{box-shadow:0 0 0 4px rgba(96,114,76,.15);transition:box-shadow .25s}
 
 @media (prefers-reduced-motion:reduce){
   #o-amb,.o-ind{display:none}

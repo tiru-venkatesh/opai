@@ -70,7 +70,7 @@ html.opai-min .opai-sb .opai-user{border-color:transparent;background:none}\
 html.opai-min .opai-sb nav{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.07)}\
 html.opai-min .opai-sb .sb-tools{flex-direction:column}\
 html.opai-min .opai-sb .opai-st{padding:6px;align-self:center}\
-.opai-scrim{position:fixed;inset:0;z-index:54;background:rgba(8,9,24,.55);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s}\
+.opai-scrim{position:fixed;inset:0;z-index:54;background:rgba(16,18,14,.55);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s}\
 .opai-menu{display:none;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;border:0;background:#121211;color:#fff;cursor:pointer;flex:none;padding:0}\
 .opai-mbar{display:none}\
 body.opai-side .opai-timer{left:calc(var(--opai-sw) + 14px)}\
@@ -90,8 +90,8 @@ body.opai-side:not(:has(#ktools)){padding-bottom:0}\
  html.opai-min .opai-sb .l,html.opai-min .opai-sb .sb-gh{display:revert}\
  html.opai-min .opai-sb .sb-search kbd{display:none}\
  .opai-menu{display:inline-flex}\
- .opai-mbar{position:fixed;top:0;left:0;right:0;height:var(--opai-mb);z-index:50;display:flex;align-items:center;gap:10px;padding:0 12px;padding-top:env(safe-area-inset-top,0px);background:rgba(245,246,251,.92);backdrop-filter:blur(10px);border-bottom:1px solid #DEDEDA;font:700 15px/20px "Plus Jakarta Sans",system-ui,sans-serif;color:#151514}\
- html[data-theme=dark] .opai-mbar{background:rgba(11,13,26,.92);border-bottom-color:#2A2A28;color:#F1F1EE}\
+ .opai-mbar{position:fixed;top:0;left:0;right:0;height:var(--opai-mb);z-index:50;display:flex;align-items:center;gap:10px;padding:0 12px;padding-top:env(safe-area-inset-top,0px);background:rgba(248,249,247,.92);backdrop-filter:blur(10px);border-bottom:1px solid #DEDEDA;font:700 15px/20px "Plus Jakarta Sans",system-ui,sans-serif;color:#151514}\
+ html[data-theme=dark] .opai-mbar{background:rgba(19,20,17,.92);border-bottom-color:#2A2A28;color:#F1F1EE}\
  html[data-theme=dark] .opai-menu{background:#2A2A28}\
  body.opai-chat .opai-mbar{display:none}\
  body.opai-side .opai-timer{left:12px}\
@@ -124,8 +124,7 @@ body.opai-side:not(:has(#ktools)){padding-bottom:0}\
   function curTitle(){var t='OPAI';NAV.forEach(function(g){g.items.forEach(function(n){if(isCur(n[1]))t=n[0]})});if(path==='profile.html')t='Profile';return t}
   function header(){
     if(!document.getElementById('opai-sb-css')){var st=document.createElement('style');st.id='opai-sb-css';st.textContent=MB_VAR+CSS;document.head.appendChild(st)}
-    if(!document.getElementById('opai-redesign')){var lk=document.createElement('link');lk.id='opai-redesign';lk.rel='stylesheet';lk.href='opai-redesign.css?v=2';document.head.appendChild(lk);
-      var fl=document.createElement('link');fl.rel='stylesheet';fl.href='https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400..800&display=swap';document.head.appendChild(fl)}
+    if(!document.getElementById('opai-redesign')){var lk=document.createElement('link');lk.id='opai-redesign';lk.rel='stylesheet';lk.href='opai-redesign.css?v=3';document.head.appendChild(lk);}
     try{if(localStorage.getItem('opai_sb_min')==='1')document.documentElement.classList.add('opai-min')}catch(e){}
     /* the old per-page top nav (a body-level <header>, never the chat tool row) is removed */
     var old=document.querySelector('body > header:not(#ktools), body > .app > header');

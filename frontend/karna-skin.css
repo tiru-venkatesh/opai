@@ -3,17 +3,17 @@
 #view:has(.jv) .head p{display:none}
 #view:has(.jv) .head{margin-bottom:6px}
 #view:has(.jv) .rtabs{margin-bottom:10px;align-self:center}
-.jv{--kb:linear-gradient(90deg,#BED6D9 0%,#84B5C5 22%,#72AABC 40%,#5A9BB1 60%,#7CB0C2 76%,#9DC4D1 100%);
+.jv{--kb:linear-gradient(90deg,#cccec9 0%,#a6b792 22%,#98ac82 40%,#879e6d 60%,#a0b28c 76%,#b8c5a9 100%);
 flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch}
 .jv-ctx{display:none}
 .jv-main{height:auto;min-height:0;padding:0;border:0;border-radius:14px;background:#0D0B0B;color:#ECF2F0;overflow:hidden}
 .jv-top{border:0;padding:12px 18px;gap:11px;background:transparent;color:#fff}
 .jv-top b{color:#fff}.jv-top span{color:#93A6A7}
-.orb{background:linear-gradient(105deg,#BED6D9 0%,#84B5C5 40%,#72AABC 62%,#8FBCCB 100%)!important;box-shadow:0 0 12px rgba(132,181,197,.55)}
+.orb{background:linear-gradient(105deg,#cccec9 0%,#a6b792 40%,#98ac82 62%,#aebd9d 100%)!important;box-shadow:0 0 12px rgba(166,183,146,.55)}
 .jv-main .scope-seg{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1)}
-.jv-main .scope-seg button{color:#B2C5C2}
+.jv-main .scope-seg button{color:#bcbeb9}
 .jv-main .scope-seg button.on{background:#fff;color:#0D0B0B}
-.jv-main .scope-add{color:#B2C5C2}
+.jv-main .scope-add{color:#bcbeb9}
 .kw-reconnect{color:#93A6A7}
 /* messages: centered 760px column, full-width scroll */
 .msgs{flex:1;background:transparent;border-radius:0;color:#ECF2F0;gap:22px;
@@ -21,20 +21,20 @@ padding:24px max(16px,calc((100% - 760px)/2)) 12px}
 .msgs .welcome{margin:auto;max-width:640px}
 .msgs .welcome h2{font-family:inherit;font-weight:400;font-size:clamp(1.7rem,3.4vw,2.6rem);letter-spacing:-.02em;color:#fff}
 .msgs .welcome p{color:#93A6A7}
-.prompts button{background:transparent!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:999px;color:#D8E2E0!important}
-.prompts button:hover{background:rgba(255,255,255,.06)!important;border-color:#84B5C5!important}
+.prompts button{background:transparent!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:999px;color:#dddedc!important}
+.prompts button:hover{background:rgba(255,255,255,.06)!important;border-color:#a6b792!important}
 /* AI = plain text, you = soft pill (Claude style) */
 .m .bubble{background:transparent;color:#ECF2F0;padding:0;border:0;max-width:100%;font-size:15.5px;line-height:1.65}
 .m.you{justify-content:flex-end}
 .m.you .bubble{background:#271F1F!important;color:#ECF2F0!important;padding:10px 16px;border-radius:18px;max-width:min(82%,620px)}
-.typing i{background:#84B5C5}
+.typing i{background:#a6b792}
 /* composer: centered floating card with blue underglow */
 .jv-main .composer{position:relative;isolation:isolate;width:min(760px,calc(100% - 32px));margin:6px auto 22px;padding:12px 14px;border:1px solid rgba(255,255,255,.065);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,0) 42%),#130F0F;box-shadow:0 2px 40px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04)}
 .jv-main .composer::before{content:"";position:absolute;z-index:-1;left:0;right:0;top:0;bottom:-4px;border-radius:inherit;background:var(--kb);opacity:.95}
 .jv-main .cbox{border:0;background:none;padding:0;box-shadow:none;align-items:flex-end}
 .jv-main .cbox:focus-within{border:0;box-shadow:none}
 .jv-main .cbox textarea{background:none;color:#fff;font-size:15.5px;padding:8px 4px}
-.jv-main .cbox textarea::placeholder{color:#A3B7B5}
+.jv-main .cbox textarea::placeholder{color:#adafab}
 .jv-main .send{position:relative;isolation:isolate;width:42px;height:42px;border-radius:50%;background:transparent;color:#F9FBFA;box-shadow:none;overflow:visible}
 .jv-main .send::before{content:"";position:absolute;inset:0;z-index:-2;border-radius:50%;background:var(--kb);animation:kring 10s linear infinite}
 .jv-main .send::after{content:"";position:absolute;inset:1.4px;z-index:-1;border-radius:50%;background:#161212}
@@ -81,7 +81,7 @@ body.karna-full main{padding:0}
 body.karna-full #view:has(.jv){height:100dvh}
 body.karna-full #view .head,body.karna-full #view .rtabs{display:none}
 .jv-top{gap:10px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.06)}
-.kf-btn{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#E2EAE8;border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer;transition:background .18s}
+.kf-btn{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#e6e7e5;border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer;transition:background .18s}
 .kf-btn:hover{background:rgba(255,255,255,.1)}
 .kf-back{background:#fff;color:#0D0B0B;border-color:#fff;font-weight:600}
 .kf-back:hover{background:#EAF0EE}

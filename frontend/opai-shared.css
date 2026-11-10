@@ -1,11 +1,11 @@
 /* OPAI shared design layer v8 — warm paper, deep teal, coral signal. Loaded LAST on every page. */
 :root{
-  --paper:#F0F4F3;--card:#F7FAF9;--card-2:#EAEFEE;--well:#E2EAE8;--hair:#D5E1DE;--line-2:#BECFCC;
+  --paper:#F0F4F3;--card:#F7FAF9;--card-2:#ededec;--well:#e6e7e5;--hair:#dbdcda;--line-2:#c7c8c5;
   --ink:#1B1516;--ink-2:#504A4D;--ink-3:#70838A;
-  --teal:#1A404D;--teal-2:#245565;--teal-soft:#E4EBE9;--coral:#E09F62;--coral-ink:#DB7516;--coral-soft:#E8F0EE;
-  --ok:#30687B;--warn:#C7680F;--bad:#CE6C11;
+  --teal:#34392e;--teal-2:#455237;--teal-soft:#E4EBE9;--coral:#E09F62;--coral-ink:#DB7516;--coral-soft:#ecedeb;
+  --ok:#576744;--warn:#C7680F;--bad:#CE6C11;
   --sans:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
-  --shadow:0 1px 0 #fff inset,0 10px 30px -18px rgba(26,64,77,.35);
+  --shadow:0 1px 0 #fff inset,0 10px 30px -18px rgba(52,57,46,.35);
 }
 html{background:var(--paper);color-scheme:light}
 body{background-color:var(--paper);color:var(--ink)}
@@ -27,7 +27,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .opai-k{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 12px;border-radius:10px;border:1px solid var(--hair);background:transparent;font:500 13px/18px var(--sans,system-ui);color:var(--ink-2,#504A4D);cursor:pointer}.opai-k kbd{font:500 11px/16px var(--sans,system-ui);color:var(--ink-3,#70838A);border:1px solid var(--hair);border-radius:5px;padding:0 5px;background:var(--well)}
 .opai-k:hover{color:var(--ink);border-color:var(--ink-3,#70838A)}
 .opai-st{display:flex;align-items:center;gap:7px;padding:4px 6px;font:500 13px/18px var(--sans,system-ui);color:var(--ink-2,#504A4D);white-space:nowrap}
-.opai-st i{width:8px;height:8px;border-radius:50%;background:var(--ok,#31697B);flex:none}.opai-st.off{color:var(--coral-ink,#CE6C11)}.opai-st.off i{background:var(--coral,#E09F62)}
+.opai-st i{width:8px;height:8px;border-radius:50%;background:var(--ok,#576745);flex:none}.opai-st.off{color:var(--coral-ink,#CE6C11)}.opai-st.off i{background:var(--coral,#E09F62)}
 .opai-user{display:flex;align-items:center;gap:9px;padding:5px 14px 5px 5px;border-radius:999px;border:1px solid var(--hair);background:var(--card);text-decoration:none;color:var(--ink)}
 .opai-user .av{width:32px;height:32px;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;font:600 13px var(--sans)}
 .opai-user b{display:block;font:600 13px/16px var(--sans,system-ui)}.opai-user small{display:block;font:12px/14px var(--sans,system-ui);color:var(--ink-3);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

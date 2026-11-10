@@ -31,7 +31,7 @@
     el.appendChild(document.createElement('br'));
     el.appendChild(document.createTextNode(n.body));
     var row = document.createElement('div'); row.style.cssText = 'margin-top:8px;display:flex;gap:8px';
-    function btn(label, fn) { var x = document.createElement('button'); x.textContent = label; x.style.cssText = 'border:0;border-radius:10px;padding:6px 12px;background:#5A9CB2;color:#fff;font:inherit;cursor:pointer'; x.onclick = function () { fn(); el.remove(); }; row.appendChild(x); }
+    function btn(label, fn) { var x = document.createElement('button'); x.textContent = label; x.style.cssText = 'border:0;border-radius:10px;padding:6px 12px;background:#889e6e;color:#fff;font:inherit;cursor:pointer'; x.onclick = function () { fn(); el.remove(); }; row.appendChild(x); }
     if (n.link) btn('Open', function () { location.href = n.link; });
     if (n.data && n.data.reminder_id) {
       btn('Done', function () { api('/v1/reminders/' + n.data.reminder_id + '/done', { method: 'POST', body: JSON.stringify({ user_id: uid }) }); });
