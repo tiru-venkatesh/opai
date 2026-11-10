@@ -65,6 +65,10 @@ body.opai-chat .msg.user .meta{border-bottom-color:rgba(255,255,255,.22)}
 body.opai-chat .msg.user .meta,body.opai-chat .msg.user .meta *{opacity:.85}
 body.opai-chat .msg.sys .body{background:var(--well);border:0;box-shadow:none;color:var(--ink-2)}
 body.opai-chat .msg.err .body{background:#FFF1F2;border-color:#FDA4AF}
+html[data-theme=dark] body.opai-chat .msg.err .body{background:rgba(220,60,74,.10);border-color:rgba(220,60,74,.38)}
+html[data-theme=dark] body.opai-chat .msg.err .bubble{color:#F3B8BD}
+html[data-theme=dark] body.opai-chat .msg.err .av{background:#8A2A33;color:#fff}
+body.opai-chat .msg.err .meta,body.opai-chat .msg.err .acts{border-top-color:transparent;border-bottom-color:transparent}
 body.opai-chat .av{box-shadow:0 0 0 3px var(--card),0 8px 20px -8px rgba(155,174,126,.5)}
 body.opai-chat .av-k{border:0;border-radius:12px;background:var(--card)}
 body.opai-chat .av-k img{border-radius:12px}
