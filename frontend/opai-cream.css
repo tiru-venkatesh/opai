@@ -1,0 +1,147 @@
+/* OPAI "Cream" skin — matches the new landing / login / signup pages.
+ * Loaded LAST on every app page (and re-appended by opai-shell.js after opai-redesign.css).
+ * Overrides colour tokens + shell + shared components; no page markup changes.
+ * Roll back: remove the <link href="opai-cream.css"> lines (and the one line in opai-shell.js).
+ *
+ * Canvas #FBF9F5 · parchment #F5F2EB · panel #ECE7DD · ink #1B1917
+ * Type: Newsreader (headings) · Plus Jakarta Sans (UI) · Space Grotesk (labels/numbers)
+ */
+
+/* ---------- tokens: every naming scheme used across the app pages ---------- */
+html:root:root:root{
+  --canvas:#FBF9F5;--parch:#F5F2EB;--panel:#ECE7DD;
+  --bg:#FBF9F5;--paper:#FBF9F5;--card:#FFFEFB;--card-2:#F5F2EB;--well:#F5F2EB;--hair:#E7E1D4;--line:#E7E1D4;--line-2:#DCD4C3;--line2:#DCD4C3;
+  --s1:#FFFEFB;--s2:#F5F2EB;--s3:#E7E1D4;--surface:#FFFEFB;--surface-2:#F5F2EB;--surface-3:#E7E1D4;--tint:#F5F2EB;--tint3:#FFFEFB;
+  --ink:#1B1917;--tx:#1B1917;--text:#1B1917;
+  --ink-2:#44403C;--ink2:#44403C;--mut:#57534E;--muted:#57534E;
+  --ink-3:#78716C;--ink3:#78716C;--dim:#78716C;--mute:#78716C;
+  --pri:#1B1917;--pri2:#2B2723;--pri3:#44403C;--primary:#1B1917;--teal:#1B1917;--teal-2:#2B2723;--teal-soft:#F0EBE0;--ac:#1B1917;--accent:#1B1917;--accent-d:#2B2723;--accent-soft:#F0EBE0;--on-accent:#FBF9F5;
+  --coral:#E09F62;--coral-ink:#9A5B14;--coral-soft:#FFF0DC;
+  --ok:#047857;--good:#047857;--good-soft:#E3F1EA;--warn:#B45309;--warn-soft:#FFF0DC;--bad:#B42318;--bad-soft:#FDECEA;--err:#B42318;--errbg:#FDECEA;
+  --pri-soft:#F0EBE0;
+  --font:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --sans:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --body:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --head:'Newsreader',Georgia,'Times New Roman',serif;--display:'Newsreader',Georgia,'Times New Roman',serif;--serif:'Newsreader',Georgia,'Times New Roman',serif;
+  --mono:'Space Grotesk',ui-monospace,'SF Mono',Menlo,monospace;
+  --shadow:0 4px 24px -2px rgba(27,25,23,.04),0 1px 2px rgba(27,25,23,.03);
+  --shadow-1:0 1px 2px rgba(27,25,23,.04);--shadow-2:0 20px 48px -12px rgba(27,25,23,.10);
+  color-scheme:light;
+}
+/* dark mode keeps the same warmth: charcoal-brown paper, cream ink */
+html[data-theme=dark]:root:root:root{
+  --canvas:#171513;--parch:#1F1C19;--panel:#292521;
+  --bg:#171513;--paper:#171513;--card:#1F1C19;--card-2:#262320;--well:#262320;--hair:#35302A;--line:#35302A;--line-2:#4A433A;--line2:#4A433A;
+  --s1:#1F1C19;--s2:#262320;--s3:#35302A;--surface:#1F1C19;--surface-2:#262320;--surface-3:#35302A;--tint:#262320;--tint3:#1F1C19;
+  --ink:#F5F2EB;--tx:#F5F2EB;--text:#F5F2EB;--ink-2:#D6D0C4;--ink2:#D6D0C4;--mut:#B5AEA1;--muted:#B5AEA1;
+  --ink-3:#8F887C;--ink3:#8F887C;--dim:#8F887C;--mute:#8F887C;
+  --pri:#F5F2EB;--pri2:#E7E1D4;--pri3:#D6D0C4;--primary:#F5F2EB;--teal:#F5F2EB;--teal-2:#E7E1D4;--teal-soft:#2E2A25;--ac:#F5F2EB;--accent:#F5F2EB;--accent-d:#E7E1D4;--accent-soft:#2E2A25;--on-accent:#171513;
+  --coral:#E8AE74;--coral-ink:#EBB985;--coral-soft:#33281C;
+  --ok:#4FBF94;--good:#4FBF94;--good-soft:#1B2B24;--warn:#E0A15A;--warn-soft:#33281C;--bad:#F0968D;--bad-soft:#3A1F1C;--err:#F0968D;--errbg:#3A1F1C;
+  --pri-soft:#2E2A25;
+  --shadow:0 0 0 1px #35302A;--shadow-1:0 0 0 1px #35302A;--shadow-2:0 24px 60px -24px rgba(0,0,0,.7);
+  color-scheme:dark;
+}
+
+/* ---------- canvas: flat cream, no shader / ambient glow / grid ---------- */
+html:root:root:root,html:root:root:root body{background:var(--bg)!important;background-image:none!important;color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased}
+canvas#opai-shader,#opai-shader,#o-amb,.scanline,.deco,#o-prog{display:none!important}
+::selection{background:#FFE6C2;color:var(--ink)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+input:focus,textarea:focus,select:focus{box-shadow:0 0 0 4px rgba(27,25,23,.08)}
+
+/* ---------- type: serif headings like the landing page ---------- */
+h1,h2,h3,.head h1,.panel-h h3,.sechd h2,.card h3{font-family:var(--serif)!important;font-weight:400!important;letter-spacing:-.02em;color:var(--ink)}
+h1{letter-spacing:-.03em;line-height:1.1}
+h1 em,h2 em{font-style:italic}
+h4,.sec,.eyebrow,.tg,.tag,.chip,.lbl,.cap,.state,.m,.idx,small{font-family:var(--mono)}
+html:root:root:root button,html:root:root:root .btn,html:root:root:root .pill,html:root:root:root .b,html:root:root:root .big,html:root:root:root .sb-search,html:root:root:root .opai-sb button{font-family:var(--font)}
+
+/* ---------- sidebar: cream, same as the landing nav ---------- */
+.opai-sb{background:var(--parch)!important;background-image:none!important;color:var(--ink)!important;border-right:1px solid var(--hair)!important;box-shadow:none!important}
+.opai-sb .sb-brand b{color:var(--ink)!important;font-family:var(--font)}
+.opai-sb .sb-brand small,.opai-sb .sb-gh,.opai-sb .opai-user small{color:var(--ink-3)!important}
+.opai-sb .sb-brand img{box-shadow:0 0 0 1px var(--hair)!important;border-radius:9px}
+.opai-sb .sb-col,.opai-sb .sb-tools button,.opai-sb .sb-search{background:var(--card)!important;border:1px solid var(--hair)!important;color:var(--ink-2)!important}
+.opai-sb .sb-col:hover,.opai-sb .sb-tools button:hover,.opai-sb .sb-search:hover{background:#fff!important;color:var(--ink)!important;border-color:var(--line-2)!important}
+.opai-sb .sb-search kbd{border-color:var(--line-2)!important;color:var(--ink-3)!important}
+.opai-sb nav a{color:var(--ink-2)!important}
+.opai-sb nav a:hover{background:rgba(27,25,23,.05)!important;color:var(--ink)!important}
+.opai-sb nav a[aria-current=page]{background:var(--ink)!important;color:var(--canvas)!important;box-shadow:0 8px 20px -10px rgba(27,25,23,.5)!important}
+.opai-sb a:focus-visible,.opai-sb button:focus-visible{outline-color:var(--ink)!important}
+html.opai-min .opai-sb nav{border-top-color:var(--hair)!important}
+.opai-sb .opai-st{background:#E3F1EA!important;color:#047857!important}
+.opai-sb .opai-st.off{background:#FDECEA!important;color:#B42318!important}
+.opai-sb .opai-user{background:var(--card)!important;border:1px solid var(--hair)!important;color:var(--ink)!important}
+.opai-sb .opai-user:hover{background:#fff!important}
+.opai-sb .opai-user b{color:var(--ink)!important}
+.opai-sb .opai-user .av{background:var(--ink)!important;color:var(--canvas)!important}
+.opai-menu{background:var(--ink)!important;color:var(--canvas)!important}
+.opai-mbar{background:rgba(251,249,245,.92)!important;border-bottom-color:var(--hair)!important;color:var(--ink)!important}
+.opai-scrim{background:rgba(27,25,23,.4)!important}
+html[data-theme=dark] .opai-sb{background:var(--parch)!important}
+html[data-theme=dark] .opai-mbar{background:rgba(23,21,19,.92)!important}
+html[data-theme=dark] .opai-sb nav a:hover{background:rgba(245,242,235,.07)!important}
+html[data-theme=dark] .opai-sb .opai-st{background:#1B2B24!important;color:#4FBF94!important}
+/* legacy top header, where a page still uses it */
+.opai-hd{background:rgba(251,249,245,.86)!important;border-bottom:1px solid var(--hair)!important}
+.opai-pills{background:var(--parch)!important;border-color:var(--hair)!important}
+.opai-pills a[aria-current=page]{background:var(--ink)!important;color:var(--canvas)!important;box-shadow:none!important}
+
+/* ---------- surfaces ---------- */
+.card,.panel,.tile,.row,.lc,.kpi,.stat,.course,.cc,.proj,.opp,.task,.addbox,.note,dialog,.modal>div{border-color:var(--hair)}
+.card,.panel,.tile,.kpi,.course,.cc,.proj,.opp{background:var(--card);box-shadow:var(--shadow)}
+.card,.panel,.tile{border-radius:20px}
+dialog{background:var(--card);color:var(--ink);box-shadow:0 30px 70px -30px rgba(27,25,23,.35)}
+.ex,.tag,.track,.meter{background:var(--well)}
+.track i,.meter>*,.bar>i,.prog>*{background:var(--ink)}
+.track i.d{background:var(--ok)}
+
+/* ---------- buttons: black primary, outlined secondary ---------- */
+.pill.teal,.big,.btn.p,.btn.primary,button.primary,.b.p,.b.pri,.chip.on,.chk-btn{background:var(--ink)!important;color:var(--canvas)!important;border-color:var(--ink)!important}
+.pill.teal:hover,.big:hover,.btn.p:hover,.btn.primary:hover,button.primary:hover{background:#2B2723!important}
+.pill.teal i{background:var(--coral)!important}
+.big.out,.pill.line{background:transparent!important;color:var(--ink)!important;border:1px solid var(--line-2)!important}
+.big.out:hover,.pill.line:hover{background:var(--card)!important;border-color:var(--ink)!important}
+.pill.coral{background:var(--coral-soft);color:var(--coral-ink)}
+.conf button:hover{background:var(--ink);color:var(--canvas)}
+html[data-theme=dark] .pill.teal,html[data-theme=dark] .big,html[data-theme=dark] .btn.p,html[data-theme=dark] .chip.on{background:var(--ink)!important;color:#171513!important;border-color:var(--ink)!important}
+
+/* ---------- floating Ask-KARNA button + focus timer ---------- */
+html:root:root #kp-fab{background:var(--ink)!important;color:var(--canvas)!important;box-shadow:0 14px 34px -14px rgba(27,25,23,.55)!important;font-family:var(--font)}
+html:root:root #kp-fab:hover{background:#2B2723!important}
+html:root:root #kp-fab i{background:var(--coral)!important}
+.opai-timer{background:var(--card)!important;border-color:var(--hair)!important}
+
+/* ---------- tables, inputs ---------- */
+input,select,textarea{background:#fff;color:var(--ink);border-color:var(--line-2)}
+html[data-theme=dark] input,html[data-theme=dark] select,html[data-theme=dark] textarea{background:var(--well)}
+input::placeholder,textarea::placeholder{color:var(--ink-3)}
+th{font-family:var(--mono);letter-spacing:.05em}
+tbody tr:hover,.blk:hover,.tp:hover,.repo:hover{background-color:rgba(27,25,23,.03)}
+
+/* ---------- KARNA chat page ---------- */
+body.opai-chat{--bg:var(--paper)}
+body.opai-chat #ktools{background:rgba(251,249,245,.86);border-bottom:1px solid var(--hair)}
+body.opai-chat .brand{font-family:var(--font);color:var(--ink)}
+body.opai-chat .brand em{background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--ink);font-family:var(--serif);font-style:italic;letter-spacing:0}
+body.opai-chat .hbtn:hover,body.opai-chat .hbtn[aria-expanded=true]{background:var(--parch);color:var(--ink)}
+body.opai-chat .hbtn b{background:var(--ink);color:var(--canvas)}
+body.opai-chat #ctxbar .tag{background:var(--parch);color:var(--ink-2)}
+body.opai-chat .msg.agent .body{background:var(--card);border:1px solid var(--hair);box-shadow:var(--shadow)}
+body.opai-chat .msg.agent .body::before{background:var(--ink)}
+body.opai-chat .msg.user .body{background:var(--ink);color:var(--canvas);box-shadow:0 14px 30px -18px rgba(27,25,23,.6)}
+body.opai-chat .msg.user .body *{color:var(--canvas)!important}
+body.opai-chat .msg.sys .body{background:var(--well);color:var(--ink-2)}
+body.opai-chat .msg.err .body{background:#FDECEA;border-color:#F4B6B0}
+html[data-theme=dark] body.opai-chat .msg.user .body,html[data-theme=dark] body.opai-chat .msg.user .body *{color:#171513!important}
+body.opai-chat .dot.ok{background:var(--ok);box-shadow:0 0 0 4px rgba(4,120,87,.14)}
+body.opai-chat .dot.wait{background:var(--warn)}
+
+/* briefs.html: opai-theme.css sets tokens behind :has(#tools); restate cream at equal specificity (loaded later) */
+html[data-theme=light]:root:has(#tools){--bg:#FBF9F5;--card:#FFFEFB;--line:#E7E1D4;--tx:#1B1917;--mut:#57534E}
+html[data-theme=dark]:root:has(#tools){--bg:#171513;--card:#1F1C19;--line:#35302A;--tx:#F5F2EB;--mut:#B5AEA1}
+
+/* highlighted word in headings, same marker-pen effect as the landing hero */
+html:root:root:root h1 em,html:root:root:root h2 em{color:var(--ink);-webkit-text-fill-color:var(--ink);font-style:italic;background:linear-gradient(transparent 70%,#FFCF94 70%,#FFCF94 92%,transparent 92%);-webkit-background-clip:border-box;background-clip:border-box}
+html[data-theme=dark]:root:root:root h1 em,html[data-theme=dark]:root:root:root h2 em{background:linear-gradient(transparent 70%,#6B4A24 70%,#6B4A24 92%,transparent 92%)}
