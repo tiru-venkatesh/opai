@@ -67,3 +67,10 @@
 - `opai-notion.js`: loads Geist + Material Symbols (same as landing); dock icons are Material Symbols with emoji fallback.
 - Cache-bust: `opai-cream.css?v=16`, `opai-notion.js?v=9`, `sw.js` opai-v82. Landing untouched.
 - Undo: delete the GLASS 2026 block (Aurora layer remains).
+
+## LANDING MATCH (Nov 27, 2026) — app uses the real landing look
+- From the landing hero: cream #FAF8F4 canvas with peach/lavender glow, near-black buttons (#1B1917), peach highlight (#FFCF99), Newsreader serif headlines, Inter body, Space Grotesk labels/buttons. Warm dark = #171513.
+- `opai-cream.css` end blocks "LANDING MATCH" + fixes override the earlier Aurora/Glass colours (violet is gone). Header is a floating rounded bar like the landing nav; dock and sheet use the same warm glass.
+- `opai-notion.js` font link now loads Inter, Newsreader, Space Grotesk, Material Symbols.
+- Cache-bust: `opai-cream.css?v=19`, `opai-notion.js?v=10`, `sw.js` opai-v83.
+- Undo to the glass-violet look: delete the "LANDING MATCH" block and the rules after it.

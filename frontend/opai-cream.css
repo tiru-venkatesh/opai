@@ -765,3 +765,95 @@ html:root:root:root .btn:not(.primary):not(.go){background:var(--glass)!importan
 body:not(.opai-chat) main,body:not(.opai-chat) .wrap,body:not(.opai-chat) #projwrap{padding-top:88px!important}
 @media(max-width:640px){.au-chip em{display:none}}
 @supports not (backdrop-filter:blur(1px)){.card,.panel,.proj,.opp,.pcol,.au-top,.au-dock{background:var(--card)!important}}
+
+/* =====================================================================
+   LANDING MATCH — warm cream + peach glow, near-black buttons, serif
+   headlines (Newsreader), Inter body, Space Grotesk labels. This is the
+   look of the real landing hero. Overrides the Glass/Aurora colours.
+   Undo: delete this block.
+   ===================================================================== */
+html:root:root:root{
+  --font:'Inter','Plus Jakarta Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;--sans:var(--font);--body:var(--font);
+  --head:'Newsreader',Georgia,'Times New Roman',serif;--display:var(--head);--serif:var(--head);--lab:'Space Grotesk',var(--font);
+  --bg:#FAF8F4;--paper:#FAF8F4;--canvas:#FAF8F4;--card:#FFFEFB;--card-2:#F4F1EA;--well:#F4F1EA;--parch:#F4F1EA;--panel:#EDE8DD;
+  --s1:#FFFEFB;--s2:#F4F1EA;--s3:rgba(40,30,15,.07);--surface:#FFFEFB;--surface-2:#F4F1EA;--surface-3:rgba(40,30,15,.07);--tint:#F4F1EA;--tint3:#FFFEFB;
+  --hair:rgba(40,30,15,.1);--line:rgba(40,30,15,.1);--line-2:rgba(40,30,15,.18);--line2:rgba(40,30,15,.18);
+  --ink:#1B1917;--tx:#1B1917;--text:#1B1917;--ink-2:#55504A;--ink2:#55504A;--mut:#55504A;--muted:#55504A;
+  --ink-3:#8A8378;--ink3:#8A8378;--dim:#8A8378;--mute:#8A8378;
+  --pri:#1B1917;--pri2:#000;--pri3:#1B1917;--primary:#1B1917;--teal:#C2692A;--teal-2:#A8571F;--teal-soft:#FFE9D2;--ac:#C2692A;--accent:#C2692A;--accent-d:#A8571F;--accent-soft:#FFE9D2;--on-accent:#fff;
+  --peach:#FFCF99;--lime:#FFCF99;--lime-ink:#3A2410;
+  --coral:#D9622B;--coral-ink:#D9622B;--coral-soft:#FFE6DA;
+  --ok:#1F8F6B;--good:#1F8F6B;--good-soft:#DDF1E8;--warn:#A86B00;--warn-soft:#FFF0CF;--bad:#C93B3B;--bad-soft:#FBE3E1;--err:#C93B3B;--errbg:#FBE3E1;
+  --glass:rgba(255,254,251,.72);--glass-2:rgba(255,254,251,.9);--glass-brd:rgba(40,30,15,.09);
+  --shadow:0 1px 0 rgba(255,255,255,.9) inset,0 8px 26px -12px rgba(80,55,20,.16);--shadow-1:var(--shadow);
+  --shadow-2:0 1px 0 rgba(255,255,255,.9) inset,0 20px 48px -16px rgba(80,55,20,.28);
+  --nt-hover:rgba(194,105,42,.09);--nt-hover-2:rgba(194,105,42,.05);--nt-side:#FAF8F4;
+}
+html[data-theme=dark]:root:root:root{
+  --bg:#171513;--paper:#171513;--canvas:#171513;--card:#1F1C19;--card-2:#262320;--well:#262320;--parch:#262320;--panel:#2E2A26;
+  --s1:#1F1C19;--s2:#262320;--s3:rgba(255,255,255,.07);--surface:#1F1C19;--surface-2:#262320;--surface-3:rgba(255,255,255,.07);--tint:#262320;--tint3:#1F1C19;
+  --hair:rgba(255,245,230,.1);--line:rgba(255,245,230,.1);--line-2:rgba(255,245,230,.18);--line2:rgba(255,245,230,.18);
+  --ink:#F5F2EB;--tx:#F5F2EB;--text:#F5F2EB;--ink-2:#CFC8BA;--ink2:#CFC8BA;--mut:#CFC8BA;--muted:#CFC8BA;
+  --ink-3:#9A9283;--ink3:#9A9283;--dim:#9A9283;--mute:#9A9283;
+  --pri:#F5F2EB;--pri2:#fff;--pri3:#F5F2EB;--primary:#F5F2EB;--teal:#FFB46E;--teal-2:#F0A35E;--teal-soft:#3A2A1B;--ac:#FFB46E;--accent:#FFB46E;--accent-d:#F0A35E;--accent-soft:#3A2A1B;--on-accent:#1B1917;
+  --peach:#FFCF99;--lime:#FFCF99;--lime-ink:#3A2410;
+  --coral:#FF8A5C;--coral-ink:#FF8A5C;--coral-soft:#3F241A;
+  --ok:#4CC49A;--good:#4CC49A;--good-soft:#173528;--warn:#FFC653;--warn-soft:#3A2E10;--bad:#FF7B7B;--bad-soft:#3F1C1C;--err:#FF7B7B;--errbg:#3F1C1C;
+  --glass:rgba(38,35,32,.66);--glass-2:rgba(38,35,32,.9);--glass-brd:rgba(255,245,230,.1);
+  --shadow:0 1px 0 rgba(255,255,255,.05) inset,0 14px 36px -16px rgba(0,0,0,.75);--shadow-1:var(--shadow);
+  --shadow-2:0 1px 0 rgba(255,255,255,.07) inset,0 26px 60px -18px rgba(0,0,0,.85);
+  --nt-hover:rgba(255,180,110,.12);--nt-hover-2:rgba(255,180,110,.07);--nt-side:#171513;
+}
+html:root:root:root,html:root:root:root body{font-family:var(--font);
+  background-image:radial-gradient(48vw 56vh at -4% 20%,rgba(255,214,168,.62),transparent 64%),radial-gradient(42vw 50vh at 104% 36%,rgba(226,232,250,.65),transparent 64%),radial-gradient(40vw 34vh at 56% 108%,rgba(244,230,255,.55),transparent 62%)!important}
+html[data-theme=dark]:root:root:root body{background-image:radial-gradient(48vw 56vh at -4% 20%,rgba(255,170,100,.16),transparent 64%),radial-gradient(42vw 50vh at 104% 36%,rgba(120,140,255,.10),transparent 64%),radial-gradient(40vw 34vh at 56% 108%,rgba(200,150,255,.08),transparent 62%)!important}
+::selection{background:var(--peach);color:#3A2410}
+
+/* serif headlines like the landing */
+h1{font:400 clamp(40px,6.2vw,76px)/.98 var(--head)!important;letter-spacing:-.04em!important}
+h1 em,h1 i{font-style:italic}
+h1::after{width:84px!important;height:7px!important;border-radius:2px!important;background:var(--peach)!important;margin-top:16px!important}
+h2,h3,.pcol-h+*{font-family:var(--head)!important;font-weight:500;letter-spacing:-.025em}
+h2{font-size:clamp(26px,3vw,36px)}
+.sec,.eyebrow,.hl-head,.td-head{font:500 11.5px/1 var(--lab)!important;letter-spacing:.1em!important;text-transform:uppercase;color:var(--ink-2)!important}
+.btn,button,.chip,.pill,.tag,.htag,.tg,.hseg button,.tabs button,.tabs a,.opai-timer,#kp-fab,.au-dock a .t{font-family:var(--lab)}
+.pill,.chip{font-weight:500}
+
+/* near-black buttons, soft outlined secondary (like the hero) */
+button.primary,.btn.primary,a.primary,.primary,.go,html:root:root:root button.primary{background:var(--ink)!important;color:var(--bg)!important;border:1px solid var(--ink)!important;border-radius:10px!important;box-shadow:none!important;font-weight:600!important;letter-spacing:.01em}
+.primary:hover,.go:hover{background:color-mix(in srgb,var(--ink) 86%,var(--peach))!important;transform:translateY(-1px);box-shadow:0 10px 22px -10px rgba(40,25,10,.45)!important}
+html:root:root:root .btn,html:root:root:root .b,html:root:root:root .big,html:root:root:root .conf button,html:root:root:root .pl-tools a{border-radius:10px!important}
+html:root:root:root .btn:not(.primary):not(.go){background:var(--card-2)!important;border:1px solid var(--line-2)!important;box-shadow:none!important;color:var(--ink)!important}
+html:root:root:root .btn:not(.primary):not(.go):hover{background:var(--panel)!important;border-color:var(--ink-3)!important}
+.hseg button[aria-pressed=true],.hseg button.on,.tabs .on,.tabs [aria-selected=true],.seg .on{background:var(--ink)!important;color:var(--bg)!important;box-shadow:none!important}
+.hseg,.tabs,.seg{background:var(--card-2)!important;border:1px solid var(--line)!important}
+.track>*,.bar>i{background:linear-gradient(90deg,#F0A35E,var(--peach))!important}
+#kp-fab{background:var(--ink)!important;color:var(--bg)!important;box-shadow:var(--shadow-2)!important}
+input:focus,select:focus,textarea:focus{border-color:var(--ink)!important;box-shadow:0 0 0 4px color-mix(in srgb,var(--peach) 55%,transparent)!important}
+a:focus-visible,button:focus-visible{outline-color:var(--ink)!important}
+
+/* surfaces: warm cards with hairline borders */
+.card,.panel,.tile,.cc,.course,.proj,.kpi,.stat,.addbox,.opp,.hk,.pcol,.note,.callout{background:var(--glass)!important;border:1px solid var(--glass-brd)!important;border-radius:20px!important;box-shadow:var(--shadow)!important}
+.pcol{background:var(--card-2)!important;opacity:1}
+.pcol .proj,.pcol .pl-it{background:var(--card)!important;border-radius:14px!important}
+.proj:hover,.opp:hover,.card:hover,.hk:hover{box-shadow:var(--shadow-2)!important;border-color:var(--line-2)!important}
+.pcol[data-s=in-progress] .pcol-h i{background:#F0A35E!important}
+
+/* header = floating rounded bar like the landing nav; dock in the same warm glass */
+.au-top{left:50%!important;right:auto!important;top:12px!important;transform:translateX(-50%);width:min(1100px,calc(100vw - 24px));height:56px!important;padding:0 10px 0 14px!important;border-radius:999px;border:1px solid var(--line-2)!important;background:var(--glass-2)!important;box-shadow:var(--shadow)!important}
+.au-chip{letter-spacing:.16em;font:700 15px/1 var(--lab)!important}
+.au-chip img{width:30px!important;height:30px!important;border-radius:9px!important}
+.au-chip em{font:500 12px/1 var(--lab);background:var(--card-2);border:1px solid var(--line);color:var(--ink-2);letter-spacing:.04em}
+.au-tools .av{background:var(--ink)!important;color:var(--bg)!important}
+body:not(.opai-chat) main,body:not(.opai-chat) .wrap,body:not(.opai-chat) #projwrap{padding-top:92px!important}
+.au-dock{background:var(--glass-2)!important;border:1px solid var(--line-2)!important}
+.au-dock a[aria-current=page],.au-sheet .g a[aria-current=page]{background:var(--ink)!important;color:var(--bg)!important;box-shadow:none!important}
+.au-sheet h4{color:var(--ink-2);font-family:var(--lab);letter-spacing:.1em}
+.au-sheet .in,.au-sheet .g a{background:var(--card)!important}
+.au-sheet .g a{border:1px solid var(--line)!important}
+html:root:root:root h1,html:root:root:root main h1,html:root:root:root .wrap h1{font:400 clamp(40px,6.2vw,76px)/.98 var(--head)!important;letter-spacing:-.04em!important;color:var(--ink)!important}
+html:root:root:root h2,html:root:root:root h3{font-family:var(--head)!important;font-weight:500!important;letter-spacing:-.025em!important}
+html:root:root:root .sechd h2,html:root:root:root h2.t,html:root:root:root section h2{font:500 clamp(26px,3.2vw,36px)/1.1 var(--head)!important;letter-spacing:-.025em!important}
+html:root:root:root button.teal,html:root:root:root a.teal,html:root:root:root .pill.teal,html:root:root:root .btn.teal,html:root:root:root button.coral,html:root:root:root .btn.coral{background:var(--ink)!important;color:var(--bg)!important;border:1px solid var(--ink)!important;box-shadow:none!important}
+html:root:root:root button.teal:hover,html:root:root:root .pill.teal:hover{background:color-mix(in srgb,var(--ink) 86%,var(--peach))!important}
+.pill.teal i{background:var(--peach)!important}
