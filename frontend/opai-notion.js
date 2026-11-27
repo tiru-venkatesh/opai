@@ -64,9 +64,12 @@
 /* AURORA 2026: floating dock + top chip replace the sidebar and breadcrumb bar. Reads links from the existing sidebar, so NAV stays defined in opai-shell.js. */
 (function(){
   if(window.__auDone)return;window.__auDone=1;
-  var EM={'today.html':'☀️','super-chat.html':'💬','plan.html':'📅','opportunities.html':'💼','projects.html?view=hackathons':'⚡','projects.html?view=programs':'🎓','projects.html?view=projects':'📁','resume-lab.html':'📄','academics.html':'📚','review.html':'📊','feedback.html':'📝','landing.html':'🏠','profile.html':'👤'};
+  var EM={'today.html':'☀️','super-chat.html':'💬','plan.html':'📅','opportunities.html':'💼','projects.html?view=hackathons':'⚡','projects.html?view=programs':'🎓','projects.html?view=projects':'📁','resume-lab.html':'📄','academics.html':'📚','review.html':'📊','feedback.html':'📝','landing.html':'🏠','profile.html':'👤','more':'▦','search':'🔍','#logout':'🚪'};
   var MAIN=['today.html','super-chat.html','plan.html','opportunities.html','projects.html?view=projects'];
   var LBL={'projects.html?view=projects':'Projects'};
+  (function(){if(document.getElementById('au-fonts'))return;var l=document.createElement('link');l.id='au-fonts';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght@400&display=swap';document.head.appendChild(l)})();
+  var MS={'today.html':'wb_sunny','super-chat.html':'auto_awesome','plan.html':'calendar_month','opportunities.html':'work','projects.html?view=projects':'folder','projects.html?view=hackathons':'bolt','projects.html?view=programs':'school','resume-lab.html':'description','academics.html':'menu_book','review.html':'monitoring','feedback.html':'rate_review','landing.html':'home','#logout':'logout','more':'apps','search':'search'};
+  function ic(k){return "<span class='ic' data-e='"+(EM[k]||'•')+"'><i class='ms'>"+(MS[k]||'circle')+"</i></span>"}
   function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e}
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
   function run(){
@@ -79,22 +82,24 @@
       var it={k:k,name:name,cur:n.getAttribute('aria-current')==='page',n:n};links[k]=it;G('Menu').a.push(it)});
     var dock=el('nav','au-dock');dock.setAttribute('aria-label','Main navigation');
     MAIN.forEach(function(k){var it=links[k];if(!it)return;
-      var a=el('a','',"<span class='ic'>"+(EM[k]||'•')+"</span><span class='t'>"+esc(LBL[k]||it.name)+'</span>');a.href=k;a.title=it.name;if(it.cur)a.setAttribute('aria-current','page');dock.appendChild(a)});
+      var a=el('a','',ic(k)+"<span class='t'>"+esc(LBL[k]||it.name)+'</span>');a.href=k;a.title=it.name;if(it.cur)a.setAttribute('aria-current','page');dock.appendChild(a)});
     dock.appendChild(el('span','sep'));
-    var more=el('button','au-more',"<span class='ic'>▦</span>");more.type='button';more.title='All sections';more.setAttribute('aria-label','All sections');dock.appendChild(more);
-    var srch=el('button','',"<span class='ic'>⌕</span>");srch.type='button';srch.title='Search (Ctrl K)';srch.setAttribute('aria-label','Search');srch.onclick=function(){var k=document.getElementById('opai-k');if(k)k.click()};dock.appendChild(srch);
+    var more=el('button','au-more',ic('more'));more.type='button';more.title='All sections';more.setAttribute('aria-label','All sections');dock.appendChild(more);
+    var srch=el('button','',ic('search'));srch.type='button';srch.title='Search (Ctrl K)';srch.setAttribute('aria-label','Search');srch.onclick=function(){var k=document.getElementById('opai-k');if(k)k.click()};dock.appendChild(srch);
     var sheet=el('div','au-sheet'),inn=el('div','in');
     groups.forEach(function(gr){if(!gr.a.length)return;inn.appendChild(el('h4','',esc(gr.t==='Workspace'?'Work':gr.t)));var grid=el('div','g');
-      gr.a.forEach(function(it){var a;if(it.k==='#logout'){a=el('a','',"<span>🚪</span>Log out");a.href='#';a.onclick=function(e){e.preventDefault();it.n.click()}}
-        else{a=el('a','',"<span>"+(EM[it.k]||'•')+"</span>"+esc(it.name));a.href=it.k;if(it.cur)a.setAttribute('aria-current','page')}grid.appendChild(a)});inn.appendChild(grid)});
+      gr.a.forEach(function(it){var a;if(it.k==='#logout'){a=el('a','',ic('#logout')+'Log out');a.href='#';a.onclick=function(e){e.preventDefault();it.n.click()}}
+        else{a=el('a','',ic(it.k)+esc(it.name));a.href=it.k;if(it.cur)a.setAttribute('aria-current','page')}grid.appendChild(a)});inn.appendChild(grid)});
     sheet.appendChild(inn);
     function open(v){sheet.classList.toggle('open',v)}
     more.onclick=function(){open(!sheet.classList.contains('open'))};sheet.onclick=function(e){if(e.target===sheet)open(false)};
     addEventListener('keydown',function(e){if(e.key==='Escape')open(false)});
     document.body.appendChild(sheet);document.body.appendChild(dock);
+    try{document.fonts.load('22px "Material Symbols Outlined"').then(function(f){if(f&&f.length)return;fb()},fb)}catch(e){fb()}
+    function fb(){[].forEach.call(document.querySelectorAll('.au-dock .ic,.au-sheet .ic'),function(x){x.textContent=x.dataset.e})}
     if(document.body.classList.contains('opai-chat'))return;
     var cur=Object.keys(links).filter(function(k){return links[k].cur})[0],title=(cur&&links[cur].name)||document.title.replace(/\s*[·|—-]\s*OPAI.*$/,'')||'OPAI';
-    var top=el('div','au-top'),chip=el('a','au-chip','<img src="assets/opai-logo-96.png?v=3d" alt=""><span>'+esc(title)+'</span>');chip.href='today.html';
+    var top=el('div','au-top'),chip=el('a','au-chip','<img src="assets/opai-logo-96.png?v=3d" alt=""><span>OPAI<em>'+esc(title)+'</em></span>');chip.href='today.html';
     var tools=el('div','au-tools'),th=document.querySelector('.opai-theme');if(th){th.classList.remove('float');tools.appendChild(th)}
     var av=sb.querySelector('a.opai-user');if(av){var pa=el('a','av',(document.getElementById('opai-av')||{}).textContent||'·');pa.href='profile.html';pa.title='Profile';tools.appendChild(pa)}
     top.appendChild(chip);top.appendChild(tools);document.body.appendChild(top);

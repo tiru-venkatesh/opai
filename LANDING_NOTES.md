@@ -60,3 +60,10 @@
 - Navigation: left sidebar, breadcrumb bar and page cover/icon are hidden. `frontend/opai-notion.js` last block builds a floating dock (Today, KARNA, Plan, Internship, Projects, All sections sheet, Search), a top-left page chip and top-right theme/profile tools. It reads links from the existing sidebar, so NAV stays in `opai-shell.js`. On KARNA chat the dock shrinks to one corner button.
 - Landing page, login, signup untouched. Cache-bust: `opai-cream.css?v=15`, `opai-notion.js?v=7`, `sw.js` opai-v81.
 - Undo: delete both AURORA CSS blocks and the last block in opai-notion.js.
+
+## GLASS 2026 (Nov 27, 2026) — app matched to landing.html
+- Tokens copied from landing's Tailwind theme: surface #F9F9FF, primary #6B34D6 → #8452F0 gradient, indigo glow shadows, lime #CAF165, on-surface #141B2B. Dark = deep indigo #0B0D1A.
+- `opai-cream.css` end block "GLASS 2026": frosted cards/columns/inputs (backdrop blur 20px), gradient pill buttons and active tabs, Geist type, full-width frosted header (logo + OPAI + page chip) like landing, glass dock.
+- `opai-notion.js`: loads Geist + Material Symbols (same as landing); dock icons are Material Symbols with emoji fallback.
+- Cache-bust: `opai-cream.css?v=16`, `opai-notion.js?v=9`, `sw.js` opai-v82. Landing untouched.
+- Undo: delete the GLASS 2026 block (Aurora layer remains).
