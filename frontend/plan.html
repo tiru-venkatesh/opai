@@ -9,11 +9,11 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
-<style>*{box-sizing:border-box}html,body{margin:0}.pl-tools a{text-decoration:none!important}.pl-tools{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}.pl-day{font:600 14px/20px var(--font)}.pl-it{display:block;text-decoration:none;color:inherit}.pl-it b{display:block;font:600 14px/1.35 var(--font);overflow-wrap:anywhere}.pl-it span{font:400 12px/18px var(--font);color:var(--ink-3)}.pl-done b{text-decoration:line-through;opacity:.55}.pl-sum{display:flex;gap:18px;flex-wrap:wrap;color:var(--ink-2);font-size:14px;margin:4px 0 12px}.pl-err{color:var(--bad)}.pl-it[draggable=true]{cursor:grab}.pl-it a{text-decoration:none;color:inherit}html:root:root:root .pcol .pl-it{display:block!important}.pl-mv{display:block;margin-top:6px;font:400 12px var(--font);padding:2px 6px!important;width:auto!important;opacity:.75}.pcol.pl-drop{outline:2px dashed #2383E2;outline-offset:-2px}</style>
+<style>*{box-sizing:border-box}html,body{margin:0}.pl-tools a{text-decoration:none!important}.pl-tools{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}.pl-day{font:600 14px/20px var(--font)}.pl-it{display:block;text-decoration:none;color:inherit}.pl-it b{display:block;font:600 14px/1.35 var(--font);overflow-wrap:anywhere}.pl-it span{font:400 12px/18px var(--font);color:var(--ink-3)}.pl-done b{text-decoration:line-through;opacity:.55}.pl-sum{display:flex;gap:18px;flex-wrap:wrap;color:var(--ink-2);font-size:14px;margin:4px 0 12px}.pl-err{color:var(--bad)}.pl-it[draggable=true]{cursor:grab}.pl-it a{text-decoration:none;color:inherit}html:root:root:root .pcol .pl-it{display:block!important}.pl-mv{display:block;margin-top:6px;font:400 12px var(--font);padding:2px 6px!important;width:auto!important;opacity:.75}.pcol.pl-drop{outline:2px dashed var(--accent);outline-offset:-2px}</style>
 <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)&&location.protocol!=='file:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 <link rel="stylesheet" href="opai-mobile.css">
 
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="opai-cream.css?v=11" id="opai-cream"></head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="opai-cream.css?v=15" id="opai-cream"></head>
 <body>
 <main id="main">
   <h1>Plan</h1>
@@ -74,7 +74,7 @@ function render(p){
   function col(title,a,dot,extra){return '<div class="pcol" '+(extra||'')+'><div class="pcol-h"><i'+(dot?' style="background:'+dot+'"':'')+'></i><b class="pl-day">'+title+'</b><span>'+a.length+'</span></div>'+(a.map(card).join('')||'<div class="pcol-e">Nothing planned</div>')+'</div>'}
   var h='';
   if(cols.over.length)h+=col('Overdue',cols.over,'#E03E3E');
-  days.forEach(function(c,k){var t=k===0?'Today':k===1?'Tomorrow':c.d.toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'short'});h+=col(t,c.a,k===0?'#2383E2':'','data-off="'+k+'"')});
+  days.forEach(function(c,k){var t=k===0?'Today':k===1?'Tomorrow':c.d.toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'short'});h+=col(t,c.a,k===0?'var(--accent)':'','data-off="'+k+'"')});
   if(cols.later.length)h+=col('Later',cols.later,'');
   if(cols.none.length)h+=col('No deadline',cols.none,'');
   $('board').innerHTML='<div class="pboard" role="group" aria-label="Week plan">'+h+'</div>';

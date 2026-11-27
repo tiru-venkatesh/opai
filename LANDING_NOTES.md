@@ -49,3 +49,14 @@
 - `frontend/plan.html` only. Task cards can be dragged to a LATER day column, or moved with the "Move to…" menu (works on touch). It calls the existing `POST /v1/today/act` with `op: snooze, days: N` (1-14, forward only; shifts the task's due date). No backend change.
 - Only `kind=task` is movable. Study blocks, applications and academics stay fixed (their dates mean something else).
 - Not verified: auto-scroll of the board edge while dragging to far columns (Move to… covers those).
+
+## FINAL cream/Notion build (Nov 27, 2026)
+- Consolidated v8: Notion layer, Today Table/Gallery, Opportunities rows, Projects board, dark-mode pass, Plan week board + drag/"Move to…".
+- Cache-bust: `opai-cream.css?v=12`, `opai-notion.js?v=6`, `sw.js` cache `opai-v80`.
+- Deploy order: backend (`today_engine.py` with `week`) first, then frontend.
+
+## AURORA 2026 (Nov 27, 2026) — replaces the Notion look
+- `frontend/opai-cream.css` end blocks "AURORA 2026" + "Aurora fixes": new palette (Cloud Dancer canvas, Signal Violet accent #5B4BF5, Lime Pulse highlight; dark = Ink Night #0C0E13), aurora background, rounded 22px surfaces, pill buttons/tabs, gradient progress bars.
+- Navigation: left sidebar, breadcrumb bar and page cover/icon are hidden. `frontend/opai-notion.js` last block builds a floating dock (Today, KARNA, Plan, Internship, Projects, All sections sheet, Search), a top-left page chip and top-right theme/profile tools. It reads links from the existing sidebar, so NAV stays in `opai-shell.js`. On KARNA chat the dock shrinks to one corner button.
+- Landing page, login, signup untouched. Cache-bust: `opai-cream.css?v=15`, `opai-notion.js?v=7`, `sw.js` opai-v81.
+- Undo: delete both AURORA CSS blocks and the last block in opai-notion.js.
