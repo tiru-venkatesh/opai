@@ -42,3 +42,21 @@
   function heads(){[].forEach.call(document.querySelectorAll('.hlist'),function(l){var f=l.firstElementChild;if(f&&f.classList.contains('hl-head'))return;if(!l.querySelector('.hk'))return;var d=document.createElement('div');d.className='hl-head';d.innerHTML='<span>Date</span><span>Name</span><span>Tags</span><span></span>';l.insertBefore(d,l.firstChild)})}
   var hk=document.getElementById('hack');if(hk){heads();new MutationObserver(heads).observe(hk,{childList:true,subtree:true})}
 })();
+/* Today: Notion database view switcher (Table | Gallery). Layout only; render and click logic stay in today.html. */
+(function(){
+  function go(){
+    var list=document.getElementById('list');
+    if(!list||!document.getElementById('sprint')||document.querySelector('.td-bar'))return;
+    var K='opai_nt_today_view',v='table';try{v=localStorage.getItem(K)||'table'}catch(e){}
+    var bar=document.createElement('div');bar.className='td-bar';
+    bar.innerHTML='<div class="hseg td-views" role="group" aria-label="View"><button type="button" data-v="table">▤ Table</button><button type="button" data-v="gallery">▦ Gallery</button></div><div class="td-head"><span>Aa&nbsp; Task</span><span>Due · Category</span></div>';
+    list.parentNode.insertBefore(bar,list);
+    function set(x){
+      list.classList.toggle('nt-gallery',x==='gallery');bar.classList.toggle('gal',x==='gallery');
+      [].forEach.call(bar.querySelectorAll('button'),function(b){b.setAttribute('aria-pressed',String(b.dataset.v===x))});
+      try{localStorage.setItem(K,x)}catch(e){}}
+    bar.querySelector('.td-views').onclick=function(e){var b=e.target.closest('button');if(b)set(b.dataset.v)};
+    set(v);
+  }
+  if(document.readyState!=='loading')go();else document.addEventListener('DOMContentLoaded',go);
+})();

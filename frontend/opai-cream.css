@@ -457,3 +457,107 @@ html:root:root:root .hk{padding:8px 6px!important;align-items:start}
 .hl-head{display:grid;grid-template-columns:92px minmax(0,.9fr) minmax(0,1.6fr) 150px;gap:0 16px;padding:6px;border-bottom:1px solid var(--hair);font:500 12px/16px var(--font);color:var(--ink-3)}
 }
 @media(max-width:899px){.hl-head{display:none}}
+
+/* ---------- Today sprints as a Notion database: Table (default) | Gallery ---------- */
+.td-bar{margin-top:8px}
+.td-views{margin:0 0 4px!important}
+.td-head{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:0 16px;padding:6px;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);font:500 12px/16px var(--font);color:var(--ink-3)}
+.td-head span:last-child{text-align:right}
+.td-bar.gal .td-head{display:none}
+html:root:root:root #list{display:block!important;margin-top:0!important}
+html:root:root:root #list>.card{display:grid!important;grid-template-columns:minmax(0,1fr) 340px;column-gap:16px;row-gap:2px;align-items:center;border:0!important;border-bottom:1px solid var(--hair)!important;border-radius:0!important;background:transparent!important;padding:10px 6px!important;animation:none!important}
+html:root:root:root #list>.card:hover{background:var(--nt-hover-2)!important}
+html:root:root:root #list>.card>h3{grid-column:1;grid-row:1;margin:0!important;font:600 16px/1.4 var(--font)!important;display:flex;gap:8px;align-items:baseline}
+html:root:root:root #list>.card>h3::before{content:"";flex:none;width:14px;height:14px;border:1.5px solid var(--line-2);border-radius:50%;transform:translateY(2px)}
+html:root:root:root #list>.card>.tags{grid-column:2;grid-row:1;justify-content:flex-end}
+html:root:root:root #list>.card>.tags .idx{display:none}
+html:root:root:root #list>.card>.sub{grid-column:1;grid-row:2;font-size:13px!important;color:var(--ink-3)!important;padding-left:22px}
+html:root:root:root #list>.card>.chk{grid-column:2;grid-row:2;border:0!important;padding:0!important;justify-content:flex-end;text-align:right;font-size:12px!important}
+html:root:root:root #list>.card>.big{grid-column:1;grid-row:3;width:auto!important;justify-self:start;margin:6px 0 0 22px;padding:0 10px!important;min-height:28px;font-size:13px!important}
+html:root:root:root #list>.card>.mini{grid-column:2;grid-row:3;justify-content:flex-end;margin-top:6px}
+html:root:root:root #list>.card>.ex,html:root:root:root #list>.card>.conf{grid-column:1/-1;grid-row:auto}
+html:root:root:root #list>.card>.ex[hidden],html:root:root:root #list>.card>.conf[hidden]{display:none!important}
+html:root:root:root #list>.card[data-kind=outbox]>h3::before{border-color:#D9730D;background:#FAEBDD}
+html:root:root:root #list>.card>.note{grid-column:1/-1}
+/* Gallery view (and phones): one column per card */
+html:root:root:root #list.nt-gallery{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;border-top:0}
+html:root:root:root #list.nt-gallery>.card{border:1px solid var(--hair)!important;border-radius:6px!important;padding:14px 16px!important;align-content:start}
+html:root:root:root #list.nt-gallery>.card:hover{background:var(--nt-hover-2)!important}
+html:root:root:root #list.nt-gallery>.card>*{grid-column:1!important;grid-row:auto!important}
+html:root:root:root #list.nt-gallery>.card>.tags,html:root:root:root #list.nt-gallery>.card>.chk,html:root:root:root #list.nt-gallery>.card>.mini{justify-content:flex-start;text-align:left}
+html:root:root:root #list.nt-gallery>.card>.sub,html:root:root:root #list.nt-gallery>.card>.big{padding-left:0;margin-left:0}
+html:root:root:root #list.nt-gallery>.card>.tags{order:-1;margin-bottom:6px}
+@media(max-width:760px){
+ .td-head{display:none}
+ html:root:root:root #list:not(.nt-gallery)>.card{grid-template-columns:1fr}
+ html:root:root:root #list:not(.nt-gallery)>.card>*{grid-column:1!important;grid-row:auto!important}
+ html:root:root:root #list:not(.nt-gallery)>.card>.tags,html:root:root:root #list:not(.nt-gallery)>.card>.chk,html:root:root:root #list:not(.nt-gallery)>.card>.mini{justify-content:flex-start;text-align:left}
+ html:root:root:root #list>.card>.sub,html:root:root:root #list>.card>.big{margin-left:0;padding-left:0}
+}
+html:root:root:root #list.nt-gallery>.card{grid-template-columns:minmax(0,1fr)!important}
+html:root:root:root #list>.card>.ex h4{font:600 11px/16px var(--font)!important;color:var(--ink-3)!important;text-transform:none!important;letter-spacing:0!important}
+.nt-cover+main>.eyebrow{margin-bottom:54px}
+
+/* ---------- Opportunities / Your applications as a Notion database (table rows) ---------- */
+html:root:root:root .opp[data-card]{grid-template-columns:28px minmax(0,1fr) auto!important;gap:2px 12px!important;align-items:center!important;margin:0!important;padding:8px 6px!important;border:0!important;border-bottom:1px solid var(--hair)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;transform:none!important}
+html:root:root:root .opp[data-card]:hover{background:var(--nt-hover-2)!important}
+html:root:root:root .opp[data-card]:first-of-type{border-top:1px solid var(--hair)!important}
+html:root:root:root .opp h3{font:600 15px/1.4 var(--font)!important;margin:0!important}
+html:root:root:root .opp .linkbtn{font:inherit!important;color:var(--ink)!important;text-decoration:none!important;border-bottom:1px solid transparent}
+html:root:root:root .opp .linkbtn:hover{border-bottom-color:var(--line-2)}
+html:root:root:root .opp .mut{font:400 13px/20px var(--font)!important;color:var(--ink-3)!important}
+html:root:root:root .opp .meta{margin-top:4px!important;gap:4px!important}
+html:root:root:root .opp .hint{font:400 12px/18px var(--font)!important;color:var(--ink-3)!important}
+html:root:root:root .opp .fit{width:28px;min-width:0;height:auto;background:transparent!important;border:0!important;padding:0!important;text-align:center}
+html:root:root:root .opp .fit b{font:600 12px/16px var(--font)!important;display:inline-block;padding:0 6px;border-radius:4px;background:#E7F3F8;color:#0B6E99}
+html:root:root:root .opp .fit small{display:none}
+html:root:root:root .stage-dot{width:10px!important;height:10px!important;margin:0 auto!important;background:rgba(55,53,47,.25)}
+html:root:root:root .stage-dot.s-applied,html:root:root:root .stage-dot.s-assessment,html:root:root:root .stage-dot.s-interview{background:#2383E2}
+html:root:root:root .stage-dot.s-offer{background:#0F7B6C}
+html:root:root:root .stage-dot.s-preparing,html:root:root:root .stage-dot.s-ready-to-submit{background:#D9730D}
+html:root:root:root .opp-act{opacity:.75;transition:opacity .12s}
+html:root:root:root .opp:hover .opp-act{opacity:1}
+html:root:root:root .opp-act .b{min-height:28px!important;padding:0 10px!important;font-size:13px!important}
+@media(max-width:700px){html:root:root:root .opp[data-card]{grid-template-columns:24px minmax(0,1fr)!important}html:root:root:root .opp-act{grid-column:1/-1;opacity:1}}
+html:root:root:root .opp .meta .chip{font:400 12px/18px var(--font)!important;padding:0 6px!important;border-radius:4px!important;background:rgba(227,226,224,.5)!important;border:0!important;color:var(--ink)!important}
+html:root:root:root .opp .meta .chip.good{background:#DBEDDB!important;color:#1C3829!important}
+html:root:root:root .opp .meta .chip.warn{background:#FADEC9!important;color:#49290E!important}
+html:root:root:root .opp .meta .chip.bad{background:#FFE2DD!important;color:#5D1715!important}
+html[data-theme=dark]:root:root:root .opp .meta .chip{background:#454B4E!important;color:#E6E6E5!important}
+
+/* ---------- Projects as a Notion board (grouped by status) ---------- */
+.pboard{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start;margin:8px 0 20px}
+.pcol{background:rgba(242,241,238,.6);border-radius:6px;padding:6px;min-width:0}
+html[data-theme=dark] .pcol{background:rgba(255,255,255,.04)}
+.pcol-h{display:flex;align-items:center;gap:6px;padding:4px 6px 8px;font:500 13px/20px var(--font);color:var(--ink-2)}
+.pcol-h i{width:8px;height:8px;border-radius:50%;background:rgba(55,53,47,.3)}
+.pcol[data-s=in-progress] .pcol-h i{background:#2383E2}.pcol[data-s=due-soon] .pcol-h i{background:#D9730D}.pcol[data-s=done] .pcol-h i{background:#0F7B6C}
+.pcol-h b{font-weight:600;color:var(--ink)}.pcol-h span{color:var(--ink-3)}
+.pcol-e{padding:8px;font:400 13px var(--font);color:var(--ink-3)}
+html:root:root:root .pcol .proj{padding:10px 12px!important;margin:0 0 6px!important;background:var(--bg)!important;border:1px solid var(--hair)!important;border-radius:6px!important;box-shadow:rgba(15,15,15,.05) 0 1px 2px!important;transform:none!important}
+html:root:root:root .pcol .proj:hover{background:var(--nt-hover-2)!important}
+.pcol .proj .ph{flex-wrap:wrap;gap:4px 8px}
+html:root:root:root .pcol .proj h2{font:600 15px/1.35 var(--font)!important}
+.pcol .proj .desc{font-size:13px}
+.pcol .proj form{flex-wrap:wrap}
+@media(max-width:1000px){.pboard{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.pboard{grid-template-columns:1fr}}
+.pboard{grid-template-columns:none!important;grid-auto-flow:column;grid-auto-columns:minmax(250px,1fr);overflow-x:auto;padding-bottom:8px;scroll-snap-type:x proximity}
+.pcol{scroll-snap-align:start}
+@media(max-width:1000px){.pboard{grid-template-columns:none!important}}
+@media(max-width:640px){.pboard{grid-auto-columns:82%}}
+html:root:root:root .proj .prog>*{background:transparent!important}
+html:root:root:root .proj .track .fill{background:#2383E2!important}
+html:root:root:root .proj h2{color:var(--ink)!important}
+html:root:root:root .pcol .proj .ph .pill{font:400 12px/18px var(--font)!important;padding:0 6px!important}
+html:root:root:root .pcol .proj h2::after,html:root:root:root .pcol .proj h2::before{display:none!important}
+html:root:root:root .pcol .proj h2{border:0!important;background:none!important}
+
+/* ---------- dark-mode fixes: callouts, warn pills, coral buttons ---------- */
+html[data-theme=dark]:root:root:root .warn:not(.htag):not(.tg):not(.pill),html[data-theme=dark]:root:root:root .stale,html[data-theme=dark]:root:root:root .banner,html[data-theme=dark]:root:root:root .notice,html[data-theme=dark]:root:root:root [class*=stale]:not(.htag),html[data-theme=dark]:root:root:root .note{background:rgba(255,255,255,.055)!important;color:var(--ink)!important}
+html[data-theme=dark]:root:root:root .banner *,html[data-theme=dark]:root:root:root .note *{color:inherit!important}
+html[data-theme=dark]:root:root:root .pill.warn{background:#594A3A!important;color:#FADEC9!important}
+html[data-theme=dark]:root:root:root button.go,html[data-theme=dark]:root:root:root .go{background:#C2610A!important;color:#fff!important}
+html[data-theme=dark]:root:root:root .opp .meta .chip.warn{background:#594A3A!important;color:#FADEC9!important}
+html[data-theme=dark]:root:root:root .opp .meta .chip.good{background:#2B593F!important;color:#E6F4EA!important}
+html[data-theme=dark]:root:root:root .opp .fit b{background:#1F3A4D;color:#8AC6E8}

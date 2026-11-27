@@ -179,7 +179,7 @@ details.chk li{margin:3px 0}
 <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 <link rel="stylesheet" href="opai-mobile.css">
 
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="opai-cream.css?v=5" id="opai-cream"></head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="opai-cream.css?v=11" id="opai-cream"></head>
 <body>
 <header><div class="bar">
 <span class="brand">OPAI</span>
@@ -313,6 +313,13 @@ function renderFocus(act){
   $('focus').innerHTML='<section class="focus" aria-label="Focus now"><small>Focus now</small><h2>'+esc(p.name)+'</h2><div class="fmeta"><span class="pill '+st.c+'">'+esc(st.l)+'</span><span>'+done+'/'+tot+' tasks complete</span></div>'+
   '<p class="nxt"><b>Next</b>'+esc(nx?nx.name:'Add the first task')+'</p><div class="fact"><a class="btn" href="#proj-'+esc(p.id)+'">Open checklist</a>'+(h?'<a class="btn alt" href="'+esc(h.u)+'" target="_blank" rel="noopener noreferrer">Open hackathon page ↗</a>':'')+'</div></section>';
 }
+function board(ps){
+  var cols=[['Planning','Planning'],['In progress','In progress'],['Due soon','Due soon'],['Done','Done']],g={};
+  cols.forEach(function(c){g[c[0]]=[]});
+  ps.forEach(function(p){var l=pstat(p).l;g[l==='Planning'||l==='In progress'||l==='Done'?l:'Due soon'].push(p)});
+  return '<div class="pboard" role="group" aria-label="Projects by status">'+cols.map(function(c){var a=g[c[0]];
+    return '<div class="pcol" data-s="'+c[0].toLowerCase().replace(/ /g,'-')+'"><div class="pcol-h"><i></i><b>'+c[1]+'</b><span>'+a.length+'</span></div>'+(a.map(pcard).join('')||'<div class="pcol-e">No projects</div>')+'</div>'}).join('')+'</div>';
+}
 function render(){
   renderHack();
   var ps=S.projects,open=0;
@@ -323,8 +330,8 @@ function render(){
   renderFocus(act);
   if(!WS){$('list').innerHTML='<div class="empty"><b>No workspace found in this browser.</b><br>Open the main app on this site first and add a project. This page shows what it saves.</div>';return}
   if(!ps.length){$('list').innerHTML='<div class="empty"><b>No projects yet.</b><br>Add one in the main app and it will appear here.</div>';return}
-  var rest=ps.filter(function(p){return act.indexOf(p)<0}).concat(act.slice(5));
-  $('list').innerHTML='<h3 class="sec" style="font-size:18px;margin:0 0 4px">Active projects</h3><p class="sec-sub" style="margin-bottom:14px">Only the projects you are building right now.</p><div class="grid">'+act.slice(0,5).map(pcard).join('')+'</div>'+
+  var rest=[];
+  $('list').innerHTML='<h3 class="sec" style="font-size:18px;margin:0 0 4px">Active projects</h3><p class="sec-sub" style="margin-bottom:14px">Grouped by status. Tick tasks off right on the card.</p>'+board(ps.slice().sort(function(x,y){return dlOf(x)-dlOf(y)}))+
     (rest.length?'<details class="more"><summary>More projects ('+rest.length+')</summary><div class="grid">'+rest.map(pcard).join('')+'</div></details>':'');
   $('note').textContent='Changes save to the same workspace the main app uses, in this browser.';
 }

@@ -237,6 +237,8 @@ def build(db: Session, user_id: str, today: Optional[date] = None, minutes: Opti
     nxt = next((i for i in items if i["state"] != "paused"), None)
     return {"date": today.isoformat(), "energy": energy, "items": items, "later_count": len(later),
             "later": [{"kind": x["kind"], "title": x["title"], "minutes": x["plan_minutes"], "due": _when(x["days"])} for x in later[:6]],
+            "week": [{"kind": x["kind"], "ref_id": x["ref_id"], "title": x["title"], "minutes": x["plan_minutes"], "due": _when(x["days"]), "days": x["days"],
+                      "category": _category(x), "link": x["link"], "planned": x in picked} for x in todo[:60]],
             "capacity": {"available_min": avail, "planned_min": used, "done_min": done_minutes, "buffer_min": max(0, avail - used - done_minutes)},
             "completed_today": [{"kind": x["kind"], "title": x["title"], "minutes": x["minutes"]} for x in cands if x["done"]],
             "needs_plan": not any(x["kind"] == "study_block" for x in cands) and db.query(Exam).filter(Exam.user_id == uid, Exam.status != "completed").count() > 0,

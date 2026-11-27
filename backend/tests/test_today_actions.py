@@ -186,3 +186,12 @@ def test_pending_outbox_draft_surfaces_but_is_not_actionable_as_done(c, uid):
     ob = next(i for i in p["items"] if i["kind"] == "outbox")
     assert ob["check"].startswith("Awaiting") and ob["link"] == "agent-console.html" and ob["category"] == "OUTREACH · OUTBOX"
     assert c.post("/v1/today/act", json={"user_id": uid, "kind": "outbox", "ref_id": ob["ref_id"], "op": "complete"}).status_code == 422
+
+
+def test_today_exposes_week_list_with_day_offsets(c, uid):
+    near, far = add_task(uid, "this week", D1(2)), add_task(uid, "ten days out", D1(10))
+    p = c.get("/v1/today", params={"user_id": uid}).json()
+    w = {x["ref_id"]: x for x in p["week"]}
+    assert w[near]["days"] == 2 and w[near]["due"] == "in 2 days"
+    assert w[far]["days"] == 10 and isinstance(w[far]["planned"], bool)
+    assert all(k in w[near] for k in ("title", "minutes", "category", "link", "planned"))

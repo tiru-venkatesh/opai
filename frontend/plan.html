@@ -9,30 +9,102 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="opai-shared.css"><link rel="stylesheet" href="opai-theme.css"><link rel="stylesheet" href="opai-motion2.css"><script src="opai-session.js"></script><script src="opai-ux.js"></script>
-<style>
-:root{--bg:#F0F4F3;--ink:#1B1516;--mut:#504A4D;--pri:#34392e;--coral:#E09F62;--font:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif}
-@media (prefers-color-scheme:dark){:root{--bg:#F0F4F3}}
-*{box-sizing:border-box}html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:16px/24px var(--font);min-height:100vh}
-.cs{min-height:calc(100vh - 56px);display:grid;place-items:center;text-align:center;padding:24px 20px 120px}
-.cs h1{margin:0;font-weight:700;letter-spacing:-.04em;line-height:1;color:var(--pri);font-size:clamp(48px,13vw,140px)}
-.cs .tag{display:inline-block;margin-bottom:18px;padding:6px 14px;border-radius:999px;background:rgba(224,159,98,.14);color:var(--coral);font:600 13px/16px var(--font);letter-spacing:.08em;text-transform:uppercase}
-.cs p{margin:18px auto 0;max-width:34ch;color:var(--mut);font-size:clamp(15px,2.4vw,18px)}
-</style>
+<style>*{box-sizing:border-box}html,body{margin:0}.pl-tools a{text-decoration:none!important}.pl-tools{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}.pl-day{font:600 14px/20px var(--font)}.pl-it{display:block;text-decoration:none;color:inherit}.pl-it b{display:block;font:600 14px/1.35 var(--font);overflow-wrap:anywhere}.pl-it span{font:400 12px/18px var(--font);color:var(--ink-3)}.pl-done b{text-decoration:line-through;opacity:.55}.pl-sum{display:flex;gap:18px;flex-wrap:wrap;color:var(--ink-2);font-size:14px;margin:4px 0 12px}.pl-err{color:var(--bad)}.pl-it[draggable=true]{cursor:grab}.pl-it a{text-decoration:none;color:inherit}html:root:root:root .pcol .pl-it{display:block!important}.pl-mv{display:block;margin-top:6px;font:400 12px var(--font);padding:2px 6px!important;width:auto!important;opacity:.75}.pcol.pl-drop{outline:2px dashed #2383E2;outline-offset:-2px}</style>
 <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)&&location.protocol!=='file:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 <link rel="stylesheet" href="opai-mobile.css">
 
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="opai-cream.css?v=5" id="opai-cream"></head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="opai-cream.css?v=11" id="opai-cream"></head>
 <body>
-<main class="cs" id="main">
-  <div>
-    <span class="tag">Plan</span>
-    <h1>Coming Soon</h1>
-    <p>Weekly planning is being rebuilt. Ask KARNA in the meantime.</p>
-  </div>
+<main id="main">
+  <h1>Plan</h1>
+  <p class="sub" id="sub">Your week at a glance, built from the same plan as Today.</p>
+  <div class="pl-sum" id="sum" aria-live="polite">Loading…</div>
+  <div class="pl-tools"><a class="btn" href="today.html">Open Today</a><a class="btn alt" href="super-chat.html">Ask KARNA to replan</a></div>
+  <div id="board"></div>
+  <p class="mut" id="note" style="font-size:13px"></p>
 </main>
 <script src="opai-shell.js?v=11" defer></script>
 <script src="guide.js" defer></script>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)},U=null;
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function base(){return (localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'')}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+async function get(path){
+  for(var i=0;;i++){
+    var ctl=new AbortController(),t=setTimeout(function(){ctl.abort()},15000);
+    try{var r=await fetch(base()+path,{signal:ctl.signal});clearTimeout(t);
+      if(r.status>=502&&r.status<=504&&i<5)throw new TypeError('waking');
+      if(!r.ok)throw new Error('Request failed ('+r.status+')');return r.json()}
+    catch(e){clearTimeout(t);if(i>=5||(e.message&&e.message.indexOf('Request failed')===0))throw e;$('sum').textContent='Server is waking up… retrying ('+(i+1)+'/6)';await sleep(3000)}}
+}
+async function uid(){
+  var em=new URLSearchParams(location.search).get('email')||localStorage.getItem('opai_sc_email');
+  if(!em){location.replace('login.html?next=plan.html');throw new Error('Please sign in')}
+  try{var c=localStorage.getItem('opai_uid:'+em.toLowerCase());if(c)return c}catch(e){}
+  var r=await fetch(base()+'/v1/auth/dev-login?email='+encodeURIComponent(em),{method:'POST'});var d=await r.json();
+  if(!r.ok||!d.user_id)throw new Error('Could not verify your account. Please sign in again.');
+  try{localStorage.setItem('opai_sc_email',em);localStorage.setItem('opai_uid:'+em.toLowerCase(),d.user_id)}catch(e){}return d.user_id;
+}
+/* due text from the planner -> day offset (negative = overdue, 7+ = later) */
+function off(due){due=String(due||'').toLowerCase();var m;
+  if(due==='today')return 0;if(due==='tomorrow')return 1;
+  if((m=due.match(/^in (\d+) days?$/)))return +m[1];
+  if((m=due.match(/^(\d+)d overdue$/)))return -(+m[1]);
+  return null}
+function render(p){
+  var days=[],i,now=new Date(),cols={over:[],none:[],later:[]};
+  for(i=0;i<7;i++){var d=new Date(now);d.setDate(now.getDate()+i);days.push({d:d,a:[]})}
+  function put(x,done){var o=off(x.due),it=Object.assign({done:done},x);
+    if(o===null)cols.none.push(it);else if(o<0)cols.over.push(it);else if(o>6)cols.later.push(it);else days[o].a.push(it)}
+  if(Array.isArray(p.week)){p.week.forEach(function(x){put(x,false)})}   /* full week list (newer backend) */
+  else{(p.items||[]).forEach(function(x){put(x,false)});(p.later||[]).forEach(function(x){put(x,false)})}
+  (p.completed_today||[]).forEach(function(x){days[0].a.push(Object.assign({done:true,due:'today'},x))});
+  var total=0,mins=0;function sum(a){a.forEach(function(x){if(!x.done){total++;mins+=x.minutes||x.plan_minutes||0}})}
+  days.forEach(function(c){sum(c.a)});sum(cols.over);sum(cols.later);sum(cols.none);
+  $('sum').innerHTML='<span><b>'+total+'</b> open</span><span><b>'+Math.round(mins/6)/10+'</b> hours planned</span>'+(cols.over.length?'<span class="pl-err"><b>'+cols.over.length+'</b> overdue</span>':'');
+  function dayName(k){var d=new Date(now);d.setDate(now.getDate()+k);return k===1?'Tomorrow':d.toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'short'})}
+  function card(x){
+    var href=(!x.link||/^plan\.html/.test(x.link))?'today.html':x.link,mv=x.kind==='task'&&!x.done&&x.ref_id,cur=Math.max(off(x.due)==null?0:off(x.due),0),opts='';
+    if(mv){for(var k=cur+1;k<=6&&k-cur<=14;k++)opts+='<option value="'+(k-cur)+'">'+esc(dayName(k))+'</option>'}
+    return '<div class="proj pl-it'+(x.done?' pl-done':'')+'"'+(mv?' draggable="true" data-ref="'+esc(x.ref_id)+'" data-cur="'+cur+'"':'')+'>'+
+      '<a href="'+esc(href)+'"><b>'+(x.done?'✓ ':'')+esc(x.title)+'</b></a><span>'+(x.minutes||x.plan_minutes||'')+(x.minutes||x.plan_minutes?' min':'')+(x.category?' · '+esc(x.category):'')+(x.due&&x.due!=='today'?' · '+esc(x.due):'')+(x.planned&&x.due!=='today'?' · in today\'s plan':'')+'</span>'+
+      (mv&&opts?'<select class="pl-mv" aria-label="Move '+esc(x.title)+' to another day" data-ref="'+esc(x.ref_id)+'"><option value="">Move to…</option>'+opts+'</select>':'')+'</div>'}
+  function col(title,a,dot,extra){return '<div class="pcol" '+(extra||'')+'><div class="pcol-h"><i'+(dot?' style="background:'+dot+'"':'')+'></i><b class="pl-day">'+title+'</b><span>'+a.length+'</span></div>'+(a.map(card).join('')||'<div class="pcol-e">Nothing planned</div>')+'</div>'}
+  var h='';
+  if(cols.over.length)h+=col('Overdue',cols.over,'#E03E3E');
+  days.forEach(function(c,k){var t=k===0?'Today':k===1?'Tomorrow':c.d.toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'short'});h+=col(t,c.a,k===0?'#2383E2':'','data-off="'+k+'"')});
+  if(cols.later.length)h+=col('Later',cols.later,'');
+  if(cols.none.length)h+=col('No deadline',cols.none,'');
+  $('board').innerHTML='<div class="pboard" role="group" aria-label="Week plan">'+h+'</div>';
+  $('note').textContent='Everything OPAI has queued for the next two weeks, by due day. Drag a task to a later day, or use Move to…, to reschedule it. Open Today to start or finish work.';
+}
+
+async function move(ref,days){
+  $('sum').textContent='Moving…';
+  try{
+    var r=await fetch(base()+'/v1/today/act',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:U,kind:'task',ref_id:ref,op:'snooze',days:days})});
+    var j=await r.json().catch(function(){return null});
+    if(!r.ok||!j||!j.today)throw new Error((j&&j.detail&&(j.detail.message||j.detail))||('Could not move it ('+r.status+')'));
+    try{Object.keys(localStorage).forEach(function(k){if(k.indexOf('opai_today:')===0)localStorage.removeItem(k)})}catch(e){}
+    render(j.today)
+  }catch(e){$('sum').innerHTML='<span class="pl-err">'+esc(e.message||'Could not move it.')+'</span>'}
+}
+var dragRef=null,dragCur=0;
+$('board').addEventListener('change',function(e){var s=e.target.closest('.pl-mv');if(s&&s.value)move(s.dataset.ref,+s.value)});
+$('board').addEventListener('dragstart',function(e){var c=e.target.closest&&e.target.closest('.pl-it[data-ref]');if(!c)return;dragRef=c.dataset.ref;dragCur=+c.dataset.cur;e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',dragRef)}catch(x){}c.style.opacity='.5'});
+$('board').addEventListener('dragend',function(e){dragRef=null;[].forEach.call(document.querySelectorAll('.pl-it'),function(c){c.style.opacity=''});[].forEach.call(document.querySelectorAll('.pcol.pl-drop'),function(c){c.classList.remove('pl-drop')})});
+function okCol(col){if(!dragRef||!col||col.dataset.off==null)return false;var d=+col.dataset.off-dragCur;return d>=1&&d<=14}
+$('board').addEventListener('dragover',function(e){var bd=$('board').firstElementChild;if(bd&&dragRef){var r=bd.getBoundingClientRect();if(e.clientX>r.right-80)bd.scrollLeft+=24;else if(e.clientX<r.left+80)bd.scrollLeft-=24}var col=e.target.closest('.pcol');if(okCol(col)){e.preventDefault();col.classList.add('pl-drop')}});
+$('board').addEventListener('dragleave',function(e){var col=e.target.closest('.pcol');if(col&&!col.contains(e.relatedTarget))col.classList.remove('pl-drop')});
+$('board').addEventListener('drop',function(e){var col=e.target.closest('.pcol');if(!okCol(col))return;e.preventDefault();var ref=dragRef,d=+col.dataset.off-dragCur;col.classList.remove('pl-drop');move(ref,d)});
+(async function(){
+  try{var u=U=await uid();render(await get('/v1/today?user_id='+encodeURIComponent(u)))}
+  catch(e){$('sum').innerHTML='<span class="pl-err">'+esc(e.name==='TypeError'?'Could not reach the backend at '+base()+'. If it is on a free host it may be waking up; retry in a minute.':e.message)+'</span>'}
+})();
+})();
+</script>
 <script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
 <script src="opai-clarity.js" defer></script>
 </body>
