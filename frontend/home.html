@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OPAI &mdash; Your personal operating agent</title>
+<meta name="description" content="OPAI brings exams, projects, internships, your resume and your daily plan into one workspace. Ask KARNA in plain language and approve anything important before it happens.">
+<meta name="theme-color" content="#FBF9F5">
+<meta property="og:title" content="OPAI &mdash; Your personal operating agent">
+<meta property="og:description" content="One plan for exams, projects, internships and more. Ask KARNA, then approve.">
+<meta property="og:image" content="https://opai.live/assets/landing/network.webp">
+<link rel="icon" type="image/png" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#FBF9F5;--parch:#F5F2EB;--panel:#ECE7DD;
+  --ink:#1B1917;--ink2:#44403C;--ink3:#78716C;
+  --hair:#E7E1D4;--line:#DCD4C3;
+  --serif:'Newsreader',Georgia,'Times New Roman',serif;
+  --sans:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'Space Grotesk',ui-monospace,'SF Mono',Menlo,monospace;
+  --sh1:0 4px 24px -2px rgba(27,25,23,.03),0 1px 2px 0 rgba(27,25,23,.02);
+  --sh3:0 20px 48px -12px rgba(27,25,23,.08),0 1px 3px rgba(27,25,23,.04);
+  --gut:1.5rem;--mar:3rem;--max:1360px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:88px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--canvas);color:var(--ink);font:400 16px/1.625 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden;
+  padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%;display:block}
+[hidden]{display:none!important}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:6px}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--mar)}
+.lbl{font:500 12px/16px var(--mono);letter-spacing:.06em;text-transform:uppercase}
+em{font-style:italic}
+h1,h2,h3{font-family:var(--serif);font-weight:400;margin:0;color:var(--ink)}
+
+/* header */
+header.nav{position:fixed;top:0;left:0;right:0;z-index:50;padding:.75rem var(--mar);padding-top:calc(.75rem + env(safe-area-inset-top,0px));transition:.3s}
+header.nav .bar{max-width:var(--max);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:.5rem .75rem .5rem 1rem;border-radius:9999px;background:rgba(251,249,245,.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(231,225,212,.65)}
+.brand{display:flex;align-items:center;gap:.6rem;text-decoration:none;font:600 18px var(--sans);letter-spacing:-.01em}
+.brand img{width:30px;height:30px;border-radius:8px}
+nav.links{display:flex;gap:1.75rem}
+nav.links a{text-decoration:none;font:500 14px var(--sans);color:var(--ink2);transition:color .2s}
+nav.links a:hover{color:var(--ink)}
+.navr{display:flex;align-items:center;gap:.5rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:48px;padding:0 1.75rem;border-radius:8px;border:1px solid transparent;
+  font:600 14px var(--mono);letter-spacing:.04em;text-decoration:none;cursor:pointer;transition:transform .25s,background .25s,border-color .25s,box-shadow .25s;white-space:nowrap}
+.btn.p{background:var(--ink);color:var(--canvas)}
+.btn.p:hover{transform:translateY(-1px);background:#2b2723;box-shadow:0 10px 24px -10px rgba(27,25,23,.5)}
+.btn.g{background:rgba(245,242,235,.8);border-color:var(--line);color:var(--ink);backdrop-filter:blur(8px)}
+.btn.g:hover{border-color:var(--ink);transform:translateY(-1px)}
+.btn.sm{height:38px;padding:0 1.1rem;font-size:13px;border-radius:9999px}
+.menu{display:none;background:none;border:1px solid var(--line);border-radius:9999px;width:40px;height:40px;cursor:pointer}
+
+/* hero */
+.hero{position:relative;padding:150px 0 40px;text-align:center}
+.glow{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1}
+.glow i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55}
+.glow i:nth-child(1){width:520px;height:520px;left:-120px;top:40px;background:#FFE6C2}
+.glow i:nth-child(2){width:480px;height:480px;right:-100px;top:120px;background:#E4EEFF;opacity:.5}
+.glow i:nth-child(3){width:420px;height:420px;left:40%;top:520px;background:#F0E6FF;opacity:.45}
+.badge{display:inline-flex;align-items:center;gap:.6rem;padding:.35rem .9rem;border-radius:9999px;background:rgba(245,242,235,.85);border:1px solid var(--line);margin-bottom:2rem}
+.beacon{width:6px;height:6px;border-radius:50%;background:#047857;animation:breathe 2.4s ease-in-out infinite}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(4,120,87,.45)}50%{box-shadow:0 0 0 6px rgba(4,120,87,0)}}
+.hero h1{font-size:clamp(44px,7.4vw,76px);line-height:1.1;letter-spacing:-.03em;max-width:15ch;margin:0 auto 1.5rem;max-width:920px}
+.hero h1 em{color:#1B1917;background:linear-gradient(transparent 70%,#FFCF94 70%,#FFCF94 92%,transparent 92%)}
+.hero .sub{font:400 20px/32px var(--sans);color:var(--ink2);max-width:680px;margin:0 auto 2.25rem}
+.ctas{display:flex;gap:.9rem;justify-content:center;flex-wrap:wrap}
+.proof{margin:1.75rem auto 0;font:500 13px var(--mono);letter-spacing:.04em;color:var(--ink3);display:flex;gap:.5rem;justify-content:center;align-items:center;flex-wrap:wrap}
+.proof b{color:var(--ink2);font-weight:500}
+
+/* cockpit mockup */
+.cockpit{margin:4rem auto 0;max-width:1120px;text-align:left;background:var(--parch);border:1px solid var(--hair);border-radius:24px;padding:14px;box-shadow:var(--sh3);position:relative}
+.ck-top{display:flex;gap:.6rem;flex-wrap:wrap;padding:.4rem .6rem .9rem}
+.chip{display:inline-flex;align-items:center;gap:.5rem;height:26px;padding:0 .8rem;border-radius:9999px;background:#fff;border:1px solid var(--hair);font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.chip .beacon{width:6px;height:6px}
+.ck{display:grid;grid-template-columns:220px 1fr;gap:14px}
+.ck-side{background:var(--canvas);border:1px solid var(--hair);border-radius:16px;padding:1.1rem}
+.ck-side .lbl{color:var(--ink3);display:block;margin-bottom:.75rem}
+.ck-side ul{list-style:none;margin:0;padding:0;display:grid;gap:.2rem}
+.ck-side li{padding:.5rem .7rem;border-radius:8px;font:500 14px var(--sans);color:var(--ink2)}
+.ck-side li.on{background:var(--ink);color:var(--canvas)}
+.ck-main{background:#fff;border:1px solid var(--hair);border-radius:16px;padding:1.5rem;box-shadow:var(--sh1)}
+.ck-h{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:1.25rem}
+.ck-h h3{font-size:24px;line-height:30px;font-weight:500;letter-spacing:-.015em}
+.ck-h p{margin:.2rem 0 0;color:var(--ink3);font-size:14px;line-height:22px}
+.tagpill{display:inline-flex;align-items:center;gap:.45rem;height:24px;padding:0 .75rem;border-radius:9999px;font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;background:var(--as,#ECFDF5);color:var(--ac,#047857)}
+.tagpill i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:breathe 2.4s infinite}
+.mini3{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1rem}
+.mini{border:1px solid var(--hair);border-radius:12px;padding:.9rem 1rem;background:var(--canvas);position:relative;overflow:hidden}
+.mini::after{content:"";position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:var(--ac);opacity:.07}
+.mini .tagpill{margin-bottom:.5rem}
+.mini b{display:block;font:500 22px/28px var(--serif)}
+.mini p{margin:.2rem 0 0;color:var(--ink3);font-size:13px;line-height:20px}
+.term{background:#1B1917;color:#E7E1D4;border-radius:12px;padding:1rem 1.1rem;font:500 12.5px/1.8 var(--mono);letter-spacing:.02em;min-height:128px}
+.term .th{display:flex;justify-content:space-between;color:#a39b8d;margin-bottom:.5rem;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.term .t{color:#EDBE85}
+.term .ok{color:#9ED2B6}
+.caret{display:inline-block;width:7px;height:13px;background:#EDBE85;vertical-align:-2px;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.ck-foot{display:flex;justify-content:space-between;align-items:center;gap:.75rem;flex-wrap:wrap;padding:.9rem .4rem .2rem;color:var(--ink3);font:500 12px var(--mono);letter-spacing:.04em}
+
+/* section heads */
+section{padding:112px 0}
+.eyebrow{display:block;color:var(--ink3);margin-bottom:1rem}
+.sh{display:flex;justify-content:space-between;align-items:flex-end;gap:2.5rem;flex-wrap:wrap;margin-bottom:3rem}
+.sh h2{font-size:clamp(32px,4.6vw,48px);line-height:1.17;letter-spacing:-.02em;max-width:16ch}
+.sh h2 em{color:var(--ink2)}
+.sh p{max-width:440px;color:var(--ink2);margin:0}
+
+/* pills + carousel */
+.pills{display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem;margin-bottom:1.5rem}
+.pill{--ac:#1D4ED8;text-align:left;background:var(--parch);border:1px solid var(--hair);border-radius:12px;padding:.9rem 1rem;cursor:pointer;display:grid;gap:.15rem;transition:.25s;position:relative;overflow:hidden}
+.pill .lbl{color:var(--ink3);font-size:11px}
+.pill .nm{font:600 15px var(--sans);letter-spacing:-.01em}
+.pill:hover{transform:translateY(-2px);border-color:var(--ac);box-shadow:var(--sh1)}
+.pill.on{background:#fff;border-color:var(--ink);box-shadow:var(--sh3)}
+.pill.on .lbl{color:var(--ac)}
+.cbar{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+.cinfo{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.cinfo .lbl{color:var(--ink3)}
+.cinfo strong{font:500 20px var(--serif);letter-spacing:-.01em}
+.ctrl{display:flex;align-items:center;gap:.6rem}
+.sq{width:44px;height:44px;border-radius:9999px;border:1px solid var(--line);background:var(--parch);cursor:pointer;display:grid;place-items:center;transition:.2s;font-size:18px}
+.sq:hover{border-color:var(--ink);background:#fff}
+.sq.pp{width:auto;padding:0 1rem;font:500 12px var(--mono);letter-spacing:.06em}
+.timer{height:3px;background:var(--hair);border-radius:3px;overflow:hidden;margin-bottom:1.5rem}
+.timer i{display:block;height:100%;width:0;background:var(--ink)}
+.viewport{overflow-x:auto;scroll-snap-type:x mandatory;display:flex;gap:1.5rem;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:4px 2px 24px;outline:none}
+.viewport::-webkit-scrollbar{display:none}
+.slide{flex:0 0 min(100%,1040px);scroll-snap-align:center;transition:opacity .4s}
+.slide:not(.on){opacity:.55}
+.sc{display:grid;grid-template-columns:1.05fr 1fr;gap:2.5rem;align-items:center;background:var(--parch);border:1px solid var(--hair);border-radius:24px;padding:2.5rem;box-shadow:var(--sh1);position:relative;overflow:hidden;min-height:480px}
+.sc::before{content:"";position:absolute;right:-120px;top:-120px;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,var(--ac),transparent 65%);opacity:.07;pointer-events:none}
+.kick{display:inline-flex;align-items:center;gap:.5rem;height:24px;padding:0 .75rem;border-radius:9999px;background:var(--as);color:var(--ac);font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:1.25rem}
+.kick i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.stext h3{font-size:clamp(28px,3.4vw,36px);line-height:1.2;letter-spacing:-.015em;font-weight:500;margin-bottom:1rem}
+.stext>p{color:var(--ink2);margin:0 0 1.5rem}
+.panel{background:#fff;border:1px solid var(--hair);border-radius:16px;padding:1.1rem 1.2rem;box-shadow:var(--sh1)}
+.ph{display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.9rem}
+.ph .lbl{color:var(--ink3)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
+.stats div{background:var(--canvas);border:1px solid var(--hair);border-radius:10px;padding:.7rem .5rem;text-align:center}
+.stats b{display:block;font:500 24px/30px var(--serif);color:var(--ac)}
+.stats span{font:500 11px var(--mono);letter-spacing:.04em;color:var(--ink3);text-transform:uppercase}
+.rows{display:grid;gap:.45rem}
+.rows div{display:flex;justify-content:space-between;gap:1rem;padding:.55rem .8rem;background:var(--canvas);border:1px solid var(--hair);border-radius:10px;font-size:14px}
+.rows span{color:var(--ink2)}.rows b{font-weight:600}
+.meter{height:8px;background:var(--panel);border-radius:9px;margin-top:.6rem;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--ac);border-radius:9px}
+.note{margin:.9rem 0 0;font-size:13px;line-height:20px;color:var(--ink3);display:flex;gap:.5rem;align-items:center}
+.note::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ac);flex:none}
+.simg{margin:0;border-radius:18px;overflow:hidden;background:var(--panel);aspect-ratio:4/3.3;box-shadow:inset 0 0 0 1px rgba(27,25,23,.05)}
+.simg img{width:100%;height:100%;object-fit:cover;transition:transform .9s cubic-bezier(.16,1,.3,1)}
+.slide.on .simg img{transform:scale(1.04)}
+.dots{display:flex;justify-content:center;gap:.5rem;margin-top:.5rem}
+.dot{width:8px;height:8px;border-radius:9999px;border:0;background:var(--line);cursor:pointer;padding:0;transition:.3s}
+.dot.on{width:28px;background:var(--ink)}
+.hint{text-align:center;margin-top:1rem;color:var(--ink3);font:500 12px var(--mono);letter-spacing:.04em}
+kbd{font:inherit;padding:0 .4rem;border:1px solid var(--line);border-radius:4px;background:var(--parch)}
+
+/* how it works */
+.how{background:var(--parch);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
+.hc{text-align:center;max-width:760px;margin:0 auto 3.5rem}
+.hc h2{font-size:clamp(32px,4.6vw,48px);line-height:1.17;letter-spacing:-.02em;margin-bottom:1rem}
+.hc p{color:var(--ink2);margin:0}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gut)}
+.step{background:var(--canvas);border:1px solid var(--hair);border-radius:16px;padding:1.6rem;box-shadow:var(--sh1);position:relative;overflow:hidden;transition:transform .35s cubic-bezier(.16,1,.3,1),box-shadow .35s;display:flex;flex-direction:column;min-height:300px}
+.step::after{content:"";position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:var(--ac);opacity:.06}
+.step:hover{transform:translateY(-4px);box-shadow:var(--sh3)}
+.ico{width:44px;height:44px;border-radius:12px;background:var(--as);color:var(--ac);display:grid;place-items:center;margin-bottom:1.1rem}
+.ico svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.step .lbl{color:var(--ac);margin-bottom:.4rem;display:block}
+.step h3{font:600 22px/30px var(--sans);letter-spacing:-.01em;margin-bottom:.6rem}
+.step p{margin:0;color:var(--ink2);font-size:15px;line-height:24px}
+.step .foot{margin-top:auto;padding-top:1.2rem;display:flex}
+
+/* demo */
+.demo{background:#fff;border:1px solid var(--hair);border-radius:24px;box-shadow:var(--sh3);padding:2.25rem;max-width:1040px;margin:0 auto}
+.demo-h{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.75rem}
+.demo-h h2{font-size:clamp(28px,3.6vw,40px);line-height:1.2;letter-spacing:-.02em}
+.tabs{display:inline-flex;padding:4px;border-radius:9999px;background:var(--parch);border:1px solid var(--hair)}
+.tab{border:0;background:none;padding:.5rem 1.1rem;border-radius:9999px;font:600 13px var(--mono);letter-spacing:.04em;cursor:pointer;color:var(--ink2);transition:.2s}
+.tab.on{background:var(--ink);color:var(--canvas)}
+.sim{background:var(--parch);border:1px solid var(--hair);border-radius:16px;padding:1.5rem}
+.sim-t{display:flex;justify-content:space-between;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:.8rem}
+.sim-t h3{font:600 19px/28px var(--sans);letter-spacing:-.01em}
+.sim p{color:var(--ink2);margin:0 0 1.25rem}
+.sim .mini3 .mini{background:#fff}
+.log{background:#1B1917;border-radius:12px;padding:1rem 1.2rem;font:500 12.5px/1.9 var(--mono);color:#E7E1D4;min-height:122px;margin-bottom:1.25rem}
+.log div{opacity:0;transform:translateY(4px);animation:in .4s forwards}
+@keyframes in{to{opacity:1;transform:none}}
+.log .ok{color:#9ED2B6}.log .t{color:#EDBE85}
+.sim-f{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+.sim-f span.m{color:var(--ink3);font:500 12px var(--mono);letter-spacing:.04em}
+.fine{max-width:1040px;margin:1.25rem auto 0;text-align:center;color:var(--ink3);font:500 12px var(--mono);letter-spacing:.04em}
+
+/* gallery strip */
+.strip{padding:0 0 112px}
+.strip .g{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:var(--gut)}
+.strip figure{margin:0;border-radius:24px;overflow:hidden;border:1px solid var(--hair);box-shadow:var(--sh1);aspect-ratio:4/5;position:relative;background:var(--panel)}
+.strip figure:first-child{aspect-ratio:auto}
+.strip img{width:100%;height:100%;object-fit:cover}
+.strip figcaption{position:absolute;left:14px;bottom:14px;right:14px;padding:.7rem 1rem;border-radius:12px;background:rgba(251,249,245,.84);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(231,225,212,.7);font:500 14px/22px var(--sans);color:var(--ink2)}
+.strip figcaption b{display:block;color:var(--ink);font:500 18px/24px var(--serif)}
+
+/* cta */
+.cta{padding:0 0 112px}
+.ctab{position:relative;overflow:hidden;text-align:center;background:var(--parch);border:1px solid var(--hair);border-radius:24px;padding:96px 2rem;box-shadow:var(--sh1)}
+.ctab::before,.ctab::after{content:"";position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;pointer-events:none}
+.ctab::before{width:360px;height:360px;left:-80px;top:-80px;background:#FFE0B0}
+.ctab::after{width:360px;height:360px;right:-80px;bottom:-100px;background:#E1D7FF}
+.ctab>*{position:relative}
+.ctab h2{font-size:clamp(32px,5vw,52px);line-height:1.15;letter-spacing:-.02em;max-width:22ch;margin:1rem auto}
+.ctab>p{max-width:560px;margin:0 auto 2rem;color:var(--ink2)}
+.form{display:flex;gap:.6rem;max-width:600px;margin:0 auto;flex-wrap:wrap;justify-content:center}
+.form input{flex:1 1 280px;height:48px;padding:0 1.25rem;border:1px solid var(--line);border-radius:8px;background:#fff;font:400 16px var(--sans);color:var(--ink)}
+.form input:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 1px var(--ink),0 8px 28px -8px rgba(27,25,23,.2)}
+.trust{margin-top:1.5rem;display:flex;gap:1.25rem;justify-content:center;flex-wrap:wrap;font:500 12px var(--mono);letter-spacing:.04em;color:var(--ink3)}
+.trust span::before{content:"\2713";margin-right:.45rem;color:#047857}
+
+/* footer */
+footer{border-top:1px solid var(--hair);padding:72px 0 40px;background:var(--canvas)}
+.fg{display:grid;grid-template-columns:1.6fr repeat(3,1fr);gap:3rem}
+.fg .brand{margin-bottom:1rem}
+.fg p{color:var(--ink3);font-size:14px;line-height:22px;max-width:320px;margin:0}
+.fg h4{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin:0 0 1rem}
+.fg ul{list-style:none;padding:0;margin:0;display:grid;gap:.55rem}
+.fg li a{text-decoration:none;color:var(--ink2);font-size:14px}
+.fg li a:hover{color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+.legal{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--hair);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;color:var(--ink3);font:500 12px var(--mono);letter-spacing:.04em}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(18px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
+.rv.in{opacity:1;transform:none}
+
+@media (max-width:1100px){
+  .pills{grid-template-columns:repeat(2,1fr)}
+  .steps{grid-template-columns:repeat(2,1fr)}
+  .fg{grid-template-columns:1fr 1fr}
+}
+@media (max-width:860px){
+  :root{--mar:1.25rem;--gut:1rem}
+  nav.links{display:none;position:absolute;top:calc(100% + 8px);left:var(--mar);right:var(--mar);flex-direction:column;gap:0;padding:.5rem;border-radius:16px;background:rgba(251,249,245,.97);border:1px solid var(--hair);box-shadow:var(--sh3)}
+  nav.links.open{display:flex}
+  nav.links a{padding:.8rem 1rem}
+  header.nav .bar{position:relative}
+  .menu{display:grid;place-items:center}
+  .navr .login{display:none}
+  .hero{padding-top:120px}
+  .hero .sub{font-size:18px;line-height:28px}
+  .ck{grid-template-columns:1fr}
+  .ck-side{display:none}
+  .mini3{grid-template-columns:1fr}
+  section{padding:72px 0}
+  .sc{grid-template-columns:1fr;padding:1.4rem;gap:1.5rem}
+  .simg{order:-1;aspect-ratio:16/10}
+  .slide{flex-basis:92%}
+  .sh{margin-bottom:2rem}
+  .strip .g{grid-template-columns:1fr}
+  .strip figure,.strip figure:first-child{aspect-ratio:16/11}
+  .demo{padding:1.25rem}
+  .ctab{padding:64px 1.25rem}
+  .hint{display:none}
+}
+@media (max-width:560px){
+  .steps{grid-template-columns:1fr}
+  .pills{grid-template-columns:1fr 1fr;gap:.5rem}
+  .fg{grid-template-columns:1fr 1fr;gap:2rem}
+  .fg>div:first-child{grid-column:1/-1}
+  .btn{padding:0 1.25rem}
+  .ctas .btn{flex:1 1 100%}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .rv{opacity:1;transform:none}
+}
+</style>
+</head>
+<body id="top">
+
+<header class="nav">
+  <div class="bar">
+    <a class="brand" href="/" aria-label="OPAI home"><img src="/assets/opai-logo-96.png" alt="" width="30" height="30">OPAI</a>
+    <nav class="links" id="links" aria-label="Primary">
+      <a href="#workspaces">Workspaces</a>
+      <a href="#how">How it works</a>
+      <a href="#demo">Live demo</a>
+      <a href="#start">Get started</a>
+    </nav>
+    <div class="navr">
+      <a class="btn g sm login" href="/login">Log in</a>
+      <a class="btn p sm" href="/signup">Get started free</a>
+      <button class="menu" id="menu" aria-label="Menu" aria-expanded="false" aria-controls="links" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- HERO -->
+<div class="hero">
+  <div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="wrap">
+    <div class="badge rv"><span class="beacon"></span><span class="lbl">Introducing OPAI &middot; Your personal operating agent</span></div>
+    <h1 class="rv">Beyond chatbots. Your <em>personal</em> operating agent.</h1>
+    <p class="sub rv">OPAI brings your exams, projects, internships, resume and daily plan into one workspace. Ask KARNA in plain language, then approve anything important before it happens.</p>
+    <div class="ctas rv">
+      <a class="btn p" href="/signup">Get started free <span aria-hidden="true">&rarr;</span></a>
+      <a class="btn g" href="#demo"><span aria-hidden="true">&#9654;</span> See it in action</a>
+    </div>
+    <p class="proof rv"><b>Built by students, for students.</b> <span>Sign in with Google or email.</span></p>
+
+    <div class="cockpit rv" aria-label="Preview of the OPAI workspace">
+      <div class="ck-top">
+        <span class="chip"><span class="beacon"></span>KARNA online</span>
+        <span class="chip">Approval before action</span>
+        <span class="chip">Sample view</span>
+      </div>
+      <div class="ck">
+        <aside class="ck-side"><span class="lbl">Workspaces</span><ul><li class="on">Today</li><li class="">KARNA</li><li class="">Academics</li><li class="">Resume Lab</li><li class="">Opportunities</li><li class="">Projects</li><li class="">DSA</li></ul></aside>
+        <div class="ck-main">
+          <div class="ck-h">
+            <div><h3>Good morning. Here&rsquo;s your day.</h3><p>KARNA merged your classes, deadlines and reminders into one plan.</p></div>
+            <span class="tagpill" style="--ac:#047857;--as:#ECFDF5"><i></i>Plan ready</span>
+          </div>
+          <div class="mini3">
+            <div class="mini" style="--ac:#1D4ED8;--as:#EFF6FF"><span class="tagpill">Career</span><b>3 openings</b><p>New internships that match your profile.</p></div>
+            <div class="mini" style="--ac:#6D28D9;--as:#F5F3FF"><span class="tagpill">Study</span><b>2 study blocks</b><p>Revision for Thursday&rsquo;s exam, scheduled.</p></div>
+            <div class="mini" style="--ac:#B45309;--as:#FFFBEB"><span class="tagpill">Build</span><b>1 milestone due</b><p>Project demo is due Friday.</p></div>
+          </div>
+          <div class="term" id="heroTerm" aria-live="off">
+            <div class="th"><span>KARNA &middot; activity</span><span>Sample</span></div>
+            <div id="heroLines"></div>
+          </div>
+        </div>
+      </div>
+      <div class="ck-foot"><span><span class="beacon" style="display:inline-block;margin-right:.5rem"></span>You approve every action</span><span>Illustrative data</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- WORKSPACES -->
+<section id="workspaces">
+  <div class="wrap">
+    <div class="sh">
+      <div class="rv"><span class="lbl eyebrow">One workspace &middot; Ten tools</span><h2>Ten tools. <em>One memory.</em></h2></div>
+      <p class="rv">Separate apps forget each other. In OPAI your exams, projects, internships and notes all feed the same plan, so there is no switching and no re-explaining.</p>
+    </div>
+    <div class="pills" id="pills" role="tablist" aria-label="Choose a workspace"><button class="pill" data-i="0" style="--ac:#1D4ED8;--as:#EFF6FF" type="button"><span class="lbl">01 / CAREER</span><span class="nm">Internship Radar</span></button><button class="pill" data-i="1" style="--ac:#6D28D9;--as:#F5F3FF" type="button"><span class="lbl">02 / STUDY</span><span class="nm">Academics Lab</span></button><button class="pill" data-i="2" style="--ac:#047857;--as:#ECFDF5" type="button"><span class="lbl">03 / PLAN</span><span class="nm">Today</span></button><button class="pill" data-i="3" style="--ac:#B45309;--as:#FFFBEB" type="button"><span class="lbl">04 / CAREER</span><span class="nm">Resume Lab</span></button><button class="pill" data-i="4" style="--ac:#0F766E;--as:#F0FDFA" type="button"><span class="lbl">05 / BUILD</span><span class="nm">Project Mgmt</span></button><button class="pill" data-i="5" style="--ac:#1D4ED8;--as:#EFF6FF" type="button"><span class="lbl">06 / PRACTICE</span><span class="nm">DSA Sparring</span></button><button class="pill" data-i="6" style="--ac:#6D28D9;--as:#F5F3FF" type="button"><span class="lbl">07 / ASSISTANT</span><span class="nm">KARNA AI</span></button><button class="pill" data-i="7" style="--ac:#0F766E;--as:#F0FDFA" type="button"><span class="lbl">08 / MEMORY</span><span class="nm">Your Docs</span></button><button class="pill" data-i="8" style="--ac:#BE123C;--as:#FFF1F2" type="button"><span class="lbl">09 / NETWORK</span><span class="nm">Warm Outreach</span></button><button class="pill" data-i="9" style="--ac:#B45309;--as:#FFFBEB" type="button"><span class="lbl">10 / ROUTINE</span><span class="nm">Daily Briefs</span></button></div>
+    <div class="cbar">
+      <div class="cinfo"><span class="lbl" id="cnt">Slide 01 / 10</span><strong id="ctitle">Internship Radar</strong></div>
+      <div class="ctrl">
+        <button class="sq pp" id="play" type="button" aria-pressed="true">Auto &middot; 6s</button>
+        <button class="sq" id="prev" type="button" aria-label="Previous slide">&larr;</button>
+        <button class="sq" id="next" type="button" aria-label="Next slide">&rarr;</button>
+      </div>
+    </div>
+    <div class="timer" aria-hidden="true"><i id="tbar"></i></div>
+    <div class="viewport" id="vp" tabindex="0" aria-label="Workspace showcase" role="region"><article class="slide" data-i="0" style="--ac:#1D4ED8;--as:#EFF6FF" aria-roledescription="slide" aria-label="1 of 10">
+<div class="sc"><div class="stext"><span class="kick"><i></i>Feature 01 &middot; Opportunities</span><h3>Find internships that fit you, then track every one.</h3><p>OPAI keeps openings, applications, deadlines and follow-ups in a single pipeline, and weighs each role against your own profile and skills so you can see where you actually stand.</p><div class="panel"><div class="ph"><span class="lbl">Opportunity pipeline</span><span class="tagpill"><i></i>Sample</span></div><div class="stats"><div><b>8</b><span>Saved</span></div><div><b>3</b><span>Applied</span></div><div><b>2</b><span>Follow-ups due</span></div></div><p class="note">Fit check is based on the skills in your profile.</p></div></div>
+<figure class="simg"><img src="/assets/landing/stairs.webp" alt="Colorful steps climbing toward an open door" loading="lazy" decoding="async"></figure></div></article><article class="slide" data-i="1" style="--ac:#6D28D9;--as:#F5F3FF" aria-roledescription="slide" aria-label="2 of 10">
+<div class="sc"><div class="stext"><span class="kick"><i></i>Feature 02 &middot; Academics</span><h3>Syllabi and exam dates become daily study blocks.</h3><p>Add a syllabus or an exam date and OPAI works backwards: topics, revision blocks and a plan that fits around the rest of your week.</p><div class="panel"><div class="ph"><span class="lbl">Exam countdown</span><span class="tagpill"><i></i>Sample</span></div><div class="stats"><div><b>9</b><span>Days to exam</span></div><div><b>6</b><span>Study blocks</span></div><div><b>3</b><span>Topics left</span></div></div><p class="note">Blocks land in today’s plan automatically.</p></div></div>
+<figure class="simg"><img src="/assets/landing/research.webp" alt="Folders, magnifier and glass cubes floating over a warm backdrop" loading="lazy" decoding="async"></figure></div></article><article class="slide" data-i="2" style="--ac:#047857;--as:#ECFDF5" aria-roledescription="slide" aria-label="3 of 10">
+<div class="sc"><div class="stext"><span class="kick"><i></i>Feature 03 &middot; Daily plan</span><h3>A realistic plan for today, rebuilt when things change.</h3><p>Deadlines, exams and reminders are merged into one plan for the day. Something slips? Tell KARNA and the plan updates around it.</p><div class="panel"><div class="ph"><span class="lbl">Today’s plan</span><span class="tagpill"><i></i>Sample</span></div><div class="rows"><div><span>5 of 7 tasks done</span><b>72%</b></div></div><div class="meter"><i style="width:72%"></i></div><p class="note">One list instead of five apps.</p></div></div>
+<figure class="simg"><img src="/assets/landing/time.webp" alt="Floating dashboards, checkmarks and reminders" loading="lazy" decoding="async"></figure></div></article><article class="slide" data-i="3" style="--ac:#B45309;--as:#FFFBEB" aria-roledescription="slide" aria-label="4 of 10">
+<div class="sc"><div class="stext"><span class="kick"><i></i>Feature 04 &middot; Resume Lab</span><h3>Tailor your master resume to any job description.</h3><p>Keep one master resume. Paste a job description and OPAI reorders and rewrites it to match, using only what is really on your resume.</p><div class="panel"><div class="ph"><span class="lbl">Tailoring check</span><span class="tagpill"><i></i>Sample</span></div><div class="rows"><div><span>Keywords matched</span><b>12 / 15</b></div><div><span>Bullets reworded</span><b>4</b></div><div><span>Needs your review</span><b>2</b></div></div><p class="note">You review every change before you use it.</p></div></div>
+<figure class="simg"><img src="/assets/landing/resume.webp" alt="Laptop surrounded by resume pages and checklists" loading="lazy" decoding="async"></figure></div></article><article class="slide" data-i="4" style="--ac:#0F766E;--as:#F0FDFA" aria-roledescription="slide" aria-label="5 of 10">
+<div class="sc"><div class="stext"><span class="kick"><i></i>Feature 05 &middot; Projects</span><h3>Turn rough notes into milestones you can finish.</h3><p>Describe the project in plain words. OPAI breaks it into milestones and tasks, and keeps them next to your classes and exams so nothing collides.</p><div class="panel"><div class="ph"><span class="lbl">Project board</span><span class="tagpill"><i></i>Sample</span></div><div class="rows"><div><span>Milestone 2 of 5</span><b>In progress</b></div><div><span>Open tasks</span><b>7</b></div><div><span>Next deadline</span><b>Friday</b></div></div><p class="note">Milestones feed the daily plan.</p></div></div>
+<figure class="simg"><img src="/assets/landing/projects.webp" alt="Project boards, milestones and targets in isometric style" loading="lazy" decoding="async"></figure></div></article><article class="slide" data-i="5" style="--ac:#1D4ED8;--as:#EFF6FF" aria-roledescription="slide" aria-label="6 of 10">
+<div class="sc"><div class="stext"><span class="kick"><i></i>Feature 06 &middot; DSA</span><h3>Practice algorithms with hints, not spoilers.</h3><p>Work through a roadmap of problems, get nudges instead of answers, and keep your daily LeetCode streak visible.</p><div class="panel"><div class="ph"><span class="lbl">Daily practice</span><span class="tagpill"><i></i>Sample</span></div><div class="stats"><div><b>12</b><span>Day streak</span></div><div><b>2</b><span>Today</span></div><div><b>Trees</b><span>Next topic</span></div></div><p class="note">Hints first. Solutions only when you ask.</p></div></div>
+<figure class="simg"><img src="/assets/landing/code.webp" alt="Laptop with code and algorithm symbols" loading="lazy" decoding="async"></figure></div></article><article class="slide" data-i="6" style="--ac:#6D28D9;--as:#F5F3FF" aria-roledescription="slide" aria-label="7 of 10">
+<div class="sc"><div class="stext"><span class="kick"><i></i>Feature 07 &middot; KARNA</span><h3>KARNA: ask in plain language, get the right workspace.</h3><p>Tell KARNA what you need. It works out which workspace the request belongs to, pulls in your notes and plan, and proposes the change.</p><div class="panel"><div class="ph"><span class="lbl">KARNA routing</span><span class="tagpill"><i></i>Sample</span></div><div class="rows"><div><span>You said</span><b>“Move my DSA to tomorrow”</b></div><div><span>Routed to</span><b>Today + DSA</b></div><div><span>Status</span><b>Waiting for approval</b></div></div><p class="note">Nothing important happens without your click.</p></div></div>
+<figure class="simg"><img src="/assets/landing/brain.webp" alt="Glowing glass brain made of colorful fibres" loading="lazy" decoding="async"></figure></div></article><article class="slide" data-i="7" style="--ac:#0F766E;--as:#F0FDFA" aria-roledescription="slide" aria-label="8 of 10">
+<div class="sc"><div class="stext"><span class="kick"><i></i>Feature 08 &middot; Notes & files</span><h3>Ask questions across your own notes and files.</h3><p>Attach notes, slides and PDFs. OPAI retrieves the relevant parts so answers and plans are grounded in what you actually uploaded.</p><div class="panel"><div class="ph"><span class="lbl">Your library</span><span class="tagpill"><i></i>Sample</span></div><div class="stats"><div><b>24</b><span>Files</span></div><div><b>6</b><span>Courses</span></div><div><b>3</b><span>Projects</span></div></div><p class="note">Answers are drawn from your uploaded material.</p></div></div>
+<figure class="simg"><img src="/assets/landing/vault.webp" alt="A cluster of colorful glass cubes" loading="lazy" decoding="async"></figure></div></article><article class="slide" data-i="8" style="--ac:#BE123C;--as:#FFF1F2" aria-roledescription="slide" aria-label="9 of 10">
+<div class="sc"><div class="stext"><span class="kick"><i></i>Feature 09 &middot; Outreach</span><h3>Prepare outreach emails, send only what you approve.</h3><p>Keep track of the people you are writing to. OPAI prepares tailored drafts and follow-up reminders. You read, edit, and decide.</p><div class="panel"><div class="ph"><span class="lbl">Outreach queue</span><span class="tagpill"><i></i>Sample</span></div><div class="rows"><div><span>Drafts ready</span><b>3</b></div><div><span>Follow-ups due</span><b>2</b></div><div><span>Sent without approval</span><b>0</b></div></div><p class="note">Drafts never leave until you say so.</p></div></div>
+<figure class="simg"><img src="/assets/landing/network.webp" alt="Many small figures connected by colorful threads" loading="lazy" decoding="async"></figure></div></article><article class="slide" data-i="9" style="--ac:#B45309;--as:#FFFBEB" aria-roledescription="slide" aria-label="10 of 10">
+<div class="sc"><div class="stext"><span class="kick"><i></i>Feature 10 &middot; Briefs</span><h3>A short brief to start every day.</h3><p>What is due, what changed, and what to do first, gathered in one short read so your morning begins with a plan instead of a scroll.</p><div class="panel"><div class="ph"><span class="lbl">Morning brief</span><span class="tagpill"><i></i>Sample</span></div><div class="rows"><div><span>Due today</span><b>3</b></div><div><span>Exams this week</span><b>1</b></div><div><span>New openings</span><b>5</b></div></div><p class="note">Takes about two minutes to read.</p></div></div>
+<figure class="simg"><img src="/assets/landing/idea.webp" alt="A glowing glass light bulb" loading="lazy" decoding="async"></figure></div></article></div>
+    <div class="dots" id="dots"><button class="dot" data-i="0" aria-label="Go to slide 1" type="button"></button><button class="dot" data-i="1" aria-label="Go to slide 2" type="button"></button><button class="dot" data-i="2" aria-label="Go to slide 3" type="button"></button><button class="dot" data-i="3" aria-label="Go to slide 4" type="button"></button><button class="dot" data-i="4" aria-label="Go to slide 5" type="button"></button><button class="dot" data-i="5" aria-label="Go to slide 6" type="button"></button><button class="dot" data-i="6" aria-label="Go to slide 7" type="button"></button><button class="dot" data-i="7" aria-label="Go to slide 8" type="button"></button><button class="dot" data-i="8" aria-label="Go to slide 9" type="button"></button><button class="dot" data-i="9" aria-label="Go to slide 10" type="button"></button></div>
+    <p class="hint">Drag or swipe &middot; use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> &middot; pauses on hover</p>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="hc rv">
+      <span class="lbl eyebrow">How it works</span>
+      <h2>Ask. Plan. <em>Approve.</em></h2>
+      <p>OPAI is built so that you stay in charge. It does the thinking and the busywork. You make the calls.</p>
+    </div>
+    <div class="steps">
+      <div class="step rv" style="--ac:#1D4ED8;--as:#EFF6FF">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12z"/></svg></div>
+        <span class="lbl">Step 01</span><h3>You ask</h3>
+        <p>Type what you need in any workspace, in plain language. &ldquo;Plan my week around the OS exam.&rdquo;</p>
+        <div class="foot"><span class="tagpill"><i></i>Plain language</span></div>
+      </div>
+      <div class="step rv" style="--ac:#6D28D9;--as:#F5F3FF">
+        <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M12 7v5M12 12l-6 5M12 12l6 5"/></svg></div>
+        <span class="lbl">Step 02</span><h3>KARNA routes</h3>
+        <p>Your request goes to the right workspace: Today, Academics, Resume Lab, Opportunities, Projects or DSA.</p>
+        <div class="foot"><span class="tagpill"><i></i>Intent routing</span></div>
+      </div>
+      <div class="step rv" style="--ac:#047857;--as:#ECFDF5">
+        <div class="ico"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div>
+        <span class="lbl">Step 03</span><h3>OPAI updates</h3>
+        <p>Your notes and files are retrieved and your plan changes with them, so nothing lives in a separate tab.</p>
+        <div class="foot"><span class="tagpill"><i></i>Your docs</span></div>
+      </div>
+      <div class="step rv" style="--ac:#B45309;--as:#FFFBEB">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5L15.5 10"/></svg></div>
+        <span class="lbl">Step 04</span><h3>You approve</h3>
+        <p>Nothing is sent or changed until you say so. Emails stay drafts. Plans are proposals. Your click decides.</p>
+        <div class="foot"><span class="tagpill"><i></i>Always your call</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <div class="wrap">
+    <div class="demo rv">
+      <div class="demo-h">
+        <h2>Try the flow, <em>step by step.</em></h2>
+        <div class="tabs" role="tablist" aria-label="Choose a scenario">
+          <button class="tab on" data-k="study" role="tab" aria-selected="true" type="button">Study</button>
+          <button class="tab" data-k="career" role="tab" aria-selected="false" type="button">Career</button>
+          <button class="tab" data-k="build" role="tab" aria-selected="false" type="button">Build</button>
+        </div>
+      </div>
+      <div class="sim" id="sim">
+        <div class="sim-t"><h3 id="sh">Ask: &ldquo;Plan my week around the OS exam&rdquo;</h3><span class="tagpill" id="sb" style="--ac:#6D28D9;--as:#F5F3FF"><i></i>Study</span></div>
+        <p id="sd"></p>
+        <div class="mini3" id="sm"></div>
+        <div class="log" id="slog" aria-live="polite"></div>
+        <div class="sim-f">
+          <span class="m" id="sst">Ready. Press run to see what KARNA would propose.</span>
+          <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+            <button class="btn g" id="sappr" type="button" hidden>Approve plan</button>
+            <button class="btn p" id="srun" type="button">Run sample &rarr;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="fine">Scenarios use illustrative data. Nothing here touches a real account.</p>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<div class="strip">
+  <div class="wrap g">
+    <figure class="rv"><img src="/assets/landing/planet.webp" alt="Glass sphere ringed by orbiting colorful lines" loading="lazy" decoding="async"><figcaption><b>Everything in orbit</b>Classes, projects and career moves around one plan.</figcaption></figure>
+    <figure class="rv"><img src="/assets/landing/crowd.webp" alt="Tiny figures joined by colorful threads" loading="lazy" decoding="async" style="object-position:30% 50%"><figcaption><b>People, not cold emails</b>Outreach you review first.</figcaption></figure>
+    <figure class="rv"><img src="/assets/landing/rings.webp" alt="Rings, spheres and ribbons floating together" loading="lazy" decoding="async"><figcaption><b>Pieces that fit</b>Tools that talk to each other.</figcaption></figure>
+  </div>
+</div>
+
+<!-- CTA -->
+<section class="cta" id="start">
+  <div class="wrap">
+    <div class="ctab rv">
+      <span class="lbl" style="color:var(--ink3)">Your personal operating agent</span>
+      <h2>Stop juggling five tools. <em>Start with one plan.</em></h2>
+      <p>Create your free workspace and let KARNA turn exams, deadlines and applications into a plan you can actually follow.</p>
+      <form class="form" id="cta" action="/signup" method="get">
+        <input type="email" name="email" placeholder="you@college.edu" autocomplete="email" aria-label="Email address">
+        <button class="btn p" type="submit">Create my workspace</button>
+      </form>
+      <div class="trust"><span>Free to start</span><span>Approve before anything is sent</span><span>Google or email sign-in</span></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="fg">
+      <div>
+        <a class="brand" href="/"><img src="/assets/opai-logo-96.png" alt="" width="30" height="30">OPAI</a>
+        <p>The personal operating agent for students. One workspace for study, career and projects.</p>
+      </div>
+      <div><h4>Workspaces</h4><ul>
+        <li><a href="/signup">Today</a></li><li><a href="/signup">KARNA</a></li><li><a href="/signup">Academics</a></li><li><a href="/signup">Resume Lab</a></li></ul></div>
+      <div><h4>More</h4><ul>
+        <li><a href="/signup">Opportunities</a></li><li><a href="/signup">Projects</a></li><li><a href="/signup">DSA practice</a></li><li><a href="/signup">Daily briefs</a></li></ul></div>
+      <div><h4>Company</h4><ul>
+        <li><a href="/feedback.html">Feedback</a></li><li><a href="mailto:tiruvenkatesh123@gmail.com">Contact</a></li><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>
+    </div>
+    <div class="legal"><span>&copy; 2026 OPAI &middot; Tiru Venkatesh &amp; Himesh</span><span>opai.live</span></div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s)},$$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* mobile menu */
+  var menu=$('#menu'),links=$('#links');
+  menu.addEventListener('click',function(){var o=links.classList.toggle('open');menu.setAttribute('aria-expanded',o)});
+  $$('#links a').forEach(function(a){a.addEventListener('click',function(){links.classList.remove('open');menu.setAttribute('aria-expanded','false')})});
+
+  /* reveal on scroll */
+  if('IntersectionObserver' in window && !reduce){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+    $$('.rv').forEach(function(el){io.observe(el)});
+  }else{$$('.rv').forEach(function(el){el.classList.add('in')})}
+
+  /* hero terminal */
+  var heroL=[
+    ['07:14','Exam date added: OS on Thursday. Building study blocks.','t'],
+    ['07:14','3 internship openings match your skills.','t'],
+    ['07:15','Plan for today updated. Waiting for your OK.','ok']];
+  var hl=$('#heroLines');
+  function addLine(box,l){var d=document.createElement('div');d.innerHTML='<span style="opacity:.5">['+l[0]+']</span> <span class="'+l[2]+'">&gt;</span> '+l[1];box.appendChild(d)}
+  if(reduce){heroL.forEach(function(l){addLine(hl,l)});}
+  else{heroL.forEach(function(l,i){setTimeout(function(){addLine(hl,l);if(i===heroL.length-1){var c=document.createElement('span');c.className='caret';hl.lastChild.appendChild(c)}},900+i*1100)})}
+  if(!reduce){}
+
+  /* carousel */
+  var vp=$('#vp'),slides=$$('.slide'),pills=$$('.pill'),dots=$$('.dot'),N=slides.length,cur=0,auto=true,hover=false,DUR=6000,t0=0,raf=null,tbar=$('#tbar');
+  var names=pills.map(function(p){return $('.nm',p).textContent});
+  function pad(n){return (n<10?'0':'')+n}
+  function setActive(i){
+    cur=i;
+    slides.forEach(function(s,k){s.classList.toggle('on',k===i)});
+    pills.forEach(function(p,k){p.classList.toggle('on',k===i);p.setAttribute('aria-selected',k===i)});
+    dots.forEach(function(d,k){d.classList.toggle('on',k===i)});
+    $('#cnt').textContent='Slide '+pad(i+1)+' / '+N;
+    $('#ctitle').textContent=names[i];
+    t0=performance.now();
+  }
+  function go(i,smooth){
+    i=(i+N)%N;var s=slides[i];
+    var left=s.offsetLeft-(vp.clientWidth-s.clientWidth)/2;
+    vp.scrollTo({left:left,behavior:(smooth===false||reduce)?'auto':'smooth'});
+    setActive(i);
+  }
+  pills.forEach(function(p){p.addEventListener('click',function(){go(+p.dataset.i)})});
+  dots.forEach(function(d){d.addEventListener('click',function(){go(+d.dataset.i)})});
+  slides.forEach(function(s){s.addEventListener('click',function(){if(+s.dataset.i!==cur)go(+s.dataset.i)})});
+  $('#prev').addEventListener('click',function(){go(cur-1)});
+  $('#next').addEventListener('click',function(){go(cur+1)});
+  $('#play').addEventListener('click',function(){auto=!auto;this.setAttribute('aria-pressed',auto);this.innerHTML=auto?'Auto &middot; 6s':'Paused';t0=performance.now()});
+  vp.addEventListener('keydown',function(e){if(e.key==='ArrowRight'){e.preventDefault();go(cur+1)}if(e.key==='ArrowLeft'){e.preventDefault();go(cur-1)}});
+  vp.addEventListener('mouseenter',function(){hover=true});vp.addEventListener('mouseleave',function(){hover=false;t0=performance.now()});
+  vp.addEventListener('focusin',function(){hover=true});vp.addEventListener('focusout',function(){hover=false;t0=performance.now()});
+  /* sync active slide while user drags/scrolls */
+  var st;vp.addEventListener('scroll',function(){clearTimeout(st);st=setTimeout(function(){
+    var c=vp.scrollLeft+vp.clientWidth/2,best=0,bd=1e9;
+    slides.forEach(function(s,k){var d=Math.abs(s.offsetLeft+s.clientWidth/2-c);if(d<bd){bd=d;best=k}});
+    if(best!==cur)setActive(best)},90)},{passive:true});
+  /* only run the timer while visible */
+  var vis=true;if('IntersectionObserver' in window){new IntersectionObserver(function(es){vis=es[0].isIntersecting;t0=performance.now()},{threshold:.25}).observe(vp)}
+  function tick(now){
+    if(auto&&!hover&&vis&&!reduce){var p=Math.min(1,(now-t0)/DUR);tbar.style.width=(p*100)+'%';if(p>=1){go(cur+1)}}
+    else{tbar.style.width=reduce||!auto?'0%':tbar.style.width}
+    raf=requestAnimationFrame(tick)}
+  setActive(0);slides[0].scrollIntoView&&(vp.scrollLeft=0);
+  window.addEventListener('resize',function(){go(cur,false)});
+  raf=requestAnimationFrame(tick);
+
+  /* demo simulator */
+  var SC={
+    study:{h:'Ask: \u201cPlan my week around the OS exam\u201d',b:'Study',ac:['#6D28D9','#F5F3FF'],
+      d:'KARNA reads your syllabus and exam date, counts the days left, and proposes revision blocks that fit around your classes and your project work.',
+      m:[['Days to exam','9'],['Blocks proposed','6'],['Topics covered','8 / 11']],
+      log:[['Read syllabus and exam date','t'],['Matched 11 topics to 9 days','t'],['Placed 6 study blocks around classes','t'],['Plan ready. Waiting for your approval','ok']],
+      done:'Approved. Study blocks added to today\u2019s plan.'},
+    career:{h:'Ask: \u201cTailor my resume for this internship\u201d',b:'Career',ac:['#1D4ED8','#EFF6FF'],
+      d:'Paste a job description. OPAI compares it with your master resume, reorders what is relevant, and rewords bullets using only what you have really done.',
+      m:[['Keywords matched','12 / 15'],['Bullets reworded','4'],['Flagged for review','2']],
+      log:[['Parsed job description','t'],['Compared with master resume','t'],['Reworded 4 bullets, flagged 2 for you','t'],['Draft ready. Waiting for your approval','ok']],
+      done:'Approved. Tailored resume saved. Nothing was sent anywhere.'},
+    build:{h:'Ask: \u201cBreak my project into milestones\u201d',b:'Build',ac:['#0F766E','#F0FDFA'],
+      d:'Describe the project in a few lines. OPAI proposes milestones and tasks with dates, and keeps them next to your other deadlines.',
+      m:[['Milestones','5'],['Tasks','18'],['First deadline','Friday']],
+      log:[['Read project notes','t'],['Split into 5 milestones','t'],['Dated 18 tasks against your calendar','t'],['Board ready. Waiting for your approval','ok']],
+      done:'Approved. Milestones added to your project board.'}
+  };
+  var key='study',timers=[],run=$('#srun'),appr=$('#sappr'),slog=$('#slog'),sst=$('#sst');
+  function clearT(){timers.forEach(clearTimeout);timers=[]}
+  function render(k){
+    key=k;clearT();var s=SC[k];
+    $('#sh').textContent=s.h;$('#sd').textContent=s.d;
+    var b=$('#sb');b.style.setProperty('--ac',s.ac[0]);b.style.setProperty('--as',s.ac[1]);b.innerHTML='<i></i>'+s.b;
+    $('#sm').innerHTML=s.m.map(function(x){return '<div class="mini" style="--ac:'+s.ac[0]+'"><span class="lbl" style="color:var(--ink3)">'+x[0]+'</span><b>'+x[1]+'</b></div>'}).join('');
+    slog.innerHTML='';appr.hidden=true;run.disabled=false;run.innerHTML='Run sample &rarr;';sst.textContent='Ready. Press run to see what KARNA would propose.';
+  }
+  $$('.tab').forEach(function(t){t.addEventListener('click',function(){
+    $$('.tab').forEach(function(x){var on=x===t;x.classList.toggle('on',on);x.setAttribute('aria-selected',on)});render(t.dataset.k)})});
+  run.addEventListener('click',function(){
+    clearT();var s=SC[key];slog.innerHTML='';appr.hidden=true;run.disabled=true;sst.textContent='KARNA is working\u2026';
+    s.log.forEach(function(l,i){timers.push(setTimeout(function(){
+      var d=document.createElement('div');d.innerHTML='<span class="'+l[1]+'">&gt;</span> '+l[0];slog.appendChild(d);
+      if(i===s.log.length-1){appr.hidden=false;run.disabled=false;run.innerHTML='Run again';sst.textContent='Waiting for your approval. Nothing has changed yet.'}
+    },reduce?0:i*750))});
+  });
+  appr.addEventListener('click',function(){
+    var d=document.createElement('div');d.innerHTML='<span class="ok">&#10003;</span> '+SC[key].done;slog.appendChild(d);appr.hidden=true;sst.textContent='Approved by you.'});
+  render('study');
+
+  /* cta: carry email to signup */
+  $('#cta').addEventListener('submit',function(){var i=this.querySelector('input');if(!i.value)i.disabled=true});
+})();
+</script>
+</body>
+</html>

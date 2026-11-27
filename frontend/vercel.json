@@ -2,11 +2,7 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/newdemotiru/index.html"
-    },
-    {
-      "source": "/products/python-rag-starter",
-      "destination": "/products/python-rag-starter.html"
+      "destination": "/home.html"
     },
     {
       "source": "/login",
