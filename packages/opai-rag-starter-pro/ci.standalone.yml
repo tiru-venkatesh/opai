@@ -1,0 +1,22 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env: { POSTGRES_USER: rag, POSTGRES_PASSWORD: rag, POSTGRES_DB: rag }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U rag" --health-interval 5s --health-retries 10
+    env:
+      OPAI_TEST_PG_DSN: postgresql://rag:rag@localhost:5432/rag
+      OPAI_RAG_EMBEDDER: hash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install opai-rag-starter-lite && pip install -e ".[dev,chroma]"   # or your Lite source
+      - run: pytest -q
+      - run: opai-rag-eval --corpus examples/corpus --dataset examples/dataset.jsonl --min-hit 0.85 -v

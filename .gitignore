@@ -21,3 +21,14 @@ backend/opa.db
 Thumbs.db
 .vscode/
 .idea/
+
+# Personal data: never commit real resumes (backend/resumes keeps only .gitkeep)
+backend/resumes/*
+!backend/resumes/.gitkeep
+
+# Build artefacts and archives
+*.zip
+*.egg-info/
+.pytest_cache/
+chroma_data/
+dist/

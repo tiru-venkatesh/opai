@@ -1,0 +1,18 @@
+{"q": "How long do I have to ask for a refund?", "doc": "handbook.md", "contains": ["14 days"]}
+{"q": "When is support open?", "doc": "handbook.md", "contains": ["Monday to Friday"]}
+{"q": "How fast do priority customers get a reply?", "doc": "handbook.md", "contains": ["2 hours"]}
+{"q": "How long until deleted documents disappear from backups?", "doc": "handbook.md", "contains": ["30 days"]}
+{"q": "Is there a discount on annual plans?", "doc": "handbook.md", "contains": ["15 percent"]}
+{"q": "How do I get my notes out of the app?", "doc": "product_faq.md", "contains": ["Export"]}
+{"q": "Does the app work without internet?", "doc": "product_faq.md", "contains": ["offline"]}
+{"q": "What is the largest attachment I can upload?", "doc": "product_faq.md", "contains": ["250 MB"]}
+{"q": "I trashed a note by accident, can I get it back?", "doc": "product_faq.md", "contains": ["Trash"]}
+{"q": "Do students pay less?", "doc": "product_faq.md", "contains": ["50 percent"]}
+{"q": "How many characters must a password have?", "doc": "security_policy.md", "contains": ["12 characters"]}
+{"q": "How quickly must a security incident be reported?", "doc": "security_policy.md", "contains": ["one hour"]}
+{"q": "How often are admin permissions reviewed?", "doc": "security_policy.md", "contains": ["quarter"]}
+{"q": "What cipher protects stored data?", "doc": "security_policy.md", "contains": ["AES-256"]}
+{"q": "How soon are critical bugs fixed after a researcher reports them?", "doc": "security_policy.md", "contains": ["14 days"]}
+{"q": "What is the capital of Australia?", "no_answer": true}
+{"q": "Who painted the Mona Lisa?", "no_answer": true}
+{"q": "zxqv blorp fnord", "no_answer": true}

@@ -1,0 +1,45 @@
+name: ci
+on: [push, pull_request]
+env:
+  OPAI_RAG_EMBEDDER: hash
+jobs:
+  kits:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env: { POSTGRES_USER: rag, POSTGRES_PASSWORD: rag, POSTGRES_DB: rag }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U rag" --health-interval 5s --health-retries 10
+    env:
+      OPAI_TEST_PG_DSN: postgresql://rag:rag@localhost:5432/rag
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -e packages/opai-rag-starter-lite -e "packages/opai-rag-starter-pro[dev,chroma]"
+      - run: pytest -q packages/opai-rag-starter-lite
+      - run: pytest -q packages/opai-rag-starter-pro
+      - name: Tutorial excerpts match the source and snippets run
+        run: python scripts/check_tutorial.py
+      - name: Retrieval-quality gate
+        run: opai-rag-eval --corpus packages/opai-rag-starter-pro/examples/corpus --dataset packages/opai-rag-starter-pro/examples/dataset.jsonl --min-hit 0.85 -v
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r backend/requirements.txt pytest httpx reportlab
+      - working-directory: backend
+        env: { OPAI_AUTH_MODE: "off" }
+        run: pytest -q tests/test_rag_pipeline.py tests/test_cross_user.py tests/test_auth_guard.py
+  no-personal-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail if resume PDFs or archives are tracked
+        run: |
+          bad=$(git ls-files 'backend/resumes/*.pdf' '*.zip' '*.db' | head -5)
+          [ -z "$bad" ] || { echo "Tracked files that must not be committed:"; echo "$bad"; exit 1; }

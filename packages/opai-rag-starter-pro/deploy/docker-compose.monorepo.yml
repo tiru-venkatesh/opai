@@ -1,0 +1,8 @@
+# Monorepo use: builds Pro against the Lite package in this repo (no PyPI/GitHub needed).
+#   docker compose -f packages/opai-rag-starter-pro/deploy/docker-compose.yml \
+#                  -f packages/opai-rag-starter-pro/deploy/docker-compose.monorepo.yml --env-file .env up --build
+services:
+  api:
+    build:
+      additional_contexts:
+        lite: ../../opai-rag-starter-lite

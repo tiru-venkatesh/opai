@@ -5,6 +5,10 @@
       "destination": "/newdemotiru/index.html"
     },
     {
+      "source": "/products/python-rag-starter",
+      "destination": "/products/python-rag-starter.html"
+    },
+    {
       "source": "/login",
       "destination": "/login.html"
     },

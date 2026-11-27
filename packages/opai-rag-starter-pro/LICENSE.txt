@@ -1,0 +1,34 @@
+DRAFT COMMERCIAL LICENCE: HAVE A LAWYER REVIEW THIS BEFORE YOU SELL. It is a starting point, not legal advice.
+Also check how it interacts with the terms of the marketplace you sell on.
+
+OPAI RAG Starter Pro: Developer Licence
+
+Copyright (c) 2026 Tiru Builds. All rights reserved.
+
+1. Grant. On payment, the licensor grants the purchaser a non-exclusive, non-transferable, perpetual licence to
+   use and modify the source code in this package ("the Kit"), and to include it in software the purchaser
+   develops, including commercial software and hosted services, for the purchaser's own use or for clients of
+   the purchaser.
+
+2. One seat. One purchase covers one named individual developer. A team needs one purchase per developer who
+   accesses the source, unless a team licence was purchased.
+
+3. Restrictions. The purchaser may not (a) redistribute, publish, sublicense, sell or share the Kit's source
+   code, in original or modified form, as source code or as a competing starter kit, template or library;
+   (b) publish it in a public repository; (c) allow persons without a licence to access it.
+   Compiled or hosted software that merely uses the Kit is not redistribution of the Kit.
+
+4. Free components. The separately published "OPAI RAG Starter (Lite)" package is licensed under the MIT licence
+   and is not affected by this licence. Third-party dependencies keep their own licences.
+
+5. Updates. Updates released for the purchased major version are included. Support is by the channel stated on
+   the product page and is not guaranteed.
+
+6. No warranty. THE KIT IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. The licensor's total liability is
+   limited to the price paid. The purchaser is responsible for testing the Kit before production use, for
+   securing deployments, and for the lawfulness of the documents they process.
+
+7. Termination. The licence ends automatically on breach of clauses 2 or 3, and the purchaser must delete the
+   Kit. Refunds follow the policy shown at the point of sale.
+
+8. Governing law: [state governing law and venue after legal review].

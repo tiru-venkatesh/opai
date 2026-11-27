@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opai-rag-starter-pro"
+version = "0.1.0"
+description = "OPAI RAG Starter Pro: Postgres/pgvector + Chroma stores, evaluation harness, multi-tenant API, deployment assets."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE.txt" }
+dependencies = ["opai-rag-starter-lite>=0.1.1"]
+
+[project.optional-dependencies]
+pg = ["psycopg[binary,pool]>=3.1"]
+chroma = ["chromadb>=0.5"]
+api = ["fastapi>=0.110", "uvicorn[standard]>=0.28", "python-multipart>=0.0.9", "psycopg[binary,pool]>=3.1"]
+claude = ["anthropic>=0.40"]
+dev = ["pytest>=8", "httpx>=0.27", "reportlab>=4", "fastapi>=0.110", "python-multipart>=0.0.9", "psycopg[binary,pool]>=3.1"]
+
+[project.scripts]
+opai-rag-eval = "opai_rag_pro.eval.cli:main"
+opai-rag-pro = "opai_rag_pro.admin:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

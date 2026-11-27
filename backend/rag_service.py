@@ -50,7 +50,7 @@ NOTE = "note"       # pasted notes (rag_api.py)
 # ------------------------------------------------------------------ embedding
 FASTEMBED_TAG = "bge-small-en-v1.5"
 HASH_DIM = 512
-HASH_TAG = f"hash-{HASH_DIM}-s1"  # bump when tokenize()/_hash_embed change so old chunks re-embed lazily
+HASH_TAG = f"hash-{HASH_DIM}-s2"  # bump when tokenize()/_hash_embed change so old chunks re-embed lazily
 
 _fe_model = None
 _fe_failed = False
@@ -114,7 +114,8 @@ def warmup() -> None:
 _STOP = set(
     "a an the and or of to in on for with at by from is are was were be been it this that these those "
     "as i my me we our you your they their he she his her its into over under about can could should "
-    "would will do does did have has had not no yes so if then than also just more most some any all".split()
+    "would will do does did have has had not no yes so if then than also just more most some any all "
+    "what who whom whose when where which why how".split()
 )
 _TOKEN = re.compile(r"[a-z0-9][a-z0-9+#\-]*")
 

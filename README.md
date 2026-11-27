@@ -1,3 +1,17 @@
+> ## Repository layout
+>
+> | Path | What | Visibility |
+> |---|---|---|
+> | `backend/`, `frontend/` | The OPAI app (FastAPI + static frontend) | private |
+> | `packages/opai-rag-starter-lite` | Free, MIT. Document Q&A with citations | **public**: export with `make export-lite DEST=...` |
+> | `packages/opai-rag-starter-pro` | Paid kit: pgvector/Chroma stores, eval harness, multi-tenant API, deploy assets | **private**: sell with `make package-pro` |
+> | `frontend/products/python-rag-starter.html` | Product landing page, served at `/products/python-rag-starter` | public (fill the two `{{...}}` links first) |
+> | `content/` | Articles and social posts, checked against the source by `make check-tutorial` | private until published |
+> | `scripts/` | Export, packaging, page check and clean-install test | private |
+>
+> Quick start for everything: `make setup && make test`. Details: `packages/README.md`.
+> Do not make this repository public as-is: it contains the paid Pro source and the app.
+
 <p align="center">
   <img src="frontend/assets/opai-logo.png" alt="OPAI logo" width="112" />
 </p>

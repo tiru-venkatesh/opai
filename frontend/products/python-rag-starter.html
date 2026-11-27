@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Python RAG Starter Kit: document Q&amp;A with page-level citations · OPAI</title>
+<meta name="description" content="A small, readable Python RAG starter. Ingest PDFs, DOCX and Markdown, ask questions, get answers that cite the file and page. Free Lite version on GitHub; Pro adds Postgres/pgvector, an evaluation harness and a multi-tenant API.">
+<link rel="canonical" href="https://opai.live/products/python-rag-starter">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Python RAG Starter Kit by OPAI">
+<meta property="og:description" content="Document Q&amp;A with page-level citations. Free Lite on GitHub, Pro kit with pgvector, evaluation harness and multi-tenant API.">
+<meta property="og:url" content="https://opai.live/products/python-rag-starter">
+<meta property="og:image" content="https://opai.live/products/img/rag-og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0b0b0a">
+<style>
+@font-face{font-family:'Outfit';font-weight:500;font-display:swap;src:url('/newdemotiru/fonts/outfit-latin-500-normal.woff2') format('woff2')}
+@font-face{font-family:'Outfit';font-weight:600;font-display:swap;src:url('/newdemotiru/fonts/outfit-latin-600-normal.woff2') format('woff2')}
+@font-face{font-family:'Manrope';font-weight:400;font-display:swap;src:url('/newdemotiru/fonts/manrope-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Manrope';font-weight:500;font-display:swap;src:url('/newdemotiru/fonts/manrope-latin-500-normal.woff2') format('woff2')}
+@font-face{font-family:'Manrope';font-weight:600;font-display:swap;src:url('/newdemotiru/fonts/manrope-latin-600-normal.woff2') format('woff2')}
+@font-face{font-family:'DM Mono';font-weight:400;font-display:swap;src:url('/newdemotiru/fonts/dm-mono-latin-400-normal.woff2') format('woff2')}
+:root{
+  --bg:#0b0b0a; --ink:#F1F1EE; --body:#C9C9C5; --mut:#8E8E89; --dim:#62625E; --line:rgba(241,241,238,.12);
+  --card:rgba(241,241,238,.045); --sage:#9BAE7E; --warn:#D9B26B;
+  --head:'Outfit',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --sans:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'DM Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --pad:clamp(18px,3vw,44px);
+}
+*{box-sizing:border-box}
+html{background:var(--bg);scroll-behavior:smooth;scroll-padding-top:76px;-webkit-text-size-adjust:100%}
+body{margin:0;background:radial-gradient(ellipse 80% 40% at 85% 0%,rgba(155,174,126,.10),transparent 60%),var(--bg);color:var(--body);
+  font:400 17px/1.7 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--ink)}
+.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#151514;padding:10px 14px;border-radius:8px;z-index:100}
+.skip:focus{left:8px}
+:focus-visible{outline:2px solid var(--sage);outline-offset:3px;border-radius:6px}
+
+/* header */
+header.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:max(12px,env(safe-area-inset-top)) var(--pad) 12px;background:rgba(11,11,10,.86);border-bottom:1px solid var(--line);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font:600 20px/1 var(--head);letter-spacing:.02em}
+.brand i{width:8px;height:8px;border-radius:50%;background:var(--ink);box-shadow:0 0 14px var(--ink)}
+nav{display:flex;align-items:center;gap:clamp(14px,2.2vw,32px)}
+nav a.l{color:var(--mut);text-decoration:none;font:500 15px/1 var(--sans)}
+nav a.l:hover{color:var(--ink)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 24px;border-radius:999px;text-decoration:none;
+  font:600 15px/1 var(--head);letter-spacing:.01em;transition:transform .2s,background .2s,border-color .2s;border:1px solid transparent}
+.btn.solid{background:var(--ink);color:#151514}
+.btn.solid:hover{transform:translateY(-2px);background:#D4D4D0}
+.btn.ghost{color:var(--ink);border-color:rgba(241,241,238,.28)}
+.btn.ghost:hover{border-color:var(--ink);transform:translateY(-2px)}
+.btn.sm{padding:10px 18px;font-size:14px}
+
+/* layout */
+main{display:block}
+.wrap{max-width:1120px;margin:0 auto;padding:0 var(--pad)}
+section{padding:clamp(56px,9vh,104px) 0}
+.eyebrow{display:flex;align-items:center;gap:14px;color:var(--mut);font:600 12px/1.5 var(--sans);letter-spacing:.14em;text-transform:uppercase;margin-bottom:18px}
+.eyebrow::before{content:"";width:36px;height:1px;background:var(--mut)}
+h1{margin:0;font:600 clamp(36px,6vw,76px)/1.04 var(--head);letter-spacing:-.035em;color:var(--ink)}
+h2{margin:0 0 clamp(22px,3.5vh,38px);font:600 clamp(28px,3.4vw,46px)/1.1 var(--head);letter-spacing:-.025em;color:var(--ink)}
+h2 em,h1 em{font-style:normal;color:var(--sage)}
+h3{margin:0 0 6px;font:600 20px/1.25 var(--head);color:var(--ink);letter-spacing:-.01em}
+p{margin:0 0 1em}
+.lead{max-width:56ch;font-size:clamp(17px,1.4vw,20px);color:var(--body);margin-top:20px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.fine{color:var(--mut);font-size:14px;margin-top:14px}
+
+/* hero */
+.hero{padding-top:clamp(48px,9vh,96px)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(28px,4vw,64px);align-items:center}
+
+/* code */
+.term{background:#111110;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.term .bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);
+  color:var(--mut);font:500 12px/1 var(--sans);letter-spacing:.06em}
+.copy{background:transparent;border:1px solid var(--line);color:var(--body);border-radius:8px;padding:6px 10px;font:500 12px/1 var(--sans);cursor:pointer}
+.copy:hover{border-color:var(--mut);color:var(--ink)}
+pre{margin:0;padding:18px;overflow-x:auto;font:400 13.5px/1.65 var(--mono);color:#D8D8D3;tab-size:2}
+pre .c{color:var(--dim)} pre .g{color:var(--sage)} pre .p{color:var(--mut)}
+code.i{font:400 .9em var(--mono);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:.1em .4em;color:var(--ink)}
+
+.fig{margin:0 0 clamp(22px,3.5vh,34px);max-width:662px}
+.fig img{display:block;width:100%;height:auto;border-radius:16px;border:1px solid var(--line)}
+
+/* steps */
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;counter-reset:s}
+.steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+.steps li::before{content:"0" counter(s);display:block;color:var(--sage);font:500 13px/1 var(--mono);margin-bottom:14px}
+.steps p{font-size:15px;color:var(--body);margin:0}
+
+/* table */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:15.5px}
+th,td{padding:14px 18px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+thead th{font:600 14px/1.3 var(--head);color:var(--ink);background:rgba(241,241,238,.04)}
+thead th.pro{color:var(--sage)}
+td.y{color:var(--ink)} td.n{color:var(--dim)}
+.price{display:block;font:500 13px/1.4 var(--sans);color:var(--mut);margin-top:4px}
+
+/* cards */
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px}
+.card p{margin:0;font-size:15.5px}
+.card.warn{border-color:rgba(217,178,107,.35)}
+.card.warn h3{color:var(--warn)}
+ul.ticks{list-style:none;margin:0;padding:0}
+ul.ticks li{position:relative;padding:8px 0 8px 28px;border-bottom:1px solid var(--line)}
+ul.ticks li:last-child{border-bottom:0}
+ul.ticks li::before{content:"";position:absolute;left:4px;top:18px;width:10px;height:6px;border-left:2px solid var(--sage);border-bottom:2px solid var(--sage);transform:rotate(-45deg)}
+.num{font-variant-numeric:tabular-nums}
+
+/* faq */
+details{border-bottom:1px solid var(--line);padding:4px 0}
+summary{cursor:pointer;list-style:none;padding:16px 36px 16px 0;position:relative;font:600 18px/1.35 var(--head);color:var(--ink)}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";position:absolute;right:6px;top:14px;font:500 24px/1 var(--head);color:var(--mut);transition:transform .2s}
+details[open] summary::after{transform:rotate(45deg)}
+details p{padding:0 0 18px;max-width:70ch}
+
+/* final cta + footer */
+.final{text-align:center;border:1px solid var(--line);border-radius:22px;padding:clamp(36px,7vw,72px) var(--pad);
+  background:radial-gradient(ellipse 70% 100% at 50% 0%,rgba(155,174,126,.12),transparent 70%),var(--card)}
+.final .cta{justify-content:center}
+footer{padding:36px 0 max(40px,env(safe-area-inset-bottom));color:var(--mut);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+footer a{color:var(--mut)}
+
+@media (max-width:900px){
+  .hero-grid{grid-template-columns:1fr}
+  .steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid2{grid-template-columns:1fr}
+  nav a.l{display:none}
+}
+@media (max-width:520px){ .steps{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} .btn,.copy,summary::after{transition:none} }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <a class="brand" href="/" aria-label="OPAI home"><i></i>OPAI</a>
+  <nav aria-label="Page">
+    <a class="l" href="#how">How it works</a>
+    <a class="l" href="#compare">Lite vs Pro</a>
+    <a class="l" href="#measured">Results</a>
+    <a class="l" href="#faq">FAQ</a>
+    <a class="btn solid sm" href="{{GUMROAD_URL}}" data-track="buy_header">Get Pro</a>
+  </nav>
+</header>
+
+<main id="main">
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Python · RAG · Starter kit</div>
+      <h1>Ask your documents. Get answers <em>with page numbers.</em></h1>
+      <p class="lead">A small, readable Python codebase for document Q&amp;A. Ingest PDFs, Word files and Markdown, ask a question, and get an answer that tells you which file and page it came from. The free version is under 800 lines.</p>
+      <div class="cta">
+        <a class="btn solid" href="{{GUMROAD_URL}}" data-track="buy_hero">Get the Pro kit &middot; ₹999 / $15</a>
+        <a class="btn ghost" href="{{GITHUB_URL}}" data-track="github_hero">Try Lite free on GitHub</a>
+      </div>
+      <p class="fine">Launch price. One-time purchase, one developer. Use it in commercial projects.</p>
+    </div>
+
+    <div class="term" role="group" aria-label="Example terminal session">
+      <div class="bar"><span>terminal</span><button class="copy" type="button" data-copy="pip install .&#10;opai-rag ingest examples/handbook.md&#10;opai-rag ask &quot;When is support available?&quot;">Copy commands</button></div>
+<pre><span class="p">$</span> pip install .
+<span class="p">$</span> opai-rag ingest examples/handbook.md
+<span class="g">ok</span>   handbook.md: 3 chunks
+<span class="p">$</span> opai-rag ask "When is support available?"
+Here is what I found in your documents:
+- handbook.md: ## Support hours Support is available
+  Monday to Friday, 9am to 6pm IST. [1]
+
+Sources:
+  [1] handbook.md  (score 0.3537)
+  [2] handbook.md  (score 0.1693)
+
+<span class="c"># Add ANTHROPIC_API_KEY for full written answers,
+# or pass any LLM as a Python callable.</span></pre>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="eyebrow">How it works</div>
+    <h2>Retrieval you can read, <em>not a black box.</em></h2>
+    <figure class="fig"><img src="/products/img/rag-illustration.webp" width="662" height="412" loading="lazy" decoding="async" alt="Illustration of a laptop showing code, surrounded by flowchart, bracket and graph icons"></figure>
+    <ol class="steps">
+      <li><h3>Parse</h3><p>PDF (page by page), DOCX, TXT, Markdown and CSV. Scanned PDFs are rejected with a clear message instead of silently returning nothing.</p></li>
+      <li><h3>Chunk &amp; embed</h3><p>Paragraph-first chunks with overlap. Uses fastembed if installed, or a built-in fallback that needs no download.</p></li>
+      <li><h3>Hybrid search</h3><p>Embedding similarity plus BM25, merged with rank fusion, then MMR so the top results aren't near-duplicates.</p></li>
+      <li><h3>Cited answer</h3><p>The model sees numbered passages and must cite them. Citations that don't exist are stripped. No LLM? You still get cited extracts.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="wrap">
+    <div class="eyebrow">Lite vs Pro</div>
+    <h2>Start free. <em>Upgrade when you ship.</em></h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">&nbsp;</th><th scope="col">Lite <span class="price">Free, MIT licence</span></th><th scope="col" class="pro">Pro <span class="price">₹999 / $15 launch price, one developer</span></th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Hybrid retrieval with file + page citations</th><td class="y">Yes</td><td class="y">Yes (uses Lite)</td></tr>
+          <tr><th scope="row">CLI and single-key HTTP API</th><td class="y">Yes</td><td class="y">Yes</td></tr>
+          <tr><th scope="row">Storage</th><td>One SQLite file</td><td class="y">Postgres + pgvector (HNSW index) or ChromaDB</td></tr>
+          <tr><th scope="row">Measure retrieval quality</th><td class="n">&mdash;</td><td class="y"><code class="i">opai-rag-eval</code>: hit@k, MRR, abstention, chunk-size comparison, CI gate</td></tr>
+          <tr><th scope="row">Multi-tenant API</th><td class="n">&mdash;</td><td class="y">One API key per customer, tenant isolation, rate limit, daily quota</td></tr>
+          <tr><th scope="row">Deployment</th><td class="n">&mdash;</td><td class="y">Dockerfile, docker-compose, GitHub Actions workflow</td></tr>
+          <tr><th scope="row">Licence</th><td>MIT</td><td>Commercial: use in your products, no redistribution of the kit's source</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cta">
+      <a class="btn solid" href="{{GUMROAD_URL}}" data-track="buy_compare">Get the Pro kit</a>
+      <a class="btn ghost" href="{{GITHUB_URL}}" data-track="github_compare">Start with Lite</a>
+    </div>
+  </div>
+</section>
+
+<section id="measured">
+  <div class="wrap">
+    <div class="eyebrow">Measured, not claimed</div>
+    <h2>The kit tells you <em>when retrieval is wrong.</em></h2>
+    <p class="lead" style="margin-top:0;margin-bottom:28px">Pro includes an evaluation harness. Write questions and the passages that should answer them; it reports whether the right passage came back. Output on the bundled sample (3 documents, 18 questions, built-in fallback embedder, no model download):</p>
+    <div class="term">
+      <div class="bar"><span>opai-rag-eval --chunk-sizes 300,600,900</span></div>
+<pre> chunk  docs   hit@1   hit@5    MRR  abstain
+   300     3    0.80    0.93   0.85     0.67
+   600     3    0.80    1.00   0.87     1.00
+   900     3    0.67    0.87   0.75     1.00</pre>
+    </div>
+    <p class="fine">This sample is tiny and exists to show how the tool works. Your documents will score differently, which is exactly why you run it on them. &ldquo;Abstain&rdquo; is the share of off-topic questions where nothing was returned.</p>
+  </div>
+</section>
+
+<section id="tested">
+  <div class="wrap">
+    <div class="eyebrow">What's tested</div>
+    <h2>Checked against <em>real databases.</em></h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Test suites</h3>
+        <ul class="ticks">
+          <li><span class="num">22</span> tests on Lite: ingestion, citations, page numbers, bad files, LLM failure, and document text passed to the model as untrusted data.</li>
+          <li><span class="num">30</span> tests on Pro, run against real Postgres with pgvector and real ChromaDB.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Behaviour covered by tests</h3>
+        <ul class="ticks">
+          <li>One customer's key cannot read or delete another's documents.</li>
+          <li>Revoked keys stop working immediately; only key hashes are stored.</li>
+          <li>The daily quota is exact with 8 parallel workers.</li>
+          <li>Switching embedders is refused instead of mixing vectors.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="limits">
+  <div class="wrap">
+    <div class="eyebrow">Know before you buy</div>
+    <h2>What it <em>doesn't</em> do.</h2>
+    <div class="grid2">
+      <div class="card warn"><h3>No OCR</h3><p>Scanned PDFs are rejected with a message. Run OCR first.</p></div>
+      <div class="card warn"><h3>English-centric</h3><p>The tokenizer and default embedder are tuned for English text.</p></div>
+      <div class="card warn"><h3>Lite scans every chunk</h3><p>Fine up to tens of thousands of chunks. Beyond that, use Pro's Postgres or Chroma store.</p></div>
+      <div class="card warn"><h3>Rate limit is per process</h3><p>With several workers, put a gateway limit in front for an exact global cap. The daily quota is exact.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="eyebrow">FAQ</div>
+    <h2>Questions <em>before you buy.</em></h2>
+    <details><summary>Do I need an OpenAI or Anthropic key?</summary><p>No. Without an LLM you get extractive answers: the most relevant sentences with citations. Add <code class="i">ANTHROPIC_API_KEY</code> for written answers with Claude, or pass any function <code class="i">(system, user) &rarr; text</code> to use a different model.</p></details>
+    <details><summary>What can I do with the licence?</summary><p>Pro is licensed to one named developer. You may modify it and use it in commercial products and hosted services, including for your clients. You may not resell, share or publish the kit's source. Read <code class="i">LICENSE.txt</code> in the repository before you buy. Lite is MIT.</p></details>
+    <details><summary>Which Python versions and databases?</summary><p>Python 3.10 or newer (the test suites are run on 3.12). Lite uses SQLite. Pro adds Postgres with the pgvector extension, tested on Postgres 16 (the <code class="i">pgvector/pgvector:pg16</code> image has it), and ChromaDB.</p></details>
+    <details><summary>Can I try it before paying?</summary><p>Yes. Lite is free, MIT-licensed and contains the same retrieval and citation code that Pro builds on.</p></details>
+    <details><summary>What if it doesn't work for me?</summary><p>Refund terms are shown at checkout. Before you buy, you can run Lite on your own documents to see how retrieval behaves on them.</p></details>
+    <details><summary>How do I get support?</summary><p>Open an issue on the Lite repository for the free code. Pro buyers can email <a href="mailto:tiruvenkatesh123@gmail.com">tiruvenkatesh123@gmail.com</a>. Response times aren't guaranteed.</p></details>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="final">
+      <h2 style="margin-bottom:12px">Ship document Q&amp;A <em>this week.</em></h2>
+      <p style="max-width:52ch;margin:0 auto">Install Lite in two minutes. Upgrade to Pro when you need a real database, a measured retrieval pipeline and customer API keys.</p>
+      <div class="cta">
+        <a class="btn solid" href="{{GUMROAD_URL}}" data-track="buy_final">Get the Pro kit &middot; ₹999 / $15</a>
+        <a class="btn ghost" href="{{GITHUB_URL}}" data-track="github_final">Try Lite free</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>&copy; 2026 Tiru Builds &middot; <a href="/">OPAI</a></span>
+    <span><a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></span>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('.copy').forEach(function(b){
+  b.addEventListener('click',function(){
+    var t=b.getAttribute('data-copy')||'';
+    var done=function(){var o=b.textContent;b.textContent='Copied';setTimeout(function(){b.textContent=o},1500)};
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,function(){})}
+  });
+});
+</script>
+</body>
+</html>

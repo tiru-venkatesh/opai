@@ -1,0 +1,33 @@
+# From the repo root:  cp deploy/.env.example .env  (edit it)  &&  docker compose -f deploy/docker-compose.yml --env-file .env up --build
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: rag
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag -d rag"]
+      interval: 5s
+      retries: 10
+    # no "ports:" on purpose: the database is reachable only from the api container
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        LITE_SPEC: ${LITE_SPEC:-opai-rag-starter-lite}
+        WITH_EMBEDDINGS: ${WITH_EMBEDDINGS:-1}
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      OPAI_RAG_DSN: postgresql://rag:${POSTGRES_PASSWORD}@db:5432/rag
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPAI_RAG_RATE_PER_MIN: ${OPAI_RAG_RATE_PER_MIN:-60}
+      OPAI_RAG_DAILY_ASKS: ${OPAI_RAG_DAILY_ASKS:-500}
+    ports: ["8000:8000"]
+volumes:
+  pgdata:
