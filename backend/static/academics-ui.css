@@ -102,3 +102,28 @@ main#main{max-width:1480px;padding:82px 28px 56px}
 @media(max-width:1050px){main#main{padding-inline:18px}.acad-layout{grid-template-columns:minmax(0,1fr) 320px;gap:14px}.acad-hero{grid-template-columns:1fr}.hero-snapshot{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:820px){.acad-layout{grid-template-columns:1fr}.acad-layout aside.study-rail{position:static;grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;overflow:visible}.courses-panel{grid-column:1/-1}.chat-panel{height:680px;min-height:520px}}
 @media(max-width:560px){main#main{padding:76px 12px 36px}.acad-hero{padding:21px 18px}.hero-snapshot{grid-template-columns:repeat(2,minmax(0,1fr))}.snapshot-card:first-child{grid-column:1/-1}.acad-layout aside.study-rail{grid-template-columns:1fr;gap:11px}.courses-panel{grid-column:auto}.chat-panel{height:calc(100dvh - 170px);min-height:490px}.chat-head{padding:15px 16px}.karna-avatar{width:36px;height:36px}.chat-online{font-size:9px}.chat-identity p{max-width:220px;font-size:11px}#thread{padding:17px 14px}.msg{max-width:96%;padding:12px 14px;font-size:13px}#ask{padding-inline:14px}.chat-composer{margin:10px 12px 0;padding-left:12px}.chat-foot{padding:9px 12px 12px}.study-rail .panel-head p{max-width:260px}}
+
+/* Subtle study-space motion; all effects are disabled for reduced-motion users. */
+@keyframes chatEnter{from{opacity:0;transform:translateY(12px) scale(.992)}to{opacity:1;transform:none}}
+@keyframes bubbleEnter{from{opacity:0;transform:translateY(9px) scale(.99)}to{opacity:1;transform:none}}
+@keyframes railEnter{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+@keyframes statusBreathe{0%,100%{box-shadow:0 0 0 3px #edf4ec;opacity:1}50%{box-shadow:0 0 0 6px rgba(237,244,236,0);opacity:.72}}
+@keyframes sparkleTurn{0%,80%,100%{transform:rotate(0) scale(1)}88%{transform:rotate(18deg) scale(1.16)}94%{transform:rotate(-12deg) scale(1.08)}}
+@media(prefers-reduced-motion:no-preference){
+  .chat-panel{animation:chatEnter .48s cubic-bezier(.2,.75,.25,1) both}
+  .study-rail .workflow-panel{animation:railEnter .42s .08s cubic-bezier(.2,.75,.25,1) both}
+  .study-rail .syllabus-panel{animation:railEnter .42s .16s cubic-bezier(.2,.75,.25,1) both}
+  .study-rail .courses-panel{animation:railEnter .42s .24s cubic-bezier(.2,.75,.25,1) both}
+  #thread .msg{animation:bubbleEnter .3s cubic-bezier(.2,.75,.25,1) both}
+  .chat-online i{animation:statusBreathe 2.4s ease-in-out infinite}
+  .flow-step{transition:transform .2s ease,background-color .2s ease,box-shadow .2s ease}
+  .flow-step:hover{transform:translateX(3px);background:#eef2eb;box-shadow:0 5px 15px -13px rgba(49,66,44,.55)}
+  .flow-step b{transition:transform .2s ease,background-color .2s ease,color .2s ease}
+  .flow-step:hover b{transform:scale(1.08);background:#52634b;color:#fff}
+  .drop{transition:border-color .2s ease,background-color .2s ease,transform .2s ease,box-shadow .2s ease}
+  .drop:hover{border-color:#aab6a2;background:#f1f5ef;box-shadow:0 7px 18px -16px rgba(49,66,44,.55)}
+  .drop.over{transform:scale(1.012);box-shadow:0 0 0 4px rgba(82,99,75,.08)}
+  .chat-composer{transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease}
+  .chat-composer:focus-within{transform:translateY(-1px)}
+  .chat-foot-mark{animation:sparkleTurn 5s ease-in-out infinite;transform-origin:center}
+}
