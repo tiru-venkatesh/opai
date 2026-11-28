@@ -231,7 +231,8 @@ class AuthGuard:
                 obs.emit("auth_guard", mode=m, path=path, status=problem[0])
             except Exception:
                 pass
-            log.warning("auth_guard[%s] would refuse %s %s -> %s", m, scope["method"], path, problem[0])
+            verb = "refused" if m == "enforce" else "would refuse"
+            log.warning("auth_guard[%s] %s %s %s -> %s", m, verb, scope["method"], path, problem[0])
             if m == "enforce":
                 body_out = json.dumps({"detail": problem[1]}).encode()
                 await send({"type": "http.response.start", "status": problem[0],

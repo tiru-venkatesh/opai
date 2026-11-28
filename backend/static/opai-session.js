@@ -10,7 +10,9 @@
   /* ---- Firebase ID token: attached to every /v1/ call so the backend knows WHO is asking ---- */
   var FB_CONFIG = { apiKey: "AIzaSyCIXqCDmMDSO8ch451PGCbZjMYCVJLtGNs", authDomain: "opagent-3ef8b.firebaseapp.com", projectId: "opagent-3ef8b", appId: "1:701157045370:web:386c270095d7655d5037c3" };
   var SDK = 'https://www.gstatic.com/firebasejs/10.12.2/', authP = null;
-  var TOKEN_BUDGET = 4000, SDK_TIMEOUT = 6000, failedUntil = 0;
+  /* Firebase app + auth SDKs load in sequence on a cold page. Give session restore
+     enough room to finish before protected API calls leave without a bearer token. */
+  var TOKEN_BUDGET = 18000, SDK_TIMEOUT = 6000, failedUntil = 0;
   function loadScript(src) {
     return new Promise(function (ok, no) {
       var s = document.createElement('script'), t = setTimeout(function () { no(new Error('timeout')); }, SDK_TIMEOUT);
@@ -90,7 +92,25 @@
   function read(k) { try { var o = JSON.parse(localStorage.getItem('opai_sess:' + k) || 'null'); if (o && o.exp > Date.now() && o.d && o.d.user_id && o.d.onboarding_required === false) return o.d; } catch (e) {} return null; }
   function write(k, d) { try { if (d && d.user_id && d.onboarding_required === false) localStorage.setItem('opai_sess:' + k, JSON.stringify({ exp: Date.now() + TTL, d: d })); else localStorage.removeItem('opai_sess:' + k); } catch (e) {} }
   function fake(d) { return new Response(JSON.stringify(d), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
-  window.opaiClearSession = function () { try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('opai_sess:') === 0) localStorage.removeItem(k); }); } catch (e) {} };
+  window.opaiClearSession = function () { try { Object.keys(localStorage).forEach(function (k) { if (/^(opai_sess:|opai_profile_v1:|opai_today:|opai_uid:)/.test(k)) localStorage.removeItem(k); }); } catch (e) {} };
+  /* ---- logout: one place. Ends the Firebase session, wipes every cached identity, returns to the landing page ---- */
+  window.opaiSignOut = function (to) {
+    var go = function () {
+      try { ['opai_sc_email', 'opai_sc_photo', 'opa_session'].forEach(function (k) { localStorage.removeItem(k); }); Object.keys(localStorage).forEach(function (k) { if (k.indexOf('opai_sess:') === 0) localStorage.removeItem(k); }); } catch (e) {}
+      try { sessionStorage.clear(); } catch (e) {}
+      location.replace(to || 'landing.html');
+    };
+    var t = setTimeout(go, 2500);                                        /* never let a slow SDK trap the user on a signed-in page */
+    firebaseAuth().then(function (a) { return a ? a.signOut() : null; }).then(function () { clearTimeout(t); go(); }, function () { clearTimeout(t); go(); });
+  };
+  /* ---- route guard: private pages need a signed-in identity, otherwise go to login and come back afterwards ---- */
+  try {
+    var pg = (location.pathname.split('/').pop() || 'landing.html').toLowerCase();
+    var PUBLIC = /^(landing|login|signup|privacy|terms|feedback|review|admin|today-legacy)(\.html)?$|^$/;
+    var hasId = !!localStorage.getItem('opai_sc_email') || /[?&]email=/.test(location.search);
+    if (location.protocol !== 'file:' && !/[?&]embed=1/.test(location.search) && !PUBLIC.test(pg) && !hasId)
+      location.replace('login.html?next=' + encodeURIComponent(pg.indexOf('.') < 0 ? pg + '.html' : pg));
+  } catch (e) {}
   window.fetch = function (input, init) {
     var url = typeof input === 'string' ? input : (input && input.url) || '';
     var method = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();

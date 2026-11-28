@@ -10,7 +10,9 @@
   /* ---- Firebase ID token: attached to every /v1/ call so the backend knows WHO is asking ---- */
   var FB_CONFIG = { apiKey: "AIzaSyCIXqCDmMDSO8ch451PGCbZjMYCVJLtGNs", authDomain: "opagent-3ef8b.firebaseapp.com", projectId: "opagent-3ef8b", appId: "1:701157045370:web:386c270095d7655d5037c3" };
   var SDK = 'https://www.gstatic.com/firebasejs/10.12.2/', authP = null;
-  var TOKEN_BUDGET = 4000, SDK_TIMEOUT = 6000, failedUntil = 0;
+  /* Firebase app + auth SDKs load in sequence on a cold page. Give session restore
+     enough room to finish before protected API calls leave without a bearer token. */
+  var TOKEN_BUDGET = 18000, SDK_TIMEOUT = 6000, failedUntil = 0;
   function loadScript(src) {
     return new Promise(function (ok, no) {
       var s = document.createElement('script'), t = setTimeout(function () { no(new Error('timeout')); }, SDK_TIMEOUT);
