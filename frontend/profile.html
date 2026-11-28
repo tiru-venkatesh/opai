@@ -50,7 +50,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
 </style>
 <link rel="stylesheet" href="opai-mobile.css">
 
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="opai-cream.css?v=19" id="opai-cream"></head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="opai-cream.css?v=22" id="opai-cream"></head>
 <body>
 <main class="pf" id="main">
   <h1>Profile</h1>
@@ -63,6 +63,25 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
       <span id="h-mail"></span>
       <div class="chips" id="h-chips"></div>
     </div>
+  </section>
+
+  <section class="card" aria-labelledby="us-t" id="usage-card" hidden>
+    <h2 id="us-t">AI usage</h2>
+    <p class="sub" id="us-sub" style="margin:0 0 14px"></p>
+    <div id="us-rows"></div>
+    <p class="sub" style="margin:10px 0 0;font-size:12.5px">A light request costs 1 credit and a deep-reasoning request costs 3. Credits reset at midnight UTC (daily) and on the 1st (monthly).</p>
+  </section>
+
+  <section class="card" aria-labelledby="pl-t" id="plans-card" hidden>
+    <h2 id="pl-t">Plans</h2>
+    <p class="sub" id="pl-note" style="margin:0 0 14px"></p>
+    <div id="pl-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
+    <div id="pl-buy" hidden style="margin-top:16px;display:none;gap:10px;flex-wrap:wrap;align-items:end">
+      <div class="field" style="margin:0"><label for="pl-phone">Mobile number (for the payment provider)</label><input id="pl-phone" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile"></div>
+      <div class="field" style="margin:0"><label for="pl-months">Months</label><select id="pl-months"><option value="1">1 month</option><option value="3">3 months</option><option value="12">12 months</option></select></div>
+      <button class="btn primary" id="pl-go" type="button">Continue to payment</button>
+    </div>
+    <p class="msg" id="pl-msg" role="status" style="margin:10px 0 0"></p>
   </section>
 
   <section class="card" aria-labelledby="ed-t">
@@ -167,10 +186,69 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
     opts=Object.assign({},opts||{});if(c)opts.signal=c.signal;
     return api(path,opts).then(function(v){clearTimeout(t);return v},function(e){clearTimeout(t);throw e});
   }
+  /* ---------- plans + upgrade (Cashfree hosted checkout) ---------- */
+  var chosen=null,plansInfo=null;
+  function plMsg(t,cls){var m=$('pl-msg');m.textContent=t||'';m.className='msg'+(cls?' '+cls:'')}
+  function esc(x){return String(x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function plansCard(cur){
+    api('/v1/billing/plans').then(function(d){
+      plansInfo=d;
+      $('pl-grid').innerHTML=d.plans.map(function(p){
+        var mine=p.id===cur,paid=p.price_inr_per_month>0;
+        return '<div style="border:1px solid var(--line,#ddd);border-radius:16px;padding:16px;background:'+(mine?'var(--well,#f4f1ea)':'transparent')+'">'
+          +'<b style="font-size:16px">'+esc(p.label)+'</b>'
+          +'<div style="font-size:26px;margin:6px 0;font-family:var(--head,serif)">'+(paid?'₹'+p.price_inr_per_month+'<span style="font-size:13px;opacity:.7"> / month</span>':'Free')+'</div>'
+          +'<div style="font-size:13px;opacity:.8;line-height:1.5">'+p.credits_per_day+' credits a day<br>'+p.credits_per_month+' a month</div>'
+          +(mine?'<div class="chips" style="margin-top:10px"><span class="pill">Your plan</span></div>'
+            :paid?'<button class="btn primary" data-plan="'+p.id+'" type="button" style="margin-top:12px">Choose '+esc(p.label)+'</button>':'')+'</div>'}).join('');
+      $('pl-note').textContent=d.credit_note+(d.payments_enabled?'':' Online payment is not open yet; message us and we will upgrade you by hand.');
+      [].forEach.call($('pl-grid').querySelectorAll('button[data-plan]'),function(b){b.onclick=function(){
+        if(!d.payments_enabled){plMsg('Online payment is not open yet. Message us and we will upgrade your account.','');return}
+        chosen=b.getAttribute('data-plan');$('pl-buy').style.display='flex';$('pl-phone').focus();plMsg('Selected '+chosen.toUpperCase()+'. Enter your mobile number to continue.','')}});
+      $('plans-card').hidden=false;
+    }).catch(function(){});
+  }
+  function loadSdk(){return new Promise(function(ok,no){
+    if(window.Cashfree)return ok();var s=document.createElement('script');s.src='https://sdk.cashfree.com/js/v3/cashfree.js';s.onload=ok;s.onerror=function(){no(new Error('Could not load the payment window. Check your connection.'))};document.head.appendChild(s)})}
+  function pay(){
+    var ph=($('pl-phone').value||'').replace(/\D/g,'');
+    if(!chosen){plMsg('Pick a plan first.','err');return}
+    if(!/^[6-9]\d{9}$/.test(ph)){plMsg('Enter a valid 10-digit Indian mobile number.','err');return}
+    var b=$('pl-go');b.disabled=true;plMsg('Starting secure checkout…','');
+    api('/v1/billing/checkout',{method:'POST',body:JSON.stringify({user_id:uid,plan:chosen,months:parseInt($('pl-months').value,10)||1,phone:ph})})
+      .then(function(r){return loadSdk().then(function(){
+        var cf=window.Cashfree({mode:r.env==='production'?'production':'sandbox'});
+        return cf.checkout({paymentSessionId:r.payment_session_id,redirectTarget:'_self'})})})
+      .catch(function(e){plMsg(e.message||'Could not start payment.','err')})
+      .then(function(){b.disabled=false});
+  }
+  function checkReturn(){
+    var o=(location.search.match(/[?&]order=([\w-]+)/)||[])[1];if(!o||!uid)return;
+    var tries=0;plMsg('Confirming your payment…','');
+    (function poll(){api('/v1/billing/order?user_id='+encodeURIComponent(uid)+'&order_id='+encodeURIComponent(o)).then(function(r){
+      if(r.status==='paid'){plMsg('Payment received. Your '+r.plan.toUpperCase()+' plan is active.','ok');usageCard();plansCard(r.plan);history.replaceState(null,'','profile.html');return}
+      if(r.status==='failed'){plMsg('The payment did not go through. You were not charged for a plan.','err');return}
+      if(++tries<12)setTimeout(poll,3000);else plMsg('Still waiting for the bank. If money was taken, your plan will switch on within a few minutes.','')
+    }).catch(function(){if(++tries<12)setTimeout(poll,3000)})})();
+  }
+  document.addEventListener('click',function(e){if(e.target&&e.target.id==='pl-go')pay()});
+  function usageCard(){
+    if(!uid)return;
+    api('/v1/usage?user_id='+encodeURIComponent(uid)).then(function(u){
+      if(!u)return;
+      var rows=[['Today',u.day],['This month',u.month]].map(function(r){
+        var w=r[1],pct=Math.min(100,Math.round(100*w.used/Math.max(1,w.limit)));
+        return '<div style="margin:10px 0"><div style="display:flex;justify-content:space-between;font-size:13.5px"><span>'+r[0]+'</span><span><b>'+w.used+'</b> / '+w.limit+' credits</span></div>'
+          +'<div style="height:8px;border-radius:99px;background:var(--well,#eee);overflow:hidden;margin-top:6px"><div style="height:100%;width:'+pct+'%;border-radius:99px;background:'+(pct>=90?'var(--bad,#c93b3b)':'linear-gradient(90deg,#F0A35E,#FFCF99)')+'"></div></div></div>'});
+      $('us-rows').innerHTML=rows.join('');
+      $('us-sub').textContent=u.plan_label+' plan'+(u.plan_expires_at?' · active until '+new Date(u.plan_expires_at).toLocaleDateString():'')+(u.metering==='enforce'?'':' · limits are not enforced yet');
+      $('usage-card').hidden=false;plansCard(u.plan);checkReturn();
+    }).catch(function(){});
+  }
   function fetchProfile(){
     var step=uid?Promise.resolve({user_id:uid}):timed('/v1/auth/dev-login?email='+encodeURIComponent(mail),{method:'POST'},12000);
     return step.then(function(d){
-      uid=d.user_id;
+      uid=d.user_id;usageCard();
       if(d.onboarding_required){location.replace('onboarding.html');return null}
       return timed('/v1/profile?user_id='+encodeURIComponent(uid),{},12000);
     });

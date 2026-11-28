@@ -857,3 +857,13 @@ html:root:root:root .sechd h2,html:root:root:root h2.t,html:root:root:root secti
 html:root:root:root button.teal,html:root:root:root a.teal,html:root:root:root .pill.teal,html:root:root:root .btn.teal,html:root:root:root button.coral,html:root:root:root .btn.coral{background:var(--ink)!important;color:var(--bg)!important;border:1px solid var(--ink)!important;box-shadow:none!important}
 html:root:root:root button.teal:hover,html:root:root:root .pill.teal:hover{background:color-mix(in srgb,var(--ink) 86%,var(--peach))!important}
 .pill.teal i{background:var(--peach)!important}
+
+/* dark-mode contrast fixes (found by automatic scan) + KARNA chat menu button position */
+html[data-theme=dark]:root:root:root a.b:not(.alt):not(.ghost),html[data-theme=dark]:root:root:root .op-actions button.b:not(.alt),html[data-theme=dark]:root:root:root button.b.p,
+html[data-theme=dark]:root:root:root nav button.on,html[data-theme=dark]:root:root:root .how li:before{color:#1B1917!important}
+html[data-theme=dark]:root:root:root .seg button.on,html[data-theme=dark]:root:root:root .modebar button.on{background:var(--ink)!important;color:#1B1917!important}
+html[data-theme=dark]:root:root:root .eyebrow{background:var(--card-2)!important;border:1px solid var(--line)!important}
+body.opai-chat .au-dock{left:12px!important;top:50%!important;bottom:auto!important;transform:translateY(-50%)!important}
+@media(max-width:900px){body.opai-chat .au-dock{top:auto!important;bottom:calc(168px + env(safe-area-inset-bottom,0px))!important;transform:none!important}}
+
+html[data-theme=dark][data-pg=internship]:root:root:root :is(a.b,button.b):not(.alt):not(.ghost){color:#1B1917!important}

@@ -69,6 +69,8 @@ from leetcode_streak import router as leetcode_router
 app.include_router(leetcode_router)
 from extras_api import router as extras_router
 app.include_router(extras_router)
+from billing_api import router as billing_router
+app.include_router(billing_router)
 from opportunities_api import router as opportunities_router
 app.include_router(opportunities_router)
 from faculty_api import router as faculty_router
@@ -110,6 +112,8 @@ if os.path.exists("static"):
 
 @app.on_event("startup")
 def on_startup():
+    import security_gate
+    security_gate.enforce_startup()      # refuses to boot on unsafe production config
     init_db()
     try:
         import rag_service

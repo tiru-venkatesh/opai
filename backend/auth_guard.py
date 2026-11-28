@@ -6,7 +6,7 @@ an email (or a user id) could read or change that person's data. This middleware
   * dev-login must carry a valid Firebase ID token whose verified email equals the ?email= asked for.
   * every other /v1/ call that names a user (?user_id= or JSON body "user_id") must belong to the token's email.
 
-OPAI_AUTH_MODE   off | log | enforce      (default: log)
+OPAI_AUTH_MODE   off | log | enforce      (default: enforce on Render / OPAI_ENV=production, log elsewhere)
     log      never blocks; writes an `auth_guard` event + warning for every call that WOULD be refused.
              Deploy this first, watch the logs for a day, then switch to enforce.
     enforce  401 = missing/invalid token, 403 = token does not own that user_id / email.
@@ -35,7 +35,7 @@ from jwt import algorithms  # noqa: F401  (ensures the crypto backend is importa
 log = logging.getLogger("opai.auth")
 
 CERTS_URL = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com"
-EXEMPT_PREFIXES = ("/v1/health", "/v1/version", "/v1/system/", "/v1/admin/")   # admin has its own key, system/tick its own secret
+EXEMPT_PREFIXES = ("/v1/health", "/v1/version", "/v1/system/", "/v1/admin/", "/v1/billing/webhook", "/v1/billing/plans")   # admin has its own key, system/tick its own secret
 MAX_BODY = 1_000_000
 
 _keys: Dict[str, object] = {}
@@ -44,8 +44,9 @@ _uid_cache: Dict[str, Tuple[str, float]] = {}
 
 
 def mode() -> str:
-    m = os.getenv("OPAI_AUTH_MODE", "log").strip().lower()
-    return m if m in ("off", "log", "enforce") else "log"
+    import security_gate
+    m = os.getenv("OPAI_AUTH_MODE", "").strip().lower()
+    return m if m in ("off", "log", "enforce") else security_gate.default_auth_mode()
 
 
 def local_bypass_enabled() -> bool:
@@ -236,6 +237,12 @@ class AuthGuard:
                 await send({"type": "http.response.start", "status": problem[0],
                             "headers": [(b"content-type", b"application/json"), (b"content-length", str(len(body_out)).encode())]})
                 return await send({"type": "http.response.body", "body": body_out})
+        try:                                                        # tell the metering layer who is calling
+            import metering
+            who = scope.get("opai_uid") or (next(iter(wanted)) if len(wanted) == 1 else None)
+            metering.set_user(who)
+        except Exception:
+            pass
         return await self.app(scope, replay, send)
 
 

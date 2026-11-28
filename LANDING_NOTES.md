@@ -74,3 +74,14 @@
 - `opai-notion.js` font link now loads Inter, Newsreader, Space Grotesk, Material Symbols.
 - Cache-bust: `opai-cream.css?v=19`, `opai-notion.js?v=10`, `sw.js` opai-v83.
 - Undo to the glass-violet look: delete the "LANDING MATCH" block and the rules after it.
+
+## Backend: security gate + metering + billing (Nov 28, 2026)
+- New: `backend/security_gate.py`, `metering.py`, `billing_api.py`; tables `usage_ledger`, `user_plans`, `billing_orders` (database.py, new tables only).
+- Hooks: `agent/llm.py` (_create / stream_chat), `auth_guard.py` (sets the caller, prod default `enforce`), `main.py` (startup gate, router).
+- Frontend: Profile page "AI usage" card (`profile.html`), sw cache opai-v84.
+- Tests: `tests/test_security_gate.py`, `test_metering.py`, `test_billing.py` (32 new). Full suite: 560 passed; the 24 failures + 16 errors were already failing before this change (DSA tests, landing copy tests, 2 files importing a missing `DsaTopic`).
+
+## Upgrade UI + Postgres migration (Nov 28, 2026)
+- Profile page: plan cards + "Continue to payment" (Cashfree hosted checkout) + payment-return confirmation; new `GET /v1/billing/order`.
+- `backend/scripts/migrate_sqlite_to_postgres.py` (+ `tests/test_migrate_pg.py`, runs when OPAI_TEST_PG is set). Verified on a populated DB: 44 tables, 2402 rows, 32,795 cells, 0 mismatches; orphan row skipped and reported; rerun changes nothing.
+- Backend suite on Postgres 16 = same result as SQLite.

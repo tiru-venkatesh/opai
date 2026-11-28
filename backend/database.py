@@ -840,3 +840,43 @@ class PushSubscription(Base):
     endpoint = Column(Text, nullable=False)
     keys = Column(JSON, default=dict)
     created_at = Column(DateTime, default=_dt.utcnow)
+
+
+# ---------------- metering & billing (new tables only; no existing table is altered) ----------------
+class UsageLedger(Base):
+    """One row per metered LLM call. Quotas are computed by summing `credits` over a day / month window."""
+    __tablename__ = "usage_ledger"
+    __table_args__ = (Index("ix_usage_user_ts", "user_id", "created_at"),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), nullable=False)          # no FK: a ledger must survive account deletion for audits
+    kind = Column(String, default="llm")                  # llm | llm_stream
+    provider = Column(String)                             # anthropic | groq
+    model = Column(String)
+    credits = Column(Integer, default=1)
+    tokens_in = Column(Integer, default=0)
+    tokens_out = Column(Integer, default=0)
+    status = Column(String, default="ok")                 # ok | error
+    created_at = Column(DateTime, default=_dt.utcnow)
+
+
+class UserPlan(Base):
+    __tablename__ = "user_plans"
+    user_id = Column(String(36), primary_key=True)
+    plan = Column(String, default="free")                 # free | pro | max
+    plan_expires_at = Column(DateTime)                    # NULL = no expiry; after it the user is treated as free
+    bonus_credits = Column(Integer, default=0)            # one-off monthly top-up granted by an admin / promo
+    updated_at = Column(DateTime, default=_dt.utcnow, onupdate=_dt.utcnow)
+
+
+class BillingOrder(Base):
+    """Server-side record of a checkout. The plan and amount come from our price table, never from the client."""
+    __tablename__ = "billing_orders"
+    order_id = Column(String(64), primary_key=True)
+    user_id = Column(String(36), nullable=False)
+    plan = Column(String, nullable=False)
+    months = Column(Integer, default=1)
+    amount_inr = Column(Integer, nullable=False)
+    status = Column(String, default="created")            # created | paid | failed
+    gateway = Column(String, default="cashfree")
+    created_at = Column(DateTime, default=_dt.utcnow)
+    paid_at = Column(DateTime)

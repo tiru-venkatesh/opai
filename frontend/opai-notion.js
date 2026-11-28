@@ -64,6 +64,7 @@
 /* AURORA 2026: floating dock + top chip replace the sidebar and breadcrumb bar. Reads links from the existing sidebar, so NAV stays defined in opai-shell.js. */
 (function(){
   if(window.__auDone)return;window.__auDone=1;
+  document.documentElement.setAttribute('data-pg',(location.pathname.split('/').pop()||'').replace('.html',''));
   var EM={'today.html':'☀️','super-chat.html':'💬','plan.html':'📅','opportunities.html':'💼','projects.html?view=hackathons':'⚡','projects.html?view=programs':'🎓','projects.html?view=projects':'📁','resume-lab.html':'📄','academics.html':'📚','review.html':'📊','feedback.html':'📝','landing.html':'🏠','profile.html':'👤','more':'▦','search':'🔍','#logout':'🚪'};
   var MAIN=['today.html','super-chat.html','plan.html','opportunities.html','projects.html?view=projects'];
   var LBL={'projects.html?view=projects':'Projects'};

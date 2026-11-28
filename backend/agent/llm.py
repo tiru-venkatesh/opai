@@ -322,7 +322,7 @@ def _groq_create(**kw):
     return groq_raw_client().chat.completions.create(**kw)
 
 
-def _create(**kw):
+def _create_raw(**kw):
     p = provider()
     if p is None:
         raise RuntimeError("No LLM key configured. Set ANTHROPIC_API_KEY (recommended) or GROQ_API_KEY on the backend.")
@@ -336,6 +336,19 @@ def _create(**kw):
             _fell.set(True)
             return _groq_create(**kw)
         raise
+
+
+def _create(**kw):
+    """Metered entry point: quota check before the call, ledger row after it (see metering.py)."""
+    import metering
+    tok = metering.begin(kw.get("model"), kw.get("tier"))
+    try:
+        resp = _create_raw(**kw)
+    except Exception:
+        metering.finish(tok, None, error=True)
+        raise
+    metering.finish(tok, resp, provider="groq" if _fell.get() or provider() == "groq" else "anthropic")
+    return resp
 
 
 class _Completions:
@@ -370,9 +383,21 @@ def stream_chat(messages: List[Dict[str, Any]], *, tier: str = "balanced", max_t
                       model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b")).choices[0].message.content or ""
         return
     args, _, model = _build_kwargs({"messages": messages, "tier": tier, "max_tokens": max_tokens, "temperature": temperature})
-    with _anthropic_client().messages.stream(**args) as s:
-        for delta in s.text_stream:
-            yield delta
+    import metering
+    tok = metering.begin(model, tier)
+    chars_in = sum(len(str(m.get("content", ""))) for m in messages)
+    chars_out, failed = 0, False
+    try:
+        with _anthropic_client().messages.stream(**args) as s:
+            for delta in s.text_stream:
+                chars_out += len(delta)
+                yield delta
+    except Exception:
+        failed = True
+        raise
+    finally:
+        metering.finish(tok, None, provider="anthropic", kind="llm_stream", error=failed,
+                        tokens_in=chars_in // 4, tokens_out=chars_out // 4)
 
 
 # ----------------------------------------------------------------------------- user-selected model (final answers only)
