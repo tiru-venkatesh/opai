@@ -95,7 +95,7 @@ button.go.working::after{content:"";position:absolute;inset:0;background:linear-
 <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)&&location.protocol!=='file:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 <link rel="stylesheet" href="opai-mobile.css">
 
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="opai-cream.css?v=24" id="opai-cream"><link rel="stylesheet" href="academics-ui.css?v=1"></head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="opai-cream.css?v=24" id="opai-cream"><link rel="stylesheet" href="academics-ui.css?v=2"></head>
 <body>
 <main id="main">
   <section class="acad-hero" aria-labelledby="acad-title">
@@ -107,25 +107,44 @@ button.go.working::after{content:"";position:absolute;inset:0;background:linear-
     </div>
   </section>
   <div class="acad-layout">
-  <aside>
-    <div class="panel"><div class="panel-head"><div><h2>Your courses</h2><p>Choose a course to review its topic map.</p></div><span class="course-total" id="courseCount">—</span></div><div id="courses"><div class="skel"></div><div class="skel" style="opacity:.6"></div></div></div>
-  </aside>
-  <section class="panel builder" aria-live="polite">
-    <div class="panel-head"><div><h2>Build a course map</h2><p>Start from a syllabus file or paste your units and topics.</p></div><span class="builder-mark">KARNA study setup</span></div>
-    <ol class="flow-steps" aria-label="Course setup steps"><li class="flow-step"><b>01</b><span>Add your syllabus</span></li><li class="flow-step"><b>02</b><span>Review the topic map</span></li><li class="flow-step"><b>03</b><span>Set confidence and exams</span></li></ol>
-    <div id="thread"></div>
-    <div id="ask"></div>
-    <div class="composer" id="intake">
-      <label class="sr" for="cname">Course name</label><input type="text" id="cname" placeholder="Course name (optional) · e.g. Data Structures" aria-label="Course name">
-      <div class="drop" id="drop">
-        <label class="chip" for="file">Upload syllabus (PDF, DOCX, TXT, MD)</label>
-        <input class="sr" type="file" id="file" accept=".pdf,.docx,.txt,.md,.markdown" multiple>
-        <div class="note" style="margin-top:8px">or drop files here. Scanned PDFs and photos need text first; paste the topics below instead.</div>
+    <section class="panel chat-panel" aria-label="KARNA study conversation">
+      <div class="chat-head">
+        <div class="chat-identity"><span class="karna-avatar" aria-hidden="true">✳</span><div><h2>KARNA study chat</h2><p>Your syllabus, study plan, and course questions in one place.</p></div></div>
+        <span class="chat-online"><i></i> Ready to study</span>
       </div>
-      <div class="wrap-mic"><textarea id="paste" placeholder="…or paste the syllabus text here (units and topics)" aria-label="Paste syllabus text"></textarea><button type="button" class="mic" id="mic" hidden aria-pressed="false" title="Speak" aria-label="Speak the syllabus or answer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
-      <div class="row"><button class="go" id="build">Build from pasted text</button><span class="note" id="status"></span></div>
-    </div>
-  </section>
+      <div id="thread" role="log" aria-live="polite" aria-relevant="additions text"></div>
+      <div id="ask" aria-live="polite"></div>
+      <form class="chat-composer" id="chatForm">
+        <label class="sr" for="chatInput">Ask KARNA about your studies</label>
+        <textarea id="chatInput" rows="1" placeholder="Ask about a topic, revision plan, or exam prep…" autocomplete="off"></textarea>
+        <button type="submit" id="chatSend" aria-label="Send message"><span aria-hidden="true">↑</span></button>
+        <div class="chat-hint">Enter to send <span>·</span> Shift + Enter for a new line</div>
+      </form>
+      <div class="chat-foot"><span class="chat-foot-mark">✦</span><span>Answers are grounded in the syllabus you add to this workspace.</span></div>
+    </section>
+    <aside class="study-rail" aria-label="Study tools">
+      <section class="panel workflow-panel">
+        <div class="panel-head"><div><h2>Study workflow</h2><p>A simple path from syllabus to exam-ready.</p></div><span class="builder-mark">3 steps</span></div>
+        <ol class="flow-steps" aria-label="Course setup steps"><li class="flow-step"><b>01</b><span><strong>Add your syllabus</strong><small>Upload or paste course topics</small></span></li><li class="flow-step"><b>02</b><span><strong>Review the topic map</strong><small>Check units and extracted topics</small></span></li><li class="flow-step"><b>03</b><span><strong>Set confidence and exams</strong><small>Build a plan around your deadlines</small></span></li></ol>
+      </section>
+      <section class="panel syllabus-panel" aria-label="Syllabus setup">
+        <div class="panel-head"><div><h2>Your syllabus</h2><p>Add a course to begin your study chat.</p></div><span class="syllabus-icon" aria-hidden="true">↥</span></div>
+        <div class="composer" id="intake">
+          <label class="sr" for="cname">Course name</label><input type="text" id="cname" placeholder="Course name (optional) · e.g. Data Structures" aria-label="Course name">
+          <div class="drop" id="drop">
+            <label class="chip" for="file"><span aria-hidden="true">＋</span> Upload syllabus</label>
+            <input class="sr" type="file" id="file" accept=".pdf,.docx,.txt,.md,.markdown" multiple>
+            <div class="note" style="margin-top:8px">PDF, DOCX, TXT, or MD · or drop a file here</div>
+          </div>
+          <label class="sr" for="paste">Paste syllabus text</label><div class="wrap-mic"><textarea id="paste" placeholder="Or paste units and topics here…" aria-label="Paste syllabus text"></textarea><button type="button" class="mic" id="mic" hidden aria-pressed="false" title="Speak" aria-label="Speak the syllabus or answer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
+          <div class="row"><button class="go" id="build">Build my study map <span aria-hidden="true">→</span></button><span class="note" id="status" role="status"></span></div>
+        </div>
+      </section>
+      <section class="panel courses-panel">
+        <div class="panel-head"><div><h2>Your courses</h2><p>Select one to review its topic map.</p></div><span class="course-total" id="courseCount">—</span></div>
+        <div id="courses"><div class="skel"></div><div class="skel" style="opacity:.6"></div></div>
+      </section>
+    </aside>
   </div>
 </main>
 <script src="opai-shell.js?v=12" defer></script>
@@ -167,6 +186,48 @@ button.go.working::after{content:"";position:absolute;inset:0;background:linear-
     if (b && !typingEl) { typingEl = say('k', '<span class="typing" aria-label="KARNA is working"><i></i><i></i><i></i></span>'); }
     if (!b && typingEl) { typingEl.remove(); typingEl = null; }
   };
+
+  /* ---------- course-aware study chat ---------- */
+  const chatForm = $('chatForm'), chatInput = $('chatInput'), chatSend = $('chatSend');
+  const chatHistory = [];
+  function richText(value) {
+    const inline = (s) => s.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    const lines = esc(value).replace(/\r/g, '').split('\n');
+    const out = []; let para = [], list = false;
+    const endList = () => { if (list) { out.push('</ul>'); list = false; } };
+    const endPara = () => { if (para.length) { out.push('<p>' + inline(para.join(' ')) + '</p>'); para = []; } };
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) { endPara(); endList(); continue; }
+      const heading = line.match(/^#{1,3}\s+(.+)$/);
+      const item = line.match(/^(?:[-*]|\d+[.)])\s+(.+)$/);
+      if (heading) { endPara(); endList(); out.push('<h3>' + inline(heading[1]) + '</h3>'); }
+      else if (item) { endPara(); if (!list) { out.push('<ul>'); list = true; } out.push('<li>' + inline(item[1]) + '</li>'); }
+      else { endList(); para.push(line); }
+    }
+    endPara(); endList(); return out.join('');
+  }
+  chatForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const message = chatInput.value.trim(); if (!message || chatSend.disabled) return;
+    chatInput.value = ''; chatInput.style.height = 'auto';
+    say('u', esc(message)); chatHistory.push({ role: 'user', content: message });
+    chatSend.disabled = true; chatInput.disabled = true;
+    const loading = say('k', '<span class="typing" aria-label="KARNA is thinking"><i></i><i></i><i></i></span>'); loading.classList.add('loading');
+    try {
+      const user = await ensureUser();
+      const result = await api('/v1/jarvis/chat', { method: 'POST', body: JSON.stringify({ user_id: user, message, history: chatHistory.slice(-8, -1) }) });
+      loading.remove();
+      say('k', richText(result.reply || 'I could not prepare an answer just now.'));
+      chatHistory.push({ role: 'assistant', content: String(result.reply || '') });
+    } catch (error) {
+      loading.remove(); say('k', esc('I could not send that message: ' + error.message), 'err');
+    } finally { chatSend.disabled = false; chatInput.disabled = false; chatInput.focus(); }
+  });
+  chatInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); chatForm.requestSubmit(); }
+  });
+  chatInput.addEventListener('input', () => { chatInput.style.height = 'auto'; chatInput.style.height = Math.min(chatInput.scrollHeight, 150) + 'px'; });
 
   /* ---------- courses sidebar + course map ---------- */
   const daysTo = (iso) => Math.ceil((new Date(iso + 'T00:00:00') - new Date(new Date().toDateString())) / 86400000);

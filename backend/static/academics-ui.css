@@ -42,3 +42,63 @@ html:root:root:root .acad-layout .course b{font-size:14px!important;line-height:
 html:root:root:root .acad-layout .course small{display:block;margin-top:4px;font-size:11px!important}
 html:root:root:root .acad-layout .builder .msg.k{background:#f3f5f1!important;border-color:#e7e9e4!important}
 @media(max-width:560px){html:root:root:root .acad-layout .panel{padding:16px!important}}
+
+/* Conversation-first Academics layout */
+main#main{max-width:1480px;padding:82px 28px 56px}
+.acad-hero{grid-template-columns:minmax(0,1fr) minmax(300px,.82fr);gap:24px;padding:clamp(22px,3vw,34px);border-radius:22px}
+.acad-hero h1{font-size:clamp(32px,4vw,48px)}
+.hero-snapshot{grid-template-columns:repeat(3,minmax(0,1fr));align-content:center}
+.snapshot-card,.snapshot-card:first-child{grid-column:auto;min-height:96px;padding:14px}
+.snapshot-value{font-size:27px}
+.acad-layout{grid-template-columns:minmax(0,1fr) minmax(310px,370px);gap:22px;margin-top:22px;align-items:stretch}
+.acad-layout aside.study-rail{position:sticky;top:82px;display:grid;gap:14px;align-self:start;max-height:calc(100vh - 100px);overflow:auto;padding:1px 3px 8px 1px;scrollbar-width:thin;scrollbar-color:#d8dcd5 transparent}
+.acad-layout .study-rail .panel{padding:18px!important}
+.chat-panel{display:flex;flex-direction:column;min-width:0;height:min(700px,calc(100vh - 290px));min-height:500px;padding:0!important;overflow:hidden}
+.chat-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 24px;border-bottom:1px solid #eceee9;background:linear-gradient(180deg,#fff 0%,#fbfcfa 100%)}
+.chat-identity{display:flex;align-items:center;gap:12px;min-width:0}
+.karna-avatar{display:grid;place-items:center;width:40px;height:40px;flex:none;border-radius:14px;background:#e9eee6;color:#52624c;font-size:20px}
+.chat-identity h2{margin:0;color:#2e382b;font:600 16px/22px 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:-.02em}
+.chat-identity p{margin:3px 0 0;color:#7b8076;font-size:12px;line-height:1.45}
+.chat-online{display:inline-flex;align-items:center;gap:7px;flex:none;color:#65715e;font:500 10px/16px var(--mono);letter-spacing:.04em;text-transform:uppercase}
+.chat-online i{width:7px;height:7px;border-radius:50%;background:#77a579;box-shadow:0 0 0 3px #edf4ec}
+#thread{display:flex;flex:1;flex-direction:column;gap:14px;min-height:0;max-height:none;overflow:auto;padding:22px clamp(16px,3vw,30px);scrollbar-color:#d8dcd5 transparent;scroll-behavior:smooth}
+.msg{max-width:min(90%,760px);padding:15px 18px;border-radius:16px;font-size:14px;line-height:1.75;box-shadow:0 3px 12px -12px rgba(31,42,29,.45)}
+.msg.k{background:#f4f6f2;border-color:#e8ebe5;color:#293127;border-top-left-radius:6px}
+.msg.u{background:#384433;border-color:#384433;color:#fff;border-top-right-radius:6px}
+.msg .who{margin-bottom:7px;color:#73856c;font-size:10px}
+.msg.k p{margin:0 0 10px}.msg.k p:last-child{margin-bottom:0}
+.msg.k h3{margin:12px 0 5px;color:#35432f;font:600 15px/1.4 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:-.01em}
+.msg.k ul{margin:6px 0 10px;padding-left:20px}.msg.k li{padding:2px 0}.msg.k code{padding:2px 5px;border-radius:5px;background:#e8ece5;color:#394734;font:12px/1.5 var(--mono)}
+.msg.loading{align-self:flex-start;padding:11px 16px}
+.msg.err{background:#fff5eb;border-color:#f0d2b5;color:#744d2c}
+#ask{flex:none;max-height:35%;overflow:auto;padding:0 24px;scrollbar-width:thin}
+#ask:not(:empty){padding-top:10px}
+#ask>.panel{padding:12px 14px;border-color:#e8ebe4;border-radius:14px;background:#f8faf7;box-shadow:none}
+#ask .rate{padding:8px 0;font-size:12px}.dots button{width:30px;height:30px}
+.chat-composer{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 42px;gap:5px 10px;margin:12px 20px 0;padding:8px 9px 7px 15px;border:1px solid #dfe4dc;border-radius:16px;background:#fff;box-shadow:0 5px 20px -18px rgba(38,52,34,.55)}
+.chat-composer:focus-within{border-color:#899681;box-shadow:0 0 0 4px rgba(93,111,85,.09)}
+.chat-composer textarea{grid-column:1;grid-row:1;display:block;width:100%;min-height:38px;max-height:150px;resize:none;border:0!important;outline:0!important;padding:8px 0!important;background:transparent!important;color:#263025;font:14px/1.55 'Plus Jakarta Sans',system-ui,sans-serif;box-shadow:none!important}
+.chat-composer textarea::placeholder{color:#969c91}
+.chat-composer button{grid-column:2;grid-row:1;align-self:center;width:38px;height:38px;border:0;border-radius:12px;background:#354331;color:#fff;font-size:22px;line-height:1;cursor:pointer;transition:background .18s,transform .18s}
+.chat-composer button:hover:not(:disabled){background:#4c5d46;transform:translateY(-1px)}.chat-composer button:disabled{opacity:.45;cursor:wait}
+.chat-hint{grid-column:1/-1;padding:0 0 1px;color:#9a9e96;font-size:10px;line-height:15px}.chat-hint span{padding:0 4px;color:#c0c4bc}
+.chat-foot{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 12px 14px;color:#92978e;font-size:10px;line-height:1.4;text-align:center}
+.chat-foot-mark{color:#9b774e}
+.study-rail .panel-head{margin-bottom:12px}.study-rail .panel-head h2{font-size:11px}.study-rail .panel-head p{font-size:11px}
+.workflow-panel .flow-steps{grid-template-columns:1fr;gap:7px;margin:0}
+.workflow-panel .flow-step{min-height:54px;padding:9px 10px;background:#f6f8f4}
+.flow-step>span{display:grid;gap:2px}.flow-step strong{color:#3b4537;font-size:11px;font-weight:600}.flow-step small{color:#858a80;font-size:10px;line-height:1.35}
+.workflow-panel .builder-mark{padding:5px 8px;font-size:9px}
+.syllabus-panel .panel-head{margin-bottom:10px}.syllabus-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:#eef2eb;color:#5c7055;font-size:19px}
+.syllabus-panel .composer{gap:9px;margin:0;padding:0;border:0}
+.syllabus-panel .composer input[type=text],.syllabus-panel .composer textarea{padding:10px 11px!important;border-radius:10px;font-size:12px}
+.syllabus-panel .drop{padding:15px 12px;border-radius:12px;background:#f8faf7}.syllabus-panel .drop .note{font-size:10px;line-height:1.45}
+.syllabus-panel .drop .chip{padding:7px 11px;font-size:11px;line-height:16px}
+.syllabus-panel .composer textarea{min-height:78px;max-height:140px}
+.syllabus-panel .composer .row button.go{width:100%;justify-content:center;padding:10px 12px;font-size:12px}
+.syllabus-panel #status{font-size:10px}
+.courses-panel #courses{max-height:220px;overflow:auto;padding-right:2px;scrollbar-width:thin}
+.courses-panel .course{padding:11px 12px}.courses-panel .course-empty{padding:16px 12px}
+@media(max-width:1050px){main#main{padding-inline:18px}.acad-layout{grid-template-columns:minmax(0,1fr) 320px;gap:14px}.acad-hero{grid-template-columns:1fr}.hero-snapshot{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:820px){.acad-layout{grid-template-columns:1fr}.acad-layout aside.study-rail{position:static;grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;overflow:visible}.courses-panel{grid-column:1/-1}.chat-panel{height:680px;min-height:520px}}
+@media(max-width:560px){main#main{padding:76px 12px 36px}.acad-hero{padding:21px 18px}.hero-snapshot{grid-template-columns:repeat(2,minmax(0,1fr))}.snapshot-card:first-child{grid-column:1/-1}.acad-layout aside.study-rail{grid-template-columns:1fr;gap:11px}.courses-panel{grid-column:auto}.chat-panel{height:calc(100dvh - 170px);min-height:490px}.chat-head{padding:15px 16px}.karna-avatar{width:36px;height:36px}.chat-online{font-size:9px}.chat-identity p{max-width:220px;font-size:11px}#thread{padding:17px 14px}.msg{max-width:96%;padding:12px 14px;font-size:13px}#ask{padding-inline:14px}.chat-composer{margin:10px 12px 0;padding-left:12px}.chat-foot{padding:9px 12px 12px}.study-rail .panel-head p{max-width:260px}}
