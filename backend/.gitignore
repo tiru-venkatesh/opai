@@ -1,8 +1,17 @@
 .env
+*.env
 *.db
+*.sqlite
+*.sqlite3
+*.sqlite-*
 *.db-shm
 *.db-wal
 *.db.backup
+*.bak
 __pycache__/
 .pytest_cache/
 node_modules/
+resumes/
+uploads/
+user_files/
+storage/

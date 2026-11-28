@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fail if resume PDFs or archives are tracked
+      - name: Fail if personal documents, archives, or local data stores are tracked
         run: |
-          bad=$(git ls-files 'backend/resumes/*.pdf' '*.zip' '*.db' | head -5)
+          bad=$(git ls-files | grep -Ei '(^|/)(resumes?|uploads?|user_files|storage)/|\.(pdf|doc|docx|rtf|zip|7z|rar|db|sqlite|sqlite3|pem|key|bak)$|\.(db|sqlite)-(shm|wal)$' | head -20 || true)
           [ -z "$bad" ] || { echo "Tracked files that must not be committed:"; echo "$bad"; exit 1; }

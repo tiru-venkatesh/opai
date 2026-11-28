@@ -1,6 +1,13 @@
 # Secrets
 .env
+.env.*
+!.env.example
 backend/.env
+backend/.env.*
+!backend/.env.example
+*.pem
+*.key
+secrets/
 
 # Python
 __pycache__/
@@ -11,10 +18,28 @@ venv/
 # Local databases and backups
 backend/opa.db
 *.db
+*.sqlite
+*.sqlite3
+*.sqlite-*
 *.db-shm
 *.db-wal
 *.db.backup
+*.sqlite-shm
+*.sqlite-wal
 *.bak
+
+# User uploads and personal documents (never commit real user files)
+*.pdf
+*.doc
+*.docx
+*.rtf
+*.zip
+*.7z
+*.rar
+backend/resumes/
+backend/uploads/
+backend/user_files/
+backend/storage/
 
 # OS / editor
 .DS_Store
