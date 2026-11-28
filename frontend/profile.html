@@ -50,7 +50,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
 </style>
 <link rel="stylesheet" href="opai-mobile.css">
 
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="opai-cream.css?v=22" id="opai-cream"></head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="opai-cream.css?v=23" id="opai-cream"></head>
 <body>
 <main class="pf" id="main">
   <h1>Profile</h1>
@@ -70,6 +70,13 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
     <p class="sub" id="us-sub" style="margin:0 0 14px"></p>
     <div id="us-rows"></div>
     <p class="sub" style="margin:10px 0 0;font-size:12.5px">A light request costs 1 credit and a deep-reasoning request costs 3. Credits reset at midnight UTC (daily) and on the 1st (monthly).</p>
+  </section>
+
+  <section class="card" aria-labelledby="fl-t" id="files-card" hidden>
+    <h2 id="fl-t">Your files</h2>
+    <p class="sub" id="fl-sub" style="margin:0 0 10px"></p>
+    <div id="fl-list"></div>
+    <p class="msg" id="fl-msg" role="status" style="margin:10px 0 0"></p>
   </section>
 
   <section class="card" aria-labelledby="pl-t" id="plans-card" hidden>
@@ -245,10 +252,46 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/22px var(--sans
       $('usage-card').hidden=false;plansCard(u.plan);checkReturn();
     }).catch(function(){});
   }
+  /* ---- your files: originals you uploaded (only shown when the server keeps them) ---- */
+  function fmtBytes(n){return n<1024?n+' B':n<1048576?(n/1024).toFixed(0)+' KB':(n/1048576).toFixed(1)+' MB'}
+  function flMsg(t,c){var m=$('fl-msg');m.textContent=t||'';m.className='msg'+(c?' '+c:'')}
+  var KIND={doc:'Document',syllabus:'Syllabus',resume:'Resume'};
+  function filesCard(){
+    if(!uid)return;
+    api('/v1/files?user_id='+encodeURIComponent(uid)).then(function(d){
+      if(!d||!d.enabled)return;
+      var u=d.usage||{bytes:0,quota_bytes:1},pct=Math.min(100,Math.round(100*u.bytes/Math.max(1,u.quota_bytes)));
+      $('fl-sub').innerHTML='<b>'+fmtBytes(u.bytes)+'</b> of '+fmtBytes(u.quota_bytes)+' used'
+        +'<div style="height:8px;border-radius:99px;background:var(--well,#eee);overflow:hidden;margin-top:6px;max-width:360px"><div style="height:100%;width:'+pct+'%;border-radius:99px;background:'+(pct>=90?'var(--bad,#c93b3b)':'var(--teal,#1b1917)')+'"></div></div>';
+      $('fl-list').innerHTML=d.files.length?d.files.map(function(f){
+        return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line,#e7e1d4)">'
+          +'<div style="flex:1;min-width:180px"><b style="font-size:14.5px;word-break:break-word">'+esc(f.filename)+'</b>'
+          +'<div style="font-size:12.5px;opacity:.7">'+esc(KIND[f.kind]||f.kind)+' · '+fmtBytes(f.size)+' · '+new Date(f.created_at).toLocaleDateString()+'</div></div>'
+          +'<button class="btn" type="button" data-dl="'+esc(f.id)+'" data-name="'+esc(f.filename)+'">Download</button>'
+          +'<button class="btn" type="button" data-rm="'+esc(f.id)+'" data-name="'+esc(f.filename)+'">Delete</button></div>'}).join('')
+        :'<p class="sub" style="margin:6px 0 0">Nothing saved yet. Files you upload from now on will appear here.</p>';
+      $('files-card').hidden=false;
+    }).catch(function(){});
+  }
+  document.addEventListener('click',function(e){
+    var b=e.target&&e.target.closest?e.target.closest('button[data-dl],button[data-rm]'):null;if(!b||!uid)return;
+    var id=b.getAttribute('data-dl')||b.getAttribute('data-rm'),name=b.getAttribute('data-name')||'file';
+    if(b.hasAttribute('data-dl')){
+      b.disabled=true;flMsg('Preparing your file…','');
+      fetch(API+'/v1/files/'+encodeURIComponent(id)+'/download?user_id='+encodeURIComponent(uid)).then(function(r){
+        if(!r.ok)throw new Error(r.status===404?'That file is no longer available.':'Could not download it right now.');return r.blob()})
+      .then(function(bl){var a=document.createElement('a'),u=URL.createObjectURL(bl);a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);flMsg('')})
+      .catch(function(er){flMsg(er.message,'err')}).then(function(){b.disabled=false});
+    }else if(window.confirm('Delete the saved copy of "'+name+'"? Your workspace keeps what it already learned from it.')){
+      b.disabled=true;
+      api('/v1/files/'+encodeURIComponent(id)+'?user_id='+encodeURIComponent(uid),{method:'DELETE'}).then(function(){flMsg('Deleted.','ok');filesCard()})
+      .catch(function(er){flMsg(er.message||'Could not delete.','err');b.disabled=false});
+    }
+  });
   function fetchProfile(){
     var step=uid?Promise.resolve({user_id:uid}):timed('/v1/auth/dev-login?email='+encodeURIComponent(mail),{method:'POST'},12000);
     return step.then(function(d){
-      uid=d.user_id;usageCard();
+      uid=d.user_id;usageCard();filesCard();
       if(d.onboarding_required){location.replace('onboarding.html');return null}
       return timed('/v1/profile?user_id='+encodeURIComponent(uid),{},12000);
     });

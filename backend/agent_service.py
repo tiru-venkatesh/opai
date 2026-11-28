@@ -463,8 +463,11 @@ def delete_resume(resume_id: str, db: Session) -> None:
     if not row:
         raise ValueError("Resume not found")
     rag.delete_source(db, row.user_id, rag.RESUME, resume_id)
+    owner = row.user_id
     db.delete(row)
     db.commit()
+    import file_store
+    file_store.delete_for_ref(db, owner, resume_id)   # no-op unless OPAI_FILE_STORE is on
 
 
 # ================= WORKFLOW C: IIT PROFESSOR OUTREACH =================

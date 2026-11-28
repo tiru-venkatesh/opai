@@ -40,3 +40,14 @@ Notes
 - **pgvector is not needed.** Embeddings are stored as JSON and compared in Python (see `database.py`, `rag_service.py`). Move to pgvector only if search gets slow with many documents.
 - **R2 / object storage is not needed yet.** Uploaded files are turned into text chunks stored in the database; the original file is not kept. Add R2 only if you decide to keep originals.
 - Test it yourself: `OPAI_TEST_PG=postgresql://user:pass@localhost:5432/scratch python -m pytest tests/test_migrate_pg.py` (this wipes that database).
+
+
+## Keeping original uploads (optional, off by default)
+Today uploads are read into text and the original is discarded. To let users re-download them:
+1. Update `frontend/privacy.html` (it must say originals are kept, where, and how users delete them).
+2. Cloudflare R2: create a bucket (keep it private) and an API token with Object Read & Write on that bucket.
+3. Set on Render: `OPAI_FILE_STORE=r2`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`. Redeploy (installs boto3).
+4. Upload one file from Documents, open Profile -> "Your files", download it, delete it. Check the object appears/disappears in the bucket.
+Files are stored under opaque keys `u/<user>/<random>.<ext>`; downloads go through the API (auth checked), never a public URL.
+Limits: `OPAI_FILE_MAX_MB` per file (10) and `OPAI_FILE_QUOTA_MB` per plan. A storage error never fails the upload.
+`local` mode writes to `OPAI_FILE_DIR`; on Render that needs a persistent disk or files vanish on every deploy.

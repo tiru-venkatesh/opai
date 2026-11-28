@@ -11,6 +11,7 @@ import os
 from datetime import date
 from typing import Dict, List, Optional
 
+import file_store
 from fastapi import Request, APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -114,7 +115,9 @@ async def upload_syllabus(request: Request, user_id: str = Form(...), course_nam
             if choose:
                 out.append({"ok": True, "booklet": True, "filename": fname, "choose": choose, "units": [], "questions": []})
                 continue
-            out.append({"ok": True, "filename": fname, **build_from_text(db, uid, text, fname, cname, course_code)})
+            built = build_from_text(db, uid, text, fname, cname, course_code)
+            file_store.save(db, uid, "syllabus", fname, data, ref_id=str(built.get("course_id") or ""))
+            out.append({"ok": True, "filename": fname, **built})
         except rag_api.ParseError as e:
             out.append({"ok": False, "filename": fname, "error": str(e)})
         except Exception as e:

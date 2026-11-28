@@ -85,3 +85,14 @@
 - Profile page: plan cards + "Continue to payment" (Cashfree hosted checkout) + payment-return confirmation; new `GET /v1/billing/order`.
 - `backend/scripts/migrate_sqlite_to_postgres.py` (+ `tests/test_migrate_pg.py`, runs when OPAI_TEST_PG is set). Verified on a populated DB: 44 tables, 2402 rows, 32,795 cells, 0 mismatches; orphan row skipped and reported; rerun changes nothing.
 - Backend suite on Postgres 16 = same result as SQLite.
+
+
+## Original uploads (R2) + dark-mode contrast + restyled public/auth pages (Nov 28, 2026)
+- Backend: `file_store.py` (off | local | r2), `files_api.py` (`GET /v1/files`, `GET /v1/files/{id}/download`, `DELETE /v1/files/{id}`), table `user_files`.
+  Hooks (best effort, never fail the upload): `rag_api.upload_docs`, `syllabus_api.upload_syllabus`, `resume_lab_api.import_resume_files`; originals removed when the document / resume is deleted.
+  `tests/test_file_store.py` (14 tests; local + a fake S3 for R2; ownership, quota, per-file limit, safe download type, failure isolation).
+- Profile page: "Your files" card (list, download, delete, storage bar). Hidden unless `OPAI_FILE_STORE` is on.
+- Dark mode: fixed the active in-page menu pill (light text on light), Projects card text, profile avatar. Automatic contrast scan of 12 pages now reports 0 failures.
+- New look for the public/auth pages (same cream design as home.html): `login.html`, `signup.html` (sign-in script unchanged), `onboarding.html` (no longer loads the legacy shader/theme script), `privacy.html`, `terms.html` (text unchanged).
+- Cache-bust: `opai-cream.css?v=23`, sw cache bumped.
+- Pre-existing, not touched: `dsa_api.py` / `dsa_coach_api.py` are never registered in `main.py` and tests import a missing `DsaTopic`, so the DSA page has no backend.

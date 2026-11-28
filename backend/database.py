@@ -868,6 +868,22 @@ class UserPlan(Base):
     updated_at = Column(DateTime, default=_dt.utcnow, onupdate=_dt.utcnow)
 
 
+class UserFile(Base):
+    """An original upload kept so the user can download it again. Only written when OPAI_FILE_STORE is local|r2."""
+    __tablename__ = "user_files"
+    __table_args__ = (Index("ix_user_files_user", "user_id", "created_at"),)
+    id = Column(String(36), primary_key=True, default=gen_id)
+    user_id = Column(String(36), nullable=False)
+    kind = Column(String, default="doc")                  # doc | syllabus | resume
+    filename = Column(String, nullable=False)
+    content_type = Column(String)
+    size = Column(Integer, default=0)
+    sha256 = Column(String(64))
+    storage_key = Column(String, nullable=False)          # opaque object key; never contains the user's filename
+    ref_id = Column(String)                               # the doc_id / resume id this file belongs to
+    created_at = Column(DateTime, default=_dt.utcnow)
+
+
 class BillingOrder(Base):
     """Server-side record of a checkout. The plan and amount come from our price table, never from the client."""
     __tablename__ = "billing_orders"

@@ -867,3 +867,10 @@ body.opai-chat .au-dock{left:12px!important;top:50%!important;bottom:auto!import
 @media(max-width:900px){body.opai-chat .au-dock{top:auto!important;bottom:calc(168px + env(safe-area-inset-bottom,0px))!important;transform:none!important}}
 
 html[data-theme=dark][data-pg=internship]:root:root:root :is(a.b,button.b):not(.alt):not(.ghost){color:#1B1917!important}
+
+/* dark-mode contrast: pills/chips that are filled with the (light) dark-mode accent need dark text */
+html[data-theme=dark] .o2-jump a[aria-current=true],
+html[data-theme=dark] .o2-jump a[aria-current=true] i{color:#171513}
+html[data-theme=dark] .repo small,html[data-theme=dark] .cc p{color:#B5ADA0}
+html[data-theme=dark] .cc{background:#1F1C19;border-color:#3A342F}
+html[data-theme=dark] .big-av{color:#171513}

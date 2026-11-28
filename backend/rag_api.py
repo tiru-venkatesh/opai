@@ -18,6 +18,7 @@ import re
 import uuid
 from typing import List, Optional
 
+import file_store
 from fastapi import Request, APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -187,7 +188,9 @@ async def upload_docs(request: Request, user_id: str = Form(...), files: List[Up
         name = os.path.basename(f.filename or "untitled")[:200]
         try:
             data = await f.read(MAX_FILE_BYTES + 1)   # read bytes up front: the UploadFile closes after the request
-            results.append({"ok": True, **ingest(db, uid, name, parse_file(name, data))})
+            info = ingest(db, uid, name, parse_file(name, data))
+            file_store.save(db, uid, "doc", name, data, ref_id=info.get("doc_id"))   # no-op unless OPAI_FILE_STORE is on
+            results.append({"ok": True, **info})
         except ParseError as e:
             results.append({"ok": False, "filename": name, "error": str(e)})
         except Exception as e:
@@ -229,6 +232,7 @@ def delete_doc(doc_id: str, user_id: str, db: Session = Depends(get_db)):
     for r in rows:
         db.delete(r)
     db.commit()
+    file_store.delete_for_ref(db, uid, doc_id)
     return {"deleted": len(rows), "docs": list_docs(db, uid)}
 
 

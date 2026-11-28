@@ -19,3 +19,4 @@ psycopg2-binary>=2.9.9
 reportlab>=4      # PDF export in Resume Lab + sample PDF for the page-citation test
 
 PyJWT[crypto]>=2.7.0   # Firebase ID-token verification (auth_guard.py)
+boto3>=1.34   # only used when OPAI_FILE_STORE=r2

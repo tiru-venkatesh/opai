@@ -15,6 +15,7 @@ from datetime import datetime
 from collections import Counter
 from typing import Any, Dict, List, Optional
 
+import file_store
 from fastapi import Request, APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -253,6 +254,7 @@ async def import_resume_files(request: Request, user_id: str = Form(...), target
             skipped.append({"label": name, "reason": f"library is full ({MAX_VERSIONS} versions); delete one first"})
             continue
         row = _create(db, u.id, label, (target_role or "").strip()[:120] or None, text[:40000])
+        file_store.save(db, u.id, "resume", name, data, ref_id=row.id)
         seen.add(_h(text))
         labels.add(label.lower())
         created.append({"id": row.id, "label": row.label})

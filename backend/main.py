@@ -71,6 +71,8 @@ from extras_api import router as extras_router
 app.include_router(extras_router)
 from billing_api import router as billing_router
 app.include_router(billing_router)
+from files_api import router as files_router
+app.include_router(files_router)
 from opportunities_api import router as opportunities_router
 app.include_router(opportunities_router)
 from faculty_api import router as faculty_router
@@ -89,6 +91,8 @@ from reminders_api import router as reminders_router
 app.include_router(reminders_router)
 from chat_api import router as chat_router
 app.include_router(chat_router)
+from karna_api import router as karna_router
+app.include_router(karna_router)
 from version_api import router as version_router
 app.include_router(version_router)
 
