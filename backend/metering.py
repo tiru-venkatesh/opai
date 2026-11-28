@@ -136,11 +136,29 @@ def check(db, uid: str, credits: int) -> None:
 
 
 def record(db, uid: str, *, model: Optional[str], provider: Optional[str], credits: int, tokens_in: int = 0,
-           tokens_out: int = 0, kind: str = "llm", status: str = "ok") -> None:
+           tokens_out: int = 0, kind: str = "llm", status: str = "ok", latency_ms: int = 0, fallback: bool = False) -> None:
     from database import UsageLedger
     db.add(UsageLedger(user_id=uid, kind=kind, provider=provider, model=(model or "")[:80], credits=credits,
-                       tokens_in=int(tokens_in or 0), tokens_out=int(tokens_out or 0), status=status))
+                       tokens_in=int(tokens_in or 0), tokens_out=int(tokens_out or 0), status=status,
+                       latency_ms=max(0, int(latency_ms or 0)), fallback=bool(fallback)))
     db.commit()
+
+
+def record_provider_attempt(provider: str, model: str, *, error: bool, latency_ms: int = 0,
+                            tokens_in: int = 0, tokens_out: int = 0, fallback: bool = False) -> None:
+    """Persist each actual provider call independently of the logical user request row."""
+    uid = current_user() or "__system__"
+    try:
+        from database import SessionLocal
+        db = SessionLocal()
+        try:
+            record(db, uid, model=model, provider=provider, credits=0, tokens_in=tokens_in,
+                   tokens_out=tokens_out, kind="provider_attempt", status="error" if error else "ok",
+                   latency_ms=latency_ms, fallback=fallback)
+        finally:
+            db.close()
+    except Exception as exc:
+        log.warning("provider attempt record skipped for %s (%s)", provider, type(exc).__name__)
 
 
 # ---- the hooks used by agent/llm.py ------------------------------------------------------------------
@@ -165,7 +183,7 @@ def begin(model: Optional[str], tier: Optional[str] = None) -> Optional[Dict[str
 
 
 def finish(tok: Optional[Dict[str, Any]], resp: Any = None, *, provider: Optional[str] = None, kind: str = "llm",
-           error: bool = False, tokens_in: int = 0, tokens_out: int = 0) -> None:
+           error: bool = False, tokens_in: int = 0, tokens_out: int = 0, latency_ms: int = 0, fallback: bool = False) -> None:
     if not tok:
         return
     try:
@@ -176,7 +194,7 @@ def finish(tok: Optional[Dict[str, Any]], resp: Any = None, *, provider: Optiona
         db = SessionLocal()
         try:
             record(db, tok["uid"], model=tok["model"], provider=provider, credits=tok["credits"], tokens_in=ti,
-                   tokens_out=to, kind=kind, status="error" if error else "ok")
+                   tokens_out=to, kind=kind, status="error" if error else "ok", latency_ms=latency_ms, fallback=fallback)
         finally:
             db.close()
     except Exception as e:

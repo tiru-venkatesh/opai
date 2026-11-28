@@ -1,65 +1,37 @@
-# OPAI KARNA: backend architecture (Claude edition)
+# OPAI KARNA backend architecture
 
-## Principle
-**Claude understands, explains and drafts. The backend validates, decides and executes.**
-The model never writes to the database directly. Every write goes through a whitelisted tool, an approval step and the audit log.
+## Request flow
 
-## Request flow (`POST /v1/chat`, `POST /v1/chat/general`)
-
-```
-Browser (super-chat.html)
-   |
-   v
-FastAPI  ── auth_guard ── rate limit ── chat_api.py / main.py
-   |
-   v
-agent/orchestrator.handle_message            (cheapest path first; the LLM is the LAST resort)
-   1. conversation.py   greetings / "what can you do" / help        0 DB, 0 LLM   ~ms
-   2. noise.py          gibberish / one-word unknowns               0 LLM
-   3. identity.py       "what is my college / year"                 DB only
-   4. reminder_chat + briefs.jarvis   "remind me", "plan my 2 hours" typed flows
-   5. direct_db.py      lists / counts / deadlines                  DB only, exact
-   6. capture.py        "add an exam / project / task ..."          LLM JSON extract (fast tier)
-   7. RAG               questions about your documents              retrieval + Claude (balanced tier), [n] citations
-   8. router.classify   intent + confidence                         Claude fast tier
-        confidence < 0.55 -> conversational answer (RAG, then general knowledge), no dead end
-        known intent      -> typed workflow (plan, task, outreach draft, opportunity search)
-        otherwise         -> Claude tool-calling loop over the whitelisted tools (agent tier)
-   |
-   v
-Approval boundary (outreach is only ever a DRAFT) -> audit log -> response
+```text
+Browser (frontend/super-chat.html)
+  -> Firebase token verification and user ownership guard
+  -> FastAPI chat / workspace route
+  -> local mode, intent, capability, privacy and quota checks
+  -> one eligible provider at a time (Groq, Gemini or OpenRouter)
+  -> normalized answer/tool deltas, usage ledger and citation checks
+  -> whitelisted workspace tools with existing confirmation and audit rules
 ```
 
-## LLM gateway (`agent/llm.py`)
-All model calls go through one place. It exposes the same shape as the old Groq client, so no call site had to change.
+The local router does not send each prompt to all providers. Auto uses Groq for everyday and coding requests, and Gemini for complex reasoning, study workflows and multimodal tasks where its data policy permits the content. Fast, Think and Expert alter the preferred route. Retries are bounded, provider cooldowns open after repeated errors, and fallback is allowed only before visible stream output starts.
 
-| Tier | Used for | Default model |
-|---|---|---|
-| fast | intent routing, field extraction, query rewrite | `claude-haiku-5-5` |
-| balanced | RAG answers, General chat, plans, outreach drafts, vision | `claude-sonnet-5-5` |
-| agent | tool-calling loop | `claude-sonnet-5-5` (`CLAUDE_AGENT_MODEL`) |
-| deep | opt-in for the hardest tasks (`tier="deep"`) | `claude-opus-5-5` |
+## Provider and privacy boundary
 
-- **Fallback:** if Claude errors or is overloaded and `GROQ_API_KEY` is set, the same call is retried on Groq (`KARNA_FALLBACK=off` disables this).
-- **Prompt caching:** the system prompt and tool list are marked cacheable, so repeated turns re-read them cheaply.
-- **JSON mode:** Claude has no native `json_object` mode, so the gateway adds an output rule and extracts the first valid JSON object from the reply.
-- **Streaming:** `POST /v1/chat/general/stream` (Server-Sent Events: `{"delta": ...}` chunks, then `{"done": true, "reply": ...}`).
-- **Observability:** each call logs provider, model, tokens, cache hits and latency (`opa.llm`). `/v1/health` reports the provider and model names (never keys).
-- **Errors:** Anthropic errors map to friendly 429/502/503 messages; raw provider text is never echoed to the user.
+All provider calls use `agent/llm.py`. Groq uses the existing SDK; Gemini and OpenRouter use the OpenAI-compatible adapter in `agent/providers/openai_compat.py`. The adapters normalize completions, tool-call streams, token usage and provider errors.
 
-## Safety boundary (unchanged, and still the reason to trust the agent)
-- Tools are a fixed whitelist (`tool_registry`, `TOOL_SPECS`); unknown tool names are refused and logged.
-- Per-turn tool-call cap, idempotency keys, emergency stop (`agent_enabled`).
-- Outreach is a pending draft until the user approves it; the approval is bound to a content hash.
-- User data in prompts is labelled as data, never instructions.
+The gateway defaults to private-workspace routing. Groq is eligible by default. Gemini may receive Workspace data only when the account is on a reviewed paid tier and both `KARNA_ENABLE_PAID_MODELS=true` and `KARNA_GEMINI_WORKSPACE_ALLOWED=true` are set. Legacy Anthropic Workspace routing needs both the paid-model switch and `KARNA_ANTHROPIC_WORKSPACE_ALLOWED=true`. OpenRouter is limited to non-private General chat because its free router may pick downstream providers with different retention terms. If no eligible provider is available, KARNA fails closed. API keys remain in backend environment variables.
 
-## Deploy (Render)
-1. Add env var `ANTHROPIC_API_KEY`. Keep `GROQ_API_KEY` if you want the fallback.
-2. Set `DATABASE_URL` to Postgres (SQLite is wiped on every Render deploy).
-3. Deploy, then open `/v1/health`: `llm.provider` should read `anthropic`.
-4. Hard refresh the site (service worker cache).
+User-facing answer paths share the base KARNA system instructions and disclose actual provider/model metadata in the UI. Uploaded and retrieved content is labeled untrusted. RAG filters by the authenticated user's owner ID, removes invalid citations, and does not add private uploads to the central professor catalog.
 
-## Not done / next steps
-- The chat page still calls the non-streaming `/v1/chat/general`; switching it to the stream endpoint is a small front-end change.
-- Not run against a live Anthropic key (none available here). The conversion layer is covered by 10 offline tests using a fake client; do one real chat after deploying.
-- Larger gains later: per-user conversation summaries in memory, and an evaluation set of real KARNA questions to compare tiers.
+## Data, identity and tools
+
+`auth_guard.py` verifies Firebase tokens and matches the verified account to any requested `user_id`. Production startup refuses insecure auth settings. Existing owner-filtered queries, file routes, memory/RAG metadata filters, whitelisted tools, action confirmations and audit logging remain in place. Chat transcripts stay in the signed-in user's browser; long-term memory is stored server-side per user and can be edited, deleted or disabled.
+
+SQLAlchemy uses the repository's existing `create_all` plus additive auto-migration path. This version adds `user_memory.enabled`, `usage_ledger.latency_ms` and `usage_ledger.fallback`. Existing memory rows stay enabled. No tables are dropped. Use persistent PostgreSQL for production. For reviewed migration history or schema changes beyond additive columns, move these additions into Alembic.
+
+## Quotas and operations
+
+`provider_quota.py` enforces optional account-specific request/token caps from `KARNA_PROVIDER_LIMITS_JSON` using OPAI's provider-attempt ledger. It does not query or rotate provider keys, and it cannot see usage outside OPAI. Per-user RPM and circuit-breaker state are process-local; use a shared limiter if deploying multiple workers. User plan credits continue through `metering.py`.
+
+`/v1/admin/ai-analytics` is protected by `OPAI_ADMIN_KEY` (or the existing `FEEDBACK_ADMIN_KEY`) and returns aggregate counts, provider health, configured quotas and optional estimated cost. It never returns prompts, responses, documents or memory text. Cost estimates remain blank unless the operator supplies current rates.
+
+See [`KARNA_MULTI_PROVIDER.md`](KARNA_MULTI_PROVIDER.md) for environment setup, privacy choices, quota configuration and deployment steps. Tests mock provider network responses; live account, billing, outage and deployment checks require staging credentials.

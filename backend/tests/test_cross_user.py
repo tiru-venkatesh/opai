@@ -107,6 +107,23 @@ def test_user_id_of_someone_else_is_403(c, world):
     assert c.post("/v1/leetcode/done", json={"user_id": world["ua"]}, headers=hb).status_code == 403
 
 
+def test_private_memory_settings_cannot_be_read_by_another_user(c, world):
+    db = D.SessionLocal()
+    try:
+        row = db.query(D.UserMemory).filter(D.UserMemory.user_id == world["ua"]).first()
+        if row is None:
+            row = D.UserMemory(user_id=world["ua"])
+            db.add(row)
+        row.goals_summary = "owner-only-study-goal"
+        db.commit()
+    finally:
+        db.close()
+    owner = c.get("/v1/memory", params={"user_id": world["ua"]}, headers=H(tok(world["a"])))
+    other = c.get("/v1/memory", params={"user_id": world["ua"]}, headers=H(tok(world["b"])))
+    assert owner.status_code == 200 and owner.json()["goals_summary"] == "owner-only-study-goal"
+    assert other.status_code == 403 and "owner-only-study-goal" not in other.text
+
+
 def test_multipart_uploads_cannot_name_another_user(c, world):
     hb = H(tok(world["b"]))
     for path, files in [("/v1/rag/docs", {"files": ("n.txt", b"hello", "text/plain")}),

@@ -32,12 +32,12 @@ def _try(db: Session, label: str, fn):
         out = fn()
         log.info("step=%s ms=%.0f hit=%s", label, (time.perf_counter() - t0) * 1000, bool(out))
         return out
-    except Exception:
-        log.exception("orchestrator step failed: %s", label)
+    except Exception as exc:
+        log.warning("orchestrator step failed label=%s error_type=%s", label, type(exc).__name__)
         try:
             db.rollback()
-        except Exception:
-            log.exception("rollback failed after step: %s", label)
+        except Exception as exc:
+            log.warning("rollback failed after step label=%s error_type=%s", label, type(exc).__name__)
         return None
 
 
@@ -77,8 +77,8 @@ def _grounded_chat(user_id: UUID, message: str, db: Session, history=None, doc_i
             text = general_answer(message, history)
             if text:
                 return JarvisChatResponse(action="chat", reply=text, payload={"answer_mode": "general"})
-        except Exception:
-            log.exception("general_answer failed; falling back to grounded reply")
+        except Exception as exc:
+            log.warning("general_answer failed error_type=%s; falling back to grounded reply", type(exc).__name__)
             db.rollback()
     return JarvisChatResponse(
         action="chat",
@@ -202,8 +202,8 @@ def handle_message(user_id: UUID, message: str, db: Session, history=None, doc_i
         if llm.enabled():
             try:
                 return _grounded_chat(user_id, message, db, history)
-            except Exception:
-                log.exception("conversational fallback failed; asking for clarification")
+            except Exception as exc:
+                log.warning("conversational fallback failed error_type=%s; asking for clarification", type(exc).__name__)
                 db.rollback()
         return _clarify(decision, message)
 

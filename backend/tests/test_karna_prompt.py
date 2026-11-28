@@ -3,6 +3,10 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from agent import karna_prompt as K, reply_guard as G
 
+
+def test_workspace_prompt_uses_shared_karna_foundation():
+    assert K.KARNA_SYSTEM.startswith(K.KARNA_CHAT_SYSTEM)
+
 CTX = {"name": "Tiru", "track": "B.Tech CSE", "timezone": "Asia/Kolkata", "available_min": 180,
        "today": [{"title": "Operating Systems: Deadlocks", "minutes": 45, "due": "in 5 days", "reason": "exam soon, low confidence"}],
        "exams": [{"course": "Operating Systems", "type": "End Semester", "days": 5}],

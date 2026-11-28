@@ -941,11 +941,20 @@ function seed() {
   };
 }
 function load() {
-  try { const r = localStorage.getItem(LS_KEY); if (r) return JSON.parse(r); } catch (e) {}
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      const hadLegacyProviderCredential = !!(data.profile && (data.profile.groqKey || data.profile.groqModel));
+      if (data.profile) { delete data.profile.groqKey; delete data.profile.groqModel; }
+      if (hadLegacyProviderCredential) localStorage.setItem(LS_KEY, JSON.stringify(data));
+      return data;
+    }
+  } catch (e) {}
   return seed();
 }
 let S = load();
-function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) { toast('Could not save — your browser storage may be full', true); } }
+function save() { try { if (S.profile) { delete S.profile.groqKey; delete S.profile.groqModel; } localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) { toast('Could not save — your browser storage may be full', true); } }
 function log(text) { S.history.unshift({ id: uid(), at: new Date().toISOString(), text }); }
 const byId = (coll, id) => S[coll].find(x => x.id === id);
 function upsert(coll, obj) {
@@ -1575,39 +1584,8 @@ function saveProfile() {
   ['name','track','github','email','skills','highlight'].forEach(k => { S.profile[k] = $('p-' + k).value.trim(); });
   save(); render(); toast('Profile saved');
 }
-function saveGroqKey() {
-  const k = $('jv-groqKey').value.trim(); const m = $('jv-groqModel').value;
-  S.profile.groqKey = k; S.profile.groqModel = m; save(); render();
-  toast(k ? 'Connected \u2014 JARVIS will use the live model' : 'Saved');
-}
-function clearGroqKey() { S.profile.groqKey = ''; save(); render(); toast('Disconnected. JARVIS is back on local replies'); }
-async function testGroq() {
-  toast('Testing connection\u2026');
-  try {
-    const r = await groqChat([{ role: 'user', content: 'Reply with just: connected' }]);
-    toast(r ? 'Groq responded: ' + r.slice(0, 60) : 'No response from Groq', !r);
-  } catch (e) { toast('Groq test failed: ' + e.message, true); }
-}
 function resetData() { confirmBox('Reset all data to the sample workspace?', 'Reset data', () => { S = seed(); save(); render(); toast('Sample data restored'); }); }
- 
-/* ---- Groq (optional live JARVIS) ---- */
-const GROQ_MODELS = [
-  { v: 'openai/gpt-oss-120b', l: 'GPT-OSS 120B (best quality)' },
-  { v: 'openai/gpt-oss-20b', l: 'GPT-OSS 20B (fastest)' },
-  { v: 'qwen/qwen3.6-27b', l: 'Qwen3.6 27B' }
-];
-async function groqChat(messages) {
-  const key = S.profile.groqKey; if (!key) return null;
-  const model = S.profile.groqModel || GROQ_MODELS[0].v;
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-    body: JSON.stringify({ model, messages, temperature: 0.6, max_tokens: 1000 })
-  });
-  if (!res.ok) { let d = ''; try { d = (await res.json()).error?.message || ''; } catch (e) {} throw new Error(res.status + (d ? ' \u2014 ' + d : '')); }
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || '';
-}
+
 function workspaceSnapshot() {
   const plan = buildPlan();
   const lines = [];
@@ -1624,23 +1602,15 @@ function workspaceSnapshot() {
 let CHAT = [];
 const PROMPTS = ['What should I focus on today?', 'Summarize my applications and deadlines.', 'Which projects need attention?', 'Help me plan the next 3 hours.'];
 function viewJarvis() {
-  const live = !!S.profile.groqKey;
-  const gm = S.profile.groqModel || GROQ_MODELS[0].v;
-  const connectBanner = live ? '' :
-    '<div style="padding:14px 18px;border-bottom:1px solid var(--line);background:var(--surface-2)">' +
-    '<div class="row-s" style="margin-bottom:10px">Connect a Groq API key to swap these canned replies for a real model. Saved only in this browser \u2014 sent straight to Groq, never through any server of ours.</div>' +
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">' +
-    '<div style="flex:1;min-width:180px"><input id="jv-groqKey" type="password" placeholder="gsk_..." autocomplete="off"></div>' +
-    '<select id="jv-groqModel" style="width:auto">' + GROQ_MODELS.map(m => '<option value="' + m.v + '">' + m.l + '</option>').join('') + '</select>' +
-    '<button class="btn sm" onclick="saveGroqKey()">Connect</button></div></div>';
-  return head('JARVIS', 'Your operating copilot. Ask about today\u2019s work, applications, projects, outreach, or what to do next.', '') +
-    '<div class="jv"><section class="panel jv-main"><div class="jv-top"><div class="orb"></div><div><b>JARVIS</b><span>' + (live ? 'Live on Groq \u00b7 ' + escA(gm) : 'Answering from your workspace data') + '</span></div>' +
-    (live ? '<span class="pill good" style="margin-left:auto;margin-right:10px">Live</span><button class="btn ghost sm" onclick="clearGroqKey()" title="Disconnect Groq">Disconnect</button>' : '<span class="pill" style="margin-left:auto;margin-right:10px">Local</span>') +
+  const live = !!BACKEND.ready;
+  return head('KARNA', 'Your operating copilot. Ask about today’s work, applications, projects, outreach, or what to do next.', '') +
+    '<div class="jv"><section class="panel jv-main"><div class="jv-top"><div class="orb"></div><div><b>KARNA</b><span>' + (live ? 'Connected to your OPAI backend' : 'Local workspace mode') + '</span></div>' +
+    '<span class="pill ' + (live ? 'good' : '') + '" style="margin-left:auto;margin-right:10px">' + (live ? 'Live' : 'Offline') + '</span>' +
     '<button class="btn ghost sm" onclick="jarvisNew()">New chat</button></div>' +
-    connectBanner +
+    (live ? '' : '<div class="row-s" style="padding:14px 18px;border-bottom:1px solid var(--line)">KARNA AI replies reconnect when the OPAI backend is available.</div>') +
     '<div class="msgs" id="msgs">' + (CHAT.length ? CHAT.map(bubbleHTML).join('') : welcomeHTML()) + '</div>' +
-    '<div class="composer"><div class="cbox"><textarea id="jv-input" rows="1" placeholder="Ask JARVIS about your workspace" aria-label="Message JARVIS"></textarea><button class="send" onclick="jarvisSend()" aria-label="Send message">' + icon('up', 17) + '</button></div></div></section>' +
-    '<aside class="panel jv-ctx"><h3>Workspace right now</h3><div id="ctx"></div><div class="ctx-note">' + (live ? 'Connected to Groq (' + escA(gm) + '). Use Test or Disconnect from the chat header.' : 'Local mode: answers come from searching your workspace. Connect a Groq key for full written answers.') + '</div></aside></div>';
+    '<div class="composer"><div class="cbox"><textarea id="jv-input" rows="1" placeholder="Ask KARNA about your workspace" aria-label="Message KARNA"></textarea><button class="send" onclick="jarvisSend()" aria-label="Send message">' + icon('up', 17) + '</button></div></div></section>' +
+    '<aside class="panel jv-ctx"><h3>Workspace right now</h3><div id="ctx"></div><div class="ctx-note">' + (live ? 'Connected to your OPAI backend (KARNA agent).' : 'Local workspace search remains available.') + '</div></aside></div>';
 }
 function welcomeHTML() { return '<div class="welcome" id="welcome"><h2>What should we work on?</h2><p>Pick a starting point or type your own question below.</p><div class="prompts">' + PROMPTS.map(p => '<button onclick="jarvisSend(this.textContent)">' + esc(p) + '</button>').join('') + '</div></div>'; }
 function fmtMsg(t) { return esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>'); }
@@ -1799,52 +1769,16 @@ function execAction(a) {
 function quickCreate(text) { const a = parseQuick(text); return a ? execAction(a) : null; }
  
 async function jarvisSend(text) {
-  const input = $('jv-input');
-  const t = (text || (input ? input.value : '')).trim(); if (!t) return;
+  const input = $('jv-input'), t = (text || (input ? input.value : '')).trim(); if (!t) return;
   if (input) { input.value = ''; input.style.height = 'auto'; }
-  const box = $('msgs'); const w = $('welcome'); if (w) w.remove();
-  CHAT.push({ role: 'user', text: t }); box.insertAdjacentHTML('beforeend', bubbleHTML({ role: 'user', text: t }));
-  box.insertAdjacentHTML('beforeend', '<div class="m" id="typing"><div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div></div>');
-  box.scrollTop = box.scrollHeight;
-  const finish = (reply, sources) => {
-    const ty = $('typing'); if (ty) ty.remove();
-    const m = { role: 'assistant', text: reply, sources: sources || [] };
-    CHAT.push(m); box.insertAdjacentHTML('beforeend', bubbleHTML(m));
-    box.scrollTop = box.scrollHeight; refreshCtx();
-  };
-  const rem = t.match(/^\s*(?:remember(?:\s+that)?|note(?:\s+that|:)|save\s+(?:this|that)\s*:?)\s*[:,\-]?\s*([\s\S]{4,})$/i);
-  if (rem) { teachAdd('', rem[1]); setTimeout(() => finish('Saved to my memory: \u201c' + rem[1].trim().slice(0, 120) + '\u201d. Ask me about it any time.'), 250); return; }
-  const qc = quickCreate(t);
-  if (qc) { setTimeout(() => finish(qc), 250); return; }
-  if (S.profile.groqKey) {
-    let reply, sources = [];
-    try {
-      const ctx = ragContext(t);
-      const sys = 'You are JARVIS, the AI copilot inside OPA, ' + (S.profile.name || 'the user') + '\u2019s personal operating agent. ' +
-        'Answer ONLY from the WORKSPACE SUMMARY and RETRIEVED RECORDS below. Cite the records you use as [n]. If the answer is not in them, say you do not have that in the workspace and suggest the user tell you with "remember that ...". Never invent names, dates, numbers, or statuses. Be direct and brief \u2014 a few sentences or a short list, not an essay. ' +
-        'You cannot send emails or apply anywhere. You CAN create records. When the user asks you to add/create something, confirm in one short sentence and end your reply with one line: ACTION: {"type":"<application|task|project|study|request|contact|mail>","data":{...}}. ' +
-        'Data fields: application {company, role, type: Internship|Research|Hackathon, deadline: YYYY-MM-DD or null}; task {name, project}; mail {to: email or contact name}; project {name}; study {subject, task, exam_date: YYYY-MM-DD or null}; request {client, ask}; contact {name, institute, email}. Only emit ACTION when the user clearly asked to create something.\n\n' + ctx.text;
-      const msgs = [{ role: 'system', content: sys }, ...CHAT.slice(-10).map(m => ({ role: m.role, content: m.text }))];
-      reply = await groqChat(msgs);
-      if (!reply) reply = jarvisReply(t) || JV_GENERIC;
-      else {
-        const ex = extractAction(reply);
-        if (ex.action) { const done = execAction(ex.action); reply = (ex.text ? ex.text + '\n\n' : '') + (done || 'I could not create that record.'); } else reply = ex.text;
-        const cited = [...new Set((reply.match(/\[(\d+)\]/g) || []).map(x => +x.slice(1, -1)))];
-        sources = cited.map(n => ctx.hits[n - 1] && { n, label: ctx.hits[n - 1].doc.title, tab: R_TYPE_TAB[ctx.hits[n - 1].doc.type] || 'today' }).filter(Boolean);
-      }
-    } catch (e) { const r = ragLocalAnswer(t); reply = 'Groq call failed (' + e.message + '). From your workspace instead:\n\n' + r.text; sources = r.sources; }
-    finish(reply, sources);
-    return;
-  }
-  setTimeout(() => {
-    const q = ragQuery(t);
-    const strongNote = ragSearch(q, 3).find(h => h.doc.type === 'note' && h.raw > 0 && h.score >= 0.5);
-    if (ragEntities(q).length || strongNote || ragSpecific(q)) { const r = ragLocalAnswer(t); finish(r.text, r.sources); return; }
-    const canned = jarvisReply(t);
-    if (canned) { finish(canned, []); return; }
-    const r = ragLocalAnswer(t); finish(r.hitsNone ? JV_GENERIC : r.text, r.sources);
-  }, 450);
+  const box = $('msgs'), w = $('welcome'); if (w) w.remove();
+  CHAT.push({role:'user',text:t}); box.insertAdjacentHTML('beforeend',bubbleHTML({role:'user',text:t}));
+  box.insertAdjacentHTML('beforeend','<div class="m" id="typing"><div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div></div>'); box.scrollTop=box.scrollHeight;
+  const finish=(reply,sources)=>{const ty=$('typing');if(ty)ty.remove();const m={role:'assistant',text:reply,sources:sources||[]};CHAT.push(m);box.insertAdjacentHTML('beforeend',bubbleHTML(m));box.scrollTop=box.scrollHeight;refreshCtx();};
+  const rem=t.match(/^\s*(?:remember(?:\s+that)?|note(?:\s+that|:)|save\s+(?:this|that)\s*:?)\s*[:,\-]?\s*([\s\S]{4,})$/i);
+  if(rem){teachAdd('',rem[1]);setTimeout(()=>finish('Saved to my memory: “'+rem[1].trim().slice(0,120)+'”. Ask me about it any time.'),250);return;}
+  const qc=quickCreate(t); if(qc){setTimeout(()=>finish(qc),250);return;}
+  setTimeout(()=>{const q=ragQuery(t),strongNote=ragSearch(q,3).find(h=>h.doc.type==='note'&&h.raw>0&&h.score>=0.5);if(ragEntities(q).length||strongNote||ragSpecific(q)){const r=ragLocalAnswer(t);finish(r.text,r.sources);return;}const canned=jarvisReply(t);if(canned){finish(canned,[]);return;}const r=ragLocalAnswer(t);finish(r.hitsNone?JV_GENERIC:r.text,r.sources);},450);
 }
 function clockStrOf(d) { return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
 const JV_GENERIC = 'I can help with your plan, applications, projects, outreach, client requests, and study tasks. Try "What should I focus on today?" or "Help me plan the next 3 hours."';

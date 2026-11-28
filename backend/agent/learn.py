@@ -221,11 +221,16 @@ def _pending(db: Session, uid: str) -> List[MemoryItem]:
 _NO = re.compile(r"^(?:no|nope|nah|cancel|don'?t|dont|vaddu|kaadu|kadu|stop)[ !.]*$", re.I)
 
 
-def propose_from_message(db: Session, uid: str, text: str, history=None) -> Dict[str, list]:
+def propose_from_message(db: Session, uid: str, text: str, history=None, *, use_llm: bool = True) -> Dict[str, list]:
     """Confirm-first learning. Chat statements never go straight into memory:
     they become 'unconfirmed' items the user accepts (Save) or edits. A plain 'yes'/'no' only ever resolves the
     pending items. Returns {'pending': [...], 'saved': [...], 'dropped': [...]}; each entry is {id, kind, label, value}."""
     out: Dict[str, list] = {"pending": [], "saved": [], "dropped": []}
+    import os
+    from database import UserMemory
+    prefs = db.query(UserMemory).filter(UserMemory.user_id == str(uid)).first()
+    if os.getenv("KARNA_ENABLE_MEMORY", "true").lower() not in ("1", "true", "yes", "on") or (prefs is not None and not prefs.enabled):
+        return out
     t = " ".join((text or "").replace("’", "'").split())
     pend = _pending(db, uid)
     from database import User
@@ -247,7 +252,7 @@ def propose_from_message(db: Session, uid: str, text: str, history=None) -> Dict
         out["dropped"].append(row(set_status(db, pend[0], "forgotten")))
         return out
     explicit = False
-    llm = extract_llm(text, history)
+    llm = extract_llm(text, history) if use_llm else None
     found = llm if llm is not None else extract(text)      # LLM first; regex only when the LLM is off or failed
     if not found:
         found = contextual(text, history)
@@ -323,13 +328,19 @@ def ack(saved: List[Tuple[str, str]]) -> str:
 
 def personal_context(db: Session, uid: str, question: str, k: int = 4) -> Dict[str, object]:
     """{'text': prompt block, 'hits': [...], 'empty': bool} built only from this user's own rows."""
+    import os
+    from database import UserMemory
+    setting = db.query(UserMemory).filter(UserMemory.user_id == str(uid)).first()
+    memory_on = os.getenv("KARNA_ENABLE_MEMORY", "true").lower() in ("1", "true", "yes", "on") and (setting is None or setting.enabled is not False)
     from agent.identity import facts, summary_lines
     f = facts(db, str(uid)) or {}
     lines = [l for l in summary_lines(f) if "not set yet" not in l and not l.startswith("- Email")]
-    mem = remembered(db, uid)
+    mem = remembered(db, uid) if memory_on else []
     hits: List[dict] = []
     try:
-        hits = [h for h in rag.retrieve(db, uid, question, k=k) if h.get("source_type") not in ("profile",)]
+        types = None
+        types = [t for t in rag.ALL_SOURCE_TYPES if t != rag.PROFILE and (memory_on or t != rag.MEMORY)]
+        hits = [h for h in rag.retrieve(db, uid, question, k=k, source_types=types) if h.get("source_type") != rag.PROFILE]
     except Exception:
         db.rollback()
     parts = []

@@ -52,6 +52,8 @@ def _user(db: Session, user_id: str) -> User:
 
 def _llm_json(system: str, prompt: str) -> Optional[Dict[str, Any]]:
     try:
+        from agent import llm
+        llm.set_request_mode(workspace=True)
         from agent.groq_client import generate_json, groq_enabled
         if not groq_enabled():
             return None

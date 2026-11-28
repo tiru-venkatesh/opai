@@ -279,7 +279,7 @@ def rewrite_query(question: str, history: Optional[list]) -> str:
         out = out.strip().strip('"')
         return out[:300] if 3 <= len(out) <= 300 else base
     except Exception as e:
-        log.warning("query rewrite failed, using heuristic: %s", e)
+        log.warning("query rewrite failed, using heuristic error_type=%s", type(e).__name__)
         return base
 
 
@@ -307,6 +307,12 @@ def retrieve_for_question(db: Session, uid: str, question: str, history=None, do
     query = rewrite_query(question, history)
     where = (lambda m: m.get("doc_id") in set(doc_ids)) if doc_ids else None
     types = list(UPLOAD_TYPES) if doc_ids else None
+    if not doc_ids:
+        from database import UserMemory
+        setting = db.query(UserMemory).filter(UserMemory.user_id == str(uid)).first()
+        memory_on = os.getenv("KARNA_ENABLE_MEMORY", "true").strip().lower() in ("1", "true", "yes", "on") and (setting is None or setting.enabled is not False)
+        if not memory_on:
+            types = [t for t in rag.ALL_SOURCE_TYPES if t != rag.MEMORY]
     # When the user explicitly scoped to specific documents, don't second-guess them with the global floor:
     # a vague question ("summarise this") should still read from the chosen doc.
     floor = -1.0 if doc_ids else _floor()
@@ -392,7 +398,8 @@ def extractive_answer(sources: List[dict], hits: Optional[List[dict]] = None, qu
 
 
 def _llm_answer(question: str, history, context: str) -> str:
-    from agent import groq_client
+    from agent import groq_client, llm
+    llm.set_request_mode(workspace=True)
     msgs = [{"role": "system", "content": SYSTEM_PROMPT}]
     for h in (history or [])[-6:]:
         if _role(h) in ("user", "assistant"):
@@ -412,6 +419,8 @@ def answer_question(db: Session, user_id, question: str, history=None, doc_ids=N
     """The whole pipeline. Returns {"answer", "mode": llm|extractive|none, "sources": [...]}."""
     from agent import groq_client
     uid = str(user_id)
+    from agent import llm
+    llm.set_request_mode(workspace=True)
     hits = retrieve_for_question(db, uid, question, history, doc_ids, k)
     if not hits:
         if not doc_ids and re.search(r"\b(uploaded|upload|documents?|docs?|files?|pdfs?|notes)\b", question, re.I) \
@@ -430,7 +439,7 @@ def answer_question(db: Session, user_id, question: str, history=None, doc_ids=N
             if answer:
                 mode = "llm"
         except Exception as e:
-            log.warning("LLM answer failed, using extractive fallback: %s", e)
+            log.warning("LLM answer failed, using extractive fallback error_type=%s", type(e).__name__)
             answer = ""
     if not answer:
         answer = extractive_answer(sources, hits, question)

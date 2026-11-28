@@ -46,6 +46,8 @@ MEMORY = "memory_item"
 TASK = "task"
 UPLOAD = "upload"   # user-uploaded files (rag_api.py)
 NOTE = "note"       # pasted notes (rag_api.py)
+ALL_SOURCE_TYPES = (RESUME, PROJECT, REFLECTION, OUTREACH, COVER_LETTER, ACADEMIC, PROFILE, REQUEST,
+                    COURSE, MEMORY, TASK, UPLOAD, NOTE)
 
 # ------------------------------------------------------------------ embedding
 FASTEMBED_TAG = "bge-small-en-v1.5"
@@ -447,6 +449,8 @@ def retrieve(
     "score" stays cosine + 0.15 * (BM25 normalised to 0..1) so existing floors keep their meaning;
     the ORDER comes from RRF + MMR (+ optional cross-encoder). Returns dicts, best first.
     """
+    if os.getenv("KARNA_ENABLE_RAG", "true").strip().lower() not in ("1", "true", "yes", "on"):
+        return []
     uid = str(user_id)
     if not (query or "").strip():
         return []

@@ -36,7 +36,7 @@
   }
   function explain(e){
     if(e.name==='AbortError')return null;
-    if((e.status===503||e.status===502)&&/GROQ|not configured|AI is not/i.test(e.message))return 'The AI key is not set on the backend yet. Add GROQ_API_KEY and retry.';
+    if((e.status===503||e.status===502)&&/provider|not configured|AI is not/i.test(e.message))return 'KARNA AI is not configured on the backend yet. Contact your OPAI administrator.';
     if(e.status===429)return 'Too many requests. Wait a minute and retry.';
     if(e.name==='TypeError')return 'Could not reach the backend. If it is on a free host it may be waking up; retry in a minute.';
     return e.message||'Something went wrong.';

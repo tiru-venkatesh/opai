@@ -67,19 +67,7 @@
       var r = await POST('/v1/attach/analyze', { section: k, question: q, files: payload });
       return r.analysis || '';
     } catch (e) {
-      // offline fallback: images + text through the browser Groq key (PDFs need the backend)
-      if (!(S.profile && S.profile.groqKey)) throw e;
-      if (files.some(function (f) { return /pdf$/i.test(f.name) || f.type === 'application/pdf'; })) throw new Error('PDF analysis needs the backend. ' + e.message);
-      var parts = [{ type: 'text', text: q || 'Analyze this and tell me what matters.' }];
-      for (var j = 0; j < payload.length; j++) {
-        if (/^image\//.test(payload[j].mime)) parts.push({ type: 'image_url', image_url: { url: 'data:' + payload[j].mime + ';base64,' + payload[j].data_base64 } });
-        else parts[0].text += '\n\n=== ' + payload[j].name + ' ===\n' + atob(payload[j].data_base64).slice(0, 20000);
-      }
-      var hasImg = parts.length > 1;
-      var res = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.profile.groqKey },
-        body: JSON.stringify({ model: hasImg ? 'qwen/qwen3.8-27b' : (S.profile.groqModel || 'openai/gpt-oss-120b'), messages: [{ role: 'user', content: hasImg ? parts : parts[0].text }], max_tokens: 1200 }) });
-      if (!res.ok) throw new Error('Groq ' + res.status);
-      return (await res.json()).choices[0].message.content || '';
+      throw new Error('Attachment analysis needs a connection to the OPAI backend. Please reconnect and try again.');
     }
   }
 

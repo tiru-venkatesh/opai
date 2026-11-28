@@ -73,6 +73,7 @@ class JarvisChatRequest(BaseModel):
     history: Optional[List[ChatTurn]] = None  # prior turns, so follow-ups ("what does it use?") resolve
     doc_ids: Optional[List[str]] = None       # restrict retrieval to these uploaded docs ("ask only this doc")
     model_key: Optional[str] = None           # server-validated model catalog key; None/"auto" = default routing
+    ai_mode: str = Field(default="auto", pattern="^(auto|fast|think|expert)$")
 
 
 class JarvisChatResponse(BaseModel):
@@ -300,6 +301,7 @@ class MemoryOut(BaseModel):
     skills_summary: Optional[str] = None
     work_patterns: List[str] = []
     recent_outcomes: Optional[str] = None
+    enabled: bool = True
 
 
 class MemoryUpdate(BaseModel):
@@ -307,6 +309,7 @@ class MemoryUpdate(BaseModel):
     skills_summary: Optional[str] = None
     work_patterns: Optional[List[str]] = None
     recent_outcomes: Optional[str] = None
+    enabled: Optional[bool] = None
 
 
 # ---- structured memory items (profile / working / learning) ----

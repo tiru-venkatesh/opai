@@ -157,10 +157,15 @@ def offline_analysis(text: str, target_role: Optional[str] = None) -> Dict[str, 
 def _analyze(text: str, target_role: Optional[str]) -> Dict[str, Any]:
     data = None
     try:
-        from agent.groq_client import groq_enabled
-        if groq_enabled():
+        from agent import llm
+        llm.set_request_mode("auto", workspace=True)
+        if llm.enabled():
             from agent_service import _analyze_resume_text
-            data = _analyze_resume_text(text, target_role)
+            visible = llm.set_user_visible(True)
+            try:
+                data = _analyze_resume_text(text, target_role)
+            finally:
+                llm.reset_user_visible(visible)
     except Exception:
         data = None
     if not isinstance(data, dict) or not isinstance(data.get("score"), dict):
@@ -438,17 +443,23 @@ class CoachBody(MatchBody):
 
 def _ai_rewrite(original: str, facts: str) -> Optional[str]:
     try:
+        from agent import llm
+        llm.set_request_mode(workspace=True)
         from agent.groq_client import get_client, groq_enabled
-        if not groq_enabled():
-            return None
-        r = get_client().chat.completions.create(
-            model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), temperature=0.2, max_tokens=120,
-            messages=[{"role": "system", "content": "Rewrite ONE resume bullet to be clearer. Use ONLY facts present in ORIGINAL or FACTS. "
-                       "Do not add numbers, tools, employers, people or outcomes. Start with an action verb. One line, at most 25 words. "
-                       "Reply with the bullet text only."},
-                      {"role": "user", "content": f"ORIGINAL: {original}\nFACTS: {facts or 'none'}"}])
-        out = (r.choices[0].message.content or "").strip().strip('"').lstrip("-* ").strip()
-        return out or None
+        visible = llm.set_user_visible(True)
+        try:
+            if not groq_enabled():
+                return None
+            r = get_client().chat.completions.create(
+                model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), temperature=0.2, max_tokens=120,
+                messages=[{"role": "system", "content": "Rewrite ONE resume bullet to be clearer. Use ONLY facts present in ORIGINAL or FACTS. "
+                           "Do not add numbers, tools, employers, people or outcomes. Start with an action verb. One line, at most 25 words. "
+                           "Reply with the bullet text only."},
+                          {"role": "user", "content": f"ORIGINAL: {original}\nFACTS: {facts or 'none'}"}])
+            out = (r.choices[0].message.content or "").strip().strip('"').lstrip("-* ").strip()
+            return out or None
+        finally:
+            llm.reset_user_visible(visible)
     except Exception:
         return None
 

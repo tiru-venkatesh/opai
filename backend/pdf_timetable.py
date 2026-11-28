@@ -83,12 +83,17 @@ def _pdf_text(b64: str) -> str:
 
 
 def _llm(user_prompt: str) -> dict:
+    from agent import llm
+    llm.set_request_mode(workspace=True)
     if not groq_client.groq_enabled():
-        raise HTTPException(503, "AI is not configured on the server")
+        raise HTTPException(503, "No AI provider key is configured on the server")
+    visible = llm.set_user_visible(True)
     try:
         return groq_client.generate_json(SYSTEM, user_prompt)
-    except Exception as e:
-        raise HTTPException(502, f"AI analysis failed: {e}")
+    except Exception:
+        raise HTTPException(502, "AI timetable analysis failed. Try again shortly.") from None
+    finally:
+        llm.reset_user_visible(visible)
 
 
 def _to_draft(data: dict) -> Draft:

@@ -5,7 +5,7 @@ load_dotenv()  # reads backend/.env if present, before any os.environ.get() call
 from uuid import UUID
 from datetime import date, datetime, timedelta
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi import FastAPI, Depends, HTTPException, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -95,6 +95,8 @@ from karna_api import router as karna_router
 app.include_router(karna_router)
 from version_api import router as version_router
 app.include_router(version_router)
+from ai_admin_api import router as ai_admin_router
+app.include_router(ai_admin_router)
 
 from auth_guard import AuthGuard
 app.add_middleware(AuthGuard)   # added BEFORE CORS so CORS stays outermost and 401/403 still carry CORS headers
@@ -137,10 +139,23 @@ def on_startup():
 
 @app.exception_handler(RuntimeError)
 def groq_not_configured_handler(request: Request, exc: RuntimeError):
-    # get_groq_client() raises RuntimeError with a clear message when
-    # GROQ_API_KEY is missing - surface that as a proper 503 instead of a
-    # raw 500 + traceback, since it's a config problem, not a bug.
-    return JSONResponse(status_code=503, content={"detail": str(exc)})
+    # Provider adapters and the router raise RuntimeError-compatible errors.
+    # Normalize provider failures so raw upstream messages never reach clients.
+    if type(exc).__name__ == "ProviderError":
+        status = getattr(exc, "status", 503)
+        if status == 429:
+            return JSONResponse(status_code=429, content={"detail": "The AI provider is rate-limited. Try again shortly."},
+                                headers={"Retry-After": "30"})
+        if status in (401, 403):
+            return JSONResponse(status_code=502, content={"detail": "The AI provider rejected its server-side key. Check backend configuration."})
+        return JSONResponse(status_code=503 if status >= 500 or status == 408 else 502,
+                            content={"detail": "The AI provider is unavailable or returned an invalid response. Try again shortly."})
+    message = str(exc)
+    safe_prefixes = ("No configured AI provider", "No configured provider", "No AI provider key is configured",
+                     "All configured AI providers", "All configured privacy-compatible AI providers")
+    if message.startswith(safe_prefixes):
+        return JSONResponse(status_code=503, content={"detail": message[:300]})
+    return JSONResponse(status_code=503, content={"detail": "The AI service is unavailable. Try again shortly."})
 
 
 def _friendly_error(exc: Exception):
@@ -151,7 +166,7 @@ def _friendly_error(exc: Exception):
         if name == "RateLimitError":
             return 429, "The AI service is rate-limited right now. Wait a minute and try again.", 30
         if name in ("AuthenticationError", "PermissionDeniedError"):
-            return 502, "The AI service rejected the server's API key. Check ANTHROPIC_API_KEY (or GROQ_API_KEY) on the backend.", None
+            return 502, "The AI provider rejected its server-side key. Check provider settings on the backend.", None
         if name == "OverloadedError" or getattr(exc, "status_code", None) == 529:
             return 503, "The AI service is busy right now. Try again in a few seconds.", 5
         if name in ("APIConnectionError", "APITimeoutError"):
@@ -167,15 +182,17 @@ def unhandled_error_handler(request: Request, exc: Exception):
     # Unhandled errors bypass CORSMiddleware, so add the CORS header here; otherwise the
     # browser reports a misleading "CORS blocked" instead of the real status/detail.
     import logging
-    logging.getLogger("opa").exception("Unhandled error on %s %s", request.method, request.url.path)
+    logger = logging.getLogger("opa")
     headers = {"Access-Control-Allow-Origin": request.headers.get("origin", "*")}
     friendly = _friendly_error(exc)
     if friendly:
+        logger.warning("request failed path=%s error_type=%s", request.url.path, type(exc).__name__)
         status, message, retry = friendly
         if retry:
             headers["Retry-After"] = str(retry)
         return JSONResponse(status_code=status, content={"detail": message}, headers=headers)
-    return JSONResponse(status_code=500, content={"detail": f"{type(exc).__name__}: {exc}"}, headers=headers)
+    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error."}, headers=headers)
 
 
 @app.get("/v1/health")
@@ -189,7 +206,7 @@ def health(db: Session = Depends(get_db)):
         "ok": True,
         "db": dialect,
         "db_persistent": dialect != "sqlite",
-        "groq_key_set": bool(os.getenv("GROQ_API_KEY", "").strip() or os.getenv("ANTHROPIC_API_KEY", "").strip()),   # page banner: "an AI key is set"
+        "groq_key_set": __import__("agent.llm", fromlist=["enabled"]).enabled(),   # legacy field used by the UI: any supported provider is configured
         "llm": __import__("agent.llm", fromlist=["status"]).status(),
         "tables": {},
     }
@@ -1310,6 +1327,10 @@ def set_agent_permissions(user_id: UUID, payload: AgentPermissionsUpdate, db: Se
 # ================= KARNA UNIFIED CHAT =================
 @app.post("/v1/jarvis/chat", response_model=JarvisChatResponse)
 def jarvis_chat(request: JarvisChatRequest, db: Session = Depends(get_db)):
+    from agent import llm
+    from agent.model_router import check_user_rate_limit
+    check_user_rate_limit(str(request.user_id))
+    llm.set_request_mode(request.ai_mode, workspace=True)
     # Greetings / thanks / "what can you do" / help: answered locally BEFORE the memory-extraction pass below,
     # which does DB reads and can call the LLM. That pass is why a plain "hi" used to take ~6 s.
     if not request.doc_ids:
@@ -1334,7 +1355,11 @@ def jarvis_chat(request: JarvisChatRequest, db: Session = Depends(get_db)):
         return JarvisChatResponse(action="chat", reply=msg, payload={"intent": "memory_pending", "memory": res})
     entry = _select_model(request.model_key, "workspace", str(request.user_id))
     _charge_model(entry, str(request.user_id))
-    res = process_jarvis_message(request.user_id, request.message, db, history=request.history, doc_ids=request.doc_ids)
+    visible = llm.set_user_visible(True)
+    try:
+        res = process_jarvis_message(request.user_id, request.message, db, history=request.history, doc_ids=request.doc_ids)
+    finally:
+        llm.reset_user_visible(visible)
     meta = llm_meta()
     if meta:
         pl = res.payload if isinstance(res.payload, dict) else ({} if res.payload is None else None)
@@ -1367,6 +1392,7 @@ class GeneralChatRequest(BaseModel):
     user_id: Optional[str] = None      # lets General mode answer questions about the user's own profile
     messages: List[GeneralChatMessage]
     model_key: Optional[str] = None    # server-validated catalog key; None/"auto" = default routing
+    ai_mode: str = Field(default="auto", pattern="^(auto|fast|think|expert)$")
 
 
 _GENERAL_HITS: dict = {}
@@ -1427,13 +1453,17 @@ def _charge_model(entry, who: str):
 
 def _general_prepare(req, request: Request, db: Session):
     """Everything before the model call. Returns ("done", response_dict) for local answers, or ("llm", msgs, saved, ctx)."""
-    from agent import groq_client, learn
+    from agent import groq_client, learn, llm
     ip = request.client.host if request.client else "unknown"
     _general_rate_limit(ip)
     last_user = next((m.content for m in reversed(req.messages) if m.role == "user"), "")
     uid = str(req.user_id) if req.user_id else None
+    from agent.model_router import check_user_rate_limit
+    check_user_rate_limit(uid or ip)
     entry = _select_model(req.model_key, "general", uid or ip)     # validated before anything else runs
+    llm.set_request_mode(req.ai_mode, workspace=False)
     third_party = bool(entry and not entry.workspace_ok)           # e.g. Hugging Face: never sent profile / memory context
+    personal_q = bool(_PERSONAL_DATA.search(last_user or ""))
     from agent import conversation          # greetings / "what can you do" / help: local reply, no DB-heavy memory pass, no LLM
     if conversation.answer(last_user) is not None:
         first = None
@@ -1447,7 +1477,7 @@ def _general_prepare(req, request: Request, db: Session):
     saved = []
     if uid:
         try:
-            res = learn.propose_from_message(db, uid, last_user, history=[{'role': m.role, 'content': m.content} for m in req.messages[:-1]])
+            res = learn.propose_from_message(db, uid, last_user, history=[{'role': m.role, 'content': m.content} for m in req.messages[:-1]], use_llm=False)
         except Exception:
             db.rollback()
             res = {"pending": [], "saved": [], "dropped": []}
@@ -1463,27 +1493,32 @@ def _general_prepare(req, request: Request, db: Session):
         if ident:
             return ("done", {"reply": ident["reply"], "source": "profile"})
     ctx = {"text": "", "hits": [], "empty": True}
-    if uid and not third_party:
+    # Minimize disclosure: only read personal workspace context when the user asks a personal-data question.
+    if uid and not third_party and personal_q:
         try:
             ctx = learn.personal_context(db, uid, last_user)
         except Exception:
             db.rollback()
-    personal_q = bool(_PERSONAL_DATA.search(last_user or ""))
-    if not groq_client.groq_enabled():
+    llm.set_request_mode(req.ai_mode, workspace=not ctx["empty"])
+    if not llm.enabled():
         if personal_q and ctx["hits"]:
             from rag_api import extractive_answer, build_sources
             src = build_sources(ctx["hits"])
             return ("done", {"reply": extractive_answer(src, ctx["hits"], last_user), "source": "workspace", "sources": src})
-        raise HTTPException(503, "No AI key is configured on the backend (set GROQ_API_KEY or ANTHROPIC_API_KEY)")
+        raise HTTPException(503, "No AI provider key is configured on the backend (set GEMINI_API_KEY, GROQ_API_KEY, or OPENROUTER_API_KEY)")
     if personal_q and third_party:
         return ("done", {"reply": "That question needs your personal data, and I don't send that to third-party models. "
-                                  "Switch the model to Auto or Claude and ask again."})
+                                  "Switch to Auto or a provider approved for private Workspace data and ask again."})
     if personal_q and ctx["empty"]:
         return ("done", {"reply": "I don't have anything about that in your OPAI data yet. Add it in Plan/Work, or tell me here "
                                   "(for example \"I study at ...\" or \"my goal is ...\") and I'll remember it."})
     # Client system prompt is only used for style (language); the honesty rules always come first.
     style = (req.system or "")[:600]
-    system = GENERAL_GUARD + ("\nStyle hint from app: " + style if style else "")
+    system = GENERAL_GUARD
+    if not ctx["empty"]:
+        system = system.replace("You have NO access to the user's plan, calendar, tasks, documents or any personal data in this mode. "
+                                "Never invent them. If asked, say to switch to Workspace mode.\n", "")
+    system += ("\nStyle hint from app: " + style if style else "")
     system += ("\nYou CANNOT save, add, update or delete anything in the user's profile or data, and you never claim to. Saving happens "
                "automatically elsewhere and is confirmed separately. Do not state facts about the user's college, location or background "
                "unless they appear in the context below; if you are unsure what a name or place refers to, say so and ask.")
@@ -1539,8 +1574,8 @@ def general_chat_stream(req: GeneralChatRequest, request: Request, db: Session =
         temp = float(os.getenv("GENERAL_TEMPERATURE", "0.2"))
         try:
             meta = None
-            if entry is not None and entry.provider != "anthropic":
-                # Groq / Hugging Face: one-shot answer (no native streaming here), with fallback + labelling handled in final_answer
+            if entry is not None and entry.provider == "hf":
+                # Hugging Face remains a compatible one-shot model-picker option; other providers stream natively.
                 piece = llm.final_answer(msgs, default_model=os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b"), max_tokens=mx,
                                          temperature=temp, entry=entry)
                 meta = llm.last_meta()
@@ -1555,7 +1590,7 @@ def general_chat_stream(req: GeneralChatRequest, request: Request, db: Session =
             yield sse({"done": True, "reply": learn.strip_false_claim("".join(buf), saved), "personalised": not ctx["empty"], "model": meta})
         except Exception as e:
             import logging
-            logging.getLogger("opa").exception("stream failed")
+            logging.getLogger("opa").warning("chat stream failed error_type=%s", type(e).__name__)
             yield sse({"error": "AI chat failed. Try again.", "done": True})
 
     return StreamingResponse(gen(), media_type="text/event-stream",

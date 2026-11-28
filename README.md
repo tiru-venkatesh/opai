@@ -18,7 +18,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python 3.10+" />
   <img src="https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/AI-Groq%20%7C%20RAG-5A45FF" alt="Groq and RAG" />
+  <img src="https://img.shields.io/badge/AI-Groq%20%7C%20Gemini%20%7C%20OpenRouter-5A45FF" alt="Groq, Gemini and OpenRouter" />
   <img src="https://img.shields.io/badge/Frontend-HTML%20%7C%20CSS%20%7C%20JavaScript-E34F26?logo=html5&logoColor=white" alt="HTML CSS JavaScript" />
   <img src="https://img.shields.io/badge/Status-Active%20Development-orange" alt="Active development" />
 </p>
@@ -59,11 +59,11 @@ OPAI uses a layered approach so language-model output is not treated as unrestri
 User request
     │
     ▼
-Intent / entity routing
+KARNA local intent + privacy + quota routing
     │
-    ├── Optional Jev provider
-    ├── Groq structured decision fallback
-    └── Deterministic rules fallback
+    ├── Groq — fast chat, coding, workspace-safe default
+    ├── Gemini — complex reasoning and policy-approved study/document/image tasks
+    └── OpenRouter — non-private general-chat fallback
     │
     ▼
 Backend validation and workflow logic
@@ -92,8 +92,10 @@ flowchart TD
     U[User] --> FE[Static frontend<br/>HTML · CSS · JavaScript]
     FE -->|HTTPS / REST| API[FastAPI backend]
     API --> AG[Agent router and workflow services]
-    AG --> JE[Optional Jev decision provider]
-    AG --> GROQ[Groq model APIs]
+    AG --> MR[KARNA model router]
+    MR --> GROQ[Groq API]
+    MR --> GEM[Gemini API]
+    MR --> OR[OpenRouter]
     AG --> RAG[RAG and retrieval layer]
     API --> DB[SQLAlchemy data layer]
     DB --> SQLITE[(SQLite)]
@@ -111,7 +113,7 @@ flowchart TD
 | Frontend | HTML, CSS, vanilla JavaScript, browser `localStorage`, web app manifest and service worker |
 | API | Python, FastAPI, Uvicorn, Pydantic |
 | Persistence | SQLAlchemy, SQLite by default, PostgreSQL supported |
-| AI | Groq API; optional Jev intent routing; deterministic fallbacks |
+| AI | KARNA routing over Groq, Gemini and OpenRouter; optional legacy providers remain configurable |
 | Retrieval | FastEmbed, `BAAI/bge-small-en-v1.5`, Python-side similarity/keyword retrieval |
 | Document processing | `pypdf`, `python-docx`, `python-multipart`, ReportLab for PDF export features |
 | Hosting pattern | Vercel or another static host for the frontend; Render, Railway, Fly.io, or a VPS for the backend |
@@ -143,7 +145,7 @@ opa-main/
 │   ├── static/                 # UI assets/pages served by FastAPI
 │   ├── requirements.txt        # Python dependencies
 │   └── .env.example            # Environment-variable template
-├── ARCHITECTURE.md             # Deeper architecture notes
+├── ARCHITECTURE.md             # KARNA's current backend architecture
 ├── CHANGELOG-v*.md             # Development history
 └── README.md
 ```
@@ -153,7 +155,7 @@ opa-main/
 ### 1. Requirements
 
 - Python **3.10 or newer**.
-- A Groq API key for AI features that call Groq.
+- At least one backend API key: Groq, Gemini, or OpenRouter.
 - A modern browser.
 - Optional: PostgreSQL for a persistent production database.
 
@@ -189,10 +191,16 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Open `backend/.env` and set your key:
+Open `backend/.env` and configure the provider keys you want to enable. Keys stay on the backend:
 
 ```dotenv
 GROQ_API_KEY=your_groq_api_key
+GEMINI_API_KEY=
+OPENROUTER_API_KEY=
+KARNA_DEFAULT_MODE=auto
+KARNA_ENABLE_FALLBACK=true
+KARNA_ENABLE_PAID_MODELS=false
+KARNA_GEMINI_WORKSPACE_ALLOWED=false
 ```
 
 Then start the API from the `backend/` directory:
@@ -237,15 +245,23 @@ The full starter template is in [`backend/.env.example`](backend/.env.example). 
 
 | Variable | Purpose | Default / notes |
 |---|---|---|
-| `GROQ_API_KEY` | Enables Groq-backed chat and generation workflows. | No default; configure a private key. |
+| `GROQ_API_KEY` | Enables Groq chat and generation. | No default; provider keys stay on the backend. |
+| `GEMINI_API_KEY` | Enables Gemini reasoning and multimodal requests. | Workspace use requires paid-tier and privacy opt-in. |
+| `OPENROUTER_API_KEY` | Enables OpenRouter general-chat fallback. | Private Workspace use is blocked by default. |
+| `KARNA_DEFAULT_MODE` | Default mode: `auto`, `fast`, `think`, or `expert`. | `auto`. |
+| `KARNA_ENABLE_FALLBACK` | Allows switching to another eligible provider. | `true`. |
+| `KARNA_ENABLE_PAID_MODELS` | Enables explicitly selected paid provider models. | `false`; provider billing still follows the account plan. |
+| `KARNA_GEMINI_WORKSPACE_ALLOWED` | Allows reviewed Gemini Paid-tier Workspace routing. | `false`; enable only after approving the account's data policy. |
+| `KARNA_ANTHROPIC_WORKSPACE_ALLOWED` | Allows reviewed legacy Anthropic Workspace routing. | `false`; requires `KARNA_ENABLE_PAID_MODELS=true`. |
+| `GROQ_MODEL` | Groq model used by automatic provider routing. | `openai/gpt-oss-120b`. |
+| `GEMINI_MODEL` | Gemini model used by automatic provider routing. | `gemini-3.8-flash`. |
+| `OPENROUTER_MODEL` | OpenRouter model/router used for general-chat fallback. | `openrouter/free`. |
 | `DATABASE_URL` | Database connection. | `sqlite:///./opa.db`; use managed PostgreSQL or persistent storage for production. |
 | `RAG_EMBEDDER` | Chooses the document embedding strategy. | `auto`; options: `auto`, `fastembed`, `hash`. |
 | `CORS_ORIGINS` | Comma-separated allowed frontend origins. | `*` in development; set explicit HTTPS origins in production. |
-| `JEV_ENABLED` | Enables the optional Jev routing provider before Groq fallback. | `false`. Requires the provider's endpoint and credentials to be configured. |
+| `JEV_ENABLED` | Enables the optional Jev intent provider before deterministic routing fallback. | `false`. Requires the provider's endpoint and credentials. |
 | `JEV_API_URL` / `JEV_API_KEY` / `JEV_MODEL` | Jev provider configuration. | Optional; see `.env.example`. |
-| `GROQ_ROUTER_MODEL` | Model used for structured routing. | `openai/gpt-oss-20b`. |
-| `GROQ_CHAT_MODEL` | Model for general chat. | `openai/gpt-oss-20b`. |
-| `GROQ_AGENT_MODEL` | Model for agent/tool workflows. | `openai/gpt-oss-120b`. |
+| `KARNA_PROVIDER_LIMITS_JSON` | Optional account-specific provider RPM/TPM/RPD/TPD caps. | `{}`; add only values verified from the provider account. |
 | `RAG_MAX_FILE_MB` | Maximum upload size for a RAG document. | `10` MB. |
 | `GENERAL_CHAT_PER_MIN` | General chat request limit per minute. | `20`. |
 | `PORT` | Port used by the backend process on hosting platforms. | `8000` locally; hosting providers usually set this. |
@@ -305,7 +321,7 @@ A SQLite file on an ephemeral hosting filesystem can disappear after a redeploy 
 1. Create a Web Service for the repository and set its **Root Directory** to `backend`.
 2. Build command: `pip install -r requirements.txt`.
 3. Start command: `python main.py`.
-4. Add `GROQ_API_KEY` and your production `DATABASE_URL` in the provider's environment settings.
+4. Add your chosen provider API keys, KARNA privacy settings, and production `DATABASE_URL` in the host environment.
 5. Set `CORS_ORIGINS` to the exact frontend origin(s), for example `https://opai.live,https://www.opai.live` if both are in use.
 6. Use a persistent database/storage option and verify `/v1/health` after deployment.
 
@@ -338,7 +354,7 @@ A focused deployment diagnostic script is available at `backend/scripts/check_de
 python scripts/check_deploy.py --help
 ```
 
-For deeper system context, see [`ARCHITECTURE.md`](ARCHITECTURE.md), `STABILITY_NOTES.md`, `MERGE_NOTES.md`, and the versioned changelog files.
+For provider privacy, quotas, analytics, and rollout steps, see [`backend/KARNA_MULTI_PROVIDER.md`](backend/KARNA_MULTI_PROVIDER.md). For architecture details, see [`ARCHITECTURE.md`](ARCHITECTURE.md), `STABILITY_NOTES.md`, `MERGE_NOTES.md`, and the versioned changelog files.
 
 ## Security, privacy, and launch readiness
 

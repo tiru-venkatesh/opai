@@ -35,6 +35,10 @@ jobs:
       - working-directory: backend
         env: { OPAI_AUTH_MODE: "off" }
         run: pytest -q tests/test_rag_pipeline.py tests/test_cross_user.py tests/test_auth_guard.py
+      - name: KARNA provider routing, streaming, privacy, memory, quota and analytics
+        working-directory: backend
+        env: { OPAI_AUTH_MODE: "off" }
+        run: pytest -q tests/test_learn.py tests/test_karna_model_router.py tests/test_karna_provider_adapters.py tests/test_provider_quota.py tests/test_ai_admin_api.py tests/test_frontend_provider_secrets.py tests/test_karna_prompt.py tests/test_karna_ux.py tests/test_llm_gateway.py
   no-personal-data:
     runs-on: ubuntu-latest
     steps:

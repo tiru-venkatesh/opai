@@ -225,6 +225,7 @@ pre.json{margin:0;padding:12px 14px;font:400 12px/1.6 var(--mono);overflow-x:aut
 <aside id="mem" aria-label="Memory">
   <div class="dh"><h3>Memory</h3><button class="xbtn" id="mem-x" type="button" aria-label="Close Memory">&times;</button></div>
   <p class="note">Only facts you confirm are remembered. Edit or delete anything here; deleted items are also removed from KARNA's search.</p>
+  <label class="note" style="display:flex;align-items:center;gap:9px;margin:0 0 12px"><input id="mem-enabled" type="checkbox" checked> Use long-term memory in replies</label>
   <div id="mem-list" style="display:flex;flex-direction:column;gap:8px"></div>
 </aside>
 
@@ -256,7 +257,8 @@ pre.json{margin:0;padding:12px 14px;font:400 12px/1.6 var(--mono);overflow-x:aut
       <div class="tb">
         <button class="icon" id="attach" type="button" aria-label="Attach files" title="Analyse a PDF, image or text file once (max 5 files, 8 MB each). To make files searchable, use Knowledge."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l9-9a3.7 3.7 0 0 1 5.2 5.2l-9 9a1.8 1.8 0 0 1-2.6-2.6l8.4-8.4"/></svg></button>
         <button class="icon" id="mic" type="button" aria-label="Voice input" aria-pressed="false" title="Speak your message" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
-        <select class="sel" id="model" aria-label="AI model" title="Which model writes the final answer. Auto uses the default routing."><option value="auto">Auto</option></select>
+        <select class="sel" id="aiMode" aria-label="KARNA mode" title="Choose whether to prioritize speed or deeper reasoning"><option value="auto">Auto</option><option value="fast">Fast</option><option value="think">Think</option><option value="expert">Expert</option></select>
+        <select class="sel" id="model" aria-label="AI model" title="Optional provider override. Auto uses the selected KARNA mode."><option value="auto">Auto</option></select>
         <select class="sel" id="lang" aria-label="Reply language" title="Reply language and voice input language"><option value="en">English</option><option value="hi">Hinglish</option><option value="te">Tenglish</option></select>
         <span class="scope" id="scope" hidden></span>
         <span class="sp"></span>
@@ -293,8 +295,8 @@ pre.json{margin:0;padding:12px 14px;font:400 12px/1.6 var(--mono);overflow-x:aut
   }
   function explain(e) {
     if (e.name === 'AbortError') return null;
-    if ((e.status === 503 || e.status === 502) && /GROQ|not configured|AI is not/i.test(e.message))
-      return 'The AI key is not set on the backend yet. Add GROQ_API_KEY (or ANTHROPIC_API_KEY) in Render and try again. Workspace mode still answers from your documents and data without it.';
+    if ((e.status === 503 || e.status === 502) && /GROQ|GEMINI|OPENROUTER|not configured|AI is not/i.test(e.message))
+      return 'No usable AI provider is configured yet. Add a Gemini, Groq, or OpenRouter key to the backend environment and try again.';
     if (e.status === 429 && /daily limit/i.test(e.message)) return e.message;
     if (e.status === 429) return 'Too many requests, or the AI service is rate-limited. Wait a minute and retry.';
     if (e.status === 502 || e.status === 503) return e.message;
@@ -367,9 +369,9 @@ pre.json{margin:0;padding:12px 14px;font:400 12px/1.6 var(--mono);overflow-x:aut
   const materialize = () => {};
 
   /* ---------- conversation store (per device/user, localStorage) ---------- */
-  const keyFor = () => 'opai_karna_v2:' + (localStorage.getItem('opai_sc_email') || 'local');
+  const keyFor = () => uid ? 'opai_karna_v3:' + uid : 'opai_karna_v2:' + (localStorage.getItem('opai_sc_email') || 'local');
   let curKey = keyFor();
-  const load = () => { try { const s = JSON.parse(localStorage.getItem(curKey)); if (s && s.convs) return s; } catch (e) {} return { cur: null, mode: 'ws', convs: {} }; };
+  const load = (key = curKey) => { try { const s = JSON.parse(localStorage.getItem(key)); if (s && s.convs) return s; } catch (e) {} return { cur: null, mode: 'ws', convs: {} }; };
   let store = load();
   function save() {
     try {
@@ -398,6 +400,12 @@ pre.json{margin:0;padding:12px 14px;font:400 12px/1.6 var(--mono);overflow-x:aut
   }
   /* ---------- model picker (server-side catalog; the server validates every key) ---------- */
   const LS_MODEL = 'opai_sc_model';
+  const LS_AI_MODE = 'opai_ai_mode';
+  let aiMode = 'auto';
+  try { aiMode = localStorage.getItem(LS_AI_MODE) || 'auto'; } catch (e) {}
+  if (!['auto','fast','think','expert'].includes(aiMode)) aiMode = 'auto';
+  $('aiMode').value = aiMode;
+  $('aiMode').addEventListener('change', (e) => { aiMode = e.target.value || 'auto'; try { localStorage.setItem(LS_AI_MODE, aiMode); } catch (x) {} });
   let modelKey = 'auto';
   try { modelKey = localStorage.getItem(LS_MODEL) || 'auto'; } catch (e) {}
   async function loadModels() {
@@ -413,10 +421,10 @@ pre.json{margin:0;padding:12px 14px;font:400 12px/1.6 var(--mono);overflow-x:aut
     } catch (e) { /* picker is optional: stay on Auto */ modelKey = 'auto'; sel.value = 'auto'; }
   }
   $('model').addEventListener('change', (e) => { modelKey = e.target.value || 'auto'; try { localStorage.setItem(LS_MODEL, modelKey); } catch (x) {} });
-  const modelBody = () => (modelKey && modelKey !== 'auto' ? { model_key: modelKey } : {});
+  const modelBody = () => ({ ai_mode: aiMode, ...(modelKey && modelKey !== 'auto' ? { model_key: modelKey } : {}) });
   function modelBadge(mm) {
     if (!mm || !mm.label) return '';
-    const prov = { anthropic: 'Claude', groq: 'Groq', hf: 'Hugging Face' }[mm.provider] || mm.provider || '';
+    const prov = { anthropic: 'Claude', groq: 'Groq', gemini: 'Gemini', openrouter: 'OpenRouter', hf: 'Hugging Face' }[mm.provider] || mm.provider || '';
     const t = mm.fallback ? 'Fallback used: answered by ' + prov + (mm.model ? ' (' + mm.model + ')' : '') : (mm.model || mm.label);
     return '<span class="mbadge' + (mm.fallback ? ' fb' : '') + '" title="' + esc(t) + '">' + esc(mm.fallback ? 'fallback \u00b7 ' + prov : mm.label) + '</span>';
   }
@@ -761,7 +769,7 @@ pre.json{margin:0;padding:12px 14px;font:400 12px/1.6 var(--mono);overflow-x:aut
 
   /* Workspace mode: same pipeline as /v1/jarvis/chat, delivered as SSE so the page can show progress phases.
      Falls back to the plain route if the server has no stream endpoint (older backend) or the connection fails before any event. */
-  async function streamWorkspace(body, signal, onPhase) {
+  async function streamWorkspace(body, signal, onPhase, onText) {
     let res;
     try { res = await fetch(base() + '/v1/jarvis/chat/stream', { method: 'POST', signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); }
     catch (e) { if (e.name === 'AbortError') throw e; return { fallback: true }; }
@@ -771,7 +779,7 @@ pre.json{margin:0;padding:12px 14px;font:400 12px/1.6 var(--mono);overflow-x:aut
       if (Array.isArray(d)) d = d.map((x) => x.msg).join('; ');
       const err = new Error(d || (res.status + ' ' + res.statusText)); err.status = res.status; throw err;
     }
-    const rd = res.body.getReader(), dec = new TextDecoder(); let buf = '', fin = null;
+    const rd = res.body.getReader(), dec = new TextDecoder(); let buf = '', fin = null, text = '';
     for (;;) {
       const { value, done } = await rd.read(); if (done) break;
       buf += dec.decode(value, { stream: true });
@@ -780,6 +788,8 @@ pre.json{margin:0;padding:12px 14px;font:400 12px/1.6 var(--mono);overflow-x:aut
         if (!line.startsWith('data:')) continue;
         let ev; try { ev = JSON.parse(line.slice(5)); } catch (e) { continue; }
         if (ev.label) onPhase(ev.label);
+        if (ev.reset) { text = ''; onText(text); }
+        if (ev.delta) { text += ev.delta; onText(text); }
         if (ev.error) { const err = new Error(ev.error); err.status = ev.status || 502; throw err; }
         if (ev.done) fin = ev;
       }
@@ -832,7 +842,12 @@ pre.json{margin:0;padding:12px 14px;font:400 12px/1.6 var(--mono);overflow-x:aut
       } else {
         const body = { user_id: await ensureUser(), message: text, history: historyFor(c), ...modelBody() };
         if (scopeDoc) body.doc_ids = [scopeDoc.doc_id];
-        const sres = await streamWorkspace(body, ctrl.signal, (lbl) => { t._phase = lbl; });
+        const sres = await streamWorkspace(body, ctrl.signal, (lbl) => { t._phase = lbl; }, (txt) => {
+          const follow = nearEnd();
+          if (!live) { clearInterval(t._iv); t.remove(); live = addMsg({ role: 'agent', action: 'chat', text: txt, ts: Date.now() }); live.classList.add('live'); }
+          else live.querySelector('.bubble').innerHTML = md(txt);
+          if (follow) window.scrollTo(0, document.body.scrollHeight);
+        });
         const r = sres.fallback ? await api('/v1/jarvis/chat', { method: 'POST', signal: ctrl.signal, body: JSON.stringify(body) }) : sres.result;
         const fups = sres.fallback ? null : sres.followups;
         const p = r.payload && typeof r.payload === 'object' && !Array.isArray(r.payload) ? r.payload : null;
@@ -885,10 +900,22 @@ pre.json{margin:0;padding:12px 14px;font:400 12px/1.6 var(--mono);overflow-x:aut
   async function drawMem() {
     const box = $('mem-list'), u = await ensureUser();
     try {
+      const pref = await api('/v1/memory?user_id=' + encodeURIComponent(u));
+      $('mem-enabled').checked = pref.enabled !== false;
       const items = await api('/v1/memory/items?user_id=' + u + '&include_unconfirmed=true');
       box.innerHTML = items.length ? items.map((it) => '<div class="mrow" data-id="' + esc(it.id) + '"><b>' + esc(it.content) + '</b><small>' + (it.status === 'active' ? 'Saved' : '<span class="pend">Not saved yet</span>') + ' \u00b7 ' + esc(it.source) + (it.created_at ? ' \u00b7 ' + esc(String(it.created_at).slice(0, 10)) : '') + '</small><div class="mact">' + (it.status === 'active' ? '' : '<button class="go" data-m="save" type="button">Save</button>') + '<button data-m="edit" type="button">Edit</button><button data-m="del" type="button">Delete</button></div></div>').join('') : '<p class="note">Nothing remembered yet.</p>';
     } catch (e) { box.innerHTML = '<p class="note">Could not load memory: ' + esc(explain(e)) + '</p>'; }
   }
+  $('mem-enabled').addEventListener('change', async (e) => {
+    const control = e.currentTarget, requested = control.checked;
+    control.disabled = true;
+    try {
+      const u = await ensureUser();
+      await api('/v1/memory?user_id=' + encodeURIComponent(u), { method: 'PATCH', body: JSON.stringify({ enabled: requested }) });
+      flash(requested ? 'Long-term memory is on.' : 'Long-term memory is off. Your saved items remain available to edit or delete.');
+    } catch (x) { control.checked = !requested; flash('Could not update memory: ' + explain(x)); }
+    finally { control.disabled = false; }
+  });
   $('mem-list').addEventListener('click', async (e) => {
     const b = e.target.closest('button[data-m]'); if (!b) return;
     const row = b.closest('.mrow'), id = row.dataset.id, u = await ensureUser();
@@ -997,16 +1024,25 @@ pre.json{margin:0;padding:12px 14px;font:400 12px/1.6 var(--mono);overflow-x:aut
   async function boot() {
     const ls = $('lang'); ls.value = getLang();
     ls.addEventListener('change', () => { try { localStorage.setItem(LANG_KEY, ls.value); localStorage.setItem('opai_voice_lang', VOICE[ls.value]); } catch (e) {} });
-    renderAll(); applyMode(); syncSend();
+      syncSend();
     try {
       const h = await api('/v1/health');
       setConn(h.ok ? 'ok' : 'err', h.ok ? 'connected' : 'backend degraded');
-      if (!h.groq_key_set) flash('The backend has no GROQ_API_KEY yet. Workspace answers are quoted straight from your data; General mode needs the key.');
+      if (!h.ai_available) flash('The backend has no Gemini, Groq, or OpenRouter key configured yet.');
     } catch (e) { setConn('err', 'backend unreachable'); flash('Could not reach ' + base() + '. If it is on a free host it may be waking up; try again in a minute.'); }
     try {
+      const previousKey = curKey;
       await ensureUser();
       const k = keyFor();
-      if (k !== curKey) { curKey = k; const l = load(); if (Object.keys(l.convs).length) { store = l; renderAll(); applyMode(); } else save(); }
+      if (k !== curKey) {
+        let next = load(k);
+        if (!Object.keys(next.convs).length && previousKey.startsWith('opai_karna_v2:')) {
+          const old = load(previousKey);
+          if (Object.keys(old.convs).length) { next = old; try { localStorage.setItem(k, JSON.stringify(old)); } catch (e) {} }
+        }
+        curKey = k; store = next;
+      }
+      renderAll(); applyMode();
       refreshDocs(); refreshEmpty();
       const p = await api('/v1/agent/permissions?user_id=' + uid);
       $('agent-chip').innerHTML = '<span class="dot ' + (p.agent_enabled ? 'ok' : 'err') + '"></span><span>' + (p.agent_enabled ? 'Agent on' : 'Agent off') + ' \u00b7 ' + (p.max_tool_calls_per_turn || p.max_tool_calls_per_message) + ' tools/msg</span>';

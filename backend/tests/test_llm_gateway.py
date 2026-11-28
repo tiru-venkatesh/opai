@@ -23,6 +23,10 @@ class FakeMessages:
 def claude(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
     monkeypatch.setenv("GROQ_API_KEY", "")
+    monkeypatch.setenv("GEMINI_API_KEY", "")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "")
+    # Paid providers are intentionally disabled by default in production.
+    monkeypatch.setenv("KARNA_ENABLE_PAID_MODELS", "true")
     monkeypatch.delenv("KARNA_PROVIDER", raising=False)
     holder = {}
 
@@ -39,10 +43,15 @@ def text(t):
 
 
 def test_provider_selection(monkeypatch):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", ""); monkeypatch.setenv("GROQ_API_KEY", ""); monkeypatch.delenv("KARNA_PROVIDER", raising=False)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", ""); monkeypatch.setenv("GROQ_API_KEY", "")
+    monkeypatch.setenv("GEMINI_API_KEY", ""); monkeypatch.setenv("OPENROUTER_API_KEY", "")
+    monkeypatch.delenv("KARNA_PROVIDER", raising=False)
+    monkeypatch.setenv("KARNA_ENABLE_PAID_MODELS", "false")
     assert llm.provider() is None and not llm.enabled()
     monkeypatch.setenv("GROQ_API_KEY", "g"); assert llm.provider() == "groq"
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "a"); assert llm.provider() == "anthropic"
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "a"); monkeypatch.setenv("KARNA_PROVIDER", "anthropic")
+    assert llm.provider() == "groq"
+    monkeypatch.setenv("KARNA_ENABLE_PAID_MODELS", "true"); assert llm.provider() == "anthropic"
     monkeypatch.setenv("KARNA_PROVIDER", "groq"); assert llm.provider() == "groq"
     with pytest.raises(RuntimeError):
         monkeypatch.setenv("ANTHROPIC_API_KEY", ""); monkeypatch.setenv("GROQ_API_KEY", ""); llm.get_client()
@@ -129,13 +138,21 @@ def test_temperature_rejected_is_retried_without_it(claude):
 def test_falls_back_to_groq_when_claude_is_down(claude, monkeypatch):
     claude([], raises=RuntimeError("overloaded"))
     monkeypatch.setenv("GROQ_API_KEY", "g")
+    monkeypatch.setenv("KARNA_ENABLE_PAID_MODELS", "true")
+    monkeypatch.setenv("KARNA_ENABLE_FALLBACK", "true")
+    llm.set_request_mode("auto", workspace=False)
+    llm.select("claude-balanced", "general", "test-user")
     seen = {}
     monkeypatch.setattr(llm, "_groq_create", lambda **kw: seen.update(kw) or "GROQ")
-    assert llm.get_client().chat.completions.create(model="openai/gpt-oss-20b", messages=[{"role": "user", "content": "x"}]) == "GROQ"
-    assert seen["model"] == "openai/gpt-oss-20b"
-    monkeypatch.setenv("KARNA_FALLBACK", "off")
-    with pytest.raises(RuntimeError):
-        llm.get_client().chat.completions.create(model="m", messages=[{"role": "user", "content": "x"}])
+    try:
+        assert llm.get_client().chat.completions.create(model="openai/gpt-oss-120b", messages=[{"role": "user", "content": "x"}]) == "GROQ"
+        assert seen["model"] == "openai/gpt-oss-120b"
+        assert llm.last_meta()["provider"] == "groq" and llm.last_meta()["fallback"]
+        monkeypatch.setenv("KARNA_ENABLE_FALLBACK", "false")
+        with pytest.raises(RuntimeError):
+            llm.get_client().chat.completions.create(model="m", messages=[{"role": "user", "content": "x"}])
+    finally:
+        llm.select(None, "general", "test-user")
 
 
 def test_stream_chat_yields_deltas(claude, monkeypatch):
@@ -152,6 +169,10 @@ def test_general_stream_endpoint_local_and_llm(monkeypatch):
     os.environ.setdefault("OPAI_LOCAL_AUTH_BYPASS", "1")
     from fastapi.testclient import TestClient
     import main
+    monkeypatch.setenv("KARNA_ENABLE_PAID_MODELS", "true")
+    monkeypatch.setenv("GROQ_API_KEY", "")
+    monkeypatch.setenv("GEMINI_API_KEY", "")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
     monkeypatch.setattr(llm, "stream_chat", lambda msgs, **kw: iter(["Pa", "ging is ", "memory mapping."]))
     c = TestClient(main.app)
@@ -166,7 +187,8 @@ def test_general_stream_endpoint_local_and_llm(monkeypatch):
 
 def test_groq_only_setup_passes_calls_straight_through(monkeypatch):
     """No Anthropic key (the user's real setup): behaviour is exactly the old Groq client."""
-    monkeypatch.setenv("ANTHROPIC_API_KEY", ""); monkeypatch.setenv("GROQ_API_KEY", "gsk_test"); monkeypatch.delenv("KARNA_PROVIDER", raising=False)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", ""); monkeypatch.setenv("GEMINI_API_KEY", ""); monkeypatch.setenv("OPENROUTER_API_KEY", "")
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_test"); monkeypatch.setenv("KARNA_ENABLE_PAID_MODELS", "false"); monkeypatch.delenv("KARNA_PROVIDER", raising=False)
     seen = {}
     fake = NS(chat=NS(completions=NS(create=lambda **kw: seen.update(kw) or NS(choices=[NS(message=NS(content="ok", tool_calls=None))]))))
     import agent.groq_client as gc

@@ -315,6 +315,7 @@ class OutboxItem(Base):
 class UserMemory(Base):
     __tablename__ = "user_memory"
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    enabled = Column(Boolean, default=True, server_default=text("true"), nullable=False)
     goals_summary = Column(Text)
     skills_summary = Column(Text)
     work_patterns = Column(JSON, default=list)
@@ -685,6 +686,10 @@ def _auto_migrate():
                     log.warning("auto-migrate: could not add %s.%s (%s)", table.name, col.name, e)
     if added:
         log.warning("auto-migrated missing columns: %s", ", ".join(added))
+    if "user_memory.enabled" in added:
+        # Existing rows predate the toggle; preserve their previous enabled behavior.
+        with engine.begin() as conn:
+            conn.execute(text('UPDATE "user_memory" SET "enabled" = TRUE WHERE "enabled" IS NULL'))
 
 
 def _mentions_contact(value, contact_id: str) -> bool:
@@ -1034,12 +1039,14 @@ class UsageLedger(Base):
     id = Column(String(36), primary_key=True, default=gen_id)
     user_id = Column(String(36), nullable=False)          # no FK: a ledger must survive account deletion for audits
     kind = Column(String, default="llm")                  # llm | llm_stream
-    provider = Column(String)                             # anthropic | groq
+    provider = Column(String)                             # anthropic | groq | gemini | openrouter
     model = Column(String)
     credits = Column(Integer, default=1)
     tokens_in = Column(Integer, default=0)
     tokens_out = Column(Integer, default=0)
     status = Column(String, default="ok")                 # ok | error
+    latency_ms = Column(Integer, default=0)
+    fallback = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_dt.utcnow)
 
 

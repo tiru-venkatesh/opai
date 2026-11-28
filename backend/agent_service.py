@@ -24,8 +24,7 @@ from schemas import (
 )
 
 def get_groq_client():
-    """Historical name. Returns the LLM client (Claude when ANTHROPIC_API_KEY is set, else Groq).
-    Raises RuntimeError with a clear message when no key is configured, instead of crashing at import."""
+    """Historical name. Returns KARNA's routed LLM compatibility client."""
     from agent import llm
     return llm.get_client()
 
@@ -450,12 +449,18 @@ def ask_resume(user_id: UUID, resume_id: str, question: str, db: Session) -> dic
         "in them. If the excerpts don't cover the question, say so plainly instead of guessing."
     )
     user_prompt = f"Resume excerpts:\n{context}\n\nQuestion: {question}"
-    completion = get_groq_client().chat.completions.create(
-        model="openai/gpt-oss-120b",
-        messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
-        temperature=0.4,
-    )
-    return {"answer": completion.choices[0].message.content, "used_chunks": len(hits)}
+    from agent import llm
+    llm.set_request_mode(workspace=True)
+    visible = llm.set_user_visible(True)
+    try:
+        completion = get_groq_client().chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+            temperature=0.4,
+        )
+        return {"answer": completion.choices[0].message.content, "used_chunks": len(hits)}
+    finally:
+        llm.reset_user_visible(visible)
 
 
 def delete_resume(resume_id: str, db: Session) -> None:

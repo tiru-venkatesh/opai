@@ -47,7 +47,7 @@ def test_stream_returns_same_result_as_plain_route(c):
         assert r.headers["content-type"].startswith("text/event-stream")
         r.read()
     ev = _events(r)
-    assert ev[0]["status"] == "reading" and ev[-1]["done"] and "error" not in ev[-1]
+    assert ev[0]["status"] == "preparing" and ev[-1]["done"] and "error" not in ev[-1]
     assert ev[-1]["result"]["action"] == "chat" and ev[-1]["result"]["reply"]
     assert isinstance(ev[-1]["followups"], list)
 

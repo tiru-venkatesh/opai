@@ -66,6 +66,25 @@ def test_workspace_chat_learns(c):
     assert st["chunks_by_source"].get("memory_item", 0) >= 1
 
 
+def test_disabling_memory_stops_chat_saves_and_memory_retrieval(c, monkeypatch):
+    from database import MemoryItem, SessionLocal, UserMemory
+    monkeypatch.setenv("KARNA_ENABLE_MEMORY", "true")
+    uid = mk(c, "memory-off@x.com")
+    with SessionLocal() as db:
+        setting = db.query(UserMemory).filter(UserMemory.user_id == uid).first()
+        if setting is None:
+            setting = UserMemory(user_id=uid)
+            db.add(setting)
+        setting.enabled = False
+        db.add(MemoryItem(user_id=uid, type="profile", content="Skills: secret-memory-term", source="chat",
+                          confidence=0.9, status="active"))
+        db.commit()
+        result = learn.propose_from_message(db, uid, "I know Rust and SQL", use_llm=False)
+        context = learn.personal_context(db, uid, "what skills did I mention")
+        assert not result["pending"] and not result["saved"]
+        assert "secret-memory-term" not in context["text"]
+
+
 def _chat(c, uid, msgs):
     return c.post("/v1/chat/general", json={"user_id": uid, "messages": msgs}).json()
 

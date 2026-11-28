@@ -1,10 +1,9 @@
 """
 LLM adapter used by the agent layer.
 
-The module keeps its historical name so every existing import (`from agent import groq_client`) still works,
-but it no longer talks to Groq directly: calls go through `agent.llm`, which uses Claude when
-ANTHROPIC_API_KEY is set and falls back to Groq (GROQ_API_KEY) otherwise or when Claude is unavailable.
-`groq_enabled()` therefore means "an LLM is configured".
+The module keeps its historical name so existing imports (`from agent import groq_client`) still work.
+Calls go through `agent.llm`, which routes across the configured providers. `groq_enabled()` retains its old
+name but means that at least one supported AI provider is configured.
 """
 from __future__ import annotations
 
@@ -29,7 +28,11 @@ def groq_raw_client():
         if not key:
             raise RuntimeError("GROQ_API_KEY is not configured")
         from groq import Groq
-        _groq = Groq(api_key=key)
+        try:
+            retries = min(2, max(0, int(os.getenv("KARNA_PROVIDER_MAX_RETRIES", "1"))))
+        except ValueError:
+            retries = 1
+        _groq = Groq(api_key=key, timeout=float(os.getenv("GROQ_TIMEOUT", "45")), max_retries=retries)
     return _groq
 
 

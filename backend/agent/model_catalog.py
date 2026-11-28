@@ -4,8 +4,10 @@ KARNA model catalog: the only place that decides which models a user may pick fo
 The browser sends a `model_key`; the server validates it here. Nothing the client sends is ever used as a model id.
 
 Providers
-  anthropic  Claude tiers (fast / balanced / deep), mapped to CLAUDE_*_MODEL by agent.llm
   groq       Groq-hosted open models
+  gemini     Gemini API models
+  openrouter OpenRouter-compatible model router
+  anthropic  Legacy Claude tiers (fast / balanced / deep), disabled unless paid models are enabled
   hf         Hugging Face Inference Providers (OpenAI-compatible router). Optional: needs HUGGINGFACE_API_KEY.
 
 Env
@@ -41,7 +43,7 @@ class ModelChoiceError(Exception):
 class ModelEntry:
     key: str
     label: str
-    provider: str          # anthropic | groq | hf
+    provider: str          # groq | gemini | openrouter | anthropic | hf
     tier: str              # cost tier used for daily caps: fast | balanced | deep | open
     model_id: str = ""     # provider model id; empty for Claude (agent.llm maps the tier)
     claude_tier: str = ""  # fast | balanced | deep for provider == anthropic
@@ -50,10 +52,12 @@ class ModelEntry:
 
 
 def _claude_entries() -> List[ModelEntry]:
+    workspace_ok = (os.getenv("KARNA_ENABLE_PAID_MODELS", "false").lower() in ("1", "true", "yes", "on")
+                    and os.getenv("KARNA_ANTHROPIC_WORKSPACE_ALLOWED", "false").lower() in ("1", "true", "yes", "on"))
     return [
-        ModelEntry("claude-fast", "Claude Fast", "anthropic", "fast", claude_tier="fast", note="Quickest, cheapest"),
-        ModelEntry("claude-balanced", "Claude Balanced", "anthropic", "balanced", claude_tier="balanced", note="Default quality"),
-        ModelEntry("claude-deep", "Claude Deep", "anthropic", "deep", claude_tier="deep", note="Hardest questions, slowest, capped"),
+        ModelEntry("claude-fast", "Claude Fast (paid)", "anthropic", "fast", claude_tier="fast", workspace_ok=workspace_ok, note="Paid provider; enable explicitly"),
+        ModelEntry("claude-balanced", "Claude Balanced (paid)", "anthropic", "balanced", claude_tier="balanced", workspace_ok=workspace_ok, note="Paid provider; enable explicitly"),
+        ModelEntry("claude-deep", "Claude Deep (paid)", "anthropic", "deep", claude_tier="deep", workspace_ok=workspace_ok, note="Paid provider; enable explicitly"),
     ]
 
 
@@ -86,6 +90,13 @@ def _hf_workspace_ok() -> bool:
 
 def catalog() -> List[ModelEntry]:
     out = _claude_entries()
+    out.extend([
+        ModelEntry("gemini-flash", "Gemini Flash", "gemini", "think", model_id=os.getenv("GEMINI_MODEL", "gemini-3.8-flash"),
+                   workspace_ok=os.getenv("KARNA_GEMINI_WORKSPACE_ALLOWED", "false").lower() in ("1", "true", "yes", "on") and os.getenv("KARNA_ENABLE_PAID_MODELS", "false").lower() in ("1", "true", "yes", "on"),
+                   note="Free-tier prompts may be used to improve Google products; general chat by default"),
+        ModelEntry("openrouter-free", "OpenRouter Free", "openrouter", "open", model_id=os.getenv("OPENROUTER_MODEL", "openrouter/free"),
+                   workspace_ok=False, note="Downstream provider data policies vary; general chat only by default"),
+    ])
     for d in _load_list("KARNA_GROQ_MODELS", _DEFAULT_GROQ):
         out.append(ModelEntry(str(d["key"]), str(d.get("label") or d["model_id"]), "groq", "open", model_id=str(d["model_id"]), workspace_ok=True))
     for d in _load_list("KARNA_HF_MODELS", _DEFAULT_HF):
@@ -95,8 +106,20 @@ def catalog() -> List[ModelEntry]:
 
 
 def _provider_ready(provider: str) -> bool:
-    key = {"anthropic": "ANTHROPIC_API_KEY", "groq": "GROQ_API_KEY", "hf": "HUGGINGFACE_API_KEY"}[provider]
-    return bool(os.getenv(key, "").strip())
+    keys = {"anthropic": "ANTHROPIC_API_KEY", "groq": "GROQ_API_KEY", "hf": "HUGGINGFACE_API_KEY",
+            "gemini": "GEMINI_API_KEY", "openrouter": "OPENROUTER_API_KEY"}
+    if provider in ("gemini", "openrouter"):
+        from .model_router import available
+        if not available(provider):
+            return False
+        from provider_quota import available as quota_available
+        return quota_available(provider)
+    if provider == "anthropic" and os.getenv("KARNA_ENABLE_PAID_MODELS", "false").lower() not in ("1", "true", "yes", "on"):
+        return False
+    if not os.getenv(keys[provider], "").strip():
+        return False
+    from provider_quota import available as quota_available
+    return quota_available(provider)
 
 
 def get(key: str) -> Optional[ModelEntry]:
@@ -114,7 +137,7 @@ def resolve(model_key: Optional[str], mode: str) -> Optional[ModelEntry]:
     if not _provider_ready(e.provider):
         raise ModelChoiceError(400, f"{e.label} isn't enabled on this server.")
     if mode == "workspace" and not e.workspace_ok:
-        raise ModelChoiceError(400, f"{e.label} can't be used in Workspace mode, because it would send your documents to a third-party provider. Use General mode or pick Claude/Groq.")
+        raise ModelChoiceError(400, f"{e.label} can't be used in Workspace mode under the current privacy settings. Use Auto or choose a provider that is approved for private workspace data.")
     return e
 
 
