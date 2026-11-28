@@ -95,20 +95,28 @@ button.go.working::after{content:"";position:absolute;inset:0;background:linear-
 <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};if(!/[?&]embed=1/.test(location.search)&&location.protocol!=='file:'&&!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){var s=document.createElement("script");s.defer=true;s.src="/_vercel/insights/script.js";document.head.appendChild(s)}</script>
 <link rel="stylesheet" href="opai-mobile.css">
 
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="opai-cream.css?v=23" id="opai-cream"></head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="opai-cream.css?v=24" id="opai-cream"><link rel="stylesheet" href="academics-ui.css?v=1"></head>
 <body>
 <main id="main">
+  <section class="acad-hero" aria-labelledby="acad-title">
+    <div class="hero-copy"><div class="hero-eyebrow">Your academic workspace</div><h1 id="acad-title">Study with a clearer plan.</h1><p>Turn your syllabus into a course map, mark what feels difficult, and keep exam dates close at hand.</p></div>
+    <div class="hero-snapshot" aria-label="Academic overview">
+      <div class="snapshot-card"><span class="hero-label">Next exam</span><strong class="snapshot-value" id="nextExam">—</strong><span class="snapshot-copy" id="nextExamMeta">Your next dated exam will show here.</span></div>
+      <div class="snapshot-card"><span class="hero-label">Courses</span><strong class="snapshot-value" id="statCourses">—</strong><span class="snapshot-copy">In your workspace</span></div>
+      <div class="snapshot-card"><span class="hero-label">Upcoming</span><strong class="snapshot-value" id="statUpcoming">—</strong><span class="snapshot-copy">Exams still ahead</span></div>
+    </div>
+  </section>
+  <div class="acad-layout">
   <aside>
-    <h1>Academics</h1>
-    <p class="sub">Give KARNA your syllabus. It builds the course map and asks what it still needs.</p>
-    <div class="panel"><h2>Your courses</h2><div id="courses"><p class="note">Loading…</p></div></div>
+    <div class="panel"><div class="panel-head"><div><h2>Your courses</h2><p>Choose a course to review its topic map.</p></div><span class="course-total" id="courseCount">—</span></div><div id="courses"><div class="skel"></div><div class="skel" style="opacity:.6"></div></div></div>
   </aside>
-  <section class="panel" aria-live="polite">
-    <h2>KARNA intake</h2>
+  <section class="panel builder" aria-live="polite">
+    <div class="panel-head"><div><h2>Build a course map</h2><p>Start from a syllabus file or paste your units and topics.</p></div><span class="builder-mark">KARNA study setup</span></div>
+    <ol class="flow-steps" aria-label="Course setup steps"><li class="flow-step"><b>01</b><span>Add your syllabus</span></li><li class="flow-step"><b>02</b><span>Review the topic map</span></li><li class="flow-step"><b>03</b><span>Set confidence and exams</span></li></ol>
     <div id="thread"></div>
     <div id="ask"></div>
     <div class="composer" id="intake">
-      <input type="text" id="cname" placeholder="Course name (optional, e.g. Data Structures)" aria-label="Course name">
+      <label class="sr" for="cname">Course name</label><input type="text" id="cname" placeholder="Course name (optional) · e.g. Data Structures" aria-label="Course name">
       <div class="drop" id="drop">
         <label class="chip" for="file">Upload syllabus (PDF, DOCX, TXT, MD)</label>
         <input class="sr" type="file" id="file" accept=".pdf,.docx,.txt,.md,.markdown" multiple>
@@ -118,8 +126,9 @@ button.go.working::after{content:"";position:absolute;inset:0;background:linear-
       <div class="row"><button class="go" id="build">Build from pasted text</button><span class="note" id="status"></span></div>
     </div>
   </section>
+  </div>
 </main>
-<script src="opai-shell.js?v=11" defer></script>
+<script src="opai-shell.js?v=12" defer></script>
 <script src="guide.js" defer></script>
 <script>
 (() => {
@@ -161,18 +170,35 @@ button.go.working::after{content:"";position:absolute;inset:0;background:linear-
 
   /* ---------- courses sidebar + course map ---------- */
   const daysTo = (iso) => Math.ceil((new Date(iso + 'T00:00:00') - new Date(new Date().toDateString())) / 86400000);
+  function updateOverview(courses, exams) {
+    const upcoming = (exams || []).filter((e) => e.exam_date && daysTo(e.exam_date) >= 0).sort((a, b) => a.exam_date.localeCompare(b.exam_date));
+    $('statCourses').textContent = String((courses || []).length);
+    $('courseCount').textContent = String((courses || []).length);
+    $('statUpcoming').textContent = String(upcoming.length);
+    if (!upcoming.length) {
+      $('nextExam').textContent = 'Not set';
+      $('nextExamMeta').textContent = (exams || []).length ? 'All dated exams are in the past.' : 'Add an exam date during course setup.';
+      return;
+    }
+    const next = upcoming[0], days = daysTo(next.exam_date);
+    const course = (courses || []).find((c) => c.id === next.course_id);
+    $('nextExam').textContent = days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : 'In ' + days + ' days';
+    $('nextExamMeta').textContent = [next.exam_type, course && course.name, new Date(next.exam_date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })].filter(Boolean).join(' · ');
+  }
   async function loadCourses() {
     const box = $('courses');
     if (!box.querySelector('.course')) box.innerHTML = '<div class="skel"></div><div class="skel" style="opacity:.6"></div>';
     try {
       const u = await ensureUser();
       const [cs, ex] = await Promise.all([api('/v1/courses?user_id=' + u), api('/v1/exams?user_id=' + u)]);
-      if (!cs.length) { box.innerHTML = '<p class="note">No courses yet. Upload a syllabus to start.</p>'; return; }
+      updateOverview(cs, ex);
+      if (!cs.length) { box.innerHTML = '<div class="course-empty"><span aria-hidden="true">✳</span><b>Your course map starts here</b><p>Upload a syllabus or paste your units to add your first course.</p></div>'; return; }
       box.innerHTML = cs.map((c, i) => {
-        const e = ex.filter((x) => x.course_id === c.id && x.exam_date).sort((a, b) => a.exam_date.localeCompare(b.exam_date))[0];
+        const dated = ex.filter((x) => x.course_id === c.id && x.exam_date).sort((a, b) => a.exam_date.localeCompare(b.exam_date));
+        const e = dated.find((x) => daysTo(x.exam_date) >= 0) || dated[dated.length - 1];
         const d = e ? daysTo(e.exam_date) : null;
-        const tag = e ? '<span class="pill ' + (d >= 0 && d <= 14 ? 'soon' : 'ok') + '">' + esc(e.exam_type) + ' · ' + (d < 0 ? 'done' : d + 'd') + '</span>' : '<span class="pill">no exam date</span>';
-        return '<button class="course" style="--i:' + i + '" data-id="' + esc(c.id) + '" aria-pressed="false"><b>' + esc(c.name) + '</b><small>' + esc(c.code || '') + '</small> ' + tag + '</button>';
+        const tag = e ? '<span class="pill ' + (d >= 0 && d <= 14 ? 'soon' : 'ok') + '">' + esc(e.exam_type || 'Exam') + ' · ' + (d < 0 ? 'completed' : d === 0 ? 'today' : d + 'd') + '</span>' : '<span class="pill">No exam date</span>';
+        return '<button class="course" style="--i:' + i + '" data-id="' + esc(c.id) + '" aria-label="Open topics for ' + esc(c.name) + '" aria-pressed="false"><b>' + esc(c.name) + '</b><small>' + esc(c.code || 'Course ' + String(i + 1).padStart(2, '0')) + '</small>' + tag + '</button>';
       }).join('');
     } catch (e) { box.innerHTML = '<p class="note">Could not load courses (' + esc(e.message) + ').</p>'; }
   }
