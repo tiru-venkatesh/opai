@@ -535,7 +535,8 @@ def reindex_user(db: Session, user_id) -> Dict[str, int]:
         if pl.reflection:
             out["reflections"] += index_reflection(db, uid, pl.plan_date, pl.reflection)
     for o in db.query(OutreachHistory).filter(OutreachHistory.user_id == uid).all():
-        out["outreach"] += index_outreach(db, o, db.query(Contact).filter(Contact.id == o.contact_id).first())
+        contact = db.query(Contact).filter(Contact.id == o.contact_id, Contact.owner_user_id == uid).first()
+        out["outreach"] += index_outreach(db, o, contact)
     for a in db.query(Academic).filter(Academic.user_id == uid).all():
         out["academics"] += index_academic(db, a)
     for a in db.query(Application).filter(Application.user_id == uid).all():

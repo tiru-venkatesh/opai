@@ -2852,6 +2852,7 @@ function enterUser(u) {
   BACKEND.userId = null; rlReset(); semsReset();
   AUTH.user = { uid: u.uid, email: u.email || '', name: u.displayName || '', photo: u.photoURL || '' };
   try { localStorage.setItem(LS_SESSION, 'google'); if (u.email) localStorage.setItem('opai_sc_email', u.email); } catch (e) {}
+  window.dispatchEvent(new Event('opai-account-changed'));
   LS_KEY = wsKey(u.uid);
   let has = false; try { has = !!localStorage.getItem(LS_KEY); } catch (e) {}
   if (has) S = load();

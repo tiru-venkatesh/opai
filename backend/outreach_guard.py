@@ -79,7 +79,7 @@ def last_contacted(db: Session, uid: str, email: str) -> Optional[datetime]:
     rows = (db.query(OutreachHistory.sent_at)
             .join(Contact, Contact.id == OutreachHistory.contact_id)
             .filter(OutreachHistory.user_id == uid, OutreachHistory.sent_at.isnot(None),
-                    OutreachHistory.status.in_(("Sent", "Replied", "No Response")))
+                    OutreachHistory.status.in_(("Sent", "Replied", "No Response")), Contact.owner_user_id == uid)
             .filter(func.lower(Contact.email) == e).all())
     times = [r[0] for r in rows if r[0]]
     return max(times) if times else None

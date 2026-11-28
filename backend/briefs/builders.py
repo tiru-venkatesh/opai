@@ -359,7 +359,7 @@ def build_outreach(ctx: Ctx) -> Dict[str, Any]:
     import extras_api as X
     import outreach_guard as G
     db, uid = ctx.db, ctx.uid
-    c = db.query(Contact).filter(Contact.id == ctx.params["entity_id"]).first()
+    c = db.query(Contact).filter(Contact.id == ctx.params["entity_id"], Contact.owner_user_id == uid).first()
     if not c:
         raise BriefError(404, "Contact not found")
     rb = (db.query(ResearchBrief).filter(ResearchBrief.user_id == uid, ResearchBrief.contact_id == c.id, ResearchBrief.created_at >= _in(-7))

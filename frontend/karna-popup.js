@@ -9,12 +9,17 @@
   }[page]||{label:'OPAI',chips:['What is due today?','What did I apply to this week?']};
 
   var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
-  var KEY='opai_popup_chat',OPEN='opai_popup_open';
+  var OPEN='opai_popup_open';
+  function chatKey(){var e='';try{e=(localStorage.getItem('opai_sc_email')||'').trim().toLowerCase()}catch(x){}return 'opai_popup_chat:'+(e||'guest')}
+  var KEY=chatKey();
   function safeUrl(u){try{var x=new URL(u,location.href);if(x.protocol==='https:'||x.protocol==='http:')return x.href}catch(e){}return null}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function loadMsgs(){try{var m=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(m)?m.slice(-40):[]}catch(e){return[]}}
   function saveMsgs(){try{localStorage.setItem(KEY,JSON.stringify(msgs.slice(-40)))}catch(e){}}
   var msgs=loadMsgs(),busy=false,ctrl=null,uid=null,changed=false,convId=null;
+  function syncAccount(){var next=chatKey();if(next===KEY)return;if(ctrl)ctrl.abort();KEY=next;msgs=loadMsgs();uid=null;changed=false;convId=null;if(th)draw()}
+  window.addEventListener('opai-account-changed',syncAccount);
+  window.addEventListener('storage',function(e){if(e.key==='opai_sc_email')syncAccount()});
 
   async function api(path,opts){
     opts=opts||{};
@@ -23,6 +28,7 @@
     var t=await res.text();return t?JSON.parse(t):null;
   }
   async function ensureUser(){
+    syncAccount();
     if(uid)return uid;
     var email=localStorage.getItem('opai_sc_email');
     if(email){uid=(await api('/v1/auth/dev-login?email='+encodeURIComponent(email),{method:'POST'})).user_id;return uid}
@@ -97,6 +103,7 @@
     if(sessionStorage.getItem(OPEN)==='1')toggle(true);
   }
   function toggle(on){
+    syncAccount();
     var o=on==null?!box.classList.contains('open'):on;
     box.classList.toggle('open',o);fab.style.display=o&&innerWidth<=760?'none':'';
     try{sessionStorage.setItem(OPEN,o?'1':'0')}catch(e){}
@@ -152,6 +159,7 @@
   }
   function setBusy(b){busy=b;go.disabled=b;ta.disabled=b}
   async function send(){
+    syncAccount();
     if(busy)return;var text=ta.value.trim();if(!text)return;
     ta.value='';ta.style.height='auto';
     var um={role:'user',text:text};msgs.push(um);box.querySelector('.ch').style.display='none';

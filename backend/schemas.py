@@ -210,6 +210,7 @@ class AcademicOut(BaseModel):
 
 # ================= CONTACTS (PROFESSORS) =================
 class ContactCreate(BaseModel):
+    user_id: Optional[UUID] = None
     name: str
     institute: str
     lab: Optional[str] = None
@@ -219,6 +220,7 @@ class ContactCreate(BaseModel):
 
 
 class ContactUpdate(BaseModel):
+    user_id: Optional[UUID] = None
     name: Optional[str] = None
     institute: Optional[str] = None
     lab: Optional[str] = None

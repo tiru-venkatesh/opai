@@ -76,7 +76,7 @@ def _excluded_emails(db: Session, uid: str) -> set:
     """Never auto-pick someone the user already wrote to, drafted for, rejected, or suppressed."""
     out = {x.email for x in db.query(SuppressedContact).filter(SuppressedContact.user_id == uid).all() if x.email}
     rows = (db.query(Contact.email).join(OutreachHistory, OutreachHistory.contact_id == Contact.id)
-            .filter(OutreachHistory.user_id == uid).all())
+            .filter(OutreachHistory.user_id == uid, Contact.owner_user_id == uid).all())
     out |= {G.norm_email(r[0]) for r in rows if r[0]}
     # every status counts: a professor whose draft the user rejected (or let expire) is not picked again
     for it in db.query(OutboxItem).filter(OutboxItem.user_id == uid, OutboxItem.channel == "email").all():
@@ -92,12 +92,15 @@ def _query_for(db: Session, u: User) -> str:
 
 
 def _contact_for(db: Session, uid: str, row: Dict[str, Any]) -> Contact:
-    c = db.query(Contact).filter(func.lower(Contact.email) == row["email"]).first()
+    c = db.query(Contact).filter(
+        Contact.owner_user_id == uid, func.lower(Contact.email) == row["email"].lower()
+    ).first()
     if c:
         return c
     inst = f"{row['institute']} - {row['department']}" if row.get("department") else row["institute"]
     c = Contact(name=row["name"], institute=inst, email=row["email"], research_areas=row.get("research_areas") or [],
-                status="Not started", source_url=row.get("website"), source_checked_on=None, email_verification="unverified")
+                status="Not started", source_url=row.get("website"), source_checked_on=None,
+                email_verification="unverified", owner_user_id=uid)
     db.add(c)
     db.commit()
     db.refresh(c)

@@ -6,6 +6,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import auto_outreach as AO
@@ -33,7 +34,11 @@ def faculty_search(user_id: str, q: Optional[str] = None, institute: Optional[st
     u = _user(db, user_id)
     auto = not (q or "").strip()
     query = _auto_query(db, u) if auto else q.strip()
-    have = {c.email for c in db.query(Contact).all() if c.email}
+    # The faculty CSV is shared; a user's selection is their own Contact row.
+    # Never let another account's selection affect this user's search results.
+    have = {email for (email,) in db.query(Contact.email).filter(
+        Contact.owner_user_id == u.id, Contact.email.isnot(None)
+    ).all()}
     suppressed = {x.email for x in db.query(SuppressedContact).filter(SuppressedContact.user_id == u.id).all()}
     if not query:   # nothing to rank by (new profile, no text): show the dataset itself instead of an empty box
         b = F.browse(institute, limit, include_on_leave, exclude_emails=suppressed)
@@ -62,11 +67,13 @@ def add_faculty(p: AddBody, db: Session = Depends(get_db)):
         raise HTTPException(404, "Professor not found in the dataset")
     if G.is_suppressed(db, u.id, r["email"]):
         raise HTTPException(409, "This address is on your do-not-contact list.")
-    c = db.query(Contact).filter(Contact.email == r["email"]).first()
+    c = db.query(Contact).filter(
+        Contact.owner_user_id == u.id, func.lower(Contact.email) == r["email"].lower()
+    ).first()
     if not c:
         c = Contact(name=r["name"], institute=f"{r['institute']} - {r['department']}" if r["department"] else r["institute"], email=r["email"],
                     research_areas=r["research_areas"], status="Not started", source_url=r["website"], source_checked_on=None,
-                    email_verification="unverified")
+                    email_verification="unverified", owner_user_id=u.id)
         db.add(c)
         db.commit()
         db.refresh(c)

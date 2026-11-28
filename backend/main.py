@@ -751,30 +751,46 @@ def delete_academic(academic_id: UUID, db: Session = Depends(get_db)):
 
 
 # ================= CONTACTS (PROFESSORS) =================
+def _contact_uid(request: Request, user_id=None) -> str:
+    """Prefer the identity verified by AuthGuard; body/query ids are for local auth bypass only."""
+    uid = str(request.scope.get("opai_uid") or user_id or "").strip()
+    if not uid:
+        raise HTTPException(status_code=401, detail="Sign in to access your contacts.")
+    return uid
+
+
 @app.get("/v1/contacts", response_model=List[ContactOut])
-def list_professors(user_id: Optional[UUID] = None, db: Session = Depends(get_db)):
-    """Contact status is per user: derived from THIS user's outreach history, so one user sending to a professor
-    never marks that professor 'Sent' for everyone else."""
-    rows = db.query(Contact).all()
+def list_professors(user_id: UUID, db: Session = Depends(get_db)):
+    """Only the current user's selected and manually added professors are returned."""
+    uid = str(user_id)
+    rows = db.query(Contact).filter(Contact.owner_user_id == uid).all()
     hist = {}
-    if user_id is not None:
-        for h in db.query(OutreachHistory).filter(OutreachHistory.user_id == str(user_id)).all():
-            prev = hist.get(h.contact_id)
-            rank = {"Draft": 1}.get(h.status, 2)          # a sent/replied record outranks a draft
-            if prev is None or rank >= prev[0]:
-                hist[h.contact_id] = (rank, h)
+    for h in db.query(OutreachHistory).filter(OutreachHistory.user_id == uid).all():
+        prev = hist.get(h.contact_id)
+        rank = {"Draft": 1}.get(h.status, 2)              # a sent/replied record outranks a draft
+        if prev is None or rank >= prev[0]:
+            hist[h.contact_id] = (rank, h)
     out = []
     for r in rows:
         v = ContactOut.model_validate(r)
         h = hist.get(r.id, (0, None))[1]
-        v.status = "Not started" if h is None else ("Drafted" if h.status == "Draft" else "Sent")
+        v.status = ("Not started" if h is None or h.status == "Rejected"
+                    else ("Drafted" if h.status == "Draft" else "Sent"))
         v.sent_on = (h.sent_at.date() if h is not None and h.status != "Draft" and h.sent_at else None)
         out.append(v)
     return out
 
 
 @app.post("/v1/contacts", response_model=ContactOut)
-def create_contact(payload: ContactCreate, db: Session = Depends(get_db)):
+def create_contact(payload: ContactCreate, request: Request, db: Session = Depends(get_db)):
+    uid = _contact_uid(request, payload.user_id)
+    if not db.query(User.id).filter(User.id == uid).first():
+        raise HTTPException(status_code=404, detail="User not found")
+    email = (payload.email or "").strip().lower()
+    if email and db.query(Contact.id).filter(
+        Contact.owner_user_id == uid, func.lower(Contact.email) == email
+    ).first():
+        raise HTTPException(status_code=409, detail="This professor is already in your contacts.")
     vec = get_embedding(
         f"{payload.institute} {payload.lab or ''} {' '.join(payload.research_areas)} {payload.bio or ''}"
     )
@@ -783,9 +799,10 @@ def create_contact(payload: ContactCreate, db: Session = Depends(get_db)):
         institute=payload.institute,
         lab=payload.lab,
         research_areas=payload.research_areas,
-        email=payload.email,
+        email=email,
         bio=payload.bio,
         embedding=vec,
+        owner_user_id=uid,
     )
     db.add(row)
     db.commit()
@@ -794,11 +811,21 @@ def create_contact(payload: ContactCreate, db: Session = Depends(get_db)):
 
 
 @app.patch("/v1/contacts/{contact_id}", response_model=ContactOut)
-def update_contact(contact_id: UUID, payload: ContactUpdate, db: Session = Depends(get_db)):
-    row = db.query(Contact).filter(Contact.id == str(contact_id)).first()
+def update_contact(contact_id: UUID, payload: ContactUpdate, request: Request, db: Session = Depends(get_db)):
+    uid = _contact_uid(request, payload.user_id)
+    row = db.query(Contact).filter(Contact.id == str(contact_id), Contact.owner_user_id == uid).first()
     if not row:
         raise HTTPException(status_code=404, detail="Contact not found")
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    values = payload.model_dump(exclude_unset=True, exclude={"user_id"})
+    next_email = values.get("email")
+    if next_email is not None:
+        next_email = next_email.strip().lower()
+        if next_email and db.query(Contact.id).filter(
+            Contact.owner_user_id == uid, Contact.id != row.id, func.lower(Contact.email) == next_email
+        ).first():
+            raise HTTPException(status_code=409, detail="This professor is already in your contacts.")
+        values["email"] = next_email
+    for field, value in values.items():
         setattr(row, field, value)
     row.embedding = get_embedding(
         f"{row.institute} {row.lab or ''} {' '.join(row.research_areas or [])} {row.bio or ''}"
@@ -809,8 +836,9 @@ def update_contact(contact_id: UUID, payload: ContactUpdate, db: Session = Depen
 
 
 @app.delete("/v1/contacts/{contact_id}")
-def delete_contact(contact_id: UUID, db: Session = Depends(get_db)):
-    row = db.query(Contact).filter(Contact.id == str(contact_id)).first()
+def delete_contact(contact_id: UUID, request: Request, user_id: Optional[UUID] = None, db: Session = Depends(get_db)):
+    uid = _contact_uid(request, user_id)
+    row = db.query(Contact).filter(Contact.id == str(contact_id), Contact.owner_user_id == uid).first()
     if not row:
         raise HTTPException(status_code=404, detail="Contact not found")
     db.delete(row)
@@ -824,7 +852,7 @@ def list_outreach(user_id: UUID, db: Session = Depends(get_db)):
     rows = db.query(OutreachHistory).filter(OutreachHistory.user_id == str(user_id)).all()
     result = []
     for r in rows:
-        contact = db.query(Contact).filter(Contact.id == r.contact_id).first()
+        contact = db.query(Contact).filter(Contact.id == r.contact_id, Contact.owner_user_id == str(user_id)).first()
         result.append({
             "id": r.id,
             "contact_id": r.contact_id,
@@ -843,7 +871,7 @@ def draft_outreach(user_id: UUID, contact_id: UUID, db: Session = Depends(get_db
         result = workflow_draft_outreach(user_id, contact_id, db)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    contact = db.query(Contact).filter(Contact.id == str(contact_id)).first()
+    contact = db.query(Contact).filter(Contact.id == str(contact_id), Contact.owner_user_id == str(user_id)).first()
     if contact and contact.status == "Not started":
         contact.status = "Drafted"
         db.commit()
@@ -858,7 +886,7 @@ def mark_outreach_sent(outreach_id: UUID, db: Session = Depends(get_db)):
     row.status = "Sent"
     row.sent_at = datetime.utcnow()
     row.follow_up_date = date.today() + timedelta(days=7)
-    contact = db.query(Contact).filter(Contact.id == row.contact_id).first()
+    contact = db.query(Contact).filter(Contact.id == row.contact_id, Contact.owner_user_id == row.user_id).first()
     if contact:
         contact.status = "Sent"
         contact.sent_on = date.today()
@@ -873,7 +901,7 @@ def reject_outreach(outreach_id: UUID, db: Session = Depends(get_db)):
     if not row:
         raise HTTPException(status_code=404, detail="Outreach draft not found")
     row.status = "Rejected"
-    contact = db.query(Contact).filter(Contact.id == row.contact_id).first()
+    contact = db.query(Contact).filter(Contact.id == row.contact_id, Contact.owner_user_id == row.user_id).first()
     if contact and contact.status == "Drafted":
         contact.status = "Not started"
     db.commit()
@@ -1005,10 +1033,15 @@ def list_outbox(user_id: UUID, db: Session = Depends(get_db)):
 
 @app.post("/v1/outbox", response_model=OutboxOut)
 def create_outbox(payload: OutboxCreate, db: Session = Depends(get_db)):
+    ref = payload.ref or {}
+    if ref.get("kind") == "contact" and not db.query(Contact.id).filter(
+        Contact.id == ref.get("id"), Contact.owner_user_id == str(payload.user_id)
+    ).first():
+        raise HTTPException(status_code=404, detail="Contact not found")
     risk = payload.risk_level or _classify_outbox_risk(payload.channel, payload.ref or {})
     row = OutboxItem(
         user_id=str(payload.user_id), channel=payload.channel,
-        payload=payload.payload, ref=payload.ref or {}, note=payload.note,
+        payload=payload.payload, ref=ref, note=payload.note,
         risk_level=risk, approval_scope="single_use",
         expires_at=datetime.utcnow() + timedelta(hours=48),
     )
@@ -1037,12 +1070,13 @@ def approve_outbox(outbox_id: UUID, reviewed_hash: Optional[str] = None, db: Ses
         row.approved_hash = _cur
     if (row.ref or {}).get("kind") == "contact":
         import outreach_guard as _og
-        _c = db.query(Contact).filter(Contact.id == (row.ref or {}).get("id")).first()
-        if _c:
-            try:
-                _og.check_can_send(db, row.user_id, _c)
-            except _og.Blocked as _e:
-                raise HTTPException(status_code=_e.status, detail=_e.detail)
+        _c = db.query(Contact).filter(Contact.id == (row.ref or {}).get("id"), Contact.owner_user_id == row.user_id).first()
+        if not _c:
+            raise HTTPException(status_code=404, detail="Contact not found")
+        try:
+            _og.check_can_send(db, row.user_id, _c)
+        except _og.Blocked as _e:
+            raise HTTPException(status_code=_e.status, detail=_e.detail)
     since = datetime.utcnow() - timedelta(days=1)
     approved_today = (
         db.query(OutboxItem)
@@ -1075,7 +1109,7 @@ def reject_outbox(outbox_id: UUID, note: str = None, db: Session = Depends(get_d
         row.note = note
     ref = row.ref or {}
     if ref.get("kind") == "contact":
-        contact = db.query(Contact).filter(Contact.id == ref.get("id")).first()
+        contact = db.query(Contact).filter(Contact.id == ref.get("id"), Contact.owner_user_id == row.user_id).first()
         if contact and contact.status == "Drafted":
             contact.status = "Not started"
     db.commit()
@@ -1628,7 +1662,8 @@ def seed_test_data(db: Session = Depends(get_db)):
         p_vec = get_embedding(f"{pr['institute']} {pr['lab']} {' '.join(pr['areas'])} {pr['bio']}")
         db.add(Contact(
             name=pr["name"], institute=pr["institute"], lab=pr["lab"],
-            research_areas=pr["areas"], bio=pr["bio"], email=pr["email"], embedding=p_vec
+            research_areas=pr["areas"], bio=pr["bio"], email=pr["email"], embedding=p_vec,
+            owner_user_id=user.id,
         ))
 
     db.commit()

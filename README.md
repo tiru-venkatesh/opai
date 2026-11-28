@@ -283,6 +283,13 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE
 
 A SQLite file on an ephemeral hosting filesystem can disappear after a redeploy or restart. Do not rely on an ephemeral filesystem for user accounts, documents, or progress data.
 
+### Shared directory and personal workspace
+
+- `backend/IIT_Faculty_Dataset.csv` is the shared, read-only IIT faculty directory. Search uses this shared reference data for every account.
+- Selecting a professor creates a `contacts` row owned by that user (`owner_user_id`). The same professor can be selected by several users, but each account gets its own contact record, notes, verification state, drafts, and outreach history.
+- Uploaded document chunks and original files are scoped by `user_id`; RAG retrieval filters by the authenticated account before ranking results. KARNA's full-page history and popup history are stored under the user's account key in browser storage.
+- Legacy shared contact rows are split by their user-specific references during database startup. When a legacy row was used by several accounts, the migration copies only professor-identifying fields and resets ambiguous private fields; any remaining unowned row is scrubbed and hidden from user APIs.
+
 ## Deployment
 
 ### Frontend — Vercel
@@ -337,11 +344,12 @@ For deeper system context, see [`ARCHITECTURE.md`](ARCHITECTURE.md), `STABILITY_
 
 OPAI can process resumes, academic records, personal notes, contact details, and application history. Treat the database, uploaded documents, environment variables, logs, browser storage, and repository history as sensitive.
 
-**Production-readiness status: blocked pending an authentication and authorization fix.** In this source snapshot, `POST /v1/auth/dev-login` accepts a caller-supplied email and returns an internal user ID without verifying the caller's identity. Several frontend pages invoke this endpoint using browser-stored email. Many API routes also accept a client-supplied `user_id`, which is not proof of identity. Do not onboard real users or process real personal documents until server-verified authentication is enforced across every protected API route and account ownership is tested end to end.
+`AuthGuard` verifies Firebase ID tokens and ties the request to the account matched from the verified email. The default mode is `enforce` on Render and when `OPAI_ENV=production`, and `log` in local development. Keep `OPAI_AUTH_MODE` away from `off` in deployments. The client still sends `user_id` for routing; it must match the identity from the verified token.
 
 Before any public deployment:
 
-- Verify provider-signed identity tokens on the backend; derive the acting account from the verified identity, not a caller-controlled email or `user_id`.
+- Keep the deployed Firebase project and authorized frontend domains aligned with the backend token verifier.
+- Exercise cross-account checks for professor selections, chat, file downloads, and RAG retrieval before onboarding users.
 - Configure exact HTTPS `CORS_ORIGINS` for the deployed frontend. CORS is not authorization and cannot replace backend access controls.
 - Configure PostgreSQL or a verified persistent volume, then test backup, restore, and persistence across a redeploy/restart.
 - Never commit API secrets, private database credentials, real resumes, academic records, uploads, or generated databases.

@@ -654,6 +654,13 @@ class ProfessorBody(BaseModel):
 _EMAIL_RX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
+def _own_contact(db: Session, uid: str, contact_id: str) -> Contact:
+    contact = db.query(Contact).filter(Contact.id == str(contact_id), Contact.owner_user_id == str(uid)).first()
+    if not contact:
+        raise HTTPException(404, "Contact not found")
+    return contact
+
+
 @router.post("/professors")
 def add_professor(p: ProfessorBody, db: Session = Depends(get_db)):
     u = _user(db, p.user_id)
@@ -662,14 +669,14 @@ def add_professor(p: ProfessorBody, db: Session = Depends(get_db)):
         raise HTTPException(422, "That email address is not valid.")
     nu = P.normalize_url(p.source_url) if p.source_url else {"url": None}
     if email:
-        dup = db.query(Contact).filter(Contact.email == email).first()
+        dup = db.query(Contact).filter(Contact.owner_user_id == u.id, func.lower(Contact.email) == email).first()
         if dup:
             raise HTTPException(409, f"{dup.name} is already in your contacts.")
     ver = "public_on_page" if (email and p.email_shown_on_source and nu.get("url")) else "unverified"
     c = Contact(name=p.name.strip(), institute=p.institute.strip() + (f" - {p.department.strip()}" if p.department else ""), email=email,
                 research_areas=[s.strip() for s in p.research_areas if s.strip()][:12], bio=None, status="Not started",
                 source_url=nu.get("url"), source_checked_on=p.source_checked_on or (date.today() if nu.get("url") else None),
-                email_verification=ver, relevant_work=p.relevant_work)
+                email_verification=ver, relevant_work=p.relevant_work, owner_user_id=u.id)
     db.add(c)
     db.commit()
     db.refresh(c)
@@ -687,9 +694,7 @@ class ConfirmContact(BaseModel):
 def confirm_professor(contact_id: str, p: ConfirmContact, db: Session = Depends(get_db)):
     """The user confirms the research connection and the email address before any draft is made."""
     u = _user(db, p.user_id)
-    c = db.query(Contact).filter(Contact.id == contact_id).first()
-    if not c:
-        raise HTTPException(404, "Contact not found")
+    c = _own_contact(db, u.id, contact_id)
     if p.email:
         e = p.email.strip().lower()
         if not _EMAIL_RX.match(e):
@@ -721,10 +726,12 @@ def _contact_out(db: Session, c: Contact, uid: str) -> Dict[str, Any]:
              .order_by(ResearchBrief.created_at.desc()).first())
     hist = (db.query(OutreachHistory).filter(OutreachHistory.user_id == uid, OutreachHistory.contact_id == c.id)
             .order_by(OutreachHistory.sent_at.desc()).first())
+    status = ("Not started" if not hist or hist.status == "Rejected"
+              else ("Drafted" if hist.status == "Draft" else "Sent"))
     return {"id": c.id, "name": c.name, "institute": c.institute, "email": c.email, "email_verification": c.email_verification or "unverified",
             "research_areas": c.research_areas or [], "source_url": c.source_url,
             "source_checked_on": c.source_checked_on.isoformat() if c.source_checked_on else None, "relevant_work": c.relevant_work,
-            "outreach_status": c.status, "suppressed": bool(G.is_suppressed(db, uid, c.email)),
+            "outreach_status": status, "suppressed": bool(G.is_suppressed(db, uid, c.email)),
             "brief": {"id": brief.id, "verification": brief.verification, "relevance": brief.relevance} if brief else None,
             "last_outreach": {"status": hist.status, "follow_up_date": hist.follow_up_date.isoformat() if hist and hist.follow_up_date else None} if hist else None}
 
@@ -732,9 +739,7 @@ def _contact_out(db: Session, c: Contact, uid: str) -> Dict[str, Any]:
 @router.get("/professors")
 def list_professors(user_id: str, db: Session = Depends(get_db)):
     u = _user(db, user_id)
-    brief_ids = {b.contact_id for b in db.query(ResearchBrief).filter(ResearchBrief.user_id == u.id).all()}
-    hist_ids = {h.contact_id for h in db.query(OutreachHistory).filter(OutreachHistory.user_id == u.id).all()}
-    rows = [c for c in db.query(Contact).all() if c.source_url or c.id in brief_ids or c.id in hist_ids or (c.status or "Not started") != "Not started"]
+    rows = db.query(Contact).filter(Contact.owner_user_id == u.id).order_by(Contact.name.asc()).all()
     return {"items": [_contact_out(db, c, u.id) for c in rows][:100],
             "daily_cap_remaining": G.remaining_today(db, u.id)}
 
@@ -758,7 +763,7 @@ def _own_outbox(db: Session, uid: str, oid: str) -> OutboxItem:
 
 def _recipient_info(db: Session, uid: str, it: OutboxItem) -> Dict[str, Any]:
     ref = it.ref or {}
-    c = db.query(Contact).filter(Contact.id == ref.get("id")).first() if ref.get("kind") == "contact" else None
+    c = db.query(Contact).filter(Contact.id == ref.get("id"), Contact.owner_user_id == uid).first() if ref.get("kind") == "contact" else None
     to = ((it.payload or {}).get("to") or "").strip()
     return {"to": to, "valid_address": bool(_EMAIL_RX.match(to)),
             "source": c.source_url if c else None, "source_checked_on": c.source_checked_on.isoformat() if c and c.source_checked_on else None,
@@ -854,12 +859,11 @@ def outbox_approve(outbox_id: str, p: OutboxApprove, db: Session = Depends(get_d
         raise HTTPException(409, "Confirm you have checked this email address (confirm_recipient=true) before approving.")
     ref = it.ref or {}
     if ref.get("kind") == "contact":
-        c = db.query(Contact).filter(Contact.id == ref.get("id")).first()
-        if c:
-            try:
-                G.check_can_send(db, u.id, c)
-            except G.Blocked as e:
-                raise HTTPException(e.status, e.detail)
+        c = _own_contact(db, u.id, ref.get("id"))
+        try:
+            G.check_can_send(db, u.id, c)
+        except G.Blocked as e:
+            raise HTTPException(e.status, e.detail)
     elif G.is_suppressed(db, u.id, ri["to"]):
         raise HTTPException(409, "This address is on your do-not-contact list.")
     it.status = "approved"
@@ -887,15 +891,14 @@ def _log_sent(db: Session, u: User, it: OutboxItem, via: str, message_id: Option
     pl, ref = it.payload or {}, it.ref or {}
     fu = date.today() + timedelta(days=FOLLOWUP_DAYS)
     if ref.get("kind") == "contact":
-        c = db.query(Contact).filter(Contact.id == ref.get("id")).first()
-        if c:
-            c.status, c.sent_on = "Sent", date.today()
-            h = (db.query(OutreachHistory).filter(OutreachHistory.user_id == u.id, OutreachHistory.contact_id == c.id, OutreachHistory.status == "Draft",
-                                                  OutreachHistory.subject == (pl.get("subject") or "")).first())
-            if h:
-                h.status, h.sent_at, h.follow_up_date, h.email_text = "Sent", now, fu, pl.get("body") or h.email_text
-            else:
-                db.add(OutreachHistory(user_id=u.id, contact_id=c.id, subject=pl.get("subject") or "", email_text=pl.get("body") or "", status="Sent", sent_at=now, follow_up_date=fu))
+        c = _own_contact(db, u.id, ref.get("id"))
+        c.status, c.sent_on = "Sent", date.today()
+        h = (db.query(OutreachHistory).filter(OutreachHistory.user_id == u.id, OutreachHistory.contact_id == c.id, OutreachHistory.status == "Draft",
+                                              OutreachHistory.subject == (pl.get("subject") or "")).first())
+        if h:
+            h.status, h.sent_at, h.follow_up_date, h.email_text = "Sent", now, fu, pl.get("body") or h.email_text
+        else:
+            db.add(OutreachHistory(user_id=u.id, contact_id=c.id, subject=pl.get("subject") or "", email_text=pl.get("body") or "", status="Sent", sent_at=now, follow_up_date=fu))
     elif ref.get("kind") == "application":
         a = db.query(Application).filter(Application.id == ref.get("id"), Application.user_id == u.id).first()
         if a:
@@ -958,12 +961,11 @@ def outbox_send(outbox_id: str, p: OutboxSend, x_gmail_token: Optional[str] = He
         raise HTTPException(422, "The recipient address is missing or invalid.")
     ref = it.ref or {}
     if ref.get("kind") == "contact":
-        c = db.query(Contact).filter(Contact.id == ref.get("id")).first()
-        if c:
-            try:
-                G.check_can_send(db, u.id, c, exclude_outbox_id=it.id)
-            except G.Blocked as e:
-                raise HTTPException(e.status, e.detail)
+        c = _own_contact(db, u.id, ref.get("id"))
+        try:
+            G.check_can_send(db, u.id, c, exclude_outbox_id=it.id)
+        except G.Blocked as e:
+            raise HTTPException(e.status, e.detail)
     elif G.is_suppressed(db, u.id, ri["to"]):
         raise HTTPException(409, "This address is on your do-not-contact list.")
     it.sent_via = "gmail_api:sending"          # claim the send BEFORE the network call so a double click cannot duplicate it
@@ -988,7 +990,7 @@ def outbox_reject(outbox_id: str, user_id: str, db: Session = Depends(get_db)):
     it.status = "rejected"
     ref = it.ref or {}
     if ref.get("kind") == "contact":
-        c = db.query(Contact).filter(Contact.id == ref.get("id")).first()
+        c = db.query(Contact).filter(Contact.id == ref.get("id"), Contact.owner_user_id == u.id).first()
         if c and c.status == "Drafted":
             c.status = "Not started"
     db.commit()
@@ -1004,7 +1006,7 @@ def _followup_items(db: Session, uid: str) -> List[Dict[str, Any]]:
                     "days_since": (today - a.submitted_at.date()).days if a.submitted_at else None, "question": "Have they replied?"})
     for h in db.query(OutreachHistory).filter(OutreachHistory.user_id == uid, OutreachHistory.status == "Sent", OutreachHistory.follow_up_date.isnot(None),
                                               OutreachHistory.follow_up_date <= today).all():
-        c = db.query(Contact).filter(Contact.id == h.contact_id).first()
+        c = db.query(Contact).filter(Contact.id == h.contact_id, Contact.owner_user_id == uid).first()
         out.append({"kind": "outreach", "id": h.id, "title": f"{c.name if c else 'Contact'}: {h.subject}", "due": h.follow_up_date.isoformat(),
                     "days_since": (today - h.sent_at.date()).days if h.sent_at else None, "question": "Have they replied?"})
     return sorted(out, key=lambda r: r["due"])
@@ -1069,7 +1071,7 @@ def followup_answer(kind: str, item_id: str, p: FollowAnswer, db: Session = Depe
     h = db.query(OutreachHistory).filter(OutreachHistory.id == item_id, OutreachHistory.user_id == u.id).first()
     if not h:
         raise HTTPException(404, "Outreach record not found")
-    c = db.query(Contact).filter(Contact.id == h.contact_id).first()
+    c = db.query(Contact).filter(Contact.id == h.contact_id, Contact.owner_user_id == u.id).first()
     if p.answer == "yes":
         h.status, h.follow_up_date = "Replied", None
         db.commit()

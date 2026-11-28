@@ -12,6 +12,8 @@ from typing import Optional
 _ID = r"([0-9a-fA-F-]{32,36})"
 # (path regex, model name, owner resolution). owner "user_id" = column on the row; ("course", ...) = through its Course.
 _TABLE = [
+    (rf"^/v1/contacts/{_ID}", "Contact", "owner_user_id"),
+    (rf"^/v1/opp/professors/{_ID}", "Contact", "owner_user_id"),
     (rf"^/v1/applications/{_ID}", "Application", "user_id"),
     (rf"^/v1/projects/{_ID}", "Project", "user_id"),
     (rf"^/v1/tasks/{_ID}", "Task", "user_id"),
@@ -42,7 +44,7 @@ def _owner(db, model_name: str, how: str, rid: str) -> Optional[str]:
     if how == "course":
         c = db.query(D.Course).filter(D.Course.id == row.course_id).first()
         return str(c.user_id).lower() if c is not None and c.user_id else None
-    v = getattr(row, "user_id", None)
+    v = getattr(row, "owner_user_id", None) if how == "owner_user_id" else getattr(row, "user_id", None)
     return str(v).lower() if v else None
 
 

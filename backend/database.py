@@ -1,5 +1,6 @@
 import os
 import uuid
+import json
 import logging
 from datetime import datetime as _dt
 from sqlalchemy import (
@@ -139,8 +140,13 @@ class Application(Base):
 
 
 class Contact(Base):
+    """One user's selected/manual professor contact; public IIT data is served from the shared faculty CSV."""
     __tablename__ = "contacts"
-    __table_args__ = (Index("ix_contacts_status", "status"), Index("ix_contacts_email", "email"))
+    __table_args__ = (
+        Index("ix_contacts_status", "status"), Index("ix_contacts_email", "email"),
+        Index("uq_contacts_owner_email", "owner_user_id", "email", unique=True,
+              sqlite_where=text("email <> ''"), postgresql_where=text("email <> ''")),
+    )
     id = Column(String(36), primary_key=True, default=gen_id)
     name = Column(String, nullable=False)
     institute = Column(String, nullable=False)
@@ -158,7 +164,7 @@ class Contact(Base):
     source_checked_at = Column(DateTime)
     email_verification = Column(String, default="unverified")  # unverified | public_page | user_confirmed
     recent_work = Column(Text)                     # paper/project the user confirmed
-    owner_user_id = Column(String(36))             # NULL = seed dataset
+    owner_user_id = Column(String(36))             # NULL = legacy/unattributed; user-visible rows must be owned
     source_checked_on = Column(Date)
     relevant_work = Column(Text)                   # paper / project the user confirmed as the connection
 
@@ -681,6 +687,183 @@ def _auto_migrate():
         log.warning("auto-migrated missing columns: %s", ", ".join(added))
 
 
+def _mentions_contact(value, contact_id: str) -> bool:
+    if isinstance(value, dict):
+        if value.get("kind") == "contact" and str(value.get("id")) == contact_id:
+            return True
+        return any(
+            (key in ("contact_id", "professor_id") and str(item) == contact_id)
+            or _mentions_contact(item, contact_id)
+            for key, item in value.items()
+        )
+    if isinstance(value, (list, tuple)):
+        return any(_mentions_contact(item, contact_id) for item in value)
+    return False
+
+
+def _contact_ref_ids(value) -> set[str]:
+    found: set[str] = set()
+    if isinstance(value, dict):
+        if value.get("kind") == "contact" and value.get("id"):
+            found.add(str(value["id"]))
+        for key, item in value.items():
+            if key in ("contact_id", "professor_id") and item:
+                found.add(str(item))
+            found.update(_contact_ref_ids(item))
+    elif isinstance(value, (list, tuple)):
+        for item in value:
+            found.update(_contact_ref_ids(item))
+    return found
+
+
+def _replace_contact_ref(value, old_id: str, new_id: str):
+    if isinstance(value, dict):
+        return {
+            key: (new_id if (key in ("contact_id", "professor_id") or (key == "id" and value.get("kind") == "contact")) and str(item) == old_id
+                  else _replace_contact_ref(item, old_id, new_id))
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_replace_contact_ref(item, old_id, new_id) for item in value]
+    if isinstance(value, tuple):
+        return tuple(_replace_contact_ref(item, old_id, new_id) for item in value)
+    return value
+
+
+def _contact_ref_users_map(db) -> dict[str, set[str]]:
+    refs: dict[str, set[str]] = {}
+
+    def add(contact_id, user_id):
+        if contact_id and user_id:
+            refs.setdefault(str(contact_id), set()).add(str(user_id))
+
+    for contact_id, user_id in db.query(OutreachHistory.contact_id, OutreachHistory.user_id).filter(
+        OutreachHistory.user_id.isnot(None)
+    ).all():
+        add(contact_id, user_id)
+    for contact_id, user_id in db.query(ResearchBrief.contact_id, ResearchBrief.user_id).filter(
+        ResearchBrief.user_id.isnot(None)
+    ).all():
+        add(contact_id, user_id)
+    for item in db.query(OutboxItem).all():
+        ref = item.ref if isinstance(item.ref, dict) else {}
+        if ref.get("kind") == "contact":
+            add(ref.get("id"), item.user_id)
+    for row in db.query(AgentActivityLog).filter(
+        AgentActivityLog.tool_name.in_(("opp.faculty_add", "opp.professor_add"))
+    ).all():
+        try:
+            result = json.loads(row.result_summary or "null")
+        except (TypeError, ValueError):
+            result = None
+        if row.user_id:
+            for contact_id in _contact_ref_ids(result):
+                add(contact_id, row.user_id)
+            for contact_id in _contact_ref_ids(row.arguments):
+                add(contact_id, row.user_id)
+    for row in db.query(ActionRecord).all():
+        if row.user_id:
+            for value in (row.payload_json, row.result_json):
+                for contact_id in _contact_ref_ids(value):
+                    add(contact_id, row.user_id)
+    return refs
+
+
+def _copy_contact_for_user(db, source: Contact, user_id: str) -> Contact:
+    existing = db.query(Contact).filter(
+        Contact.owner_user_id == user_id, Contact.email == source.email
+    ).first()
+    if existing:
+        return existing
+    # Only fields needed to identify the public professor are copied. Bio and
+    # embedding may contain user-entered material, so ambiguous legacy rows do
+    # not carry them across accounts.
+    row = Contact(
+        name=source.name, institute=source.institute, lab=source.lab,
+        research_areas=source.research_areas or [], email=source.email, bio=None,
+        embedding=None, status="Not started", sent_on=None,
+        source_url=source.source_url, source_checked_at=source.source_checked_at,
+        email_verification="unverified", recent_work=None, owner_user_id=user_id,
+        source_checked_on=None, relevant_work=None,
+    )
+    db.add(row)
+    db.flush()
+    return row
+
+
+def _rewrite_contact_references(db, old_id: str, user_id: str, new_id: str) -> None:
+    for row in db.query(OutreachHistory).filter(
+        OutreachHistory.contact_id == old_id, OutreachHistory.user_id == user_id
+    ).all():
+        row.contact_id = new_id
+    for row in db.query(ResearchBrief).filter(
+        ResearchBrief.contact_id == old_id, ResearchBrief.user_id == user_id
+    ).all():
+        row.contact_id = new_id
+    for row in db.query(OutboxItem).filter(OutboxItem.user_id == user_id).all():
+        ref = row.ref if isinstance(row.ref, dict) else {}
+        if ref.get("kind") == "contact" and str(ref.get("id")) == old_id:
+            row.ref = {**ref, "id": new_id}
+    for row in db.query(AgentActivityLog).filter(AgentActivityLog.user_id == user_id).all():
+        row.arguments = _replace_contact_ref(row.arguments or {}, old_id, new_id)
+        try:
+            result = json.loads(row.result_summary or "null")
+        except (TypeError, ValueError):
+            result = None
+        if _mentions_contact(result, old_id):
+            row.result_summary = json.dumps(_replace_contact_ref(result, old_id, new_id), default=str)
+    for row in db.query(ActionRecord).filter(ActionRecord.user_id == user_id).all():
+        if _mentions_contact(row.payload_json, old_id):
+            row.payload_json = _replace_contact_ref(row.payload_json, old_id, new_id)
+        if _mentions_contact(row.result_json, old_id):
+            row.result_json = _replace_contact_ref(row.result_json, old_id, new_id)
+
+
+def _isolate_legacy_contacts() -> None:
+    """Move legacy shared professor selections into each owner's private Contact row."""
+    db = SessionLocal()
+    try:
+        changed = 0
+        ref_users = _contact_ref_users_map(db)
+        for contact in db.query(Contact).filter(Contact.owner_user_id.is_(None)).all():
+            old_id = str(contact.id)
+            owners = ref_users.get(old_id, set())
+            if len(owners) == 1:
+                owner = next(iter(owners))
+                existing = db.query(Contact).filter(
+                    Contact.owner_user_id == owner, Contact.email == contact.email
+                ).first()
+                if existing and existing.id != contact.id:
+                    _rewrite_contact_references(db, old_id, owner, str(existing.id))
+                else:
+                    contact.owner_user_id = owner
+                changed += 1
+            elif owners:
+                for owner in owners:
+                    personal = _copy_contact_for_user(db, contact, owner)
+                    _rewrite_contact_references(db, old_id, owner, str(personal.id))
+                changed += 1
+
+            if len(owners) != 1 or (owners and contact.owner_user_id is None):
+                # The original remains a shared directory record. Remove fields
+                # that may have been written by an individual user's workflow.
+                contact.status, contact.sent_on = "Not started", None
+                contact.email_verification = "unverified"
+                contact.bio = None
+                contact.embedding = None
+                contact.source_checked_on = None
+                contact.recent_work = None
+                contact.relevant_work = None
+        db.commit()
+        if changed:
+            log.warning("isolated %d legacy shared professor contact(s)", changed)
+    except Exception:
+        db.rollback()
+        log.exception("contact isolation migration failed; unowned contacts remain hidden")
+    finally:
+        db.close()
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
     _auto_migrate()
@@ -692,6 +875,7 @@ def init_db():
                 idx.create(bind=engine, checkfirst=True)
             except Exception as e:
                 log.warning("db-index: could not create %s (%s)", idx.name, e)
+    _isolate_legacy_contacts()
 
 
 def get_db():

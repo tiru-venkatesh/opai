@@ -475,7 +475,7 @@ def workflow_draft_outreach(user_id: UUID, contact_id: UUID, db: Session) -> Pro
     uid = str(user_id)
     cid = str(contact_id)
     user = db.query(User).filter(User.id == uid).first()
-    contact = db.query(Contact).filter(Contact.id == cid).first()
+    contact = db.query(Contact).filter(Contact.id == cid, Contact.owner_user_id == uid).first()
     if not contact:
         raise ValueError("Contact not found")
 
@@ -819,7 +819,7 @@ def _tool_update_task_status(uid: str, db: Session, args: dict) -> dict:
 
 def _tool_draft_outreach(uid: str, db: Session, args: dict) -> dict:
     contact_id = args.get("contact_id")
-    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+    contact = db.query(Contact).filter(Contact.id == contact_id, Contact.owner_user_id == uid).first()
     if not contact:
         return {"drafted": False, "error": "contact not found"}
     try:
@@ -1104,7 +1104,7 @@ def _process_jarvis_message_legacy(user_id: UUID, message: str, db: Session) -> 
             payload=plan.model_dump()
         )
     elif action == "emails":
-        contact = db.query(Contact).first()
+        contact = db.query(Contact).filter(Contact.owner_user_id == str(user_id)).first()
         if contact:
             draft = workflow_draft_outreach(user_id, UUID(contact.id), db)
             return JarvisChatResponse(

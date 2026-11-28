@@ -88,7 +88,7 @@ def _brief_out(b: ResearchBrief) -> Dict[str, Any]:
 def research_brief(contact_id: str, p: BriefBody, db: Session = Depends(get_db)):
     """Grounded brief built BEFORE any draft. Only facts already stored on the contact (or supplied with a source) are used."""
     u = _user(db, p.user_id)
-    c = db.query(Contact).filter(Contact.id == contact_id).first()
+    c = db.query(Contact).filter(Contact.id == contact_id, Contact.owner_user_id == u.id).first()
     if not c:
         raise HTTPException(404, "Contact not found")
     areas = [str(a).strip() for a in (c.research_areas or []) if str(a).strip()]
@@ -194,7 +194,7 @@ def _similar_draft_warning(db: Session, uid: str, contact: Contact, body: str) -
 def draft_email(contact_id: str, p: DraftBody, db: Session = Depends(get_db)):
     """Creates ONE draft in the Outbox. Requires a research brief with at least a partial source. Never sends."""
     u = _user(db, p.user_id)
-    c = db.query(Contact).filter(Contact.id == contact_id).first()
+    c = db.query(Contact).filter(Contact.id == contact_id, Contact.owner_user_id == u.id).first()
     if not c:
         raise HTTPException(404, "Contact not found")
     q = db.query(ResearchBrief).filter(ResearchBrief.user_id == u.id, ResearchBrief.contact_id == c.id)
@@ -292,7 +292,7 @@ def mark_bounced(outreach_id: str, user_id: str, db: Session = Depends(get_db)):
     row = db.query(OutreachHistory).filter(OutreachHistory.id == outreach_id, OutreachHistory.user_id == u.id).first()
     if not row:
         raise HTTPException(404, "Outreach record not found")
-    c = db.query(Contact).filter(Contact.id == row.contact_id).first()
+    c = db.query(Contact).filter(Contact.id == row.contact_id, Contact.owner_user_id == u.id).first()
     row.status = "No Response"
     if c and not G.is_suppressed(db, u.id, c.email):
         db.add(SuppressedContact(user_id=u.id, email=G.norm_email(c.email), reason="bounced"))

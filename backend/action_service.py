@@ -410,7 +410,7 @@ def _h_tailor_resume(db, uid, p):
 def _h_create_outreach_draft(db, uid, p):
     from fastapi import HTTPException
     import extras_api as X
-    if not db.query(Contact).filter(Contact.id == str(p["contact_id"])).first():
+    if not db.query(Contact).filter(Contact.id == str(p["contact_id"]), Contact.owner_user_id == uid).first():
         raise ActionError(404, "Contact not found")
     try:
         out = X.draft_email(p["contact_id"], X.DraftBody(user_id=uid, brief_id=p.get("brief_id")), db)

@@ -9,11 +9,16 @@
   }[page]||{label:'OPAI',chips:['What is due today?','What did I apply to this week?']};
 
   var API=(localStorage.getItem('opa_api_base')||(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'http://localhost:8000':'https://opa-52ug.onrender.com')).replace(/\/+$/,'');
-  var KEY='opai_popup_chat',OPEN='opai_popup_open';
+  var OPEN='opai_popup_open';
+  function chatKey(){var e='';try{e=(localStorage.getItem('opai_sc_email')||'').trim().toLowerCase()}catch(x){}return 'opai_popup_chat:'+(e||'guest')}
+  var KEY=chatKey();
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function loadMsgs(){try{var m=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(m)?m.slice(-40):[]}catch(e){return[]}}
   function saveMsgs(){try{localStorage.setItem(KEY,JSON.stringify(msgs.slice(-40)))}catch(e){}}
-  var msgs=loadMsgs(),busy=false,ctrl=null,uid=null,changed=false;
+  var msgs=loadMsgs(),busy=false,ctrl=null,uid=null,changed=false,convId=null;
+  function syncAccount(){var next=chatKey();if(next===KEY)return;if(ctrl)ctrl.abort();KEY=next;msgs=loadMsgs();uid=null;changed=false;convId=null;if(th)draw()}
+  window.addEventListener('opai-account-changed',syncAccount);
+  window.addEventListener('storage',function(e){if(e.key==='opai_sc_email')syncAccount()});
 
   async function api(path,opts){
     opts=opts||{};
@@ -22,6 +27,7 @@
     var t=await res.text();return t?JSON.parse(t):null;
   }
   async function ensureUser(){
+    syncAccount();
     if(uid)return uid;
     var email=localStorage.getItem('opai_sc_email');
     if(email){uid=(await api('/v1/auth/dev-login?email='+encodeURIComponent(email),{method:'POST'})).user_id;return uid}
@@ -85,7 +91,7 @@
     th=box.querySelector('.th');ta=box.querySelector('textarea');go=box.querySelector('.go');
     fab.onclick=function(){toggle()};
     box.querySelector('.x').onclick=function(){toggle(false)};
-    box.querySelector('.nw').onclick=function(){if(busy)return;msgs=[];changed=false;saveMsgs();draw()};
+    box.querySelector('.nw').onclick=function(){if(busy)return;msgs=[];changed=false;convId=null;saveMsgs();draw()};
     go.onclick=function(){send()};
     ta.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send()}});
     ta.addEventListener('input',function(){ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,110)+'px'});
@@ -97,6 +103,7 @@
     if(sessionStorage.getItem(OPEN)==='1')toggle(true);
   }
   function toggle(on){
+    syncAccount();
     var o=on==null?!box.classList.contains('open'):on;
     box.classList.toggle('open',o);fab.style.display=o&&innerWidth<=760?'none':'';
     try{sessionStorage.setItem(OPEN,o?'1':'0')}catch(e){}
@@ -146,6 +153,7 @@
   }
   function setBusy(b){busy=b;go.disabled=b;ta.disabled=b}
   async function send(){
+    syncAccount();
     if(busy)return;var text=ta.value.trim();if(!text)return;
     ta.value='';ta.style.height='auto';
     var um={role:'user',text:text};msgs.push(um);box.querySelector('.ch').style.display='none';
@@ -160,9 +168,10 @@
     ctrl=new AbortController();
     try{
       var tz=null;try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone}catch(e){}
-      var conv=null;try{conv=sessionStorage.getItem('kp_conv')}catch(e){}
-      var r=await api('/v1/chat',{method:'POST',signal:ctrl.signal,body:JSON.stringify({user_id:await ensureUser(),text:text,channel:'popup',timezone:tz,conversation_id:conv,history:history()})});
-      try{if(r.conversation_id)sessionStorage.setItem('kp_conv',r.conversation_id)}catch(e){}
+      var body={user_id:await ensureUser(),text:text,channel:'popup',timezone:tz,history:history()};
+      if(convId)body.conversation_id=convId;
+      var r=await api('/v1/chat',{method:'POST',signal:ctrl.signal,body:JSON.stringify(body)});
+      if(r.conversation_id)convId=r.conversation_id;
       var am={role:'agent',text:r.reply||'',brief:r.brief||null,actions:r.actions||[],status:r.status};msgs.push(am);
       if(r.action==='task'||(r.tool_calls&&r.tool_calls.length))changed=true;
       clearInterval(iv);saveMsgs();draw();
