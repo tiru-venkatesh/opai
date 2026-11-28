@@ -24,6 +24,7 @@ backend/opa.db
 *.db-shm
 *.db-wal
 *.db.backup
+*.db.backup-*
 *.sqlite-shm
 *.sqlite-wal
 *.bak
